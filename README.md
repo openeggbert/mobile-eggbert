@@ -27,4 +27,11 @@ CNA is an XNA-like wrapper built around SDL 3, a cross-platform software develop
 
 The C++ source code was derived from the following Git commit in the mobile-eggbert-core repository:
  - https://github.com/openeggbert/mobile-eggbert-core/commit/1cbc13415b768085b7f5c97fbf35a773d7f14a8e
+ 
+## Development
+
+### Init submodules
+
+git submodule init --recursive
+git submodule update --recursive
 

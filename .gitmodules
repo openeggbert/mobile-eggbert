@@ -1,0 +1,6 @@
+[submodule "Content"]
+	path = Content
+	url = https://github.com/openeggbert/speedy-blupi-dadagames-content
+[submodule "worlds"]
+	path = worlds
+	url = https://github.com/openeggbert/speedy-blupi-dadagames-worlds
