@@ -23,7 +23,9 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         src/WindowsPhoneSpeedyBlupi/Sound.cpp
         include/WindowsPhoneSpeedyBlupi/Sound.h
         src/WindowsPhoneSpeedyBlupi/Text.cpp
-        include/WindowsPhoneSpeedyBlupi/Text.h)
+        include/WindowsPhoneSpeedyBlupi/Text.h
+        ../../cna/src/Microsoft/Xna/Framework/Content/ContentManager.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Content/ContentManager.h)
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
