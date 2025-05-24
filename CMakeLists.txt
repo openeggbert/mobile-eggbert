@@ -25,7 +25,23 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         src/WindowsPhoneSpeedyBlupi/Text.cpp
         include/WindowsPhoneSpeedyBlupi/Text.h
         ../../cna/src/Microsoft/Xna/Framework/Content/ContentManager.cpp
-        ../../cna/include/Microsoft/Xna/Framework/Content/ContentManager.h)
+        ../../cna/include/Microsoft/Xna/Framework/Content/ContentManager.h
+        ../../cna/src/Microsoft/Xna/Framework/Vector2.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Vector2.h
+        ../../cna/src/Microsoft/Xna/Framework/Viewport.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Graphics/Viewport.h
+        ../../cna/include/Microsoft/Xna/Framework/Helper.h
+        src/WindowsPhoneSpeedyBlupi/Decor.cpp
+        include/WindowsPhoneSpeedyBlupi/Decor.h
+        ../../cna/src/Microsoft/Xna/Framework/Color.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Color.h
+        ../../cna/include/Microsoft/Xna/Framework/Graphics/SpriteSortMode.h
+        ../../cna/include/Microsoft/Xna/Framework/Graphics/BlendState.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Graphics/BlendState.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/Touch/TouchPanel.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchPanel.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/Touch/TouchPanelCapabilities.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchPanelCapabilities.h)
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

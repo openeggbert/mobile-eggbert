@@ -88,6 +88,7 @@ namespace WindowsPhoneSpeedyBlupi
             Web
         };
 
+    public: static constexpr Platform PLATFORM = Desktop; //todo
         public: static constexpr ushort LXIMAGE = 640;
 
         public: static constexpr ushort LYIMAGE = 480;

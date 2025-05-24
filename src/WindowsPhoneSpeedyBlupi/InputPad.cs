@@ -274,7 +274,7 @@ namespace WindowsPhoneSpeedyBlupi
             float screenHeight = game1.getGraphics().GraphicsDevice.Viewport.Height;
             float screenRatio = screenWidth / screenHeight;
 
-            if ((Env.PLATFORM.isAndroid() && screenRatio > 1.3333333333333333) || (Env.IMPL.isKNI()))
+            if ((Def::PLATFORM.isAndroid() && screenRatio > 1.3333333333333333) || (Env.IMPL.isKNI()))
             {
                 for (int i = 0; i < touchesOrClicks.Count; i++)
                 {
@@ -976,11 +976,11 @@ namespace WindowsPhoneSpeedyBlupi
             float adjustedThreshold = (accelLastState ? (sensitivityThreshold * 0.6f) : sensitivityThreshold);
             if (y > adjustedThreshold)
             {
-                accelSpeedX = 0.0 - Math.Min((double)y * 0.25 / (double)sensitivityThreshold + 0.25, 1.0);
+                accelSpeedX = 0.0 - std::min((double)y * 0.25 / (double)sensitivityThreshold + 0.25, 1.0);
             }
             else if (y < 0f - adjustedThreshold)
             {
-                accelSpeedX = Math.Min((double)(0f - y) * 0.25 / (double)sensitivityThreshold + 0.25, 1.0);
+                accelSpeedX = std::min((double)(0f - y) * 0.25 / (double)sensitivityThreshold + 0.25, 1.0);
             }
             else
             {
