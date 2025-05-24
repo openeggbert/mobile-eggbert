@@ -1,0 +1,27 @@
+//
+// Created by robertvokac on 3/27/25.
+//
+
+#ifndef GAME1_H
+#define GAME1_H
+
+#include "CNA/Game.h"
+
+namespace WindowsPhoneSpeedyBlupi {
+class Game1 : public CNA::Game {
+public:
+    Game1();
+    virtual ~Game1();
+    void LoadContent() override;
+    void Update(float deltaTime) override;
+    void Draw() override;
+
+private:
+
+protected:
+
+};
+
+}
+
+#endif //GAME1_H

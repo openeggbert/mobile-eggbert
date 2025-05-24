@@ -1,12 +1,16 @@
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Tables
-using WindowsPhoneSpeedyBlupi;
+#ifndef TABLES_H
+#define TABLES_H
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    public static class Tables
+    using ushort = unsigned short;
+
+    class Tables
     {
-        public enum CheatCodes
+    public:
+        enum class CheatCodes
         {
             BuildOfficialMissions,
             OpenDoors,
@@ -30,9 +34,9 @@ namespace WindowsPhoneSpeedyBlupi
             Overcraft,
             Dynamite,
             WeelKeys
-        }
+        };
 
-        public static int[] table_blupi = new int[2911]
+        static constexpr short table_blupi[2911] =
         {
         35, 9, 0, 276, 277, 278, 279, 280, 281, 282,
         283, 284, 1, 330, 0, 0, 0, 0, 0, 0,
@@ -328,7 +332,7 @@ namespace WindowsPhoneSpeedyBlupi
         0
         };
 
-        public static int[] table_mirror = new int[335]
+        static constexpr short table_mirror[335] =
         {
         4, 3, 2, 1, 0, 11, 12, 13, 14, 15,
         16, 5, 6, 7, 8, 9, 10, 20, 21, 22,
@@ -366,13 +370,13 @@ namespace WindowsPhoneSpeedyBlupi
         330, 331, 332, 333, 334
         };
 
-        public static int[] table_vitesse_march = new int[4] { 2, 4, 6, 8 };
+        static constexpr short table_vitesse_march[4] = { 2, 4, 6, 8 };
 
-        public static int[] table_vitesse_nage = new int[7] { 2, 1, 5, 10, 8, 6, 4 };
+        static constexpr short table_vitesse_nage[7] = { 2, 1, 5, 10, 8, 6, 4 };
 
-        public static int[] table_vitesse_surf = new int[6] { 0, 2, 5, 8, 3, 0 };
+        static constexpr short table_vitesse_surf[6] = { 0, 2, 5, 8, 3, 0 };
 
-        public static short[] table_decor_quart = new short[7056]
+        static constexpr short table_decor_quart[7056] =
         {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -1082,29 +1086,29 @@ namespace WindowsPhoneSpeedyBlupi
         1, 0, 0, 1, 1, 0
         };
 
-        public static int[] table_bulldozer_left = new int[8] { 66, 66, 67, 67, 66, 66, 65, 65 };
+        static constexpr short table_bulldozer_left[8] = { 66, 66, 67, 67, 66, 66, 65, 65 };
 
-        public static int[] table_bulldozer_right = new int[8] { 58, 58, 57, 57, 58, 58, 59, 59 };
+        static constexpr short table_bulldozer_right[8] = { 58, 58, 57, 57, 58, 58, 59, 59 };
 
-        public static int[] table_bulldozer_turn2l = new int[22]
+        static constexpr short table_bulldozer_turn2l[22]  =
         {
         58, 59, 59, 59, 60, 60, 60, 61, 61, 62,
         62, 63, 63, 64, 64, 64, 65, 65, 65, 66,
         66, 66
         };
 
-        public static int[] table_bulldozer_turn2r = new int[22]
+        static constexpr short table_bulldozer_turn2r [22]=
         {
         66, 65, 65, 65, 64, 64, 64, 63, 63, 62,
         62, 61, 61, 60, 60, 60, 59, 59, 59, 58,
         58, 58
         };
 
-        public static int[] table_poisson_left = new int[8] { 82, 82, 81, 81, 82, 82, 83, 83 };
+        static constexpr short table_poisson_left [8]= { 82, 82, 81, 81, 82, 82, 83, 83 };
 
-        public static int[] table_poisson_right = new int[8] { 79, 79, 78, 78, 79, 79, 80, 80 };
+        static constexpr short table_poisson_right[8] = { 79, 79, 78, 78, 79, 79, 80, 80 };
 
-        public static int[] table_poisson_turn2l = new int[48]
+        static constexpr short table_poisson_turn2l [48]=
         {
         79, 79, 80, 80, 84, 84, 85, 85, 86, 86,
         87, 87, 88, 88, 83, 83, 82, 82, 83, 83,
@@ -1113,7 +1117,7 @@ namespace WindowsPhoneSpeedyBlupi
         86, 86, 87, 87, 88, 88, 83, 83
         };
 
-        public static int[] table_poisson_turn2r = new int[48]
+        static constexpr short table_poisson_turn2r[48] =
         {
         82, 82, 83, 83, 88, 88, 87, 87, 86, 86,
         85, 85, 84, 84, 79, 79, 79, 79, 80, 80,
@@ -1122,27 +1126,27 @@ namespace WindowsPhoneSpeedyBlupi
         86, 86, 85, 85, 84, 84, 79, 79
         };
 
-        public static int[] table_oiseau_left = new int[8] { 98, 99, 100, 101, 102, 103, 104, 105 };
+        static constexpr short table_oiseau_left[8] = { 98, 99, 100, 101, 102, 103, 104, 105 };
 
-        public static int[] table_oiseau_right = new int[8] { 90, 91, 92, 93, 94, 95, 96, 97 };
+        static constexpr short table_oiseau_right[8] = { 90, 91, 92, 93, 94, 95, 96, 97 };
 
-        public static int[] table_oiseau_turn2l = new int[10] { 106, 107, 108, 109, 110, 111, 112, 113, 105, 105 };
+        static constexpr short table_oiseau_turn2l[10] = { 106, 107, 108, 109, 110, 111, 112, 113, 105, 105 };
 
-        public static int[] table_oiseau_turn2r = new int[10] { 114, 115, 116, 117, 118, 119, 120, 121, 97, 97 };
+        static constexpr short table_oiseau_turn2r[10] = { 114, 115, 116, 117, 118, 119, 120, 121, 97, 97 };
 
-        public static int[] table_guepe_left = new int[6] { 195, 196, 197, 198, 197, 196 };
+        static constexpr short table_guepe_left[6] = { 195, 196, 197, 198, 197, 196 };
+[]
+        static constexpr short table_guepe_right[6] = { 199, 200, 201, 202, 201, 200 };
 
-        public static int[] table_guepe_right = new int[6] { 199, 200, 201, 202, 201, 200 };
+        static constexpr short table_guepe_turn2l[5] = { 207, 206, 205, 204, 203 };
 
-        public static int[] table_guepe_turn2l = new int[5] { 207, 206, 205, 204, 203 };
+        static constexpr short table_guepe_turn2r[5] = { 203, 204, 205, 206, 207 };
 
-        public static int[] table_guepe_turn2r = new int[5] { 203, 204, 205, 206, 207 };
+        static constexpr short table_creature_left[8] = { 247, 248, 249, 250, 251, 250, 249, 248 };
 
-        public static int[] table_creature_left = new int[8] { 247, 248, 249, 250, 251, 250, 249, 248 };
+        static constexpr short table_creature_right[8] = { 247, 248, 249, 250, 251, 250, 249, 248 };
 
-        public static int[] table_creature_right = new int[8] { 247, 248, 249, 250, 251, 250, 249, 248 };
-
-        public static int[] table_creature_turn2 = new int[152]
+        static constexpr short table_creature_turn2[152] =
         {
         244, 244, 244, 244, 244, 244, 244, 244, 243, 243,
         242, 242, 242, 242, 242, 242, 242, 242, 243, 243,
@@ -1162,43 +1166,43 @@ namespace WindowsPhoneSpeedyBlupi
         244, 244
         };
 
-        public static int[] table_blupih_left = new int[8] { 66, 67, 68, 67, 66, 69, 70, 69 };
+        static constexpr short table_blupih_left[8] = { 66, 67, 68, 67, 66, 69, 70, 69 };
 
-        public static int[] table_blupih_right = new int[8] { 61, 62, 63, 62, 61, 64, 65, 64 };
+        static constexpr short table_blupih_right[8] = { 61, 62, 63, 62, 61, 64, 65, 64 };
 
-        public static int[] table_blupih_turn2l = new int[26]
+        static constexpr short table_blupih_turn2l[26] =
         {
         71, 71, 72, 72, 73, 73, 74, 74, 75, 75,
         68, 68, 275, 275, 271, 271, 271, 271, 272, 272,
         273, 273, 273, 273, 275, 275
         };
 
-        public static int[] table_blupih_turn2r = new int[26]
+        static constexpr short table_blupih_turn2r[26] =
         {
         75, 75, 74, 74, 73, 73, 72, 72, 71, 71,
         63, 63, 274, 274, 271, 271, 271, 271, 272, 272,
         273, 273, 273, 273, 274, 274
         };
 
-        public static int[] table_blupit_left = new int[8] { 249, 249, 250, 250, 249, 249, 248, 248 };
+        static constexpr short table_blupit_left[8] = { 249, 249, 250, 250, 249, 249, 248, 248 };
 
-        public static int[] table_blupit_right = new int[8] { 238, 238, 237, 237, 238, 238, 239, 239 };
+        static constexpr short table_blupit_right[8] = { 238, 238, 237, 237, 238, 238, 239, 239 };
 
-        public static int[] table_blupit_turn2l = new int[24]
+        static constexpr short table_blupit_turn2l[24] =
         {
         238, 238, 251, 251, 238, 238, 238, 239, 240, 241,
         242, 243, 244, 245, 246, 247, 248, 249, 249, 249,
         252, 252, 249, 249
         };
 
-        public static int[] table_blupit_turn2r = new int[24]
+        static constexpr short table_blupit_turn2r[24] =
         {
         249, 249, 252, 252, 249, 249, 249, 248, 247, 246,
         245, 244, 243, 242, 241, 240, 239, 238, 238, 238,
         251, 251, 238, 238
         };
 
-        public static int[] table_explo1 = new int[39]
+        static constexpr short table_explo1[39] =
         {
         0, 0, 1, 1, 2, 2, 3, 3, 4, 3,
         4, 4, 3, 4, 3, 3, 4, 4, 5, 5,
@@ -1206,29 +1210,29 @@ namespace WindowsPhoneSpeedyBlupi
         7, 8, 8, 9, 9, 10, 10, 11, 11
         };
 
-        public static int[] table_explo2 = new int[20]
+        static constexpr short table_explo2[20] =
         {
         12, -1, 13, 14, -1, 15, 13, -1, 14, 15,
         12, -1, 13, 15, 14, 14, -1, 14, 15, 13
         };
 
-        public static int[] table_explo3 = new int[20]
+        static constexpr short table_explo3[20] =
         {
         32, 32, 34, 34, 32, 32, 34, 34, 32, 32,
         34, 34, 32, 32, 35, 35, 32, 32, 35, 35
         };
 
-        public static int[] table_explo4 = new int[9] { 12, 13, 14, 15, 7, 8, 9, 10, 11 };
+        static constexpr short table_explo4[9] = { 12, 13, 14, 15, 7, 8, 9, 10, 11 };
 
-        public static int[] table_explo5 = new int[12]
+        static constexpr short table_explo5[12] =
         {
         54, -1, 55, -1, 56, -1, 57, -1, 58, -1,
         59, -1
         };
 
-        public static int[] table_explo6 = new int[6] { 54, 55, 56, 57, 58, 59 };
+        static constexpr short table_explo6[6] = { 54, 55, 56, 57, 58, 59 };
 
-        public static int[] table_explo7 = new int[128]
+        static constexpr short table_explo7[128] =
         {
         60, 61, -1, 63, 64, 65, 62, 64, 62, 60,
         62, -1, 65, -1, 60, 65, 63, 61, 62, -1,
@@ -1245,23 +1249,23 @@ namespace WindowsPhoneSpeedyBlupi
         -1, 61, -1, -1, -1, 60, -1, -1
         };
 
-        public static int[] table_explo8 = new int[5] { 7, 8, 9, 10, 11 };
+        static constexpr short table_explo8[5] = { 7, 8, 9, 10, 11 };
 
-        public static int[] table_sploutch1 = new int[10] { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99 };
+        static constexpr short table_sploutch1[10] = { 90, 91, 92, 93, 94, 95, 96, 97, 98, 99 };
 
-        public static int[] table_sploutch2 = new int[13]
+        static constexpr short table_sploutch2[13] =
         {
         -1, -1, -1, 90, 91, 92, 93, 94, 95, 96,
         97, 98, 99
         };
 
-        public static int[] table_sploutch3 = new int[18]
+        static constexpr short table_sploutch3[18] =
         {
         -1, -1, -1, -1, -1, -1, -1, -1, 90, 91,
         92, 93, 94, 95, 96, 97, 98, 99
         };
 
-        public static int[] table_tentacule = new int[45]
+        static constexpr short table_tentacule[45] =
         {
         86, 85, 84, 83, 84, 85, 86, -1, 86, 85,
         84, 83, 82, 81, 80, 79, 78, 77, 76, 75,
@@ -1270,7 +1274,7 @@ namespace WindowsPhoneSpeedyBlupi
         83, 84, 85, 86, -1
         };
 
-        public static int[] table_bridge = new int[157]
+        static constexpr short table_bridge[157] =
         {
         365, 366, 365, 366, 365, 366, 365, 366, 365, 366,
         365, 366, 365, 366, 365, 366, 367, 367, 368, 368,
@@ -1290,58 +1294,58 @@ namespace WindowsPhoneSpeedyBlupi
         367, 367, 366, 366, 365, 365, 364
         };
 
-        public static int[] table_pollution = new int[8] { 179, 180, 181, 182, 183, 184, 185, 186 };
+        static constexpr short table_pollution[8] = { 179, 180, 181, 182, 183, 184, 185, 186 };
 
-        public static int[] table_invertstart = new int[8] { 179, 180, 181, 182, 183, 184, 185, 186 };
+        static constexpr short table_invertstart[8] = { 179, 180, 181, 182, 183, 184, 185, 186 };
 
-        public static int[] table_invertstop = new int[8] { 186, 185, 184, 183, 182, 181, 180, 179 };
+        static constexpr short table_invertstop[8] = { 186, 185, 184, 183, 182, 181, 180, 179 };
 
-        public static int[] table_invertpanel = new int[8] { 187, 188, 189, 190, 191, 192, 193, 194 };
+        static constexpr short table_invertpanel[8] = { 187, 188, 189, 190, 191, 192, 193, 194 };
 
-        public static int[] table_plouf = new int[7] { 99, 100, 101, 102, 101, 100, 99 };
+        static constexpr short table_plouf[7] = { 99, 100, 101, 102, 101, 100, 99 };
 
-        public static int[] table_tiplouf = new int[3] { 244, 99, 244 };
+        static constexpr short table_tiplouf[3] = { 244, 99, 244 };
 
-        public static int[] table_blup = new int[20]
+        static constexpr short table_blup[20] =
         {
         103, 104, 105, 106, 104, 103, 106, 105, 103, 104,
         103, 105, 106, 103, 105, 106, 103, 104, 106, 105
         };
 
-        public static int[] table_follow1 = new int[26]
+        static constexpr short table_follow1[26] =
         {
         256, 256, 256, 257, 257, 258, 259, 260, 261, 262,
         263, 264, 264, 265, 265, 265, 264, 264, 263, 262,
         261, 260, 259, 258, 257, 257
         };
 
-        public static int[] table_follow2 = new int[5] { 256, 258, 260, 262, 264 };
+        static constexpr short table_follow2[5] = { 256, 258, 260, 262, 264 };
 
-        public static int[] table_cle = new int[12]
+        static constexpr short table_cle[12] =
         {
         122, 123, 124, 125, 126, 127, 128, 127, 126, 125,
         124, 123
         };
 
-        public static int[] table_cle1 = new int[12]
+        static constexpr short table_cle1[12] =
         {
         209, 210, 211, 212, 213, 214, 215, 214, 213, 212,
         211, 210
         };
 
-        public static int[] table_cle2 = new int[12]
+        static constexpr short table_cle2[12] =
         {
         220, 221, 222, 221, 220, 219, 218, 217, 216, 217,
         218, 219
         };
 
-        public static int[] table_cle3 = new int[12]
+        static constexpr short table_cle3[12] =
         {
         229, 228, 227, 226, 225, 224, 223, 224, 225, 226,
         227, 228
         };
 
-        public static int[] table_dynamitef = new int[100]
+        static constexpr short table_dynamitef[100] =
         {
         253, 252, 254, 252, 252, 255, 252, 254, 253, 252,
         253, 254, 255, 252, 255, 253, 252, 254, 252, 255,
@@ -1355,7 +1359,7 @@ namespace WindowsPhoneSpeedyBlupi
         255, 253, 253, 254, 255, 254, 252, 253, 254, 255
         };
 
-        public static int[] table_skate = new int[34]
+        static constexpr short table_skate[34] =
         {
         129, 129, 129, 129, 130, 130, 130, 131, 131, 132,
         132, 133, 133, 134, 134, 134, 135, 135, 135, 135,
@@ -1363,14 +1367,14 @@ namespace WindowsPhoneSpeedyBlupi
         130, 130, 130, 130
         };
 
-        public static int[] table_glu = new int[25]
+        static constexpr short table_glu[25] =
         {
         168, 168, 169, 169, 170, 170, 171, 171, 170, 170,
         169, 169, 168, 168, 169, 169, 169, 168, 168, 169,
         169, 170, 170, 169, 168
         };
 
-        public static int[] table_clear = new int[70]
+        static constexpr short table_clear[70] =
         {
         40, 40, 40, 40, 41, 41, 41, 41, 40, 40,
         40, 40, 40, 40, 40, 41, 41, 41, 40, 40,
@@ -1381,7 +1385,7 @@ namespace WindowsPhoneSpeedyBlupi
         47, 47, 46, 46, 47, 47, 46, 46, 47, 47
         };
 
-        public static int[] table_electro = new int[90]
+        static constexpr short table_electro[90] =
         {
         266, 267, 266, 267, 266, 267, 266, 267, 266, 267,
         266, 267, 266, 267, 266, 267, 266, 267, 266, 267,
@@ -1394,11 +1398,11 @@ namespace WindowsPhoneSpeedyBlupi
         46, 46, 47, 47, 46, 46, 47, 47, 46, 46
         };
 
-        public static int[] table_chenille = new int[6] { 311, 312, 313, 314, 315, 316 };
+        static constexpr short table_chenille[6] = { 311, 312, 313, 314, 315, 316 };
 
-        public static int[] table_chenillei = new int[6] { 316, 315, 314, 313, 312, 311 };
+        static constexpr short table_chenillei[6] = { 316, 315, 314, 313, 312, 311 };
 
-        public static int[] table_adapt_decor = new int[144]
+        static constexpr short table_adapt_decor[144] =
         {
         153, 147, 148, 146, 40, 151, 150, 144, 39, 152,
         149, 145, 38, 36, 37, 35, 153, 147, 148, 146,
@@ -1417,7 +1421,7 @@ namespace WindowsPhoneSpeedyBlupi
         251, 250, 256, 250
         };
 
-        public static int[] table_adapt_fromage = new int[32]
+        static constexpr short table_adapt_fromage[32] =
         {
         -1, 265, 264, 268, 267, 273, 271, 275, 266, 272,
         270, 274, 269, 277, 276, 278, -1, 286, 285, 289,
@@ -1425,66 +1429,66 @@ namespace WindowsPhoneSpeedyBlupi
         297, 299
         };
 
-        public static int[] table_shield = new int[16]
+        static constexpr short table_shield[16] =
         {
         144, 145, 146, 147, 148, 149, 150, 151, 266, 267,
         268, 269, 270, 271, 272, 273
         };
 
-        public static int[] table_shield_blupi = new int[16]
+        static constexpr short table_shield_blupi[16] =
         {
         144, 145, 146, 147, 148, 149, 150, 151, 266, 267,
         268, 269, 270, 271, 272, 273
         };
 
-        public static int[] table_power = new int[8] { 136, 137, 138, 139, 140, 141, 142, 143 };
+        static constexpr short table_power[8] = { 136, 137, 138, 139, 140, 141, 142, 143 };
 
-        public static int[] table_invert = new int[20]
+        static constexpr short table_invert[20] =
         {
         187, 187, 187, 188, 189, 190, 191, 192, 193, 194,
         187, 187, 187, 194, 193, 192, 191, 190, 189, 188
         };
 
-        public static int[] table_charge = new int[6] { 238, 239, 240, 241, 242, 243 };
+        static constexpr short table_charge[6] = { 238, 239, 240, 241, 242, 243 };
 
-        public static int[] table_magicloop = new int[5] { 152, 153, 154, 155, 156 };
+        static constexpr short table_magicloop[5] = { 152, 153, 154, 155, 156 };
 
-        public static int[] table_magictrack = new int[24]
+        static constexpr short table_magictrack[24] =
         {
         152, 153, 154, 155, 156, 152, 153, 154, 155, 156,
         157, 158, 159, 160, 157, 158, 159, 160, 161, 162,
         163, 164, 165, 166
         };
 
-        public static int[] table_shieldloop = new int[5] { 274, 275, 276, 277, 278 };
+        static constexpr short table_shieldloop[5] = { 274, 275, 276, 277, 278 };
 
-        public static int[] table_shieldtrack = new int[20]
+        static constexpr short table_shieldtrack[20] =
         {
         274, 275, 276, 277, 278, 274, 275, 276, 277, 278,
         279, 280, 281, 282, 283, 284, 285, 286, 287, 288
         };
 
-        public static int[] table_drinkeffect = new int[5] { 274, 275, 276, 277, 278 };
+        static constexpr short table_drinkeffect[5] = { 274, 275, 276, 277, 278 };
 
-        public static int[] table_drinkoffset = new int[3] { 0, 7, 22 };
+        static constexpr short table_drinkoffset[3] = { 0, 7, 22 };
 
-        public static int[] table_tresortrack = new int[11]
+        static constexpr short table_tresortrack[11] =
         {
         166, 165, 164, 163, 162, 161, 162, 163, 164, 165,
         166
         };
 
-        public static int[] table_decor_lave = new int[8] { 68, 69, 70, 71, 72, 71, 70, 69 };
+        static constexpr short table_decor_lave[8] = { 68, 69, 70, 71, 72, 71, 70, 69 };
 
-        public static int[] table_decor_piege1 = new int[16]
+        static constexpr short table_decor_piege1[16] =
         {
         374, 374, 373, 347, 373, 374, 374, 374, 373, 347,
         347, 373, 374, 374, 374, 374
         };
 
-        public static int[] table_decor_piege2 = new int[4] { 374, 373, 347, 373 };
+        static constexpr short table_decor_piege2[4] = { 374, 373, 347, 373 };
 
-        public static int[] table_decor_goutte = new int[48]
+        static constexpr short table_decor_goutte[48] =
         {
         410, 409, 410, -1, -1, -1, -1, -1, -1, 410,
         409, 408, 409, 410, -1, -1, -1, -1, -1, -1,
@@ -1493,223 +1497,62 @@ namespace WindowsPhoneSpeedyBlupi
         -1, 410, 409, 410, -1, -1, -1, -1
         };
 
-        public static int[] table_decor_ecraseur = new int[10] { 317, 317, 318, 319, 320, 321, 322, 323, 323, 323 };
+        static constexpr short table_decor_ecraseur[10] = { 317, 317, 318, 319, 320, 321, 322, 323, 323, 323 };
 
-        public static int[] table_decor_scie = new int[6] { 378, 379, 380, 381, 382, 383 };
+        static constexpr short table_decor_scie[6] = { 378, 379, 380, 381, 382, 383 };
 
-        public static int[] table_decor_temp = new int[20]
+        static constexpr short table_decor_temp[20] =
         {
         328, 328, 327, 327, 326, 326, 325, 325, 324, 324,
         325, 325, 326, 326, 327, 329, 328, 328, -1, -1
         };
 
-        public static int[] table_decor_eau1 = new int[6] { 92, 93, 94, 95, 94, 93 };
+        static constexpr short table_decor_eau1[6] = { 92, 93, 94, 95, 94, 93 };
 
-        public static int[] table_decor_eau2 = new int[6] { 91, 96, 97, 98, 97, 96 };
+        static constexpr short table_decor_eau2[6] = { 91, 96, 97, 98, 97, 96 };
 
-        public static int[] table_decor_ventillog = new int[3] { 126, 127, 128 };
+        static constexpr short table_decor_ventillog[3] = { 126, 127, 128 };
 
-        public static int[] table_decor_ventillod = new int[3] { 129, 130, 131 };
+        static constexpr short table_decor_ventillod[3] = { 129, 130, 131 };
 
-        public static int[] table_decor_ventilloh = new int[3] { 132, 133, 134 };
+        static constexpr short table_decor_ventilloh[3] = { 132, 133, 134 };
 
-        public static int[] table_decor_ventillob = new int[3] { 135, 136, 137 };
+        static constexpr short table_decor_ventillob[3] = { 135, 136, 137 };
 
-        public static int[] table_decor_ventg = new int[4] { 110, 111, 112, 113 };
+        static constexpr short table_decor_ventg[4] = { 110, 111, 112, 113 };
 
-        public static int[] table_decor_ventd = new int[4] { 114, 115, 116, 117 };
+        static constexpr short table_decor_ventd[4] = { 114, 115, 116, 117 };
 
-        public static int[] table_decor_venth = new int[4] { 118, 119, 120, 121 };
+        static constexpr short table_decor_venth[4] = { 118, 119, 120, 121 };
 
-        public static int[] table_decor_ventb = new int[4] { 122, 123, 124, 125 };
+        static constexpr short table_decor_ventb[4] = { 122, 123, 124, 125 };
 
-        public static int[] table_marine = new int[11]
+        static constexpr short table_marine[11] =
         {
         203, 204, 205, 206, 207, 208, 207, 206, 205, 204,
         203
         };
 
-        public static int[] table_ressort = new int[8] { 209, 210, 211, 212, 213, 212, 211, 210 };
+        static constexpr short table_ressort[8] = { 209, 210, 211, 212, 213, 212, 211, 210 };
 
-        public static int[] table_training1;
+        static short table_training1[133];
 
-        public static int[] table_training2;
+        static short table_training2[31];
 
-        public static int[] table_training3;
+        static short table_training3[67];
 
-        public static int[] table_training4;
+        static short table_training4[31];
 
-        public static int[] table_decor_action;
+        static short table_decor_action[519];
 
-        public static int[] table_explo_size;
+        static short table_explo_size[100];
 
-        public static int[] world_terminal;
+        static short world_terminal[30];
 
-        static Tables()
-        {
-            int[] array = new int[133]
-            {
-            1, 3, 0, 50, -1, 0, 4, 4, 0, 50,
-            0, 0, 6, 6, 0, 50, 1, 0, 9, 9,
-            0, 50, -1, 0, 12, 14, 0, 50, 1, 0,
-            16, 16, 0, 50, -1, 0, 20, 21, 0, 50,
-            -1, 0, 23, 24, 0, 50, -1, 0, 27, 27,
-            0, 50, -1, 0, 28, 28, 0, 50, -1, 0,
-            30, 31, 0, 50, -1, 0, 36, 36, 0, 50,
-            -1, 0, 39, 39, 0, 50, -1, 0, 44, 44,
-            0, 50, -1, 0, 46, 46, 0, 50, -1, 0,
-            53, 53, 0, 50, -1, 0, 56, 56, 0, 50,
-            -1, 0, 62, 64, 0, 50, -1, 0, 65, 66,
-            0, 50, -1, 0, 69, 74, 0, 50, -1, 0,
-            80, 85, 0, 50, 1, 0, 87, 93, 0, 50,
-            -1, 0, -1
-            };
-            array[5] = MyResource.TX_TRAINING101;
-            array[11] = MyResource.TX_TRAINING102;
-            array[17] = MyResource.TX_TRAINING103;
-            array[23] = MyResource.TX_TRAINING104;
-            array[29] = MyResource.TX_TRAINING105;
-            array[35] = MyResource.TX_TRAINING106;
-            array[41] = MyResource.TX_TRAINING107;
-            array[47] = MyResource.TX_TRAINING108;
-            array[53] = MyResource.TX_TRAINING109;
-            array[59] = MyResource.TX_TRAINING110;
-            array[65] = MyResource.TX_TRAINING111;
-            array[71] = MyResource.TX_TRAINING112;
-            array[77] = MyResource.TX_TRAINING113;
-            array[83] = MyResource.TX_TRAINING114;
-            array[89] = MyResource.TX_TRAINING115;
-            array[95] = MyResource.TX_TRAINING116;
-            array[101] = MyResource.TX_TRAINING117;
-            array[107] = MyResource.TX_TRAINING118;
-            array[113] = MyResource.TX_TRAINING119;
-            array[119] = MyResource.TX_TRAINING120;
-            array[125] = MyResource.TX_TRAINING121;
-            array[131] = MyResource.TX_TRAINING122;
-            table_training1 = array;
-            int[] array2 = new int[31]
-            {
-            9, 15, 0, 100, -1, 0, 16, 16, 0, 100,
-            -1, 0, 19, 21, 0, 100, -1, 0, 24, 31,
-            0, 100, -1, 0, 33, 40, 0, 100, -1, 0,
-            -1
-            };
-            array2[5] = MyResource.TX_TRAINING201;
-            array2[11] = MyResource.TX_TRAINING202;
-            array2[17] = MyResource.TX_TRAINING203;
-            array2[23] = MyResource.TX_TRAINING204;
-            array2[29] = MyResource.TX_TRAINING205;
-            table_training2 = array2;
-            int[] array3 = new int[67]
-            {
-            16, 24, 36, 40, -2, 0, 16, 24, 36, 40,
-            -3, 0, 22, 25, 34, 34, -3, 0, 22, 31,
-            34, 37, -2, 0, 32, 43, 34, 34, -2, 0,
-            32, 43, 26, 34, -3, 0, 44, 48, 20, 22,
-            -2, 0, 29, 31, 12, 12, -1, 0, 44, 54,
-            20, 22, -3, 0, 63, 65, 20, 22, -1, 0,
-            77, 81, 20, 22, -3, 0, -1
-            };
-            array3[5] = MyResource.TX_TRAINING301;
-            array3[11] = MyResource.TX_TRAINING302;
-            array3[17] = MyResource.TX_TRAINING303;
-            array3[23] = MyResource.TX_TRAINING304;
-            array3[29] = MyResource.TX_TRAINING305;
-            array3[35] = MyResource.TX_TRAINING306;
-            array3[41] = MyResource.TX_TRAINING307;
-            array3[47] = MyResource.TX_TRAINING308;
-            array3[53] = MyResource.TX_TRAINING309;
-            array3[59] = MyResource.TX_TRAINING310;
-            array3[65] = MyResource.TX_TRAINING311;
-            table_training3 = array3;
-            int[] array4 = new int[31]
-            {
-            7, 14, 0, 100, -4, 0, 7, 19, 0, 100,
-            -5, 0, 20, 22, 0, 100, -4, 0, 20, 22,
-            0, 100, -5, 0, 27, 28, 42, 100, -1, 0,
-            -1
-            };
-            array4[5] = MyResource.TX_TRAINING401;
-            array4[11] = MyResource.TX_TRAINING402;
-            array4[17] = MyResource.TX_TRAINING403;
-            array4[23] = MyResource.TX_TRAINING404;
-            array4[29] = MyResource.TX_TRAINING405;
-            table_training4 = array4;
-            table_decor_action = new int[519]
-            {
-            1, 32, -4, 4, 4, -3, -4, 2, 4, 5,
-            -4, -1, 4, 2, -4, -4, 4, -3, -3, 2,
-            3, 2, -3, -5, 3, 4, -3, 5, 3, -2,
-            -3, 5, 3, 4, -2, -2, 2, 4, -2, -2,
-            2, -2, -2, -4, 2, 2, -2, -2, 2, -3,
-            -1, -3, 1, -2, -1, -1, 1, 2, -1, -2,
-            1, -1, -1, 1, 1, 2, 2, 32, -4, 0,
-            4, 0, -4, 0, 4, 0, -4, 0, 4, 0,
-            -4, 0, 4, 0, -3, 0, 3, 0, -3, 0,
-            3, 0, -3, 0, 3, 0, -3, 0, 3, 0,
-            -2, 0, 2, 0, -2, 0, 2, 0, -2, 0,
-            2, 0, -2, 0, 2, 0, -1, 0, 1, 0,
-            -1, 0, 1, 0, -1, 0, 1, 0, -1, 0,
-            1, 0, 5, 192, 0, -32, 0, 32, 0, -16,
-            0, 6, 0, -8, 0, 8, 0, -4, 0, 4,
-            0, -2, 0, 2, -7, 0, -6, 0, -5, 0,
-            -4, 0, -2, 0, 0, 0, 2, 0, 4, 0,
-            5, 0, 6, 0, 7, 0, 7, 0, 6, 0,
-            5, 0, 4, 0, 2, 0, 0, 0, -2, 0,
-            -4, 0, -5, 0, -6, 0, -7, 0, -7, 0,
-            -6, 0, -5, 0, -4, 0, -2, 0, 0, 0,
-            2, 0, 4, 0, 5, 0, 6, 0, 7, 0,
-            7, 0, 6, 0, 5, 0, 4, 0, 2, 0,
-            0, 0, -2, 0, -4, 0, -5, 0, -6, 0,
-            -7, 0, -7, 0, -6, 0, -5, 0, -4, 0,
-            -2, 0, 0, 0, 2, 0, 4, 0, 5, 0,
-            6, 0, 7, 0, 7, 0, 6, 0, 5, 0,
-            4, 0, 2, 0, 0, 0, -2, 0, -4, 0,
-            -5, 0, -6, 0, -7, 0, -7, 0, -6, 0,
-            -5, 0, -4, 0, -2, 0, 0, 0, 2, 0,
-            4, 0, 5, 0, 6, 0, 7, 0, 7, 0,
-            6, 0, 5, 0, 4, 0, 2, 0, 0, 0,
-            -2, 0, -4, 0, -5, 0, -6, 0, -7, 0,
-            -7, 0, -6, 0, -5, 0, -4, 0, -2, 0,
-            0, 0, 2, 0, 4, 0, 5, 0, 6, 0,
-            7, 0, 7, 0, 6, 0, 5, 0, 4, 0,
-            2, 0, 0, 0, -2, 0, -4, 0, -5, 0,
-            -6, 0, -7, 0, -7, 0, -6, 0, -5, 0,
-            -4, 0, -2, 0, 0, 0, 2, 0, 4, 0,
-            5, 0, 6, 0, 7, 0, 7, 0, 6, 0,
-            5, 0, 4, 0, 2, 0, 0, 0, -2, 0,
-            -4, 0, -5, 0, -6, 0, -7, 0, -7, 0,
-            -6, 0, -5, 0, -4, 0, -2, 0, 0, 0,
-            2, 0, 4, 0, 5, 0, 6, 0, 7, 0,
-            7, 0, 6, 0, 5, 0, 4, 0, 2, 0,
-            0, 0, -2, 0, -4, 0, -5, 0, -6, 0,
-            -7, 0, -7, 0, -6, 0, -5, 0, -4, 0,
-            -2, 0, 0, 0, 2, 0, 4, 0, 5, 0,
-            6, 0, 7, 0, 7, 0, 6, 0, 5, 0,
-            4, 0, 2, 0, 0, 0, -2, 0, -4, 0,
-            -5, 0, -6, 0, -7, 0, -7, 0, -6, 0,
-            -5, 0, -4, 0, -2, 0, -1, 0, 0
-            };
-            table_explo_size = new int[100]
-            {
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-            64, 64, 64, 64, 64, 64, 144, 144, 144, 128,
-            64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-            64, 64, 64, 64, 64, 64, 64, 128, 128, 128,
-            64, 64, 64, 64, 64, 64, 64, 64, 64, 64
-            };
-            world_terminal = new int[30]
-            {
-            0, 0, 158, 166, 159, 167, 160, 168, 161, 169,
-            162, 170, 163, 171, 164, 172, 165, 173, 309, 310,
-            411, 416, 412, 417, 413, 418, 414, 419, 415, 420
-            };
-        }
-    }
+    private: static void Init();
+
+
+    };
 
 }
+#endif // TABLES_H

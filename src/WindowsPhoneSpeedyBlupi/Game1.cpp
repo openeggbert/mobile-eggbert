@@ -1,3 +1,38 @@
+#include "WindowsPhoneSpeedyBlupi/Game1.h"
+
+#include <iostream>
+
+namespace WindowsPhoneSpeedyBlupi {
+
+Game1::Game1() {
+
+}
+
+Game1::~Game1() {
+
+}
+void Game1::LoadContent() {
+
+}
+
+
+void Game1::Update(float deltaTime) {
+
+}
+
+void Game1::Draw() {
+std::cout<<"hello"<<std::endl;
+}
+
+
+}
+
+
+
+
+
+
+#ifdef cs
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Game1
 using System;
@@ -1007,3 +1042,4 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 }
+#endif

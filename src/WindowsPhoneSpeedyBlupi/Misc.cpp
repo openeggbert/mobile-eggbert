@@ -1,15 +1,22 @@
+//
+// Created by robertvokac on 5/24/25.
+//
+
+#include "../../include/WindowsPhoneSpeedyBlupi/Misc.h"
+
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Misc
-using System;
-using System.Diagnostics;
-using Microsoft.Xna.Framework;
-using WindowsPhoneSpeedyBlupi;
-using static WindowsPhoneSpeedyBlupi.Def;
+// using System;
+// using System.Diagnostics;
+// using Microsoft.Xna.Framework;
+// using WindowsPhoneSpeedyBlupi;
+// using static WindowsPhoneSpeedyBlupi.Def;
 
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    public static class Misc
+    //static class
+    class Misc
     {
         public static Rectangle RotateAdjust(Rectangle rect, double angle)
         {
