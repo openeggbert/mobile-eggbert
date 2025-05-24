@@ -16,6 +16,8 @@ public:
     void DrawPart(int i, WindowsPhoneSpeedyBlupi::TinyPoint dest, const WindowsPhoneSpeedyBlupi::TinyRect & rect, double x);
 
     void DrawIcon(int i, int i1, const WindowsPhoneSpeedyBlupi::TinyRect & rect, double x, bool cond);
+
+    void DrawChar(int rank, WindowsPhoneSpeedyBlupi::TinyPoint pos, double size);
 };
 
 

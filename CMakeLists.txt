@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(../../cna CNA)
 include_directories(../cna/include CNA)
 
-add_subdirectory(../../neo-sdk NEO_SDK)
-include_directories(../neo-sdk/include NEO_SDK)
+#add_subdirectory(../../neo-sdk NEO_SDK)
+#include_directories(../neo-sdk/include NEO_SDK)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -17,7 +17,13 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         src/WindowsPhoneSpeedyBlupi/Pixmap.cpp
         include/WindowsPhoneSpeedyBlupi/Pixmap.h
         src/WindowsPhoneSpeedyBlupi/Misc.cpp
-        include/WindowsPhoneSpeedyBlupi/Misc.h)
+        include/WindowsPhoneSpeedyBlupi/Misc.h
+        src/WindowsPhoneSpeedyBlupi/Jauge.cpp
+        include/WindowsPhoneSpeedyBlupi/Jauge.h
+        src/WindowsPhoneSpeedyBlupi/Sound.cpp
+        include/WindowsPhoneSpeedyBlupi/Sound.h
+        src/WindowsPhoneSpeedyBlupi/Text.cpp
+        include/WindowsPhoneSpeedyBlupi/Text.h)
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

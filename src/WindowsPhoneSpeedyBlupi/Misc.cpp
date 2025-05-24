@@ -3,6 +3,7 @@
 //
 
 #include "../../include/WindowsPhoneSpeedyBlupi/Misc.h"
+#include <cmath>
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Misc
@@ -15,115 +16,107 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    //static class
-    class Misc
+
+    Microsoft::Xna::Framework::Rectangle Misc::RotateAdjust(const Microsoft::Xna::Framework::Rectangle& rect, const double &angle)
     {
-        public static Rectangle RotateAdjust(Rectangle rect, double angle)
-        {
-            TinyPoint tinyPoint = default(TinyPoint);
-            tinyPoint.X = rect.Width / 2;
-            tinyPoint.Y = rect.Height / 2;
-            TinyPoint p = tinyPoint;
-            TinyPoint tinyPoint2 = RotatePointRad(angle, p);
-            int num = tinyPoint2.X - p.X;
-            int num2 = tinyPoint2.Y - p.Y;
-            return new Rectangle(rect.Left - num, rect.Top - num2, rect.Width, rect.Height);
-        }
+        TinyPoint tinyPoint;
+        tinyPoint.X = rect.Width / 2;
+        tinyPoint.Y = rect.Height / 2;
+        TinyPoint p = tinyPoint;
+        TinyPoint tinyPoint2 = RotatePointRad(angle, p);
+        int num = tinyPoint2.X - p.X;
+        int num2 = tinyPoint2.Y - p.Y;
+        return {rect.Left - num, rect.Top - num2, rect.Width, rect.Height};
+    }
+    double Misc::DegToRad(const double &angle)
+    {
+        return angle * M_PI / 180.0;
+    }
 
-        public static TinyPoint RotatePointRad(double angle, TinyPoint p)
-        {
-            return RotatePointRad(default(TinyPoint), angle, p);
-        }
+    TinyPoint Misc::RotatePointRad(const TinyPoint& center, const double& angle, const TinyPoint& point)
+    {
+        TinyPoint tinyPoint;
+        TinyPoint result;
+        tinyPoint.X = point.X - center.X;
+        tinyPoint.Y = point.Y - center.Y;
+        double rad = DegToRad(angle);
+        double num = sin(rad);
+        double num2 = cos(rad);
+        result.X = (int)((double)tinyPoint.X * num2 - (double)tinyPoint.Y * num);
+        result.Y = (int)((double)tinyPoint.X * num + (double)tinyPoint.Y * num2);
+        result.X += center.X;
+        result.Y += center.Y;
+        return result;
+    }
+    TinyPoint Misc::RotatePointRad(const double& angle, const TinyPoint& p)
+    {
+        return RotatePointRad(TinyPoint(), angle, p);
+    }
 
-        public static TinyPoint RotatePointRad(TinyPoint center, double angle, TinyPoint p)
+    int Misc::Approach(int actual, int& final, int& step)
+    {
+        if (actual < final)
         {
-            TinyPoint tinyPoint = default(TinyPoint);
-            TinyPoint result = default(TinyPoint);
-            tinyPoint.X = p.X - center.X;
-            tinyPoint.Y = p.Y - center.Y;
-            double num = Math.Sin(angle);
-            double num2 = Math.Cos(angle);
-            result.X = (int)((double)tinyPoint.X * num2 - (double)tinyPoint.Y * num);
-            result.Y = (int)((double)tinyPoint.X * num + (double)tinyPoint.Y * num2);
-            result.X += center.X;
-            result.Y += center.Y;
-            return result;
+            actual = std::min(actual + step, final);
         }
-
-        public static double DegToRad(double angle)
+        else if (actual > final)
         {
-            return angle * Math.PI / 180.0;
+            actual = std::max(actual - step, final);
         }
-
-        public static int Approch(int actual, int final, int step)
-        {
-            if (actual < final)
-            {
-                actual = Math.Min(actual + step, final);
-            }
-            else if (actual > final)
-            {
-                actual = Math.Max(actual - step, final);
-            }
-            return actual;
-        }
-
-        public static int Speed(double speed, int max)
-        {
-            if (speed > 0.0)
-            {
-                return Math.Max((int)(speed * (double)max), 1);
-            }
-            if (speed < 0.0)
-            {
-                return Math.Min((int)(speed * (double)max), -1);
-            }
-            return 0;
-        }
-
-        public static TinyRect Inflate(TinyRect rect, int value)
-        {
-            TinyRect result = default(TinyRect);
-            result.LeftX = rect.LeftX - value;
-            result.RightX = rect.RightX + value;
-            result.TopY = rect.TopY - value;
-            result.BottomY = rect.BottomY + value;
-            return result;
-        }
-
-        public static bool IsInside(TinyRect rect, TinyPoint p)
-        {
-            return p.X >= rect.LeftX && p.X <= rect.RightX && p.Y >= rect.TopY && p.Y <= rect.BottomY;
-        }
-
-        public static bool IntersectRect(out TinyRect dst, TinyRect src1, TinyRect src2)
-        {
-            dst = default(TinyRect);
-            dst.LeftX = Math.Max(src1.LeftX, src2.LeftX);
-            dst.RightX = Math.Min(src1.RightX, src2.RightX);
-            dst.TopY = Math.Max(src1.TopY, src2.TopY);
-            dst.BottomY = Math.Min(src1.BottomY, src2.BottomY);
-            return !IsRectEmpty(dst);
-        }
-
-        public static bool UnionRect(out TinyRect dst, TinyRect src1, TinyRect src2)
-        {
-            dst = default(TinyRect);
-            dst.LeftX = Math.Min(src1.LeftX, src2.LeftX);
-            dst.RightX = Math.Max(src1.RightX, src2.RightX);
-            dst.TopY = Math.Min(src1.TopY, src2.TopY);
-            dst.BottomY = Math.Max(src1.BottomY, src2.BottomY);
-            return !IsRectEmpty(dst);
-        }
-
-        private static bool IsRectEmpty(TinyRect rect)
-        {
-            if (rect.LeftX < rect.RightX)
-            {
-                return rect.TopY >= rect.BottomY;
-            }
-            return true;
-        }
+        return actual;
 
     }
+
+    int Misc::Speed(const double& speed, const int& max)
+    {
+        if (speed > 0.0)
+        {
+            return std::max((int)(speed * (double)max), 1);
+        }
+        if (speed < 0.0)
+        {
+            return std::min((int)(speed * (double)max), -1);
+        }
+        return 0;
+    }
+
+    TinyRect Misc::Inflate(const TinyRect& rect, const int& value)
+    {
+        TinyRect result;
+        result.LeftX = rect.LeftX - value;
+        result.RightX = rect.RightX + value;
+        result.TopY = rect.TopY - value;
+        result.BottomY = rect.BottomY + value;
+        return result;
+    }
+
+    bool Misc::IsInside(const TinyRect &rect, const TinyPoint &p) {
+        return p.X >= rect.LeftX && p.X <= rect.RightX && p.Y >= rect.TopY && p.Y <= rect.BottomY;
+    }
+
+    bool Misc::IntersectRect(TinyRect& dst, const TinyRect& src1, const TinyRect& src2)
+    {
+        dst = TinyRect();
+        dst.LeftX = std::max(src1.LeftX, src2.LeftX);
+        dst.RightX = std::min(src1.RightX, src2.RightX);
+        dst.TopY = std::max(src1.TopY, src2.TopY);
+        dst.BottomY = std::min(src1.BottomY, src2.BottomY);
+        return !IsRectEmpty(dst);
+    }
+
+    bool Misc::UnionRect(TinyRect& dst, const TinyRect& src1, const TinyRect& src2)
+    {
+        dst = TinyRect();
+        dst.LeftX = std::min(src1.LeftX, src2.LeftX);
+        dst.RightX = std::max(src1.RightX, src2.RightX);
+        dst.TopY = std::min(src1.TopY, src2.TopY);
+        dst.BottomY = std::max(src1.BottomY, src2.BottomY);
+        return !IsRectEmpty(dst);
+    }
+
+    bool Misc::IsRectEmpty(const TinyRect& rect)
+    {
+        return rect.Width <= 0 || rect.Height <= 0;
+    }
+
 }

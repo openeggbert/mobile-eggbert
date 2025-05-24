@@ -1,54 +1,36 @@
+//
+// Created by robertvokac on 5/24/25.
+//
+
+
+#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
+#include "WindowsPhoneSpeedyBlupi/Sound.h"
+#include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
+
+#include "WindowsPhoneSpeedyBlupi/Jauge.h"
+
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Jauge
-using Microsoft.Xna.Framework.Media;
-using WindowsPhoneSpeedyBlupi;
+// using Microsoft.Xna.Framework.Media;
+// using WindowsPhoneSpeedyBlupi;
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    public class Jauge
+    Jauge::Jauge():
+    m_mode(0),
+    m_bHide(true),
+    m_bMinimizeRedraw(false),
+    m_bRedraw(false),
+    m_zoom(1.0),
+    m_level(0),
+    Zoom( [this]() { return m_zoom;},[this](double value) {m_zoom = value;})
     {
-        private Pixmap m_pixmap;
 
-        private Sound m_sound;
+    }
 
-        private bool m_bHide;
+;
 
-        private TinyPoint m_pos;
-
-        private TinyPoint m_dim;
-
-        private int m_mode;
-
-        private int m_level;
-
-        private bool m_bMinimizeRedraw;
-
-        private bool m_bRedraw;
-
-        private double m_zoom;
-
-        public double Zoom
-        {
-            get
-            {
-                return m_zoom;
-            }
-            set
-            {
-                m_zoom = value;
-            }
-        }
-
-        public Jauge()
-        {
-            m_mode = 0;
-            m_bHide = true;
-            m_bMinimizeRedraw = false;
-            m_bRedraw = false;
-            m_zoom = 1.0;
-        }
-
-        public bool Create(Pixmap pixmap, Sound sound, TinyPoint pos, int mode, bool bMinimizeRedraw)
+        bool Jauge::Create(Pixmap& pixmap, Sound& sound, TinyPoint pos, int& mode, bool& bMinimizeRedraw)
         {
             m_pixmap = pixmap;
             m_sound = sound;
@@ -63,9 +45,9 @@ namespace WindowsPhoneSpeedyBlupi
             return true;
         }
 
-        public void Draw()
+        void Jauge::Draw()
         {
-            TinyRect rect = default(TinyRect);
+            TinyRect rect;
             if (m_bMinimizeRedraw && !m_bRedraw)
             {
                 return;
@@ -90,17 +72,17 @@ namespace WindowsPhoneSpeedyBlupi
             }
         }
 
-        public void Redraw()
+        void Jauge::Redraw()
         {
             m_bRedraw = true;
         }
 
-        public int GetLevel()
+        int Jauge::GetLevel()
         {
             return m_level;
         }
 
-        public void SetLevel(int level)
+        void Jauge::SetLevel(int level)
         {
             if (level < 0)
             {
@@ -117,12 +99,12 @@ namespace WindowsPhoneSpeedyBlupi
             m_level = level;
         }
 
-        public int GetMode()
+        int Jauge::GetMode()
         {
             return m_mode;
         }
 
-        public void SetMode(int mode)
+        void Jauge::SetMode(int mode)
         {
             if (m_mode != mode)
             {
@@ -131,12 +113,12 @@ namespace WindowsPhoneSpeedyBlupi
             m_mode = mode;
         }
 
-        public bool GetHide()
+        bool Jauge::GetHide()
         {
             return m_bHide;
         }
 
-        public void SetHide(bool bHide)
+        void Jauge::SetHide(bool bHide)
         {
             if (m_bHide != bHide)
             {
@@ -145,15 +127,14 @@ namespace WindowsPhoneSpeedyBlupi
             m_bHide = bHide;
         }
 
-        public TinyPoint GetPos()
-        {
+        TinyPoint Jauge::GetPos() const {
             return m_pos;
         }
 
-        public void SetRedraw()
+        void Jauge::SetRedraw()
         {
             m_bRedraw = true;
         }
-    }
+
 
 }

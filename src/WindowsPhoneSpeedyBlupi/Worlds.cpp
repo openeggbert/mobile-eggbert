@@ -21,8 +21,8 @@
 namespace WindowsPhoneSpeedyBlupi
 {//static class
 
-    NeoSdk::Property<std::string> Worlds::GameDataFilename{ [this]() { return "SpeedyBlupi"; }};
-    NeoSdk::Property<std::string> Worlds::CurrentGameFilename{ [this]() { return "CurrentGame"; }};
+    NeoSdk::Property<std::string> Worlds::GameDataFilename{ []() { return "SpeedyBlupi"; }};
+    NeoSdk::Property<std::string> Worlds::CurrentGameFilename{ []() { return "CurrentGame"; }};
 
 
         
@@ -363,6 +363,6 @@ namespace WindowsPhoneSpeedyBlupi
 
           string Worlds::GetWriteString()
         {
-            return output.str;
+            return output.str();
         }
 }

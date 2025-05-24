@@ -5,10 +5,10 @@
 #ifndef GAME1_H
 #define GAME1_H
 
-#include "CNA/Game.h"
+#include "Microsoft/Xna/Framework/Game.h"
 
 namespace WindowsPhoneSpeedyBlupi {
-class Game1 : public CNA::Game {
+class Game1 : public Microsoft::Xna::Framework::Game {
 public:
     Game1();
     virtual ~Game1();

@@ -1135,7 +1135,7 @@ namespace WindowsPhoneSpeedyBlupi
         static constexpr short table_oiseau_turn2r[10] = { 114, 115, 116, 117, 118, 119, 120, 121, 97, 97 };
 
         static constexpr short table_guepe_left[6] = { 195, 196, 197, 198, 197, 196 };
-[]
+
         static constexpr short table_guepe_right[6] = { 199, 200, 201, 202, 201, 200 };
 
         static constexpr short table_guepe_turn2l[5] = { 207, 206, 205, 204, 203 };

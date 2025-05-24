@@ -2072,7 +2072,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     num5 = 90;
                 }
-                m_blupiLogicRotation = Misc.Approch(m_blupiLogicRotation, num5, 10);
+                m_blupiLogicRotation = Misc.Approach(m_blupiLogicRotation, num5, 10);
                 if (m_blupiDir == 2)
                 {
                     m_blupiRealRotation = m_blupiLogicRotation - 90;
@@ -2097,7 +2097,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     num2 = 23;
                 }
-                m_blupiLogicRotation = Misc.Approch(m_blupiLogicRotation, 0, 10);
+                m_blupiLogicRotation = Misc.Approach(m_blupiLogicRotation, 0, 10);
                 m_blupiRealRotation = m_blupiLogicRotation;
                 m_blupiRealRotation += (int)(Math.Sin((double)m_time / 10.0) * 10.0);
             }
@@ -3849,11 +3849,11 @@ namespace WindowsPhoneSpeedyBlupi
                 end.X += (int)m_blupiVitesseX;
                 if (flag5 && !flag6)
                 {
-                    m_blupiRealRotation = Misc.Approch(m_blupiRealRotation, -45, 5);
+                    m_blupiRealRotation = Misc.Approach(m_blupiRealRotation, -45, 5);
                 }
                 else if (!flag5 && flag6)
                 {
-                    m_blupiRealRotation = Misc.Approch(m_blupiRealRotation, 45, 5);
+                    m_blupiRealRotation = Misc.Approach(m_blupiRealRotation, 45, 5);
                 }
                 else if (!flag2)
                 {

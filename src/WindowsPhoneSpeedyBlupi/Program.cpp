@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "CNA/Game.h"
+#include "Microsoft/Xna/Framework/Game.h"
 #include "WindowsPhoneSpeedyBlupi/Game1.h"
 
 int main(int argc, char *args[]) {

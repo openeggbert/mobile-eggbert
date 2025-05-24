@@ -1,11 +1,11 @@
 #include "../../include/WindowsPhoneSpeedyBlupi/DDebug.h"
 
 #include "NeoSdk/Property.h"
-
+#define DEFINE_DEBUGGING false
 namespace WindowsPhoneSpeedyBlupi {
-    bool DDebug::detailedDebugging = false;
+
     void DDebug::WriteLine(std::string &msg) {
-        if (detailedDebugging) {
+        if (DEFINE_DEBUGGING) {
             std::cout << msg;
         }
     }

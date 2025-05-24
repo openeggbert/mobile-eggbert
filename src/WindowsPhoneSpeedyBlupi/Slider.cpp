@@ -5,6 +5,7 @@
 #include "../../include/WindowsPhoneSpeedyBlupi/Slider.h"
 
 #include "../../include/WindowsPhoneSpeedyBlupi/Pixmap.h"
+#include "WindowsPhoneSpeedyBlupi/Misc.h"
 
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
@@ -67,7 +68,7 @@ namespace WindowsPhoneSpeedyBlupi
         pixmap.DrawIcon(10, 38, rect, 1.0, false);
     }
 
-        bool Slider::Move(TinyPoint& pos) {
+        bool Slider::Move(TinyPoint& pos)
         {
             TinyRect tinyRect;
             tinyRect.LeftX = TopLeftCorner.get().X - 50;
@@ -75,7 +76,7 @@ namespace WindowsPhoneSpeedyBlupi
             tinyRect.TopY = TopLeftCorner.get().Y - 50;
             tinyRect.BottomY = TopLeftCorner.get().Y + 44 + 50;
             TinyRect rect = tinyRect;
-            if (Misc.IsInside(rect, pos))
+            if (Misc::IsInside(rect, pos))
             {
                 double val = ((double)pos.X - (double)PosLeft) / (double)(PosRight - PosLeft);
                 val = std::max(val, 0.0);

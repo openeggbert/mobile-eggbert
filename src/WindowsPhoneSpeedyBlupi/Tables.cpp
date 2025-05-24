@@ -1,6 +1,6 @@
 //using WindowsPhoneSpeedyBlupi;
 #include <iostream>
-#include "WindowsPhoneSpeedyBlupi/Tables.h""
+#include "WindowsPhoneSpeedyBlupi/Tables.h"
 
 #include "WindowsPhoneSpeedyBlupi/MyResource.h"
 
@@ -9,7 +9,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     void Tables::Init() {
 
-            short Tables::table_training1[133] =
+            short table_training1[133] =
             {
             1, 3, 0, 50, -1, 0, 4, 4, 0, 50,
             0, 0, 6, 6, 0, 50, 1, 0, 9, 9,
@@ -49,7 +49,7 @@ namespace WindowsPhoneSpeedyBlupi {
             Tables::table_training1[125] = MyResource::TX_TRAINING121;
             Tables::table_training1[131] = MyResource::TX_TRAINING122;
             
-            short Tables::table_training2[31] =
+            short table_training2[31] =
             {
             9, 15, 0, 100, -1, 0, 16, 16, 0, 100,
             -1, 0, 19, 21, 0, 100, -1, 0, 24, 31,
@@ -62,7 +62,7 @@ namespace WindowsPhoneSpeedyBlupi {
             Tables::table_training2[23] = MyResource::TX_TRAINING204;
             Tables::table_training2[29] = MyResource::TX_TRAINING205;
 
-            short Tables::table_training3[67] =
+            short table_training3[67] =
             {
             16, 24, 36, 40, -2, 0, 16, 24, 36, 40,
             -3, 0, 22, 25, 34, 34, -3, 0, 22, 31,
@@ -84,7 +84,7 @@ namespace WindowsPhoneSpeedyBlupi {
             Tables::table_training3[59] = MyResource::TX_TRAINING310;
             Tables::table_training3[65] = MyResource::TX_TRAINING311;
 
-            short Tables::table_training4[31] =
+            short table_training4[31] =
             {
             7, 14, 0, 100, -4, 0, 7, 19, 0, 100,
             -5, 0, 20, 22, 0, 100, -4, 0, 20, 22,
@@ -97,7 +97,7 @@ namespace WindowsPhoneSpeedyBlupi {
             Tables::table_training4[23] = MyResource::TX_TRAINING404;
             Tables::table_training4[29] = MyResource::TX_TRAINING405;
 
-            short Tables::table_decor_action[519] =
+            short table_decor_action[519] =
             {
             1, 32, -4, 4, 4, -3, -4, 2, 4, 5,
             -4, -1, 4, 2, -4, -4, 4, -3, -3, 2,
@@ -152,7 +152,7 @@ namespace WindowsPhoneSpeedyBlupi {
             -5, 0, -6, 0, -7, 0, -7, 0, -6, 0,
             -5, 0, -4, 0, -2, 0, -1, 0, 0
             };
-            short Tables::table_explo_size[100] =
+            short table_explo_size[100] =
             {
             128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
             128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
@@ -165,7 +165,7 @@ namespace WindowsPhoneSpeedyBlupi {
             64, 64, 64, 64, 64, 64, 64, 128, 128, 128,
             64, 64, 64, 64, 64, 64, 64, 64, 64, 64
             };
-            short Tables::world_terminal[30] =
+            short world_terminal[30] =
             {
             0, 0, 158, 166, 159, 167, 160, 168, 161, 169,
             162, 170, 163, 171, 164, 172, 165, 173, 309, 310,

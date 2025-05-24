@@ -80,6 +80,14 @@ namespace WindowsPhoneSpeedyBlupi
             Cheat9
         };
 
+    public:
+        enum Platform {
+            Desktop,
+            Android,
+            iOS,
+            Web
+        };
+
         public: constexpr ushort LXIMAGE = 640;
 
         public: constexpr ushort LYIMAGE = 480;
