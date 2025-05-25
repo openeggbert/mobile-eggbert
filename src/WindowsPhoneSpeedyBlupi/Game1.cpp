@@ -4,9 +4,11 @@
 
 namespace WindowsPhoneSpeedyBlupi {
 
-Game1::Game1() {
-
-}
+Game1::Game1():
+    IMPL_PROP_AUTO_READONLY(bool, IsTrialMode, false),
+    IMPL_PROP_AUTO_READONLY(bool, IsRankingMode, false)
+    {
+    }
 
 Game1::~Game1() {
 

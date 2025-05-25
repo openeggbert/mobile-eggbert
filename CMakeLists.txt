@@ -41,7 +41,20 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         ../../cna/src/Microsoft/Xna/Framework/Input/Touch/TouchPanel.cpp
         ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchPanel.h
         ../../cna/src/Microsoft/Xna/Framework/Input/Touch/TouchPanelCapabilities.cpp
-        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchPanelCapabilities.h)
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchPanelCapabilities.h
+        src/WindowsPhoneSpeedyBlupi/InputPad.cpp
+        include/WindowsPhoneSpeedyBlupi/InputPad.h
+        ../../cna/src/Microsoft/Devices/Sensors/Accelerometer.cpp
+        ../../cna/include/Microsoft/Devices/Sensors/Accelerometer.h
+        ../../cna/include/Microsoft/Devices/Sensors/AccelerometerReading.h
+        ../../cna/include/Microsoft/Devices/Sensors/SensorBase.cpp
+        ../../cna/include/Microsoft/Devices/Sensors/SensorBase.h
+        ../../cna/src/Microsoft/Devices/Sensors/SensorReadingEventArgs.cpp
+        ../../cna/include/Microsoft/Devices/Sensors/SensorReadingEventArgs.h
+        ../../cna/include/System/EventHandler.cpp
+        ../../cna/include/System/EventHandler.h
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchCollection.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchCollection.h)
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

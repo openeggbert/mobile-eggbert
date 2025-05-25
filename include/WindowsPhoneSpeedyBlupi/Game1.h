@@ -15,8 +15,12 @@ public:
     void LoadContent() override;
     void Update(float deltaTime) override;
     void Draw() override;
+    DEF_PROP_AUTO(bool, IsTrialMode, false)
+    DEF_PROP_AUTO(bool, IsRankingMode, false)
 
 private:
+
+
 
 protected:
 
