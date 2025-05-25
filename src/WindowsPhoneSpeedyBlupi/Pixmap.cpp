@@ -8,6 +8,11 @@
 #include "WindowsPhoneSpeedyBlupi/Decor.h"
 #include "WindowsPhoneSpeedyBlupi/Def.h"
 
+#include "Microsoft/Xna/Framework/Graphics/BlendState.h"
+#include "Microsoft/Xna/Framework/Graphics/SpriteSortMode.h"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
+#include "Microsoft/Xna/Framework/Color.h"
+
 namespace WindowsPhoneSpeedyBlupi {
     Pixmap::Pixmap(Game1& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics): game1(game1),
         graphics(graphics), spriteBatch(Microsoft::Xna::Framework::Graphics::SpriteBatch()), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),

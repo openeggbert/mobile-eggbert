@@ -18,11 +18,7 @@
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.h"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
 #include "WindowsPhoneSpeedyBlupi/TinyRect.h"
-#include "Microsoft/Xna/Framework/Color.h"
 #include "Microsoft/Xna/Framework/Rectangle.h"
-#include "Microsoft/Xna/Framework/Graphics/BlendState.h"
-#include "Microsoft/Xna/Framework/Graphics/SpriteSortMode.h"
-#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Pixmap
