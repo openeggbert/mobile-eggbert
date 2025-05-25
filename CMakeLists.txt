@@ -53,8 +53,17 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         ../../cna/include/Microsoft/Devices/Sensors/SensorReadingEventArgs.h
         ../../cna/include/System/EventHandler.cpp
         ../../cna/include/System/EventHandler.h
-        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchCollection.cpp
-        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchCollection.h)
+        ../../cna/src/Microsoft/Xna/Framework/Input/Touch/TouchCollection.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchCollection.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/Touch/TouchLocation.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchLocation.h
+        ../../cna/include/Microsoft/Xna/Framework/Input/Touch/TouchLocationState.h
+        ../../cna/include/Microsoft/Xna/Framework/Input/MouseState.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/MouseState.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/Mouse.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/Mouse.h
+        ../../cna/include/Microsoft/Xna/Framework/Input/ButtonState.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/ButtonState.h)
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

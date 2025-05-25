@@ -761,7 +761,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             int num = 1;
 //             TinyPoint tinyPoint = default(TinyPoint);
 //             tinyPoint.X = m_drawBounds.LeftX;
-//             TinyRect rect = default(TinyRect);
+//             TinyRect rect = TinyRect();
 //             rect.LeftX = pos.X % 640;
 //             rect.RightX = 640;
 //             for (int i = 0; i < 3; i++)
@@ -1219,7 +1219,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             }
 //             if ((m_mission != 1 && m_mission % 10 != 0) || m_bPrivate)
 //             {
-//                 TinyRect tinyRect = default(TinyRect);
+//                 TinyRect tinyRect = TinyRect();
 //                 tinyRect.LeftX = 410 + m_pixmap.Origin.X;
 //                 tinyRect.RightX = 510 + m_pixmap.Origin.X;
 //                 tinyRect.TopY = 445;
@@ -1274,7 +1274,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //                     if (!string.IsNullOrEmpty(text))
 //                     {
 //                         TinyRect drawBounds = m_pixmap.DrawBounds;
-//                         TinyRect tinyRect2 = default(TinyRect);
+//                         TinyRect tinyRect2 = TinyRect();
 //                         tinyRect2.LeftX = 0;
 //                         tinyRect2.RightX = drawBounds.Width;
 //                         tinyRect2.TopY = 0;
@@ -2239,7 +2239,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //
 //         private TinyRect BlupiRect(TinyPoint pos)
 //         {
-//             TinyRect result = default(TinyRect);
+//             TinyRect result = TinyRect();
 //             if (m_blupiNage || m_blupiSurf)
 //             {
 //                 result.LeftX = pos.X + 12;
@@ -2413,7 +2413,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //                 PlaySound(8, m_blupiPos);
 //                 return;
 //             }
-//             TinyRect rect = default(TinyRect);
+//             TinyRect rect = TinyRect();
 //             if (m_blupiVector.X != 0 || m_blupiVector.Y != 0)
 //             {
 //                 rect = BlupiRect(m_blupiPos);
@@ -6163,7 +6163,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             int num3 = (rect.RightX + 16 - 1) / 16;
 //             int num4 = rect.TopY / 16;
 //             int num5 = (rect.BottomY + 16 - 1) / 16;
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             TinyRect dst;
 //             for (int i = num4; i <= num5; i++)
 //             {
@@ -6221,7 +6221,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             int num = Math.Abs(end.X - start.X);
 //             int num2 = Math.Abs(end.Y - start.Y);
 //             TinyPoint tinyPoint = start;
-//             TinyRect rect2 = default(TinyRect);
+//             TinyRect rect2 = TinyRect();
 //             if (num > num2)
 //             {
 //                 if (end.X > start.X)
@@ -7295,10 +7295,10 @@ namespace WindowsPhoneSpeedyBlupi {
 //         {
 //             TinyPoint tinyPoint = default(TinyPoint);
 //             bool flag = false;
-//             TinyRect tinyRect = default(TinyRect);
+//             TinyRect tinyRect = TinyRect();
 //             if ((m_moveObject[i].type == 1 || m_moveObject[i].type == 47 || m_moveObject[i].type == 48) && !m_blupiSuspend)
 //             {
-//                 TinyRect src = default(TinyRect);
+//                 TinyRect src = TinyRect();
 //                 src.LeftX = m_blupiPos.X + 20;
 //                 src.RightX = m_blupiPos.X + 60 - 20;
 //                 src.TopY = m_blupiPos.Y + 60 - 2;
@@ -8324,7 +8324,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //                 m_decorAction = 1;
 //                 m_decorPhase = 0;
 //             }
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             src.LeftX = posStart.X;
 //             src.RightX = posStart.X + 128;
 //             src.TopY = posStart.Y;
@@ -8351,7 +8351,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //                 }
 //                 tinyPoint.Y++;
 //             }
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             for (i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type == 2 || m_moveObject[i].type == 3 || m_moveObject[i].type == 96 || m_moveObject[i].type == 97 || m_moveObject[i].type == 4 || m_moveObject[i].type == 6 || m_moveObject[i].type == 12 || m_moveObject[i].type == 13 || m_moveObject[i].type == 16 || m_moveObject[i].type == 17 || m_moveObject[i].type == 18 || m_moveObject[i].type == 19 || m_moveObject[i].type == 20 || m_moveObject[i].type == 24 || m_moveObject[i].type == 25 || m_moveObject[i].type == 26 || m_moveObject[i].type == 28 || m_moveObject[i].type == 30 || m_moveObject[i].type == 32 || m_moveObject[i].type == 33 || m_moveObject[i].type == 34 || m_moveObject[i].type == 40 || m_moveObject[i].type == 44 || m_moveObject[i].type == 46 || m_moveObject[i].type == 52 || m_moveObject[i].type == 54 || m_moveObject[i].type == 200 || m_moveObject[i].type == 201 || m_moveObject[i].type == 202 || m_moveObject[i].type == 203)
@@ -8405,7 +8405,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             int num = newpos.Y - oldpos.Y;
 //             int num2 = ((num >= 0) ? 30 : (-30));
 //             num = Math.Abs(num);
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type != 1 && m_moveObject[i].type != 47 && m_moveObject[i].type != 48)
@@ -8533,7 +8533,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //
 //         private bool TestPushOneCaisse(int i, TinyPoint move, int b)
 //         {
-//             TinyRect rect = default(TinyRect);
+//             TinyRect rect = TinyRect();
 //             int num = (rect.LeftX = m_moveObject[i].posCurrent.X + move.X);
 //             rect.RightX = num + 64;
 //             rect.TopY = m_moveObject[i].posCurrent.Y;
@@ -8571,8 +8571,8 @@ namespace WindowsPhoneSpeedyBlupi {
 //             AddLinkCaisse(rank);
 //             TinyPoint posCurrent = m_moveObject[rank].posCurrent;
 //             bool flag;
-//             TinyRect src = default(TinyRect);
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src = TinyRect();
+//             TinyRect src2 = TinyRect();
 //             do
 //             {
 //                 flag = false;
@@ -8697,7 +8697,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //                     }
 //                 }
 //             }
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             src.LeftX = pos.X;
 //             src.RightX = pos.X + 60;
 //             src.TopY = pos.Y + 11;
@@ -8706,7 +8706,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             {
 //                 src.BottomY += 90;
 //             }
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type != 2 && m_moveObject[i].type != 16 && m_moveObject[i].type != 96 && m_moveObject[i].type != 97 && m_moveObject[i].type != 4 && m_moveObject[i].type != 20 && m_moveObject[i].type != 44 && m_moveObject[i].type != 54 && m_moveObject[i].type != 23 && m_moveObject[i].type != 32 && m_moveObject[i].type != 33)
@@ -8757,12 +8757,12 @@ namespace WindowsPhoneSpeedyBlupi {
 //             {
 //                 return false;
 //             }
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             src.LeftX = pos.X + 16;
 //             src.RightX = pos.X + 60 - 16;
 //             src.TopY = pos.Y + 11;
 //             src.BottomY = pos.Y + 60 - 2;
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             src2.LeftX = m_blupiPos.X - 16 - 40;
 //             src2.RightX = m_blupiPos.X + 60 + 16 + 40;
 //             src2.TopY = m_blupiPos.Y + 11 - 40;
@@ -8784,7 +8784,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //             TinyRect src = BlupiRect(pos);
 //             src.LeftX = pos.X + 16;
 //             src.RightX = pos.X + 60 - 16;
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type == 96)
@@ -8808,12 +8808,12 @@ namespace WindowsPhoneSpeedyBlupi {
 //             TinyRect src = BlupiRect(pos);
 //             src.LeftX = pos.X + 16;
 //             src.RightX = pos.X + 60 - 16;
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             src2.LeftX = src.LeftX - 20;
 //             src2.RightX = src.RightX + 20;
 //             src2.TopY = src.TopY - 40;
 //             src2.BottomY = src.BottomY + 30;
-//             TinyRect src3 = default(TinyRect);
+//             TinyRect src3 = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type == 0 || m_moveObject[i].type == 27 || m_moveObject[i].type == 57 || m_moveObject[i].type == 39 || m_moveObject[i].type == 58 || m_moveObject[i].type == 34 || m_moveObject[i].type == 37 || m_moveObject[i].type == 38 || ((m_blupiAction == 14 || m_blupiAction == 29) && m_moveObject[i].type == 12))
@@ -8882,12 +8882,12 @@ namespace WindowsPhoneSpeedyBlupi {
 //             {
 //                 return -1;
 //             }
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             src.LeftX = pos.X + 12;
 //             src.RightX = pos.X + 60 - 12;
 //             src.TopY = pos.Y + 60 - 2;
 //             src.BottomY = pos.Y + 60 + height - 1;
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type == 1 || m_moveObject[i].type == 47 || m_moveObject[i].type == 48)
@@ -8908,12 +8908,12 @@ namespace WindowsPhoneSpeedyBlupi {
 //
 //         private int MoveChargeDetect(TinyPoint pos)
 //         {
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             src.LeftX = pos.X + 16;
 //             src.RightX = pos.X + 60 - 16;
 //             src.TopY = pos.Y + 11;
 //             src.BottomY = pos.Y + 60 - 2;
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type == 31)
@@ -8934,12 +8934,12 @@ namespace WindowsPhoneSpeedyBlupi {
 //
 //         private int MovePersoDetect(TinyPoint pos)
 //         {
-//             TinyRect src = default(TinyRect);
+//             TinyRect src = TinyRect();
 //             src.LeftX = pos.X + 16;
 //             src.RightX = pos.X + 60 - 16;
 //             src.TopY = pos.Y + 11;
 //             src.BottomY = pos.Y + 60 - 2;
-//             TinyRect src2 = default(TinyRect);
+//             TinyRect src2 = TinyRect();
 //             for (int i = 0; i < MAXMOVEOBJECT; i++)
 //             {
 //                 if (m_moveObject[i].type >= 200 && m_moveObject[i].type <= 203)

@@ -6,6 +6,7 @@
 #define GAME1_H
 
 #include "Microsoft/Xna/Framework/Game.h"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
 
 namespace WindowsPhoneSpeedyBlupi {
 class Game1 : public Microsoft::Xna::Framework::Game {
@@ -15,6 +16,9 @@ public:
     void LoadContent() override;
     void Update(float deltaTime) override;
     void Draw() override;
+
+    Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() const;
+
     DEF_PROP_AUTO(bool, IsTrialMode, false)
     DEF_PROP_AUTO(bool, IsRankingMode, false)
 

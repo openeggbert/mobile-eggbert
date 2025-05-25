@@ -4,7 +4,7 @@
 #define DEFINE_DEBUGGING false
 namespace WindowsPhoneSpeedyBlupi {
 
-    void DDebug::WriteLine(std::string &msg) {
+    void DDebug::WriteLine(const std::string &msg) {
         if (DEFINE_DEBUGGING) {
             std::cout << msg;
         }

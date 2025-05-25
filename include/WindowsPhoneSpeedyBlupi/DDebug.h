@@ -8,6 +8,6 @@ namespace WindowsPhoneSpeedyBlupi
     private: static bool detailedDebugging;
         NeoSdk::Property<bool> DetailedDebugging{ [this]() { return detailedDebugging; } , [this](bool value) {detailedDebugging = value; }};
 
-    public: static void WriteLine(std::string& msg);
+    public: static void WriteLine(const std::string &msg);
     };
 }

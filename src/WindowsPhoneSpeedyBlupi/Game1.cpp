@@ -564,7 +564,7 @@ namespace WindowsPhoneSpeedyBlupi
                 if (fadeOutPhase == Def.Phase.MainSetup)
                 {
                     num = (1.0 - num) * (1.0 - num);
-                    TinyRect tinyRect = default(TinyRect);
+                    TinyRect tinyRect = TinyRect();
                     tinyRect.LeftX = (int)(720.0 - 640.0 * num);
                     tinyRect.RightX = (int)(1360.0 - 640.0 * num);
                     tinyRect.TopY = 0;
@@ -575,7 +575,7 @@ namespace WindowsPhoneSpeedyBlupi
                 else
                 {
                     num = ((fadeOutPhase != 0) ? (1.0 - num * 2.0) : (1.0 - (1.0 - num) * (1.0 - num)));
-                    TinyRect tinyRect2 = default(TinyRect);
+                    TinyRect tinyRect2 = TinyRect();
                     tinyRect2.LeftX = 80;
                     tinyRect2.RightX = 720;
                     tinyRect2.TopY = (int)(-160.0 + num * 160.0);
@@ -604,7 +604,7 @@ namespace WindowsPhoneSpeedyBlupi
                     opacity = 1.0 - num;
                     num = 1.0 + num * 10.0;
                 }
-                TinyRect tinyRect3 = default(TinyRect);
+                TinyRect tinyRect3 = TinyRect();
                 tinyRect3.LeftX = (int)(468.0 - 205.0 * num);
                 tinyRect3.RightX = (int)(468.0 + 205.0 * num);
                 tinyRect3.TopY = (int)(280.0 - 190.0 * num);
@@ -619,7 +619,7 @@ namespace WindowsPhoneSpeedyBlupi
                     double num = std::min((double)phaseTime / 20.0, 1.0);
                     double opacity = 1.0 - num;
                     num = 1.0 + num * 10.0;
-                    TinyRect tinyRect4 = default(TinyRect);
+                    TinyRect tinyRect4 = TinyRect();
                     tinyRect4.LeftX = (int)(418.0 - 205.0 * num);
                     tinyRect4.RightX = (int)(418.0 + 205.0 * num);
                     tinyRect4.TopY = (int)(190.0 - 190.0 * num);
@@ -631,7 +631,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     double num = std::min((double)phaseTime / 20.0, 1.0);
                     num *= num;
-                    TinyRect tinyRect5 = default(TinyRect);
+                    TinyRect tinyRect5 = TinyRect();
                     tinyRect5.LeftX = (int)(213.0 + 800.0 * num);
                     tinyRect5.RightX = (int)(623.0 + 800.0 * num);
                     tinyRect5.TopY = 0;
@@ -651,7 +651,7 @@ namespace WindowsPhoneSpeedyBlupi
                         num = std::min((double)phaseTime / 15.0, 1.0);
                         num = 1.0 - num;
                     }
-                    TinyRect tinyRect6 = default(TinyRect);
+                    TinyRect tinyRect6 = TinyRect();
                     tinyRect6.LeftX = (int)(418.0 - 205.0 * num);
                     tinyRect6.RightX = (int)(418.0 + 205.0 * num);
                     tinyRect6.TopY = (int)(190.0 - 190.0 * num);
@@ -687,20 +687,20 @@ namespace WindowsPhoneSpeedyBlupi
                     num = 1.0 - num;
                     num2 = 1.0 - num2;
                 }
-                TinyRect tinyRect7 = default(TinyRect);
+                TinyRect tinyRect7 = TinyRect();
                 tinyRect7.LeftX = (int)(720.0 - 640.0 * num);
                 tinyRect7.RightX = (int)(1360.0 - 640.0 * num);
                 tinyRect7.TopY = 0;
                 tinyRect7.BottomY = 160;
                 TinyRect rect = tinyRect7;
                 pixmap.DrawIcon(15, 0, rect, num * num, false);
-                TinyRect tinyRect8 = default(TinyRect);
+                TinyRect tinyRect8 = TinyRect();
                 tinyRect8.LeftX = 487;
                 tinyRect8.RightX = 713;
                 tinyRect8.TopY = 148;
                 tinyRect8.BottomY = 374;
                 TinyRect rect2 = tinyRect8;
-                TinyRect tinyRect9 = default(TinyRect);
+                TinyRect tinyRect9 = TinyRect();
                 tinyRect9.LeftX = 118;
                 tinyRect9.RightX = 570;
                 tinyRect9.TopY = 268;
@@ -714,7 +714,7 @@ namespace WindowsPhoneSpeedyBlupi
             if (phase == Def.Phase.Lost)
             {
                 double num = std::min((double)phaseTime / 100.0, 1.0);
-                TinyRect tinyRect10 = default(TinyRect);
+                TinyRect tinyRect10 = TinyRect();
                 tinyRect10.LeftX = (int)(418.0 - 205.0 * num);
                 tinyRect10.RightX = (int)(418.0 + 205.0 * num);
                 tinyRect10.TopY = (int)(238.0 - 190.0 * num);
@@ -733,7 +733,7 @@ namespace WindowsPhoneSpeedyBlupi
             if (phase == Def.Phase.Win)
             {
                 double num = Math.Sin((double)phaseTime / 3.0) / 2.0 + 1.0;
-                TinyRect tinyRect11 = default(TinyRect);
+                TinyRect tinyRect11 = TinyRect();
                 tinyRect11.LeftX = (int)(418.0 - 205.0 * num);
                 tinyRect11.RightX = (int)(418.0 + 205.0 * num);
                 tinyRect11.TopY = (int)(238.0 - 190.0 * num);
@@ -750,14 +750,14 @@ namespace WindowsPhoneSpeedyBlupi
                 TinyRect drawBounds = pixmap.DrawBounds;
                 int width = drawBounds.Width;
                 int height = drawBounds.Height;
-                TinyRect tinyRect = default(TinyRect);
+                TinyRect tinyRect = TinyRect();
                 tinyRect.LeftX = 10;
                 tinyRect.RightX = 260;
                 tinyRect.TopY = height - 325;
                 tinyRect.BottomY = height - 10;
                 TinyRect rect = tinyRect;
                 pixmap.DrawIcon(14, 15, rect, 0.3, false);
-                TinyRect tinyRect2 = default(TinyRect);
+                TinyRect tinyRect2 = TinyRect();
                 tinyRect2.LeftX = width - 170;
                 tinyRect2.RightX = width - 10;
                 tinyRect2.TopY = height - ((IsTrialMode || IsRankingMode) ? 325 : 195);
