@@ -11,6 +11,7 @@
 #include "Pixmap.h"
 #include "Sound.h"
 #include "InputPad.h"
+#include "MyResource.h"
 #include "Microsoft/Xna/Framework/Game.h"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
 #include "System/TimeSpan.h"
@@ -134,7 +135,7 @@ protected: void Initialize override()
         protected: void OnDeactivated(object sender, EventArgs args)
 #endif
         {
-            if (phase == Def::Phase.Play)
+            if (phase == Def::Phase::Play)
             {
                 decor.CurrentWrite();
             }
@@ -168,17 +169,17 @@ protected: void Initialize override()
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
             {
-                if (phase == Def::Phase.Play)
+                if (phase == Def::Phase::Play)
                 {
-                    SetPhase(Def::Phase.Pause);
+                    SetPhase(Def::Phase::Pause);
                 }
-                else if (phase == Def::Phase.PlaySetup)
+                else if (phase == Def::Phase::PlaySetup)
                 {
-                    SetPhase(Def::Phase.Play, -1);
+                    SetPhase(Def::Phase::Play, -1);
                 }
-                else if (phase != Def::Phase.Init)
+                else if (phase != Def::Phase::Init)
                 {
-                    SetPhase(Def::Phase.Init);
+                    SetPhase(Def::Phase::Init);
                 }
                 else
                 {
@@ -197,27 +198,27 @@ protected: void Initialize override()
             }
             if (missionToStart2 != -1)
             {
-                SetPhase(Def::Phase.Play, missionToStart2);
+                SetPhase(Def::Phase::Play, missionToStart2);
                 return;
             }
-            if (phase == Def::Phase.First)
+            if (phase == Def::Phase::First)
             {
                 startTime = gameTime.TotalGameTime;
                 pixmap.LoadContent();
                 sound.LoadContent();
                 gameData.Read();
                 inputPad.PixmapOrigin = pixmap.Origin;
-                SetPhase(Def::Phase.Wait);
+                SetPhase(Def::Phase::Wait);
                 return;
             }
-            if (phase == Def::Phase.Wait)
+            if (phase == Def::Phase::Wait)
             {
                 if (continueMission == 2)
                 {
                     continueMission = 0;
                     if (decor.CurrentRead())
                     {
-                        SetPhase(Def::Phase.Resume);
+                        SetPhase(Def::Phase::Resume);
                         return;
                     }
                 }
@@ -225,7 +226,7 @@ protected: void Initialize override()
                 waitProgress = (double)num / 50000000.0;
                 if (waitProgress > 1.0)
                 {
-                    SetPhase(Def::Phase.Init);
+                    SetPhase(Def::Phase::Init);
                 }
                 return;
             }
@@ -239,10 +240,10 @@ protected: void Initialize override()
             switch (buttonPressed)
             {
                 case Def::ButtonGlyph::InitSetup:
-                    SetPhase(Def::Phase.MainSetup);
+                    SetPhase(Def::Phase::MainSetup);
                     return;
                 case Def::ButtonGlyph::PauseSetup:
-                    SetPhase(Def::Phase.PlaySetup);
+                    SetPhase(Def::Phase::PlaySetup);
                     return;
                 case Def::ButtonGlyph::SetupSounds:
                     gameData.Sounds = !gameData.Sounds;
@@ -267,23 +268,23 @@ protected: void Initialize override()
                 case Def::ButtonGlyph::SetupReturn:
                     if (playSetup)
                     {
-                        SetPhase(Def::Phase.Play, -1);
+                        SetPhase(Def::Phase::Play, -1);
                     }
                     else
                     {
-                        SetPhase(Def::Phase.Init);
+                        SetPhase(Def::Phase::Init);
                     }
                     return;
                 case Def::ButtonGlyph::InitPlay:
-                    SetPhase(Def::Phase.Play, 1);
+                    SetPhase(Def::Phase::Play, 1);
                     return;
                 case Def::ButtonGlyph::PlayPause:
-                    SetPhase(Def::Phase.Pause);
+                    SetPhase(Def::Phase::Pause);
                     return;
                 case Def::ButtonGlyph::WinLostReturn:
                 case Def::ButtonGlyph::PauseMenu:
                 case Def::ButtonGlyph::ResumeMenu:
-                    SetPhase(Def::Phase.Init);
+                    SetPhase(Def::Phase::Init);
                     break;
             }
             switch (buttonPressed)
@@ -294,23 +295,23 @@ protected: void Initialize override()
                 case Def::ButtonGlyph::InitBuy:
                 case Def::ButtonGlyph::TrialBuy:
                     Guide.Show(PlayerIndex.One);
-                    SetPhase(Def::Phase.Init);
+                    SetPhase(Def::Phase::Init);
                     return;
                 case Def::ButtonGlyph::InitRanking:
-                    SetPhase(Def::Phase.Ranking);
+                    SetPhase(Def::Phase::Ranking);
                     return;
                 case Def::ButtonGlyph::TrialCancel:
                 case Def::ButtonGlyph::RankingContinue:
-                    SetPhase(Def::Phase.Init);
+                    SetPhase(Def::Phase::Init);
                     return;
                 case Def::ButtonGlyph::PauseBack:
                     MissionBack();
                     return;
                 case Def::ButtonGlyph::PauseRestart:
-                    SetPhase(Def::Phase.Play, mission);
+                    SetPhase(Def::Phase::Play, mission);
                     return;
                 case Def::ButtonGlyph::PauseContinue:
-                    SetPhase(Def::Phase.Play, -1);
+                    SetPhase(Def::Phase::Play, -1);
                     return;
                 case Def::ButtonGlyph::Cheat11:
                 case Def::ButtonGlyph::Cheat12:
@@ -343,7 +344,7 @@ protected: void Initialize override()
             {
                 CheatAction(buttonPressed);
             }
-            if (phase == Def::Phase.Play)
+            if (phase == Def::Phase::Play)
             {
                 decor.ButtonPressed = buttonPressed;
                 decor.MoveStep();
@@ -351,12 +352,12 @@ protected: void Initialize override()
                 if (num2 == -1)
                 {
                     MemorizeGamerProgress();
-                    SetPhase(Def::Phase.Lost);
+                    SetPhase(Def::Phase::Lost);
                 }
                 else if (num2 == -2)
                 {
                     MemorizeGamerProgress();
-                    SetPhase(Def::Phase.Win);
+                    SetPhase(Def::Phase::Win);
                 }
                 else if (num2 >= 1)
                 {
@@ -372,18 +373,18 @@ protected: void Initialize override()
             int num = mission;
             if (num == 1)
             {
-                SetPhase(Def::Phase.Init);
+                SetPhase(Def::Phase::Init);
                 return;
             }
             num = ((num % 10 == 0) ? 1 : (num / 10 * 10));
-            SetPhase(Def::Phase.Play, num);
+            SetPhase(Def::Phase::Play, num);
         }
 
         private: void StartMission(int mission)
         {
             if (mission > 20 && mission % 10 > 1 && IsTrialMode)
             {
-                SetPhase(Def::Phase.Trial);
+                SetPhase(Def::Phase::Trial);
                 return;
             }
             this.mission = mission;
@@ -405,7 +406,7 @@ protected: void Initialize override()
 
         private: void ContinueMission()
         {
-            SetPhase(Def::Phase.Play, -2);
+            SetPhase(Def::Phase::Play, -2);
             mission = decor.GetMission();
             if (mission != 1)
             {
@@ -456,10 +457,10 @@ protected: void Initialize override()
             {
                 continueMission = 2;
             }
-            if (phase == Def::Phase.Wait || phase == Def::Phase.Init || phase == Def::Phase.Pause || phase == Def::Phase.Resume || phase == Def::Phase.Lost || phase == Def::Phase.Win || phase == Def::Phase.MainSetup || phase == Def::Phase.PlaySetup || phase == Def::Phase.Trial || phase == Def::Phase.Ranking)
+            if (phase == Def::Phase::Wait || phase == Def::Phase::Init || phase == Def::Phase::Pause || phase == Def::Phase::Resume || phase == Def::Phase::Lost || phase == Def::Phase::Win || phase == Def::Phase::MainSetup || phase == Def::Phase::PlaySetup || phase == Def::Phase::Trial || phase == Def::Phase::Ranking)
             {
                 pixmap.DrawBackground();
-                if (fadeOutPhase == Def::Phase.None && missionToStart1 != -1)
+                if (fadeOutPhase == Def::Phase::None && missionToStart1 != -1)
                 {
                     missionToStart2 = missionToStart1;
                     missionToStart1 = -1;
@@ -467,7 +468,7 @@ protected: void Initialize override()
                 else
                 {
                     DrawBackgroundFade();
-                    if (fadeOutPhase == Def::Phase.None)
+                    if (fadeOutPhase == Def::Phase::None)
                     {
                         DrawButtonsBackground();
                         inputPad.Draw();
@@ -475,12 +476,12 @@ protected: void Initialize override()
                     }
                 }
             }
-            else if (phase == Def::Phase.Play)
+            else if (phase == Def::Phase::Play)
             {
                 decor.Build();
                 inputPad.Draw();
             }
-            if (phase == Def::Phase.Wait)
+            if (phase == Def::Phase::Wait)
             {
                 DrawWaitProgress();
             }
@@ -489,12 +490,12 @@ protected: void Initialize override()
 
         private: void DrawBackgroundFade()
         {
-            if (phase == Def::Phase.Init)
+            if (phase == Def::Phase::Init)
             {
                 double num = std::min((double)phaseTime / 20.0, 1.0);
                 TinyRect rect;
                 double opacity;
-                if (fadeOutPhase == Def::Phase.MainSetup)
+                if (fadeOutPhase == Def::Phase::MainSetup)
                 {
                     num = (1.0 - num) * (1.0 - num);
                     TinyRect tinyRect = TinyRect();
@@ -518,16 +519,16 @@ protected: void Initialize override()
                 }
                 pixmap.DrawIcon(15, 0, rect, opacity, false);
             }
-            if (phase == Def::Phase.Init)
+            if (phase == Def::Phase::Init)
             {
                 double num = std::min((double)phaseTime / 20.0, 1.0);
                 double opacity;
-                if (fadeOutPhase == Def::Phase.MainSetup)
+                if (fadeOutPhase == Def::Phase::MainSetup)
                 {
                     opacity = (1.0 - num) * (1.0 - num);
                     num = 1.0;
                 }
-                else if (fadeOutPhase == Def::Phase.None)
+                else if (fadeOutPhase == Def::Phase::NonePhase)
                 {
                     num = 0.5 + num / 2.0;
                     opacity = std::min(num * num, 1.0);
@@ -545,9 +546,9 @@ protected: void Initialize override()
                 TinyRect rect = tinyRect3;
                 pixmap.DrawIcon(16, 0, rect, opacity, 0.0, false);
             }
-            if (phase == Def::Phase.Pause || phase == Def::Phase.Resume)
+            if (phase == Def::Phase::Pause || phase == Def::Phase::Resume)
             {
-                if (fadeOutPhase == Def::Phase.Play)
+                if (fadeOutPhase == Def::Phase::Play)
                 {
                     double num = std::min((double)phaseTime / 20.0, 1.0);
                     double opacity = 1.0 - num;
@@ -560,7 +561,7 @@ protected: void Initialize override()
                     TinyRect rect = tinyRect4;
                     pixmap.DrawIcon(16, 0, rect, opacity, 0.0, false);
                 }
-                else if (fadeOutPhase == Def::Phase.PlaySetup)
+                else if (fadeOutPhase == Def::Phase::PlaySetup)
                 {
                     double num = std::min((double)phaseTime / 20.0, 1.0);
                     num *= num;
@@ -575,7 +576,7 @@ protected: void Initialize override()
                 else
                 {
                     double num;
-                    if (fadeOutPhase == Def::Phase.None)
+                    if (fadeOutPhase == Def::Phase::NonePhase)
                     {
                         num = std::min((double)phaseTime / 15.0, 1.0);
                     }
@@ -601,7 +602,7 @@ protected: void Initialize override()
                     }
                 }
             }
-            if (phase == Def::Phase.MainSetup || phase == Def::Phase.PlaySetup)
+            if (phase == Def::Phase::MainSetup || phase == Def::Phase::PlaySetup)
             {
                 double num = std::min((double)phaseTime / 20.0, 1.0);
                 num = 1.0 - (1.0 - num) * (1.0 - num);
@@ -644,7 +645,7 @@ protected: void Initialize override()
                 pixmap.DrawIcon(17, 0, rect2, opacity, rotation, false);
                 pixmap.DrawIcon(17, 0, rect3, opacity, (0.0 - rotation) * 0.5, false);
             }
-            if (phase == Def::Phase.Lost)
+            if (phase == Def::Phase::Lost)
             {
                 double num = std::min((double)phaseTime / 100.0, 1.0);
                 TinyRect tinyRect10 = TinyRect();
@@ -663,7 +664,7 @@ protected: void Initialize override()
                     pixmap.DrawIcon(16, 0, rect, 1.0, rotation, false);
                 }
             }
-            if (phase == Def::Phase.Win)
+            if (phase == Def::Phase::Win)
             {
                 double num = Math.Sin((double)phaseTime / 3.0) / 2.0 + 1.0;
                 TinyRect tinyRect11 = TinyRect();
@@ -678,7 +679,7 @@ protected: void Initialize override()
 
         private: void DrawButtonsBackground()
         {
-            if (phase == Def::Phase.Init)
+            if (phase == Def::Phase::Init)
             {
                 TinyRect drawBounds = pixmap.DrawBounds;
                 int width = drawBounds.Width;
@@ -702,76 +703,76 @@ protected: void Initialize override()
 
         private: void DrawButtonsText()
         {
-            if (phase == Def::Phase.Init)
+            if (phase == Def::Phase::Init)
             {
                 DrawButtonGamerText(Def::ButtonGlyph::InitGamerA, 0);
                 DrawButtonGamerText(Def::ButtonGlyph::InitGamerB, 1);
                 DrawButtonGamerText(Def::ButtonGlyph::InitGamerC, 2);
-                DrawTextUnderButton(Def::ButtonGlyph::InitPlay, MyResource.TX_BUTTON_PLAY);
-                DrawTextRightButton(Def::ButtonGlyph::InitSetup, MyResource.TX_BUTTON_SETUP);
+                DrawTextUnderButton(Def::ButtonGlyph::InitPlay, MyResource::TX_BUTTON_PLAY);
+                DrawTextRightButton(Def::ButtonGlyph::InitSetup, MyResource::TX_BUTTON_SETUP);
                 if (IsTrialMode)
                 {
-                    DrawTextUnderButton(Def::ButtonGlyph::InitBuy, MyResource.TX_BUTTON_BUY);
+                    DrawTextUnderButton(Def::ButtonGlyph::InitBuy, MyResource::TX_BUTTON_BUY);
                 }
                 if (IsRankingMode)
                 {
-                    DrawTextUnderButton(Def::ButtonGlyph::InitRanking, MyResource.TX_BUTTON_RANKING);
+                    DrawTextUnderButton(Def::ButtonGlyph::InitRanking, MyResource::TX_BUTTON_RANKING);
                 }
             }
-            if (phase == Def::Phase.Pause)
+            if (phase == Def::Phase::Pause)
             {
-                DrawTextUnderButton(Def::ButtonGlyph::PauseMenu, MyResource.TX_BUTTON_MENU);
+                DrawTextUnderButton(Def::ButtonGlyph::PauseMenu, MyResource::TX_BUTTON_MENU);
                 if (mission != 1)
                 {
-                    DrawTextUnderButton(Def::ButtonGlyph::PauseBack, MyResource.TX_BUTTON_BACK);
+                    DrawTextUnderButton(Def::ButtonGlyph::PauseBack, MyResource::TX_BUTTON_BACK);
                 }
-                DrawTextUnderButton(Def::ButtonGlyph::PauseSetup, MyResource.TX_BUTTON_SETUP);
+                DrawTextUnderButton(Def::ButtonGlyph::PauseSetup, MyResource::TX_BUTTON_SETUP);
                 if (mission != 1 && mission % 10 != 0)
                 {
-                    DrawTextUnderButton(Def::ButtonGlyph::PauseRestart, MyResource.TX_BUTTON_RESTART);
+                    DrawTextUnderButton(Def::ButtonGlyph::PauseRestart, MyResource::TX_BUTTON_RESTART);
                 }
-                DrawTextUnderButton(Def::ButtonGlyph::PauseContinue, MyResource.TX_BUTTON_CONTINUE);
+                DrawTextUnderButton(Def::ButtonGlyph::PauseContinue, MyResource::TX_BUTTON_CONTINUE);
             }
-            if (phase == Def::Phase.Resume)
+            if (phase == Def::Phase::Resume)
             {
-                DrawTextUnderButton(Def::ButtonGlyph::ResumeMenu, MyResource.TX_BUTTON_MENU);
-                DrawTextUnderButton(Def::ButtonGlyph::ResumeContinue, MyResource.TX_BUTTON_CONTINUE);
+                DrawTextUnderButton(Def::ButtonGlyph::ResumeMenu, MyResource::TX_BUTTON_MENU);
+                DrawTextUnderButton(Def::ButtonGlyph::ResumeContinue, MyResource::TX_BUTTON_CONTINUE);
             }
-            if (phase == Def::Phase.MainSetup || phase == Def::Phase.PlaySetup)
+            if (phase == Def::Phase::MainSetup || phase == Def::Phase::PlaySetup)
             {
-                DrawTextRightButton(Def::ButtonGlyph::SetupSounds, MyResource.TX_BUTTON_SETUP_SOUNDS);
-                DrawTextRightButton(Def::ButtonGlyph::SetupJump, MyResource.TX_BUTTON_SETUP_JUMP);
-                DrawTextRightButton(Def::ButtonGlyph::SetupZoom, MyResource.TX_BUTTON_SETUP_ZOOM);
-                DrawTextRightButton(Def::ButtonGlyph::SetupAccel, MyResource.TX_BUTTON_SETUP_ACCEL);
-                if (phase == Def::Phase.MainSetup)
+                DrawTextRightButton(Def::ButtonGlyph::SetupSounds, MyResource::TX_BUTTON_SETUP_SOUNDS);
+                DrawTextRightButton(Def::ButtonGlyph::SetupJump, MyResource::TX_BUTTON_SETUP_JUMP);
+                DrawTextRightButton(Def::ButtonGlyph::SetupZoom, MyResource::TX_BUTTON_SETUP_ZOOM);
+                DrawTextRightButton(Def::ButtonGlyph::SetupAccel, MyResource::TX_BUTTON_SETUP_ACCEL);
+                if (phase == Def::Phase::MainSetup)
                 {
-                    string text = string.Format(MyResource.LoadString(MyResource.TX_BUTTON_SETUP_RESET), new string((char)(65 + gameData.SelectedGamer), 1));
+                    string text = string.Format(MyResource::LoadString(MyResource::TX_BUTTON_SETUP_RESET), new string((char)(65 + gameData.SelectedGamer), 1));
                     DrawTextRightButton(Def::ButtonGlyph::SetupReset, text);
                 }
             }
-            if (phase == Def::Phase.Trial)
+            if (phase == Def::Phase::Trial)
             {
-                TinyPoint tinyPoint = default(TinyPoint);
+                TinyPoint tinyPoint();
                 tinyPoint.X = 360;
                 tinyPoint.Y = 50;
                 TinyPoint pos = tinyPoint;
-                Text.DrawText(pixmap, pos, MyResource.LoadString(MyResource.TX_TRIAL1), 0.9);
+                Text.DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL1), 0.9);
                 pos.Y += 40;
-                Text.DrawText(pixmap, pos, MyResource.LoadString(MyResource.TX_TRIAL2), 0.7);
+                Text.DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL2), 0.7);
                 pos.Y += 25;
-                Text.DrawText(pixmap, pos, MyResource.LoadString(MyResource.TX_TRIAL3), 0.7);
+                Text.DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL3), 0.7);
                 pos.Y += 25;
-                Text.DrawText(pixmap, pos, MyResource.LoadString(MyResource.TX_TRIAL4), 0.7);
+                Text.DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL4), 0.7);
                 pos.Y += 25;
-                Text.DrawText(pixmap, pos, MyResource.LoadString(MyResource.TX_TRIAL5), 0.7);
+                Text.DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL5), 0.7);
                 pos.Y += 25;
-                Text.DrawText(pixmap, pos, MyResource.LoadString(MyResource.TX_TRIAL6), 0.7);
-                DrawTextUnderButton(Def::ButtonGlyph::TrialBuy, MyResource.TX_BUTTON_BUY);
-                DrawTextUnderButton(Def::ButtonGlyph::TrialCancel, MyResource.TX_BUTTON_BACK);
+                Text.DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL6), 0.7);
+                DrawTextUnderButton(Def::ButtonGlyph::TrialBuy, MyResource::TX_BUTTON_BUY);
+                DrawTextUnderButton(Def::ButtonGlyph::TrialCancel, MyResource::TX_BUTTON_BACK);
             }
-            if (phase == Def::Phase.Ranking)
+            if (phase == Def::Phase::Ranking)
             {
-                DrawTextUnderButton(Def::ButtonGlyph::RankingContinue, MyResource.TX_BUTTON_BACK);
+                DrawTextUnderButton(Def::ButtonGlyph::RankingContinue, MyResource::TX_BUTTON_BACK);
             }
         }
 
@@ -786,31 +787,31 @@ protected: void Initialize override()
             tinyPoint.X = buttonRect.RightX + 5 - pixmap.Origin.X;
             tinyPoint.Y = buttonRect.TopY + 3 - pixmap.Origin.Y;
             TinyPoint pos = tinyPoint;
-            string text = string.Format(MyResource.LoadString(MyResource.TX_GAMER_TITLE), new string((char)(65 + gamer), 1));
+            string text = string.Format(MyResource::LoadString(MyResource::TX_GAMER_TITLE), new string((char)(65 + gamer), 1));
             Text.DrawText(pixmap, pos, text, 0.7);
             TinyPoint tinyPoint2 = default(TinyPoint);
             tinyPoint2.X = buttonRect.RightX + 5 - pixmap.Origin.X;
             tinyPoint2.Y = buttonRect.TopY + 25 - pixmap.Origin.Y;
             pos = tinyPoint2;
-            text = string.Format(MyResource.LoadString(MyResource.TX_GAMER_MDOORS), mainDoors);
+            text = string.Format(MyResource::LoadString(MyResource::TX_GAMER_MDOORS), mainDoors);
             Text.DrawText(pixmap, pos, text, 0.45);
             TinyPoint tinyPoint3 = default(TinyPoint);
             tinyPoint3.X = buttonRect.RightX + 5 - pixmap.Origin.X;
             tinyPoint3.Y = buttonRect.TopY + 39 - pixmap.Origin.Y;
             pos = tinyPoint3;
-            text = string.Format(MyResource.LoadString(MyResource.TX_GAMER_SDOORS), secondaryDoors);
+            text = string.Format(MyResource::LoadString(MyResource::TX_GAMER_SDOORS), secondaryDoors);
             Text.DrawText(pixmap, pos, text, 0.45);
             TinyPoint tinyPoint4 = default(TinyPoint);
             tinyPoint4.X = buttonRect.RightX + 5 - pixmap.Origin.X;
             tinyPoint4.Y = buttonRect.TopY + 53 - pixmap.Origin.Y;
             pos = tinyPoint4;
-            text = string.Format(MyResource.LoadString(MyResource.TX_GAMER_LIFES), nbVies);
+            text = string.Format(MyResource::LoadString(MyResource::TX_GAMER_LIFES), nbVies);
             Text.DrawText(pixmap, pos, text, 0.45);
         }
 
         private: void DrawTextRightButton(Def::ButtonGlyph glyph, int res)
         {
-            DrawTextRightButton(glyph, MyResource.LoadString(res));
+            DrawTextRightButton(glyph, MyResource::LoadString(res));
         }
 
         private: void DrawTextRightButton(Def::ButtonGlyph glyph, string text)
@@ -844,7 +845,7 @@ protected: void Initialize override()
             tinyPoint.X = (buttonRect.LeftX + buttonRect.RightX) / 2 - pixmap.Origin.X;
             tinyPoint.Y = buttonRect.BottomY + 2 - pixmap.Origin.Y;
             TinyPoint pos = tinyPoint;
-            string text = MyResource.LoadString(res);
+            string text = MyResource::LoadString(res);
             Text.DrawTextCenter(pixmap, pos, text, 0.7);
         }
 
@@ -891,16 +892,16 @@ protected: void Initialize override()
             {
                 if (missionToStart2 == -1)
                 {
-                    if ((this.phase == Def::Phase.Init || this.phase == Def::Phase.MainSetup || this.phase == Def::Phase.PlaySetup || this.phase == Def::Phase.Pause || this.phase == Def::Phase.Resume) && fadeOutPhase == Def::Phase.None)
+                    if ((this.phase == Def::Phase::Init || this.phase == Def::Phase::MainSetup || this.phase == Def::Phase::PlaySetup || this.phase == Def::Phase::Pause || this.phase == Def::Phase::Resume) && fadeOutPhase == Def::Phase::None)
                     {
                         fadeOutPhase = phase;
                         fadeOutMission = mission;
                         phaseTime = 0;
                         return;
                     }
-                    if (phase == Def::Phase.Play)
+                    if (phase == Def::Phase::Play)
                     {
-                        fadeOutPhase = Def::Phase.None;
+                        fadeOutPhase = Def::Phase::NonePhase;
                         if (fadeOutMission != -1)
                         {
                             missionToStart1 = fadeOutMission;
@@ -916,43 +917,43 @@ protected: void Initialize override()
                 }
             }
             this.phase = phase;
-            fadeOutPhase = Def::Phase.None;
+            fadeOutPhase = Def::Phase::NonePhase;
             inputPad.Phase = this.phase;
-            playSetup = this.phase == Def::Phase.PlaySetup;
+            playSetup = this.phase == Def::Phase::PlaySetup;
             isTrialMode = Guide.IsTrialMode;
             phaseTime = 0;
             missionToStart2 = -1;
             decor.StopSound();
             switch (this.phase)
             {
-                case Def::Phase.Init:
+                case Def::Phase::Init:
                     pixmap.BackgroundCache("init");
                     break;
-                case Def::Phase.Pause:
-                case Def::Phase.Resume:
+                case Def::Phase::Pause:
+                case Def::Phase::Resume:
                     pixmap.BackgroundCache("pause");
                     break;
-                case Def::Phase.Lost:
+                case Def::Phase::Lost:
                     pixmap.BackgroundCache("lost");
                     break;
-                case Def::Phase.Win:
+                case Def::Phase::Win:
                     pixmap.BackgroundCache("win");
                     break;
-                case Def::Phase.MainSetup:
-                case Def::Phase.PlaySetup:
+                case Def::Phase::MainSetup:
+                case Def::Phase::PlaySetup:
                     pixmap.BackgroundCache("setup");
                     break;
-                case Def::Phase.Trial:
+                case Def::Phase::Trial:
                     pixmap.BackgroundCache("trial");
                     break;
-                case Def::Phase.Ranking:
+                case Def::Phase::Ranking:
                     pixmap.BackgroundCache("pause");
                     break;
-                case Def::Phase.Play:
+                case Def::Phase::Play:
                     decor.DrawBounds = pixmap.DrawBounds;
                     break;
             }
-            if (this.phase == Def::Phase.Play && mission > 0)
+            if (this.phase == Def::Phase::Play && mission > 0)
             {
                 StartMission(mission);
             }

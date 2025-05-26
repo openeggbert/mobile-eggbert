@@ -36,12 +36,11 @@ namespace WindowsPhoneSpeedyBlupi {
         Activated += OnActivated;
 #endif
 
-        if (Env.IMPL.isNotKNI() && !TouchPanel.GetCapabilities().IsConnected)
+        bool touchPanelConnected = true;
+        if (touchPanelConnected)
         {
             this.IsMouseVisible = true;
-#if !FNA
-            Mouse.SetCursor(MouseCursor.Arrow);
-#endif
+            Mouse.SetCursor(MouseCursor.Arrow);//TODO: Is it XNA 4.0?
         }
 
         graphics = new GraphicsDeviceManager(this);
