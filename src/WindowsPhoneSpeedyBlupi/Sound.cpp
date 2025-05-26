@@ -103,12 +103,12 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-         bool Sound::PlayImage(int channel, TinyPoint& pos)
+         bool Sound::PlayImage(int channel, const TinyPoint& pos)
         {
             return PlayImage(channel, pos, -1, false);
         }
 
-         bool Sound::PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop)
+         bool Sound::PlayImage(int channel, const TinyPoint& pos, int rank, bool bLoop)
         {
             if (!gameData.Sounds)
             {

@@ -99,9 +99,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void StopAll();
 
-        bool PlayImage(int channel, TinyPoint& pos);
+        bool PlayImage(int channel, const TinyPoint& pos) const;
 
-        bool PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop);
+        bool PlayImage(int channel, const TinyPoint& pos, int rank, bool bLoop);
 
         bool PosImage(int channel, TinyPoint& pos);
 

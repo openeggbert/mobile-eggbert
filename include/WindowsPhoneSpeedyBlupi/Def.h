@@ -80,6 +80,16 @@ namespace WindowsPhoneSpeedyBlupi
             Cheat9
         };
 
+
+
+    public: static bool notAnyOf(const ButtonGlyph& buttonGlyphToBeChecked, const std::vector<ButtonGlyph>& buttonGlyphs) {
+        for (auto buttonGlyph : buttonGlyphs) {
+            if (buttonGlyph == buttonGlyphToBeChecked) {
+                return false;
+            }
+        }
+        return true;
+    }
     public:
         enum Platform {
             Desktop,

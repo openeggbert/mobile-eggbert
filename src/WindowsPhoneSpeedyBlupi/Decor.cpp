@@ -9185,7 +9185,7 @@ namespace WindowsPhoneSpeedyBlupi {
 //
 //         private void ByeByeDraw(TinyPoint posDecor)
 //         {
-//             foreach (ByeByeObject byeByeObject in byeByeObjects)
+//             for (ByeByeObject byeByeObject in byeByeObjects)
 //             {
 //                 TinyPoint tinyPoint = default(TinyPoint);
 //                 tinyPoint.X = m_drawBounds.LeftX + (int)byeByeObject.posX - posDecor.X;

@@ -107,7 +107,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
 
          void SetHotSpot(double zoom, double x, double y);
 
-         void DrawInputButton(TinyRect& rect, Def::ButtonGlyph& glyph, bool& pressed, bool& selected);
+         void DrawInputButton(TinyRect rect, Def::ButtonGlyph &glyph, bool &pressed, bool &selected);
 
          void LoadContent();
 
@@ -135,9 +135,9 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
 
          bool DrawPart(int channel, TinyPoint& dest, TinyRect& rect, double zoom);
 
-         void DrawIcon(int channel, int icon, TinyRect& rect, double opacity, bool useHotSpot);
+         void DrawIcon(int channel, int icon, TinyRect rect, double opacity, bool useHotSpot);
 
-         void DrawIcon(int channel, int icon, TinyRect& rect, double opacity, double rotationDeg, bool useHotSpot);
+         void DrawIcon(int channel, int icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot);
 
     private:
         Microsoft::Xna::Framework::Rectangle GetSrcRectangle(Texture2D& bitmap, int bitmapGridX, int bitmapGridY, int iconWidth, int iconHeight, int gap, int icon);

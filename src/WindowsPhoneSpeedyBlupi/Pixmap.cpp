@@ -65,7 +65,7 @@ namespace WindowsPhoneSpeedyBlupi {
         return result;
     }
 
-            void Pixmap::DrawInputButton(TinyRect& rect, Def::ButtonGlyph& glyph, bool& pressed, bool& selected)
+            void Pixmap::DrawInputButton(TinyRect rect, Def::ButtonGlyph& glyph, bool& pressed, bool& selected)
         {
             switch (glyph)
             {
@@ -314,12 +314,12 @@ namespace WindowsPhoneSpeedyBlupi {
             return true;
         }
 
-         void Pixmap::DrawIcon(int channel, int icon, TinyRect& rect, double opacity, bool useHotSpot)
+         void Pixmap::DrawIcon(int channel, int icon, TinyRect rect, double opacity, bool useHotSpot)
         {
             DrawIcon(channel, icon, rect, opacity, 0.0, useHotSpot);
         }
 
-         void Pixmap::DrawIcon(int channel, int icon, TinyRect& rect, double opacity, double rotationDeg, bool useHotSpot)
+         void Pixmap::DrawIcon(int channel, int icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot)
         {
             if (icon == -1)
             {

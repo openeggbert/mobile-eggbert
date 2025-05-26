@@ -11,6 +11,12 @@ namespace WindowsPhoneSpeedyBlupi{
 class Decor {
 public: int a;
     static std::string GetCheatTinyText(Def::ButtonGlyph glyph);
+
+    void SetSpeedX(double horizontal_change) const;
+
+    void SetSpeedY(double vertical_change) const;
+
+    void KeyChange(int key_press) const;
 };
 }
 

@@ -32,7 +32,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     public: void Draw(Pixmap& pixmap);
 
-    public: bool Move(TinyPoint& pos);
+    public: bool Move(TinyPoint &pos);
     };
 }
 
