@@ -5,18 +5,16 @@
 #ifndef DECOR_H
 #define DECOR_H
 #include "Def.h"
+#include "Game1.h"
+#include "Game1.h"
+#include "Game1.h"
+#include "Pixmap.h"
+#include "Sound.h"
 
 namespace WindowsPhoneSpeedyBlupi{
 
 class Decor {
-public: int a;
-    static std::string GetCheatTinyText(Def::ButtonGlyph glyph);
 
-    void SetSpeedX(double horizontal_change) const;
-
-    void SetSpeedY(double vertical_change) const;
-
-    void KeyChange(int key_press) const;
 };
 }
 

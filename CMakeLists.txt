@@ -13,7 +13,25 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         ../../cna/include/System/TimeSpan.h
-        ../../cna/include/Microsoft/Xna/Framework/ExitingEventArgs.h)
+        ../../cna/include/Microsoft/Xna/Framework/ExitingEventArgs.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/MouseCursor.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/MouseCursor.h
+        ../../cna/include/System/Runtime/CompilerServices/EventArgs.cpp
+        ../../cna/include/System/Runtime/CompilerServices/EventArgs.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/GamePad.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/GamePad.h
+        ../../cna/include/Microsoft/Xna/Framework/PlayerIndex.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/GamePadState.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/GamePadState.h
+        ../../cna/src/Microsoft/Xna/Framework/Input/GamePadButtons.cpp
+        ../../cna/include/Microsoft/Xna/Framework/Input/GamePadButtons.h
+        ../../cna/src/Microsoft/Xna/Framework/GameTime.cpp
+        ../../cna/include/Microsoft/Xna/Framework/GameTime.h
+        ../../cna/src/Microsoft/Xna/Framework/GamerServices/Guide.cpp
+        ../../cna/include/Microsoft/Xna/Framework/GamerServices/Guide.h
+        src/WindowsPhoneSpeedyBlupi/Helper.cpp
+        include/WindowsPhoneSpeedyBlupi/Helper.h
+)
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

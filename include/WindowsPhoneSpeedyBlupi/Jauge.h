@@ -35,7 +35,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         Jauge();
 
-        bool Create(Pixmap& pixmap, Sound& sound, TinyPoint pos, int& mode, bool& bMinimizeRedraw);
+        bool Create(Pixmap& pixmap, Sound& sound, TinyPoint pos, int mode, bool bMinimizeRedraw);
 
         void Draw();
 
