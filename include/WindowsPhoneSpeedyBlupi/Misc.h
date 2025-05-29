@@ -28,7 +28,7 @@ using WindowsPhoneSpeedyBlupi::TinyPoint;
 
 
 
-         static int Approach(int actual, int& final, int& step);
+         static int Approach(int actual, const int &final, const int &step);
 
          static int Speed(const double& speed, const int& max);
 

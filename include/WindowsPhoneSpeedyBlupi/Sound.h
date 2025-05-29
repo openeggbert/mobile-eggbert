@@ -76,7 +76,8 @@ namespace WindowsPhoneSpeedyBlupi {
     private: double volume;
 
     public: Sound(Game1& game1, GameData& gameData);
-
+        Sound(const Sound&);
+        Sound& operator=(const Sound&);
 
     public:
         void LoadContent();

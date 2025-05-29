@@ -1202,7 +1202,8 @@ namespace WindowsPhoneSpeedyBlupi
         251, 251, 238, 238
         };
 
-        static constexpr short table_explo1[39] =
+        static constexpr short table_explo1Length = 39;
+        static constexpr short table_explo1[table_explo1Length] =
         {
         0, 0, 1, 1, 2, 2, 3, 3, 4, 3,
         4, 4, 3, 4, 3, 3, 4, 4, 5, 5,
@@ -1470,7 +1471,8 @@ namespace WindowsPhoneSpeedyBlupi
 
         static constexpr short table_drinkeffect[5] = { 274, 275, 276, 277, 278 };
 
-        static constexpr short table_drinkoffset[3] = { 0, 7, 22 };
+        static constexpr unsigned char table_drinkoffsetLength = 3;
+        static constexpr short table_drinkoffset[table_drinkoffsetLength] = { 0, 7, 22 };
 
         static constexpr short table_tresortrack[11] =
         {

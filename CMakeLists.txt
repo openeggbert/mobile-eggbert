@@ -31,6 +31,8 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
         ../../cna/include/Microsoft/Xna/Framework/GamerServices/Guide.h
         src/WindowsPhoneSpeedyBlupi/Helper.cpp
         include/WindowsPhoneSpeedyBlupi/Helper.h
+        ../../cna/src/System/Random.cpp
+        ../../cna/include/System/Random.h
 )
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -53,7 +53,7 @@ namespace WindowsPhoneSpeedyBlupi
         return RotatePointRad(TinyPoint(), angle, p);
     }
 
-    int Misc::Approach(int actual, int& final, int& step)
+    int Misc::Approach(int actual, const int& final, const int& step)
     {
         if (actual < final)
         {

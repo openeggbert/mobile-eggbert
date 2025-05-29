@@ -667,7 +667,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 pixmap.DrawIcon(14, 15, rect, 0.3, false);
             }
         }
-#define STRING_VECTOR(items) std::vector<string>{items}
+
         void Game1::DrawButtonsText()
         {
             if (phase == Def::Phase::Init)

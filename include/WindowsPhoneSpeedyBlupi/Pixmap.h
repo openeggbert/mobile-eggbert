@@ -103,6 +103,8 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
 
          Pixmap(Game1& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics);
 
+        Pixmap(const Pixmap&);
+        Pixmap& operator=(const Pixmap&);
          TinyPoint HotSpotToHud(TinyPoint& pos);
 
          void SetHotSpot(double zoom, double x, double y);
