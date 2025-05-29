@@ -356,9 +356,9 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             gameData.LastWorld = this->mission / 10;
         }
-        decor.Read(0, this.mission, false);
+        decor.Read(0, this->mission, false);
         decor.LoadImages();
-        decor.SetMission(this.mission);
+        decor.SetMission(this->mission);
         decor.SetNbVies(gameData.NbVies);
         decor.InitializeDoors(gameData);
         decor.AdaptDoors(false);

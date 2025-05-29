@@ -348,6 +348,7 @@ private: static constexpr int m_linkCaisseLength = MAXMOVEOBJECT;
 
         private: std::vector<ByeByeObject> byeByeObjects;
 
+public:
     DEF_PROP_CUSTOM(TinyRect, DrawBounds)
     DEF_PROP_AUTO(Def::ButtonGlyph, ButtonPressed, Def::ButtonGlyph::InitPlay)
 
