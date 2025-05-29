@@ -98,9 +98,9 @@ class Decor {
 
         private: static constexpr int OVERHEIGHT = 80;
 
-        private: Sound m_sound;
+        private: std::optional<Sound> m_sound;
 
-        private: Pixmap m_pixmap;
+        private: std::optional<Pixmap> m_pixmap;
 
         private: GameData m_gameData;
 
@@ -108,9 +108,11 @@ class Decor {
 
         private: Cellule m_bigDecor[100][100];
 
-        private: int m_balleTraj[1300];
+        private: static constexpr int m_balleTrajLength = 1300;
+        private: int m_balleTraj[m_balleTrajLength];
 
-        private: int m_moveTraj[1300];
+        private: static constexpr int m_moveTrajLength = 1300;
+        private: int m_moveTraj[m_moveTrajLength];
 
         private: MoveObject m_moveObject[MAXMOVEOBJECT];
 
@@ -136,11 +138,13 @@ class Decor {
 
         private: int m_nbRankCaisse;
 
-        private: int m_rankCaisse[MAXMOVEOBJECT];
+        private: static constexpr int m_rankCaisseLength = MAXMOVEOBJECT;
+        private: int m_rankCaisse[m_rankCaisseLength];
 
         private: int m_nbLinkCaisse;
 
-        private: int m_linkCaisse[MAXMOVEOBJECT];
+private: static constexpr int m_linkCaisseLength = MAXMOVEOBJECT;
+        private: int m_linkCaisse[m_linkCaisseLength];
 
         private: TinyPoint m_blupiPos;
 
@@ -274,7 +278,8 @@ class Decor {
 
         private: int m_mission;
 
-        private: int m_doors[200];
+        private: static constexpr int m_doorsLength = 200;
+        private: int m_doors[m_doorsLength];
 
         private: int m_nbVies;
 
@@ -347,7 +352,7 @@ class Decor {
     DEF_PROP_AUTO(Def::ButtonGlyph, ButtonPressed, Def::ButtonGlyph::InitPlay)
 
 
-        private: static void MoveObjectCopy(MoveObject& dst, MoveObject src)
+        private: static void MoveObjectCopy(MoveObject& dst, const MoveObject &src)
         {
             dst.type = src.type;
             dst.stepAdvance = src.stepAdvance;
@@ -376,19 +381,19 @@ class Decor {
             m_drawBounds.LeftX = 0;
             m_drawBounds.RightX = 640;
             m_drawBounds.TopY = 0;
-            m_drawBounds.BottomY = 480;
-            m_time = 0;
-            m_bCheatDoors = false;
-            m_bSuperBlupi = false;
-            m_bDrawSecret = false;
-            m_buildOfficialMissions = false;
-            m_hotSpotFinalZoom = 1.0;
-            m_hotSpotFinalX = 320.0;
-            m_hotSpotFinalY = 240.0;
-            m_hotSpotCurrentZoom = 1.0;
-            m_hotSpotCurrentX = 320.0;
-            m_hotSpotCurrentY = 240.0;
-        }
+        m_drawBounds.BottomY = 480;
+        m_time = 0;
+        m_bCheatDoors = false;
+        m_bSuperBlupi = false;
+        m_bDrawSecret = false;
+        m_buildOfficialMissions = false;
+        m_hotSpotFinalZoom = 1.0;
+        m_hotSpotFinalX = 320.0;
+        m_hotSpotFinalY = 240.0;
+        m_hotSpotCurrentZoom = 1.0;
+        m_hotSpotCurrentX = 320.0;
+        m_hotSpotCurrentY = 240.0;
+    }
 
         public: void Create(Sound& sound, Pixmap& pixmap, GameData& gameData)
         {
@@ -417,7 +422,7 @@ class Decor {
             std::ostringstream oss;
             oss << "decor" << std::setw(3) << std::setfill('0') << m_region;
             string name = oss.str();
-            m_pixmap.BackgroundCache(name);
+            m_pixmap.value().BackgroundCache(name);
             return true;
         }
 
@@ -656,7 +661,7 @@ class Decor {
 
         private: void ResetHotSpot()
         {
-            m_pixmap.SetHotSpot(1.0, DrawBounds.get().Width / 2, DrawBounds.get().Height / 2);
+            m_pixmap.value().SetHotSpot(1.0, DrawBounds.get().Width / 2, DrawBounds.get().Height / 2);
         }
 
         private: void MoveHotSpot()
@@ -728,7 +733,7 @@ class Decor {
             {
                 m_hotSpotCurrentX = std::max(m_hotSpotCurrentX - m_hotSpotStepX, m_hotSpotFinalX);
             }
-            m_pixmap.SetHotSpot(m_hotSpotCurrentZoom, m_hotSpotCurrentX, m_hotSpotCurrentY);
+            m_pixmap.value().SetHotSpot(m_hotSpotCurrentZoom, m_hotSpotCurrentX, m_hotSpotCurrentY);
         }
 
         private: bool BlitzActif(int celx, int cely)
@@ -767,7 +772,7 @@ class Decor {
                 rect.BottomY = 480;
                 for (int j = 0; j < 2; j++)
                 {
-                    m_pixmap.DrawPart(3, tinyPoint, rect);
+                    m_pixmap.value().DrawPart(3, tinyPoint, rect);
                     tinyPoint.Y += rect.Height - num;
                     rect.TopY = 0;
                     rect.BottomY = 480;
@@ -807,7 +812,7 @@ class Decor {
                             {
                                 pos.Y -= 2;
                             }
-                            m_pixmap.QuickIcon(channel, num2, pos);
+                            m_pixmap.value().QuickIcon(channel, num2, pos);
                         }
                     }
                     tinyPoint.Y += 64;
@@ -825,7 +830,7 @@ class Decor {
                         int num2 = m_decor[i][j].icon;
                         if (num2 == 384 || num2 == 385)
                         {
-                            m_pixmap.QuickIcon(1, num2, tinyPoint);
+                            m_pixmap.value().QuickIcon(1, num2, tinyPoint);
                         }
                     }
                     tinyPoint.Y += 64;
@@ -853,12 +858,12 @@ class Decor {
                     {
                         int num2 = Tables::table_shield_blupi[m_time / 2 % 16];
                         tinyPoint.Y -= 2;
-                        m_pixmap.QuickIcon(10, num2, tinyPoint);
+                        m_pixmap.value().QuickIcon(10, num2, tinyPoint);
                         tinyPoint.Y += 2;
                         num2 = Tables::table_shieldloop[m_time / 2 % 5];
-                        m_pixmap.QuickIcon(10, num2, tinyPoint);
+                        m_pixmap.value().QuickIcon(10, num2, tinyPoint);
                     }
-                    m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
                 else if (m_blupiPower)
                 {
@@ -866,9 +871,9 @@ class Decor {
                     if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                     {
                         int num2 = Tables::table_magicloop[m_time / 2 % 5];
-                        m_pixmap.QuickIcon(10, num2, tinyPoint);
+                        m_pixmap.value().QuickIcon(10, num2, tinyPoint);
                     }
-                    m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
                 else if (m_blupiCloud)
                 {
@@ -880,26 +885,26 @@ class Decor {
                             int num2 = 48 + (m_time + k) / 1 % 6;
                             pos.X = tinyPoint.X - 34;
                             pos.Y = tinyPoint.Y - 34;
-                            m_pixmap.QuickIcon(9, num2, pos);
+                            m_pixmap.value().QuickIcon(9, num2, pos);
                         }
                     }
-                    m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
                 else if (m_blupiHide)
                 {
                     m_blupiSec = 4;
                     if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                     {
-                        m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 0.3, rotation);
+                        m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 0.3, rotation);
                     }
                     else
                     {
-                        m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                        m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                     }
                 }
                 else
                 {
-                    m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
             }
             for (int num3 = MAXMOVEOBJECT - 1; num3 >= 0; num3--)
@@ -922,7 +927,7 @@ class Decor {
                     {
                         opacity = (double)(20 - m_moveObject[num3].phase) * 0.3 / 20.0;
                     }
-                    m_pixmap.QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint, opacity, 0.0);
+                    m_pixmap.value().QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint, opacity, 0.0);
                     if (m_moveObject[num3].type == 30)
                     {
                         for (int l = 0; l < Tables::table_drinkoffsetLength; l++)
@@ -934,12 +939,12 @@ class Decor {
                             tinyPoint2.Y = tinyPoint.Y - num4 * 3;
                             TinyPoint pos2 = tinyPoint2;
                             double opacity2 = (50.0 - (double)num4) / 50.0;
-                            m_pixmap.QuickIcon(10, rank, pos2, opacity2, 0.0);
+                            m_pixmap.value().QuickIcon(10, rank, pos2, opacity2, 0.0);
                         }
                     }
                     if (m_bDrawSecret && m_moveObject[num3].type == 12 && m_moveObject[num3].icon != 32 && m_moveObject[num3].icon != 33 && m_moveObject[num3].icon != 34)
                     {
-                        m_pixmap.QuickIcon(1, 214, tinyPoint);
+                        m_pixmap.value().QuickIcon(1, 214, tinyPoint);
                     }
                 }
             }
@@ -973,7 +978,7 @@ class Decor {
                         switch (num2)
                         {
                             default:
-                                m_pixmap.QuickIcon(1, num2, pos);
+                                m_pixmap.value().QuickIcon(1, num2, pos);
                                 break;
                             case 68:
                             case 91:
@@ -1028,7 +1033,7 @@ class Decor {
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
-                    m_pixmap.QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
+                    m_pixmap.value().QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
                 }
             }
             tinyPoint.X = m_drawBounds.LeftX - posDecor.X % 64;
@@ -1044,18 +1049,18 @@ class Decor {
                         if (num2 == 68)
                         {
                             num2 = Tables::table_decor_lave[(i * 13 + j * 7 + m_time / 2) % 8];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 373)
                         {
                             num2 = ((!m_blupiFocus) ? Tables::table_decor_piege2[(i * 13 + j * 7 + m_time / 2) % 4] : Tables::table_decor_piege1[(i * 13 + j * 7 + m_time / 4) % 16]);
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 404 || num2 == 410)
                         {
                             num2 = Tables::table_decor_goutte[(i * 13 + j * 7 + m_time / 2) % 48];
                             pos.Y -= 9;
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                             if (num2 >= 404 && num2 <= 407)
                             {
                                 m_decor[i][j].icon = 404;
@@ -1068,73 +1073,73 @@ class Decor {
                         if (num2 == 317)
                         {
                             num2 = Tables::table_decor_ecraseur[m_time / 3 % 10];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 378)
                         {
                             num2 = Tables::table_decor_scie[(i * 13 + j * 7 + m_time / 1) % 6];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 324)
                         {
                             num2 = Tables::table_decor_temp[m_time / 4 % 20];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 92)
                         {
                             num2 = Tables::table_decor_eau1[(i * 13 + j * 7 + m_time / 3) % 6];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 91)
                         {
                             int num5 = 3 + (i * 17 + j * 13) % 3;
                             num2 = Tables::table_decor_eau2[(i * 11 + j * 7 + m_time / num5) % 6];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 305 && BlitzActif(i, j))
                         {
                             num2 = m_random.Next(305, 308);
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 110)
                         {
                             num2 = Tables::table_decor_ventg[m_time / 1 % 4];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 114)
                         {
                             num2 = Tables::table_decor_ventd[m_time / 1 % 4];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 118)
                         {
                             num2 = Tables::table_decor_venth[m_time / 1 % 4];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 122)
                         {
                             num2 = Tables::table_decor_ventb[m_time / 1 % 4];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 126)
                         {
                             num2 = Tables::table_decor_ventillog[m_time / 2 % 3];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 129)
                         {
                             num2 = Tables::table_decor_ventillod[m_time / 2 % 3];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 132)
                         {
                             num2 = Tables::table_decor_ventilloh[m_time / 2 % 3];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                         if (num2 == 135)
                         {
                             num2 = Tables::table_decor_ventillob[m_time / 2 % 3];
-                            m_pixmap.QuickIcon(1, num2, pos);
+                            m_pixmap.value().QuickIcon(1, num2, pos);
                         }
                     }
                     tinyPoint.Y += 64;
@@ -1148,14 +1153,14 @@ class Decor {
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
-                    m_pixmap.QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
+                    m_pixmap.value().QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
                 }
             }
             if (m_blupiFront)
             {
                 tinyPoint.X = m_drawBounds.LeftX + m_blupiPos.X - posDecor.X;
                 tinyPoint.Y = m_drawBounds.TopY + m_blupiPos.Y - posDecor.Y;
-                m_pixmap.QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint);
+                m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint);
             }
             DrawInfo();
             VoyageDraw();
@@ -1169,21 +1174,21 @@ class Decor {
             pos.Y = 417;
             for (int i = 0; i < m_nbVies; i++)
             {
-                m_pixmap.HudIcon(2, 48, pos);
+                m_pixmap.value().HudIcon(2, 48, pos);
                 pos.X += 16;
             }
             pos.X = 570;
             pos.Y = 442;
             for (int i = 0; i < m_blupiBullet; i++)
             {
-                m_pixmap.HudIcon(10, 176, pos);
+                m_pixmap.value().HudIcon(10, 176, pos);
                 pos.X += 4;
             }
             if (m_blupiPerso > 0)
             {
                 pos.X = 0;
                 pos.Y = 438;
-                m_pixmap.HudIcon(4, 108, pos);
+                m_pixmap.value().HudIcon(4, 108, pos);
                 string text = Helper::formatString("= {0}", STRING_VECTOR(std::to_string(m_blupiPerso)));
                 pos.X = 32;
                 pos.Y = 452;
@@ -1193,35 +1198,35 @@ class Decor {
             {
                 pos.X = 505;
                 pos.Y = 414;
-                m_pixmap.HudIcon(10, 252, pos);
+                m_pixmap.value().HudIcon(10, 252, pos);
             }
             if (((uint)m_blupiCle & (true ? 1u : 0u)) != 0)
             {
                 pos.X = 520;
                 pos.Y = 418;
-                m_pixmap.HudIcon(10, 215, pos);
+                m_pixmap.value().HudIcon(10, 215, pos);
             }
             if (((uint)m_blupiCle & 2u) != 0)
             {
                 pos.X = 530;
                 pos.Y = 418;
-                m_pixmap.HudIcon(10, 222, pos);
+                m_pixmap.value().HudIcon(10, 222, pos);
             }
             if (((uint)m_blupiCle & 4u) != 0)
             {
                 pos.X = 540;
                 pos.Y = 418;
-                m_pixmap.HudIcon(10, 229, pos);
+                m_pixmap.value().HudIcon(10, 229, pos);
             }
             if ((m_mission != 1 && m_mission % 10 != 0) || m_bPrivate)
             {
                 TinyRect tinyRect = TinyRect();
-                tinyRect.LeftX = 410 + m_pixmap.Origin.get().X;
-                tinyRect.RightX = 510 + m_pixmap.Origin.get().X;
+                tinyRect.LeftX = 410 + m_pixmap.value().Origin.get().X;
+                tinyRect.RightX = 510 + m_pixmap.value().Origin.get().X;
                 tinyRect.TopY = 445;
                 tinyRect.BottomY = 480;
                 TinyRect rect = tinyRect;
-                m_pixmap.DrawIcon(14, 15, rect, 0.6, false);
+                m_pixmap.value().DrawIcon(14, 15, rect, 0.6, false);
                 string text = Helper::formatString("{0}/{1}", STRING_VECTOR(ToString(m_nbTresor), ToString(m_totalTresor)));
                 pos.X = 460;
                 pos.Y = 450;
@@ -1270,14 +1275,14 @@ class Decor {
                     string text = MyResource::LoadString(array[i + 5] + num3);
                     if (text != "")
                     {
-                        TinyRect drawBounds = m_pixmap.DrawBounds;
+                        TinyRect drawBounds = m_pixmap.value().DrawBounds;
                         TinyRect tinyRect2 = TinyRect();
                         tinyRect2.LeftX = 0;
                         tinyRect2.RightX = drawBounds.Width;
                         tinyRect2.TopY = 0;
                         tinyRect2.BottomY = 40;
                         TinyRect rect2 = tinyRect2;
-                        m_pixmap.DrawIcon(14, 15, rect2, 1.0, false);
+                        m_pixmap.value().DrawIcon(14, 15, rect2, 1.0, false);
                         double num4 = Text::GetTextWidth(text, 1.0);
                         double num5 = std::min(640.0 / num4, 1.0);
                         pos.X = 320;
@@ -1473,14 +1478,14 @@ class Decor {
             {
                 pos.X -= m_posDecor.X;
                 pos.Y -= m_posDecor.Y;
-                m_sound.PlayImage(sound, pos);
+                m_sound.value().PlayImage(sound, pos);
             }
         }
 
         public: void StopSound()
         {
             m_blupiMotorSound = 0;
-            m_sound.StopAll();
+            m_sound.value().StopAll();
         }
 
         public: void StartSound()
@@ -1490,7 +1495,7 @@ class Decor {
 
         private: void StopSound(int sound)
         {
-            m_sound.Stop(sound);
+            m_sound.value().Stop(sound);
         }
 
         private: void AdaptMotorVehicleSound()
@@ -1517,20 +1522,20 @@ class Decor {
                 blupiPos.Y -= m_posDecor.Y;
                 if (m_blupiMotorSound == 0 && num != 0)
                 {
-                    m_sound.PlayImage(channel, blupiPos);
+                    m_sound.value().PlayImage(channel, blupiPos);
                 }
                 if (m_blupiMotorSound != 0 && num == 0)
                 {
-                    m_sound.PlayImage(channel2, blupiPos);
+                    m_sound.value().PlayImage(channel2, blupiPos);
                 }
                 if (m_blupiMotorSound != 0)
                 {
-                    m_sound.Stop(m_blupiMotorSound);
+                    m_sound.value().Stop(m_blupiMotorSound);
                 }
                 m_blupiMotorSound = num;
                 if (m_blupiMotorSound != 0)
                 {
-                    m_sound.PlayImage(m_blupiMotorSound, blupiPos, -1, true);
+                    m_sound.value().PlayImage(m_blupiMotorSound, blupiPos, -1, true);
                 }
             }
         }
@@ -1541,7 +1546,7 @@ class Decor {
             {
                 pos.X -= m_posDecor.X;
                 pos.Y -= m_posDecor.Y;
-                m_sound.PosImage(m_blupiMotorSound, pos);
+                m_sound.value().PosImage(m_blupiMotorSound, pos);
             }
         }
 
@@ -5159,7 +5164,7 @@ class Decor {
                     celSwitch.Y = 418;
                     tinyPoint2.X = celBridge.X * 64 - m_posDecor.X;
                     tinyPoint2.Y = celBridge.Y * 64 - m_posDecor.Y;
-                    VoyageInit(celSwitch, m_pixmap.HotSpotToHud(tinyPoint2), 214 + (num - 334) * 7, 10);
+                    VoyageInit(celSwitch, m_pixmap.value().HotSpotToHud(tinyPoint2), 214 + (num - 334) * 7, 10);
                 }
             }
             if (!m_blupiHelico && !m_blupiSuspend && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiSkate && !m_blupiJeep && !m_blupiTank && !m_blupiJeep && m_blupiFocus)
@@ -5256,7 +5261,7 @@ class Decor {
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                     tinyPoint2.X = 570;
                     tinyPoint2.Y = 430;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), tinyPoint2, 177, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), tinyPoint2, 177, 10);
                     m_blupiBullet += 10;
                     if (m_blupiBullet > 10)
                     {
@@ -5459,7 +5464,7 @@ class Decor {
                     TinyPoint end2;
                     end2.X = 430;
                     end2.Y = 430;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), end2, 6, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end2, 6, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5473,7 +5478,7 @@ class Decor {
                     TinyPoint end3;
                     end3.X = 520;
                     end3.Y = 418;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), end3, 215, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end3, 215, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5487,7 +5492,7 @@ class Decor {
                     TinyPoint end4;
                     end4.X = 530;
                     end4.Y = 418;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), end4, 222, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end4, 222, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5501,7 +5506,7 @@ class Decor {
                     TinyPoint end5;
                     end5.X = 540;
                     end5.Y = 418;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), end5, 229, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end5, 229, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5512,7 +5517,7 @@ class Decor {
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), VoyageGetPosVie(m_nbVies + 1), 21, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), VoyageGetPosVie(m_nbVies + 1), 21, 10);
                 }
                 if (m_moveObject[icon].type == 25 && !m_blupiShield && !m_blupiHide && !m_blupiPower && m_blupiFocus)
                 {
@@ -5594,7 +5599,7 @@ class Decor {
                             celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                             tinyPoint2.X = 0;
                             tinyPoint2.Y = 438;
-                            VoyageInit(m_pixmap.HotSpotToHud(celSwitch), tinyPoint2, 108, 4);
+                            VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), tinyPoint2, 108, 4);
                         }
                     }
                     else if (!m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
@@ -5618,7 +5623,7 @@ class Decor {
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                     tinyPoint2.X = 505;
                     tinyPoint2.Y = 414;
-                    VoyageInit(m_pixmap.HotSpotToHud(celSwitch), tinyPoint2, 252, 10);
+                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), tinyPoint2, 252, 10);
                     m_blupiAction = 86;
                     m_blupiPhase = 0;
                     m_blupiFocus = false;
@@ -5876,7 +5881,7 @@ class Decor {
                     TinyPoint posDecor = GetPosDecor(m_blupiPos);
                     celSwitch.X = m_blupiPos.X - posDecor.X - 30;
                     celSwitch.Y = m_blupiPos.Y - posDecor.Y;
-                    VoyageInit(VoyageGetPosVie(m_nbVies), m_pixmap.HotSpotToHud(celSwitch), 48, 2);
+                    VoyageInit(VoyageGetPosVie(m_nbVies), m_pixmap.value().HotSpotToHud(celSwitch), 48, 2);
                 }
                 else
                 {
@@ -5952,7 +5957,7 @@ class Decor {
             {
                 StopSound(47);
             }
-            if (m_blupiFocus && !m_blupiAir && (!m_blupiHelico || BlupiIsGround()) && (!m_blupiOver || BlupiIsGround()) && !m_blupiBalloon && !m_blupiEcrase && !m_blupiShield && !m_blupiHide && !bVertigoLeft && !bVertigoRight && m_blupiTransport == -1 && !IsLave(m_blupiPos) && !IsPiege(m_blupiPos) && !IsGoutte(m_blupiPos, true) && !IsScie(m_blupiPos) && !IsBridge(m_blupiPos, ref celSwitch) && IsTeleporte(m_blupiPos) == -1 && !IsBlitz(m_blupiPos, true) && !IsTemp(m_blupiPos) && !IsBalleTraj(m_blupiPos) && !IsMoveTraj(m_blupiPos))
+            if (m_blupiFocus && !m_blupiAir && (!m_blupiHelico || BlupiIsGround()) && (!m_blupiOver || BlupiIsGround()) && !m_blupiBalloon && !m_blupiEcrase && !m_blupiShield && !m_blupiHide && !bVertigoLeft && !bVertigoRight && m_blupiTransport == -1 && !IsLave(m_blupiPos) && !IsPiege(m_blupiPos) && !IsGoutte(m_blupiPos, true) && !IsScie(m_blupiPos) && !IsBridge(m_blupiPos, celSwitch) && IsTeleporte(m_blupiPos) == -1 && !IsBlitz(m_blupiPos, true) && !IsTemp(m_blupiPos) && !IsBalleTraj(m_blupiPos) && !IsMoveTraj(m_blupiPos))
             {
                 if (m_blupiFifoNb > 0)
                 {
@@ -6064,7 +6069,7 @@ class Decor {
                 pos.Y = m_blupiPos.Y - m_posDecor.Y;
                 pos2.X = m_blupiPos.X - m_posDecor.X;
                 pos2.Y = m_blupiPos.Y - m_posDecor.Y - 300;
-                VoyageInit(m_pixmap.HotSpotToHud(pos), m_pixmap.HotSpotToHud(pos2), 230, 10);
+                VoyageInit(m_pixmap.value().HotSpotToHud(pos), m_pixmap.value().HotSpotToHud(pos2), 230, 10);
                 PlaySound(74, m_blupiPos);
             }
             if (m_blupiAction == 76)
@@ -6073,7 +6078,7 @@ class Decor {
                 pos.Y = m_blupiPos.Y - m_posDecor.Y;
                 pos2.X = m_blupiPos.X - m_posDecor.X;
                 pos2.Y = m_blupiPos.Y - m_posDecor.Y - 2000;
-                VoyageInit(m_pixmap.HotSpotToHud(pos), m_pixmap.HotSpotToHud(pos2), 40, 10);
+                VoyageInit(m_pixmap.value().HotSpotToHud(pos), m_pixmap.value().HotSpotToHud(pos2), 40, 10);
                 PlaySound(74, m_blupiPos);
             }
             if (m_blupiAction == 77)
@@ -6172,7 +6177,7 @@ class Decor {
                     {
                         continue;
                     }
-                    int icon = m_decor[num6, num7].icon;
+                    int icon = m_decor[num6][ num7].icon;
                     if (icon < 0 || icon >= MAXQUART || (m_blupiHelico && icon == 214) || (m_blupiOver && icon == 214) || (icon == 324 && m_time / 4 % 20 >= 18))
                     {
                         continue;
@@ -6185,7 +6190,7 @@ class Decor {
                         src.RightX = src.LeftX + 16;
                         src.TopY = i * 16;
                         src.BottomY = src.TopY + 16;
-                        if (Misc::IntersectRect(out dst, src, rect))
+                        if (Misc::IntersectRect(dst, src, rect))
                         {
                             m_detectIcon = icon;
                             return true;
@@ -6204,7 +6209,7 @@ class Decor {
                 src.RightX = m_moveObject[num8].posCurrent.X + 64;
                 src.TopY = m_moveObject[num8].posCurrent.Y;
                 src.BottomY = m_moveObject[num8].posCurrent.Y + 64;
-                if (Misc::IntersectRect(out dst, src, rect))
+                if (Misc::IntersectRect(dst, src, rect))
                 {
                     m_detectIcon = m_moveObject[num8].icon;
                     return true;
@@ -6213,7 +6218,7 @@ class Decor {
             return false;
         }
 
-        private: bool TestPath(TinyRect rect, TinyPoint start, TinyPoint& end)
+        private: bool TestPath(const TinyRect& rect, const TinyPoint& start, TinyPoint& end)
         {
             int num = std::abs(end.X - start.X);
             int num2 = std::abs(end.Y - start.Y);
@@ -6792,7 +6797,7 @@ class Decor {
             {
                 for (int j = 0; j < 100; j++)
                 {
-                    if (num == m_decor[i,][j].icon)
+                    if (num == m_decor[i][j].icon)
                     {
                         newpos.X = i * 64;
                         newpos.Y = j * 64 + 60;
@@ -7305,7 +7310,7 @@ class Decor {
                 tinyRect.TopY = m_moveObject[i].posCurrent.Y;
                 tinyRect.BottomY = m_moveObject[i].posCurrent.Y + 16;
                 TinyRect dst;
-                flag = Misc::IntersectRect(out dst, tinyRect, src);
+                flag = Misc::IntersectRect(dst, tinyRect, src);
                 tinyPoint = m_moveObject[i].posCurrent;
             }
             TinyPoint end;
@@ -7332,7 +7337,7 @@ class Decor {
                 tinyRect.RightX = end.X + 60 - 10;
                 tinyRect.TopY = end.Y + 10;
                 tinyRect.BottomY = end.Y + 60 - 10;
-                if (TestPath(tinyRect, m_moveObject[i].posCurrent, ref end))
+                if (TestPath(tinyRect, m_moveObject[i].posCurrent, end))
                 {
                     m_moveObject[i].posCurrent = end;
                     m_moveObject[i].posStart = end;
@@ -8358,7 +8363,7 @@ class Decor {
                     src2.TopY = m_moveObject[i].posCurrent.Y;
                     src2.BottomY = m_moveObject[i].posCurrent.Y + 60;
                     TinyRect dst;
-                    if (Misc::IntersectRect(out dst, src2, src))
+                    if (Misc::IntersectRect(dst, src2, src))
                     {
                         if (m_moveObject[i].type == 12)
                         {
@@ -8416,7 +8421,7 @@ class Decor {
                 TinyRect dst;
                 if (num < 30)
                 {
-                    if (Misc::IntersectRect(out dst, src, rect))
+                    if (Misc::IntersectRect(dst, src, rect))
                     {
                         return i;
                     }
@@ -8427,7 +8432,7 @@ class Decor {
                 src2.BottomY -= num / 30 * num2;
                 for (int j = 0; j <= num / 30; j++)
                 {
-                    if (Misc::IntersectRect(out dst, src, src2))
+                    if (Misc::IntersectRect(dst, src, src2))
                     {
                         return i;
                     }
@@ -8594,7 +8599,7 @@ class Decor {
                             src2.RightX = src2.LeftX + 64 + 1;
                             src2.BottomY = src2.TopY + 64 + 1;
                             TinyRect dst;
-                            if (Misc::IntersectRect(out dst, src2, src) && AddLinkCaisse(num2))
+                            if (Misc::IntersectRect(dst, src2, src) && AddLinkCaisse(num2))
                             {
                                 flag = true;
                             }
@@ -8715,7 +8720,7 @@ class Decor {
                 src2.TopY = m_moveObject[i].posCurrent.Y + 36;
                 src2.BottomY = m_moveObject[i].posCurrent.Y + 60;
                 TinyRect dst;
-                if (!Misc::IntersectRect(out dst, src2, src))
+                if (!Misc::IntersectRect(dst, src2, src))
                 {
                     continue;
                 }
@@ -8765,7 +8770,7 @@ class Decor {
             src2.TopY = m_blupiPos.Y + 11 - 40;
             src2.BottomY = m_blupiPos.Y + 60 - 2 + 40;
             TinyRect dst;
-            if (Misc::IntersectRect(out dst, src, src2))
+            if (Misc::IntersectRect(dst, src, src2))
             {
                 return true;
             }
@@ -8791,7 +8796,7 @@ class Decor {
                     src2.TopY = m_moveObject[i].posCurrent.Y - 100;
                     src2.BottomY = m_moveObject[i].posCurrent.Y + 60 + 100;
                     TinyRect dst;
-                    if (Misc::IntersectRect(out dst, src2, src))
+                    if (Misc::IntersectRect(dst, src2, src))
                     {
                         m_moveObject[i].type = 97;
                         PlaySound(92, m_moveObject[i].posCurrent);
@@ -8858,12 +8863,12 @@ class Decor {
                     src3.BottomY = m_moveObject[i].posCurrent.Y + 60 - 32;
                 }
                 TinyRect dst;
-                if (Misc::IntersectRect(out dst, src3, src))
+                if (Misc::IntersectRect(dst, src3, src))
                 {
                     bNear = true;
                     return i;
                 }
-                if (m_moveObject[i].type == 2 && Misc::IntersectRect(out dst, src3, src2))
+                if (m_moveObject[i].type == 2 && Misc::IntersectRect(dst, src3, src2))
                 {
                     bNear = false;
                     return i;
@@ -8894,7 +8899,7 @@ class Decor {
                     src2.TopY = m_moveObject[i].posCurrent.Y;
                     src2.BottomY = m_moveObject[i].posCurrent.Y + 16;
                     TinyRect dst;
-                    if (Misc::IntersectRect(out dst, src2, src))
+                    if (Misc::IntersectRect(dst, src2, src))
                     {
                         return i;
                     }
@@ -8920,7 +8925,7 @@ class Decor {
                     src2.TopY = m_moveObject[i].posCurrent.Y + 36;
                     src2.BottomY = m_moveObject[i].posCurrent.Y + 60;
                     TinyRect dst;
-                    if (Misc::IntersectRect(out dst, src2, src))
+                    if (Misc::IntersectRect(dst, src2, src))
                     {
                         return i;
                     }
@@ -8946,7 +8951,7 @@ class Decor {
                     src2.TopY = m_moveObject[i].posCurrent.Y + 36;
                     src2.BottomY = m_moveObject[i].posCurrent.Y + 60;
                     TinyRect dst;
-                    if (Misc::IntersectRect(out dst, src2, src))
+                    if (Misc::IntersectRect(dst, src2, src))
                     {
                         return i;
                     }
@@ -9014,7 +9019,7 @@ class Decor {
             {
                 if (m_moveObject[i].type != 0)
                 {
-                    MoveObjectCopy(ref m_moveObject[num++], m_moveObject[i]);
+                    MoveObjectCopy(m_moveObject[num++], m_moveObject[i]);
                 }
             }
             for (int i = num; i < MAXMOVEOBJECT; i++)
@@ -9033,9 +9038,9 @@ class Decor {
                 {
                     if (SortGetType(m_moveObject[i].type) > SortGetType(m_moveObject[i + 1].type))
                     {
-                        MoveObjectCopy(ref dst, m_moveObject[i]);
-                        MoveObjectCopy(ref m_moveObject[i], m_moveObject[i + 1]);
-                        MoveObjectCopy(ref m_moveObject[i + 1], dst);
+                        MoveObjectCopy(dst, m_moveObject[i]);
+                        MoveObjectCopy(m_moveObject[i], m_moveObject[i + 1]);
+                        MoveObjectCopy(m_moveObject[i + 1], dst);
                         flag = true;
                     }
                 }
@@ -9060,9 +9065,9 @@ class Decor {
                 }
                 if (j <= i)
                 {
-                    MoveObjectCopy(ref dst, m_moveObject[i]);
-                    MoveObjectCopy(ref m_moveObject[i], m_moveObject[j]);
-                    MoveObjectCopy(ref m_moveObject[j], dst);
+                    MoveObjectCopy(dst, m_moveObject[i]);
+                    MoveObjectCopy(m_moveObject[i], m_moveObject[j]);
+                    MoveObjectCopy(m_moveObject[j], dst);
                     if (m_moveObject[i].type == 12 || m_moveObject[j].type == 12)
                     {
                         UpdateCaisse();
@@ -9148,11 +9153,11 @@ class Decor {
                 double num2 = 10.0 - byeByeObject.phase;
                 if (num2 > 0.0)
                 {
-                    byeByeObject.posY -= Math.Pow(num2, 1.5) * byeByeObject.animationSpeed;
+                    byeByeObject.posY -= std::pow(num2, 1.5) * byeByeObject.animationSpeed;
                 }
                 if (num2 < 0.0)
                 {
-                    byeByeObject.posY += Math.Pow(0.0 - num2, 1.5) * byeByeObject.animationSpeed;
+                    byeByeObject.posY += std::pow(0.0 - num2, 1.5) * byeByeObject.animationSpeed;
                 }
                 byeByeObject.posX += byeByeObject.speedX * byeByeObject.animationSpeed;
                 if (byeByeObject.speedX > 0.0)
@@ -9171,7 +9176,7 @@ class Decor {
                 }
                 if (byeByeObject.phase > 30.0)
                 {
-                    byeByeObjects.RemoveAt(num);
+                    byeByeObjects.erase(byeByeObjects.begin() + num);
                 }
                 else
                 {
@@ -9182,13 +9187,13 @@ class Decor {
 
         private: void ByeByeDraw(TinyPoint posDecor)
         {
-            for (ByeByeObject byeByeObject in byeByeObjects)
+            for (ByeByeObject byeByeObject : byeByeObjects)
             {
                 TinyPoint tinyPoint;
                 tinyPoint.X = m_drawBounds.LeftX + (int)byeByeObject.posX - posDecor.X;
                 tinyPoint.Y = m_drawBounds.TopY + (int)byeByeObject.posY - posDecor.Y;
                 TinyPoint pos = tinyPoint;
-                m_pixmap.QuickIcon(byeByeObject.channel, byeByeObject.icon, pos, 1.0, byeByeObject.rotation);
+                m_pixmap.value().QuickIcon(byeByeObject.channel, byeByeObject.icon, pos, 1.0, byeByeObject.rotation);
             }
         }
 
@@ -9219,46 +9224,46 @@ class Decor {
             {
                 m_voyageTotal = 40;
                 m_nbVies--;
-                m_sound.PlayImage(9, end, -1, false);
+                m_sound.value().PlayImage(9, end, -1, false);
             }
             if (m_voyageIcon == 21 && m_voyageChannel == 10)
             {
-                m_sound.PlayImage(12, start, -1, false);
+                m_sound.value().PlayImage(12, start, -1, false);
             }
             if (m_voyageIcon == 6 && m_voyageChannel == 10)
             {
                 if (m_nbTresor == m_totalTresor - 1)
                 {
-                    m_sound.PlayImage(19, start, -1, false);
+                    m_sound.value().PlayImage(19, start, -1, false);
                 }
                 else
                 {
-                    m_sound.PlayImage(11, start, -1, false);
+                    m_sound.value().PlayImage(11, start, -1, false);
                 }
             }
             if (m_voyageIcon == 215 && m_voyageChannel == 10)
             {
-                m_sound.PlayImage(11, start, -1, false);
+                m_sound.value().PlayImage(11, start, -1, false);
             }
             if (m_voyageIcon == 222 && m_voyageChannel == 10)
             {
-                m_sound.PlayImage(11, start, -1, false);
+                m_sound.value().PlayImage(11, start, -1, false);
             }
             if (m_voyageIcon == 229 && m_voyageChannel == 10)
             {
-                m_sound.PlayImage(11, start, -1, false);
+                m_sound.value().PlayImage(11, start, -1, false);
             }
             if (m_voyageIcon == 108 && m_voyageChannel == 4)
             {
-                m_sound.PlayImage(60, start, -1, false);
+                m_sound.value().PlayImage(60, start, -1, false);
             }
             if (m_voyageIcon == 252 && m_voyageChannel == 10)
             {
-                m_sound.PlayImage(60, start, -1, false);
+                m_sound.value().PlayImage(60, start, -1, false);
             }
             if (m_voyageIcon == 177 && m_voyageChannel == 10)
             {
-                m_sound.PlayImage(54, start, -1, false);
+                m_sound.value().PlayImage(54, start, -1, false);
             }
             if (m_voyageIcon == 230 && m_voyageChannel == 10)
             {
@@ -9301,42 +9306,42 @@ class Decor {
                     {
                         m_nbVies++;
                     }
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 6 && m_voyageChannel == 10)
                 {
                     m_nbTresor++;
                     OpenDoorsTresor();
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 215 && m_voyageChannel == 10)
                 {
                     m_blupiCle |= 1;
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 222 && m_voyageChannel == 10)
                 {
                     m_blupiCle |= 2;
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 229 && m_voyageChannel == 10)
                 {
                     m_blupiCle |= 4;
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 108 && m_voyageChannel == 4)
                 {
                     m_blupiPerso++;
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 252 && m_voyageChannel == 10)
                 {
                     m_blupiDynamite++;
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 177 && m_voyageChannel == 10)
                 {
-                    m_sound.PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
                 }
                 m_voyageIcon = -1;
             }
@@ -9363,7 +9368,7 @@ class Decor {
             pos.Y = m_voyageStart.Y + (m_voyageEnd.Y - m_voyageStart.Y) * num / m_voyageTotal;
             if (m_voyageIcon != 40 || m_voyageChannel != 10 || num != 0)
             {
-                m_pixmap.HudIcon(m_voyageChannel, m_voyageIcon, pos);
+                m_pixmap.value().HudIcon(m_voyageChannel, m_voyageIcon, pos);
             }
             if (m_voyageIcon == 40 && m_voyageChannel == 10)
             {
@@ -10074,33 +10079,33 @@ class Decor {
             Worlds::WriteIntField("_nbLinkCaisse_", m_nbLinkCaisse);
             Worlds::WritePointField("_sucettePos_", m_sucettePos);
             Worlds::WriteIntField("_sucetteType_", m_sucetteType);
-            Worlds::WriteIntArrayField("_RankCaisse_", m_rankCaisse);
-            Worlds::WriteIntArrayField("_LinkCaisse_", m_linkCaisse);
-            Worlds::WriteIntArrayField("_BalleTraj_", m_balleTraj);
-            Worlds::WriteIntArrayField("_MoveTraj_", m_moveTraj);
-            Worlds::WriteIntArrayField("_Doors_", m_doors);
+            Worlds::WriteIntArrayField("_RankCaisse_", m_rankCaisse, m_rankCaisseLength);
+            Worlds::WriteIntArrayField("_LinkCaisse_", m_linkCaisse, m_linkCaisseLength);
+            Worlds::WriteIntArrayField("_BalleTraj_", m_balleTraj, m_balleTrajLength);
+            Worlds::WriteIntArrayField("_MoveTraj_", m_moveTraj, m_moveTrajLength);
+            Worlds::WriteIntArrayField("_Doors_", m_doors, m_doorsLength);
             Worlds::WriteEndSection();
             Worlds::WriteSection("Decor");
             Worlds::WriteEndSection();
             for (int i = 0; i < 100; i++)
             {
-                int[] array = new int[100];
+                int array[100];
                 for (int j = 0; j < 100; j++)
                 {
                     array[j] = m_decor[i][j].icon;
                 }
-                Worlds::WriteDecorField(array);
+                Worlds::WriteDecorField(array, 100);
             }
             Worlds::WriteSection("BigDecor");
             Worlds::WriteEndSection();
             for (int k = 0; k < 100; k++)
             {
-                int[] array2 = new int[100];
+                int array2[100];
                 for (int l = 0; l < 100; l++)
                 {
                     array2[l] = m_bigDecor[k][ l].icon;
                 }
-                Worlds::WriteDecorField(array2);
+                Worlds::WriteDecorField(array2, 100);
             }
             for (int m = 0; m < MAXMOVEOBJECT; m++)
             {
@@ -10132,7 +10137,8 @@ class Decor {
                 Worlds::WriteIntField("level", m_jauges[n].GetLevel());
                 Worlds::WriteEndSection();
             }
-            Worlds::WriteCurrentGame(Worlds::GetWriteString());
+            auto text = Worlds::GetWriteString();
+            Worlds::WriteCurrentGame(text);
             return true;
         }
 
@@ -10237,14 +10243,16 @@ class Decor {
             {
                 for (int j = 0; j < 100; j++)
                 {
-                    m_decor[j][ i].icon = Worlds::GetDecorField(lines, "Decor", j, i) ?? (-1);
+                    auto decorField = Worlds::GetDecorField(lines, "Decor", j, i);
+                    m_decor[j][ i].icon =  decorField != 0 ? decorField : -1;
                 }
             }
             for (int k = 0; k < 100; k++)
             {
                 for (int l = 0; l < 100; l++)
                 {
-                    m_bigDecor[l][ k].icon = Worlds::GetDecorField(lines, "BigDecor", l, k) ?? (-1);
+                    auto decorField = Worlds::GetDecorField(lines, "BigDecor", l, k);
+                    m_bigDecor[l][ k].icon = decorField != 0? decorField : -1;
                 }
             }
             for (int m = 0; m < MAXMOVEOBJECT; m++)
@@ -10286,29 +10294,32 @@ class Decor {
         {
             InitDecor();
             auto arrayVector = Worlds::ReadWorld(gamer, rank);
-            auto array = arrayVector.toArray();
-            if (array.empty())
+            auto vectorSize = arrayVector.size();
+            string* array = arrayVector.data();
+            if (arrayVector.empty())
             {
                 return false;
             }
-            m_posDecor = Worlds::GetPointField(array, "DescFile", 0, "posDecor");
-            m_dimDecor = Worlds::GetPointField(array, "DescFile", 0, "dimDecor");
-            m_music = Worlds::GetIntField(array, "DescFile", 0, "music");
-            m_region = Worlds::GetIntField(array, "DescFile", 0, "region");
-            m_blupiStartPos = Worlds::GetPointField(array, "DescFile", 0, "blupiPos");
-            m_blupiStartDir = Worlds::GetIntField(array, "DescFile", 0, "blupiDir");
+            m_posDecor = Worlds::GetPointField(array, vectorSize, "DescFile", 0, "posDecor");
+            m_dimDecor = Worlds::GetPointField(array, vectorSize, "DescFile", 0, "dimDecor");
+            m_music = Worlds::GetIntField(array, vectorSize, "DescFile", 0, "music");
+            m_region = Worlds::GetIntField(array, vectorSize, "DescFile", 0, "region");
+            m_blupiStartPos = Worlds::GetPointField(array, vectorSize, "DescFile", 0, "blupiPos");
+            m_blupiStartDir = Worlds::GetIntField(array, vectorSize, "DescFile", 0, "blupiDir");
             for (int i = 0; i < 100; i++)
             {
                 for (int j = 0; j < 100; j++)
                 {
-                    m_decor[j][ i].icon = Worlds::GetDecorField(array, "Decor", j, i) ?? (-1);
+                    int decorField = Worlds::GetDecorField(array, vectorSize, "Decor", j, i);
+                    m_decor[j][ i].icon =  decorField != 0 ? decorField : -1;
                 }
             }
             for (int k = 0; k < 100; k++)
             {
                 for (int l = 0; l < 100; l++)
                 {
-                    m_bigDecor[l][ k].icon = Worlds::GetDecorField(array, "BigDecor", l, k) ?? (-1);
+                    int decorField = Worlds::GetDecorField(array, vectorSize, "BigDecor", l, k);
+                    m_bigDecor[l][ k].icon = decorField != 0 ? decorField : -1;
                 }
             }
             for (int m = 0; m < MAXMOVEOBJECT; m++)
@@ -10317,24 +10328,24 @@ class Decor {
             }
             for (int n = 0; n < MAXMOVEOBJECT; n++)
             {
-                int intField = Worlds::GetIntField(array, "MoveObject", n, "type");
+                int intField = Worlds::GetIntField(array, vectorSize ,"MoveObject", n, "type");
                 if (intField == 0)
                 {
                     break;
                 }
                 m_moveObject[n].type = intField;
-                m_moveObject[n].stepAdvance = Worlds::GetIntField(array, "MoveObject", n, "stepAdvance");
-                m_moveObject[n].stepRecede = Worlds::GetIntField(array, "MoveObject", n, "stepRecede");
-                m_moveObject[n].timeStopStart = Worlds::GetIntField(array, "MoveObject", n, "timeStopStart");
-                m_moveObject[n].timeStopEnd = Worlds::GetIntField(array, "MoveObject", n, "timeStopEnd");
-                m_moveObject[n].posStart = Worlds::GetPointField(array, "MoveObject", n, "posStart");
-                m_moveObject[n].posEnd = Worlds::GetPointField(array, "MoveObject", n, "posEnd");
-                m_moveObject[n].posCurrent = Worlds::GetPointField(array, "MoveObject", n, "posCurrent");
-                m_moveObject[n].step = Worlds::GetIntField(array, "MoveObject", n, "step");
-                m_moveObject[n].time = Worlds::GetIntField(array, "MoveObject", n, "time");
-                m_moveObject[n].phase = Worlds::GetIntField(array, "MoveObject", n, "phase");
-                m_moveObject[n].channel = Worlds::GetIntField(array, "MoveObject", n, "channel");
-                m_moveObject[n].icon = Worlds::GetIntField(array, "MoveObject", n, "icon");
+                m_moveObject[n].stepAdvance = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "stepAdvance");
+                m_moveObject[n].stepRecede = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "stepRecede");
+                m_moveObject[n].timeStopStart = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "timeStopStart");
+                m_moveObject[n].timeStopEnd = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "timeStopEnd");
+                m_moveObject[n].posStart = Worlds::GetPointField(array, vectorSize, "MoveObject", n, "posStart");
+                m_moveObject[n].posEnd = Worlds::GetPointField(array, vectorSize, "MoveObject", n, "posEnd");
+                m_moveObject[n].posCurrent = Worlds::GetPointField(array, vectorSize, "MoveObject", n, "posCurrent");
+                m_moveObject[n].step = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "step");
+                m_moveObject[n].time = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "time");
+                m_moveObject[n].phase = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "phase");
+                m_moveObject[n].channel = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "channel");
+                m_moveObject[n].icon = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "icon");
                 if (m_moveObject[n].type == 54)
                 {
                     m_moveObject[n].timeStopStart = 152;
@@ -10354,7 +10365,7 @@ class Decor {
             return false;
         }
 
-        private: bool SearchWorld(int world, ref TinyPoint blupi, ref int dir)
+        private: bool SearchWorld(int world, TinyPoint& blupi, int& dir)
         {
             if (world < 0 || world > 12)
             {
@@ -10366,7 +10377,7 @@ class Decor {
             {
                 for (int j = 0; j < 100; j++)
                 {
-                    int icon = m_decor[i,][j].icon;
+                    int icon = m_decor[i][j].icon;
                     if (icon == num || icon == num2)
                     {
                         if (IsPassIcon(m_decor[i - 1][ j].icon))
@@ -10389,7 +10400,7 @@ class Decor {
             return false;
         }
 
-        private: bool SearchDoor(int n, ref TinyPoint cel, ref TinyPoint blupi)
+        private: bool SearchDoor(int n, TinyPoint& cel, TinyPoint& blupi)
         {
             for (int i = 0; i < 100; i++)
             {
@@ -10436,7 +10447,7 @@ class Decor {
             return false;
         }
 
-        private: bool SearchGold(int n, ref TinyPoint cel)
+        private: bool SearchGold(int n, TinyPoint& cel)
         {
             for (int num = 99; num >= 0; num--)
             {
@@ -10459,7 +10470,7 @@ class Decor {
             {
                 TinyPoint blupi;
                 int dir = 0;
-                if (SearchWorld(lastWorld, ref blupi, ref dir))
+                if (SearchWorld(lastWorld, blupi, dir))
                 {
                     m_blupiStartPos = blupi;
                     m_blupiStartDir = dir;
@@ -10480,7 +10491,7 @@ class Decor {
             {
                 for (int i = 0; i < 20; i++)
                 {
-                    if (SearchGold(i, ref cel) && (m_doors[180 + i] == 1 || m_bCheatDoors))
+                    if (SearchGold(i, cel) && (m_doors[180 + i] == 1 || m_bCheatDoors))
                     {
                         m_decor[cel.X][ cel.Y].icon = -1;
                         int num = MoveObjectFree();
@@ -10506,7 +10517,7 @@ class Decor {
                 {
                     for (int k = 0; k < 100; k++)
                     {
-                        int icon = m_decor[j, k].icon;
+                        int icon = m_decor[j][ k].icon;
                         if (icon >= 158 && icon <= 165 && (m_doors[180 + icon - 158 + 1] == 1 || m_bCheatDoors))
                         {
                             m_decor[j][ k].icon += 8;
@@ -10530,7 +10541,7 @@ class Decor {
                 }
                 for (int i = 0; i < 10; i++)
                 {
-                    if (SearchDoor(i, ref cel, ref blupi) && (m_doors[m_mission + i] == 1 || m_bCheatDoors))
+                    if (SearchDoor(i, cel, blupi) && (m_doors[m_mission + i] == 1 || m_bCheatDoors))
                     {
                         OpenDoor(cel);
                         m_blupiStartPos = blupi;
