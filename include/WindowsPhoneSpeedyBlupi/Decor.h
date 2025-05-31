@@ -11,7 +11,7 @@
 #include "Pixmap.h"
 #include "Sound.h"
 #include "System/Random.h"
-#include "Helper.h"
+#include "WindowsPhoneSpeedyBlupi/Helper.h"
 
 // // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // // WindowsPhoneSpeedyBlupi.Decor
@@ -628,10 +628,7 @@ public:
 
         private: void AdaptBorder(TinyPoint cel);
 
-        public: void CurrentDelete()
-        {
-            Worlds::DeleteCurrentGame();
-        }
+        public: void CurrentDelete();
 
         public: bool CurrentWrite();
 

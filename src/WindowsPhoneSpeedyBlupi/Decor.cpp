@@ -1339,7 +1339,7 @@ void Decor::InitDecor()
             gameData.SetDoors(m_doors);
         }
 
-         static string Decor::GetCheatTinyText(Def::ButtonGlyph glyph)
+         string Decor::GetCheatTinyText(Def::ButtonGlyph glyph)
         {
             switch (glyph)
             {
@@ -3197,9 +3197,9 @@ void Decor::InitDecor()
                     end.X += (int)m_blupiVitesseX;
                 }
                 MoveObjectPollution();
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     rect.LeftX = m_blupiPos.X + 20;
                     rect.RightX = m_blupiPos.X + 22;
                     rect.TopY = m_blupiPos.Y + 60 - 2;
@@ -3318,9 +3318,9 @@ void Decor::InitDecor()
                 }
                 end.X += (int)m_blupiVitesseX;
                 MoveObjectPollution();
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     rect.LeftX = m_blupiPos.X + 20;
                     rect.RightX = m_blupiPos.X + 22;
                     rect.TopY = m_blupiPos.Y + 60 - 2;
@@ -3602,9 +3602,9 @@ void Decor::InitDecor()
                 }
                 m_blupiOffsetY = std::abs(m_blupiRealRotation / 2);
                 MoveObjectPollution();
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     celSwitch.X = m_blupiPos.X;
                     celSwitch.Y = m_blupiPos.Y - BLUPIFLOOR;
                     ObjectStart(celSwitch, 19, 0);
@@ -3734,9 +3734,9 @@ void Decor::InitDecor()
                 }
                 end.X += (int)m_blupiVitesseX;
                 MoveObjectPollution();
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     celSwitch.X = m_blupiPos.X;
                     celSwitch.Y = m_blupiPos.Y;
                     ObjectStart(celSwitch, 28, 0);
@@ -3796,9 +3796,9 @@ void Decor::InitDecor()
                     m_blupiVitesseX = 0.0;
                 }
                 end.X += (int)m_blupiVitesseX;
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && !flag2 && !m_blupiAir && m_blupiTransport == -1 && m_blupiVitesseX < 8.0)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && !m_blupiAir && m_blupiTransport == -1 && m_blupiVitesseX < 8.0)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     m_blupiSkate = false;
                     m_blupiAction = 43;
                     m_blupiPhase = 0;
@@ -4087,11 +4087,11 @@ void Decor::InitDecor()
                     PlaySound(35, end);
                 }
             }
-            if (ButtonPressed == Def::ButtonGlyph::PlayAction && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiTank && !m_blupiJeep && !m_blupiSkate && !flag2 && m_blupiTransport == -1 && m_blupiFocus)
+            if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiTank && !m_blupiJeep && !m_blupiSkate && !flag2 && m_blupiTransport == -1 && m_blupiFocus)
             {
                 if (m_blupiDynamite > 0)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     rect.LeftX = end.X + 18;
                     rect.RightX = end.X + 20;
                     rect.TopY = end.Y + 60 - 2;
@@ -4113,7 +4113,7 @@ void Decor::InitDecor()
                 }
                 else if (m_blupiPerso > 0)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     icon = MoveObjectDetect(end, bNear);
                     if (icon == -1 || m_moveObject[icon].type != 200)
                     {
@@ -4804,9 +4804,9 @@ void Decor::InitDecor()
                     m_blupiRestart = true;
                     m_blupiAir = true;
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && (num26 == -1 || !bNear) && IsSwitch(m_blupiPos, celSwitch) && !m_blupiOver && !m_blupiBalloon && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && (num26 == -1 || !bNear) && IsSwitch(m_blupiPos, celSwitch) && !m_blupiOver && !m_blupiBalloon && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     ActiveSwitch(m_decor[celSwitch.X][ celSwitch.Y].icon == 385, celSwitch);
                     m_blupiAction = 82;
                     m_blupiPhase = 0;
@@ -4914,9 +4914,9 @@ void Decor::InitDecor()
             }
             if (icon != -1 && bNear)
             {
-                if (m_moveObject[icon].type == 13 && (ButtonPressed == Def::ButtonGlyph::PlayAction || IsFloatingObject(icon)) && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (m_moveObject[icon].type == 13 && (getButtonPressed() == Def::ButtonGlyph::PlayAction || IsFloatingObject(icon)) && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4931,9 +4931,9 @@ void Decor::InitDecor()
                         m_jauges[1].SetHide(true);
                     }
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 46 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 46 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4947,9 +4947,9 @@ void Decor::InitDecor()
                         m_jauges[1].SetHide(true);
                     }
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 19 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 19 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4965,9 +4965,9 @@ void Decor::InitDecor()
                         m_jauges[1].SetHide(true);
                     }
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 28 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 28 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4997,9 +4997,9 @@ void Decor::InitDecor()
                         m_blupiBullet = 10;
                     }
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 24 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 24 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
                     m_blupiAction = 42;
@@ -5259,9 +5259,9 @@ void Decor::InitDecor()
                     m_blupiPosMagic = m_blupiPos;
                     m_jauges[1].SetHide(false);
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 26 && !m_blupiShield && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 26 && !m_blupiShield && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     m_sucettePos = m_moveObject[icon].posCurrent;
                     m_sucetteType = m_moveObject[icon].type;
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5285,9 +5285,9 @@ void Decor::InitDecor()
                     ObjectStart(m_blupiPos, 41, 10);
                     ObjectStart(m_blupiPos, 41, -10);
                 }
-                if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 30 && !m_blupiShield && !m_blupiCloud && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
+                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 30 && !m_blupiShield && !m_blupiCloud && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     m_sucettePos = m_moveObject[icon].posCurrent;
                     m_sucetteType = m_moveObject[icon].type;
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5320,9 +5320,9 @@ void Decor::InitDecor()
                 {
                     if (m_moveObject[icon].type == 200)
                     {
-                        if (m_blupiPerso < 5 && ButtonPressed == Def::ButtonGlyph::PlayAction)
+                        if (m_blupiPerso < 5 && getButtonPressed() == Def::ButtonGlyph::PlayAction)
                         {
-                            ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                            setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                             ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                             celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                             celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
@@ -5344,9 +5344,9 @@ void Decor::InitDecor()
                         m_decorPhase = 0;
                     }
                 }
-                if (m_moveObject[icon].type == 55 && m_blupiFocus && m_blupiDynamite == 0 && (m_voyageIcon != 252 || m_voyageChannel != 10) && ButtonPressed == Def::ButtonGlyph::PlayAction)
+                if (m_moveObject[icon].type == 55 && m_blupiFocus && m_blupiDynamite == 0 && (m_voyageIcon != 252 || m_voyageChannel != 10) && getButtonPressed() == Def::ButtonGlyph::PlayAction)
                 {
-                    ButtonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
@@ -5590,7 +5590,7 @@ void Decor::InitDecor()
                 m_blupiPhase = 0;
                 m_blupiFocus = true;
             }
-            if (ButtonPressed == Def::ButtonGlyph::PlayAction && m_blupiAction == 1)
+            if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_blupiAction == 1)
             {
                 m_blupiAction = 84;
                 m_blupiPhase = 0;
