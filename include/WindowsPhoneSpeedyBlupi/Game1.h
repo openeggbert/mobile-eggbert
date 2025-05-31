@@ -93,9 +93,9 @@ private: Def::Phase fadeOutPhase;
         private: int fadeOutMission{0};
 
 public:
-    DEF_PROP_CUSTOM(bool, IsRankingMode);
+    public: [[nodiscard]] bool getIsRankingMode() const;
 
-    DEF_PROP_CUSTOM(bool, IsTrialMode)
+    public: [[nodiscard]] bool getIsTrialMode() const;
 
     Game1();
     virtual ~Game1();
@@ -110,7 +110,7 @@ protected: void Initialize() override;
 
 protected: void OnActivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) override;
 
-        protected: void OnExiting(std::any sender, System::Runtime::CompilerServices::EventArgs args);
+        protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args);
 
 protected:void Update(Microsoft::Xna::Framework::GameTime gameTime) override;
 

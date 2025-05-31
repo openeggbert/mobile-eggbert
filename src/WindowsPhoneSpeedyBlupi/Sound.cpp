@@ -4,10 +4,11 @@
 
 #include "WindowsPhoneSpeedyBlupi/Sound.h"
 namespace WindowsPhoneSpeedyBlupi {
-    Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped):
+    int Sound::Play::getChannel() const { return channel; }
+    bool Sound::Play::getIsFree() const { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
 
-        Channel( [channel]() { return channel; }),
-        IsFree( [*this]() { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }),
+
+    Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped):
         channel(channel),
         sei(se.CreateInstance())
     {
@@ -18,10 +19,10 @@ namespace WindowsPhoneSpeedyBlupi {
             pitch = tableVolumePitch[num + 1];
         }
 
-        sei.Volume = (float)volume;
-        sei.Pan = (float)balance;
-        sei.Pitch = (float)(pitch < 0.0 ? 0.0: pitch);
-        sei.IsLooped = isLooped;
+        sei.setVolume((float)volume);
+        sei.setPan((float)balance);
+        sei.setPitch((float)(pitch < 0.0 ? 0.0: pitch));
+        sei.setIsLooped(isLooped);
         sei.Play();
     }
     void Sound::Play::Stop()
@@ -37,13 +38,13 @@ namespace WindowsPhoneSpeedyBlupi {
         // soundEffects = new List<SoundEffect>();
         // plays = new List<Play>();
         volume = 1.0;
-        Microsoft::Xna::Framework::Audio::SoundEffect::MasterVolume = 1.0f;
+        Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolume(1.0f);
     }
 
 
         void Sound::LoadContent()
         {
-            if (Def::HasSound)
+            if (Def::getHasSound())
             {
                 for (int i = 0; i <= 92; i++)
                 {
@@ -51,7 +52,8 @@ namespace WindowsPhoneSpeedyBlupi {
                     oss << "sounds/sound" << std::setw(3) << std::setfill('0') << i;
                     std::string assetName = oss.str();
 
-                    Microsoft::Xna::Framework::Audio::SoundEffect item = game1.Content.get().Load<Microsoft::Xna::Framework::Audio::SoundEffect>(assetName);
+                    using Microsoft::Xna::Framework::Audio::SoundEffect;
+                    SoundEffect item = game1.getContent().Load<SoundEffect>(assetName);
                     soundEffects.push_back(item);
                 }
             }
@@ -103,12 +105,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-         bool Sound::PlayImage(int channel, const TinyPoint& pos)
-        {
-            return PlayImage(channel, pos, -1, false);
-        }
-
-         bool Sound::PlayImage(int channel, const TinyPoint& pos, int rank, bool bLoop)
+         bool Sound::PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop)
         {
             if (!gameData.Sounds)
             {
@@ -118,13 +115,13 @@ namespace WindowsPhoneSpeedyBlupi {
             {
 
                 if (channel != 10 && std::any_of(plays.begin(), plays.end(),
-    [channel](const Play& p) { return p.Channel == channel && !p.IsFree; })) {
+    [channel](const Play& p) { return p.getChannel() == channel && !p.getIsFree(); })) {
                     return true;
     }
 
                 if (plays.size() >= 10) {
                     plays.erase(std::remove_if(plays.begin(), plays.end(),
-                        [](const Play& p) { return p.IsFree; }), plays.end());
+                        [](const Play& p) { return p.getIsFree(); }), plays.end());
                 }
 
                 plays.emplace_back(soundEffects[channel], channel, (float)GetVolume(pos), (float)GetBalance(pos), 0.0, bLoop);
@@ -143,7 +140,7 @@ namespace WindowsPhoneSpeedyBlupi {
             size_t num = 0;
             while (num < plays.size())
             {
-                if (plays[num].Channel == channel)
+                if (plays[num].getChannel() == channel)
                 {
                     plays[num].Stop();
                     plays.erase(plays.begin() + num);
@@ -155,7 +152,6 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             return true;
         }
-
 
         double Sound::GetVolume(TinyPoint& pos)
         {

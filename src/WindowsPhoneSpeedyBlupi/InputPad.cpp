@@ -143,11 +143,14 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
             //IL_0037: Unknown result type (might be due to invalid IL or missing references)
             //IL_0041: Expected O, but got Unknown
 
-using Microsoft::Devices::Sensors::AccelerometerReading;
-            ((SensorBase<AccelerometerReading>)accelSensor).CurrentValueChanged +=
-                [this](const Microsoft::Devices::Sensors::SensorReadingEventArgs<AccelerometerReading> & sensor_reading_event_args) {
-                    HandleAccelSensorCurrentValueChanged(sensor_reading_event_args);
-                };
+            using Microsoft::Devices::Sensors::AccelerometerReading;
+            using Microsoft::Devices::Sensors::SensorBase;
+            ((SensorBase<AccelerometerReading>) accelSensor).CurrentValueChanged +=
+                    [this](
+                const Microsoft::Devices::Sensors::SensorReadingEventArgs<AccelerometerReading> &
+                sensor_reading_event_args) {
+                        HandleAccelSensorCurrentValueChanged(sensor_reading_event_args);
+                    };
 
             lastButtonDown = Def::ButtonGlyph::NoneButtonGlyph;
             buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;

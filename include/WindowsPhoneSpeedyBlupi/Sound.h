@@ -29,8 +29,9 @@ namespace WindowsPhoneSpeedyBlupi {
     private: Microsoft::Xna::Framework::Audio::SoundEffectInstance sei;
     private: const int channel;
 
-    public:NeoSdk::Property<int> Channel;
-    public:NeoSdk::Property<bool> IsFree;
+        public: [[nodiscard]] int getChannel() const;
+        public: [[nodiscard]] bool getIsFree() const;
+
 
 
     public: Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped);
@@ -100,9 +101,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void StopAll();
 
-        bool PlayImage(int channel, const TinyPoint& pos) const;
-
-        bool PlayImage(int channel, const TinyPoint& pos, int rank, bool bLoop);
+        bool PlayImage(int channel, TinyPoint& pos, int rank = -1, bool bLoop = false);
 
         bool PosImage(int channel, TinyPoint& pos);
 

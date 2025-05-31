@@ -21,34 +21,32 @@
 #include "WindowsPhoneSpeedyBlupi/Helper.h"
 
 namespace WindowsPhoneSpeedyBlupi {
-    Game1::Game1():
-        IMPL_PROP_CUSTOM_READONLY(bool, IsTrialMode, {return false;}),
-        IMPL_PROP_CUSTOM_READONLY(bool, IsRankingMode,
-{
-    if (!simulateTrialMode)
-    {
-        return isTrialMode;
+    bool Game1::getIsRankingMode() const {
+        if (!simulateTrialMode)
+        {
+            return isTrialMode;
+        }
+        return true;
     }
-    return true;
-}
 
-
-        ),
-    graphics(this),
-    gameData(),
-    pixmap(this, graphics),
-    sound(this, gameData),
-    decor(),
-    waitJauge(),
-    inputPad(this, decor, pixmap, sound, gameData)
+    bool Game1::getIsTrialMode() const { return false ; }
 
 
 
 
 
-    {
 
-        Exiting += OnExiting;
+    Game1::Game1(): graphics(this),
+                    gameData(), startTime(System::TimeSpan(0)),
+                    pixmap(this, graphics),
+                    sound(this, gameData),
+                    decor(),
+                    waitJauge(),
+                    inputPad(this, decor, pixmap, sound, gameData) {
+
+        Exiting += [this](const Microsoft::Xna::Framework::ExitingEventArgs & args) {
+        OnExiting(args);
+        };
 
 #if KNI
         Deactivated += OnDeactivated;
@@ -56,16 +54,18 @@ namespace WindowsPhoneSpeedyBlupi {
 #endif
 
         bool touchPanelConnected = true;
-        if (touchPanelConnected)
-        {
-            this->IsMouseVisible = true;
-            Microsoft::Xna::Framework::Input::Mouse::SetCursor(MouseCursor::Arrow);//TODO: Is it XNA 4.0?
+        using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
+        if (!TouchPanel::GetCapabilities().getIsConnected()) {
+            Game::setIsMouseVisible(true);
+            using Microsoft::Xna::Framework::Input::Mouse;
+            using Microsoft::Xna::Framework::Input::MouseCursor;
+            Mouse::SetCursor(MouseCursor::Arrow); //TODO: Is it XNA 4.0?
         }
 
-        graphics.IsFullScreen = false;
-        Game::Content.get().RootDirectory = "Content";
-        Game::TargetElapsedTime = System::TimeSpan::FromTicks(500000L);
-        Game::InactiveSleepTime = System::TimeSpan::FromSeconds(1.0);
+        graphics.setIsFullScreen(false);
+        Game::getContent().setRootDirectory("Content");
+        Game::setTargetElapsedTime(System::TimeSpan::FromTicks(500000L));
+        Game::setInactiveSleepTime(System::TimeSpan::FromSeconds(1.0));
         missionToStart1 = -1;
         missionToStart2 = -1;
 
@@ -84,7 +84,6 @@ namespace WindowsPhoneSpeedyBlupi {
         fadeOutPhase = Def::Phase::NonePhase;
 
         SetPhase(Def::Phase::First);
-
     }
 
     Game1::~Game1() {
@@ -121,17 +120,16 @@ namespace WindowsPhoneSpeedyBlupi {
         Game::OnActivated(sender, args);
     }
 
-    void Game1::OnExiting(std::any sender, System::Runtime::CompilerServices::EventArgs args)
+    void Game1::OnExiting(const Microsoft::Xna::Framework::ExitingEventArgs args)
     {
         decor.CurrentDelete();
     }
-
 
     void Game1::Update(Microsoft::Xna::Framework::GameTime gameTime) {
         using Microsoft::Xna::Framework::Input::GamePad;
         using Microsoft::Xna::Framework::PlayerIndex;
         using Microsoft::Xna::Framework::Input::ButtonState;
-            if (GamePad::GetState(PlayerIndex::One).Buttons.get().Back == ButtonState::Pressed)
+            if (GamePad::GetState(PlayerIndex::One).getButtons().getBack() == ButtonState::Pressed)
             {
                 if (phase == Def::Phase::Play)
                 {
@@ -167,11 +165,11 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             if (phase == Def::Phase::First)
             {
-                startTime = gameTime.TotalGameTime;
+                startTime = gameTime.getTotalGameTime();
                 pixmap.LoadContent();
                 sound.LoadContent();
                 gameData.Read();
-                inputPad.PixmapOrigin = pixmap.Origin;
+                inputPad.setPixmapOrigin(pixmap.Origin);
                 SetPhase(Def::Phase::Wait);
                 return;
             }

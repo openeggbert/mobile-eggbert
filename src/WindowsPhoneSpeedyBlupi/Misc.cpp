@@ -2,7 +2,7 @@
 // Created by robertvokac on 5/24/25.
 //
 
-#include "../../include/WindowsPhoneSpeedyBlupi/Misc.h"
+#include "WindowsPhoneSpeedyBlupi/Misc.h"
 #include <cmath>
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439

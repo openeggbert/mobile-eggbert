@@ -5,8 +5,7 @@
 //using static WindowsPhoneSpeedyBlupi.Def;
 #ifndef DEF_H
 #define DEF_H
-
-#include "NeoSdk/ReadonlyProperty.h"
+#include <vector>
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -707,9 +706,9 @@ namespace WindowsPhoneSpeedyBlupi
 
         public: static constexpr ushort KEY_DOWN = 4;
 
-        static constexpr NeoSdk::ReadOnlyProperty<bool> HasSound{ [this]() { return true; } };
+        static constexpr bool getHasSound(){return true;}
 
-        static constexpr NeoSdk::ReadOnlyProperty<bool> EasyMove{ [this]() { return true; } };
+        static constexpr bool getEasyMove(){ return true;}
 
     };
 

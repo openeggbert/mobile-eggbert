@@ -5,7 +5,8 @@
 
 #include <string>
 #include <sstream>
-#include "NeoSdk/ReadonlyProperty.h"
+
+#include "CNA/Prop.h"
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -26,8 +27,8 @@ namespace WindowsPhoneSpeedyBlupi
 
         }
 
-        NeoSdk::ReadOnlyProperty<int> Width{ [this]() { return RightX - LeftX;  } };
-        NeoSdk::ReadOnlyProperty<int> Height{ [this]() { return BottomY - TopY; } };
+        public: [[nodiscard]] int getWidth() const;
+        public: [[nodiscard]] int getHeight() const;
 
         std::string ToString() const
         {;

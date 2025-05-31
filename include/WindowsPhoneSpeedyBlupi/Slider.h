@@ -14,15 +14,15 @@ namespace WindowsPhoneSpeedyBlupi {
     using byte = unsigned char;
     class Slider
     {
+    private: WindowsPhoneSpeedyBlupi::TinyPoint topLeftCorner;
+    private: double value;
 
-    public:NeoSdk::Property<WindowsPhoneSpeedyBlupi::TinyPoint> TopLeftCorner;
-    public:NeoSdk::Property<double> Value;
-    public:NeoSdk::Property<int> PosLeft;
-    public:NeoSdk::Property<int> PosRight;
+    public: [[nodiscard]] WindowsPhoneSpeedyBlupi::TinyPoint getTopLeftCorner() const;
+    ddata(double, Value)
+    public: [[nodiscard]] int getPosLeft() const;
+    public: [[nodiscard]] int getPosRight() const;
 
     public: Slider(WindowsPhoneSpeedyBlupi::TinyPoint topLeftCorner, double value) ;
-
-
 
 /*
         NeoSdk::Property<byte> SelectedGamer;
