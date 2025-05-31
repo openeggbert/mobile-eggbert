@@ -28,8 +28,8 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Slider::Draw(Pixmap& pixmap) {
         TinyPoint tinyPoint;
-        tinyPoint.X = getTopLeftCorner().X - pixmap.Origin.X;
-        tinyPoint.Y = getTopLeftCorner().Y - pixmap.Origin.Y;
+        tinyPoint.X = getTopLeftCorner().X - pixmap.getOrigin().X;
+        tinyPoint.Y = getTopLeftCorner().Y - pixmap.getOrigin().Y;
         TinyPoint dest = tinyPoint;
         TinyRect tinyRect;
         tinyRect.LeftX = 0;
@@ -77,7 +77,7 @@ namespace WindowsPhoneSpeedyBlupi
                 double val = ((double)pos.X - (double)getPosLeft()) / (double)(getPosRight() - getPosLeft());
                 val = std::max(val, 0.0);
                 val = std::min(val, 1.0);
-                if (getValue != val)
+                if (getValue() != val)
                 {
                     setValue(val);
                     return true;

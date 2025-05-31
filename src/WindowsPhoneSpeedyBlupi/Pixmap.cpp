@@ -12,6 +12,9 @@
 #include "Microsoft/Xna/Framework/Graphics/SpriteSortMode.h"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
 #include "Microsoft/Xna/Framework/Color.h"
+#include "WindowsPhoneSpeedyBlupi/Misc.h"
+#include "WindowsPhoneSpeedyBlupi/Tables.h"
+#include "WindowsPhoneSpeedyBlupi/Text.h"
 
 namespace WindowsPhoneSpeedyBlupi {
 
@@ -48,7 +51,8 @@ namespace WindowsPhoneSpeedyBlupi {
     
 
     
-    Pixmap::Pixmap(Game1& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics): game1(game1),
+    Pixmap::Pixmap(Microsoft::Xna::Framework::Game& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
+        game1(game1),
         graphics(graphics), spriteBatch(Microsoft::Xna::Framework::Graphics::SpriteBatch()), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
         bitmapObject(Texture2D()),
         bitmapElement(Texture2D()),
@@ -156,7 +160,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         tinyPoint.X = rect.LeftX + rect.getWidth() / 2 - (int)originX;
                         tinyPoint.Y = rect.TopY + 28;
                         TinyPoint pos = tinyPoint;
-                        Text::DrawTextCenter(this, pos, Decor::GetCheatTinyText(glyph), 1.0);
+                        Text::DrawTextCenter(*this, pos, Decor::GetCheatTinyText(glyph), 1.0);
                         break;
                     }
                 case Def::ButtonGlyph::Cheat11:

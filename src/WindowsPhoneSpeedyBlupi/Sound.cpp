@@ -3,6 +3,9 @@
 //
 
 #include "WindowsPhoneSpeedyBlupi/Sound.h"
+
+#include <algorithm>
+
 namespace WindowsPhoneSpeedyBlupi {
     int Sound::Play::getChannel() const { return channel; }
     bool Sound::Play::getIsFree() const { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
@@ -30,7 +33,7 @@ namespace WindowsPhoneSpeedyBlupi {
         sei.Stop();
     }
 
-    Sound::Sound(Game1& game1, GameData& gameData):
+    Sound::Sound(Microsoft::Xna::Framework::Game& game1, GameData& gameData):
     game1(game1),
     gameData(gameData)
     {
@@ -107,7 +110,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
          bool Sound::PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop)
         {
-            if (!gameData.Sounds)
+            if (!gameData.getSounds())
             {
                 return true;
             }

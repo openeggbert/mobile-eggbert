@@ -8,7 +8,6 @@
 #include "Microsoft/Devices/Sensors/Accelerometer.h"
 #include "Microsoft/Devices/Sensors/AccelerometerReading.h"
 #include "WindowsPhoneSpeedyBlupi/Decor.h"
-#include "WindowsPhoneSpeedyBlupi/Game1.h"
 #include "WindowsPhoneSpeedyBlupi/Pixmap.h"
 #include "WindowsPhoneSpeedyBlupi/Slider.h"
 #include "WindowsPhoneSpeedyBlupi/Sound.h"
@@ -20,7 +19,7 @@ class InputPad
     private:
         static const int padRadius = 140;
 
-         mutable Game1 game1;
+         mutable Microsoft::Xna::Framework::Game game1;
 
          mutable Decor decor;
 
@@ -73,7 +72,7 @@ class InputPad
         public: [[nodiscard]] TinyPoint getPadCenter() const;
 
     public:
-        InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData);
+        InputPad(Microsoft::Xna::Framework::Game& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData);
 
         void StartMission(int mission);
 

@@ -5,12 +5,12 @@
 #ifndef SOUND_H
 #define SOUND_H
 #include "Def.h"
-#include "Game1.h"
 #include "GameData.h"
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.h"
 #include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.h"
 #include "Microsoft/Xna/Framework/Audio/SoundState.h"
 #include "CNA/Prop.h"
+#include "Microsoft/Xna/Framework/Game.h"
 
 
 namespace WindowsPhoneSpeedyBlupi {
@@ -22,6 +22,7 @@ namespace WindowsPhoneSpeedyBlupi {
 // using Microsoft.Xna.Framework.Audio;
 // using WindowsPhoneSpeedyBlupi;
 
+    class Game1;
     class Sound
     {
     private: class Play
@@ -66,7 +67,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     public: static constexpr int MAXVOLUME = 20;
 
-    private: const Game1 game1;
+    private: const Microsoft::Xna::Framework::Game game1;
 
     private: const GameData gameData;
 
@@ -76,7 +77,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     private: double volume;
 
-    public: Sound(Game1& game1, GameData& gameData);
+    public: Sound(Microsoft::Xna::Framework::Game& game1, GameData& gameData);
         Sound(const Sound&);
         Sound& operator=(const Sound&);
 

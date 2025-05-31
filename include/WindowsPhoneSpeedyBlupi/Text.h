@@ -199,11 +199,11 @@ using std::string;
     public:
         static void DrawTextLeft(Pixmap& pixmap, TinyPoint& pos, string& text, double& size);
 
-        static void DrawText(Pixmap& pixmap, TinyPoint pos, string& text, double& size);
+        static void DrawText(Pixmap &pixmap, TinyPoint pos, string text, double size);
 
         static void DrawTextPente(Pixmap pixmap, TinyPoint pos, string text, int pente, double size);
 
-        static void DrawTextCenter(Pixmap& pixmap, TinyPoint& pos, string& text, double& size);
+        static void DrawTextCenter(Pixmap &pixmap, TinyPoint &pos, string text, double size);
 
         static int GetTextWidth(const string &text, double size);
 

@@ -12,7 +12,7 @@
 
 #include "CNA/Prop.h"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
-#define is(i) std::to_string(i)
+#define int_to_string(i) std::to_string(i)
 
 
 namespace WindowsPhoneSpeedyBlupi {

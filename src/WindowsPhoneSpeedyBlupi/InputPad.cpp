@@ -137,19 +137,19 @@ namespace WindowsPhoneSpeedyBlupi {
     TinyPoint InputPad::getPadCenter() const
     {
         TinyRect drawBounds = pixmap.getDrawBounds();
-        int x = gameData.JumpRight ? 100 : drawBounds.getWidth() - 100;
+        int x = gameData.getJumpRight() ? 100 : drawBounds.getWidth() - 100;
         return TinyPoint(x, drawBounds.getHeight() - 100);
     }
     /** Properties : End */
 
-    InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData):
+    InputPad::InputPad(Microsoft::Xna::Framework::Game& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData):
         game1(game1),
         decor(decor),
         pixmap(pixmap),
         sound(sound),
         gameData(gameData),
         accelSensor(Microsoft::Devices::Sensors::Accelerometer()),
-        accelSlider(Slider(TinyPoint(320, 400), this->gameData.AccelSensitivity))
+        accelSlider(Slider(TinyPoint(320, 400), this->gameData.getAccelSensitivity()))
         {
             //IL_0037: Unknown result type (might be due to invalid IL or missing references)
             //IL_0041: Expected O, but got Unknown
@@ -176,9 +176,9 @@ namespace WindowsPhoneSpeedyBlupi {
         void InputPad::Update()
         {
             pressedGlyphs.clear();
-            if (accelActive != gameData.AccelActive)
+            if (accelActive != gameData.getAccelActive())
             {
-                accelActive = gameData.AccelActive;
+                accelActive = gameData.getAccelActive();
                 if (accelActive)
                 {
                     StartAccel();
@@ -327,7 +327,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
                     if ((getPhase() == Def::Phase::MainSetup || getPhase() == Def::Phase::PlaySetup) && accelSlider.Move(touchOrClick))
                     {
-                        gameData.AccelSensitivity = accelSlider.getValue();
+                        gameData.setAccelSensitivity(accelSlider.getValue());
                     }
                     switch (pressedGlyph)
                     {
@@ -520,27 +520,27 @@ namespace WindowsPhoneSpeedyBlupi {
                 if (buttonGlyph >= Def::ButtonGlyph::InitGamerA && buttonGlyph <= Def::ButtonGlyph::InitGamerC)
                 {
                     int selectedGamer = (int)(buttonGlyph - 1);
-                    selected = selectedGamer == gameData.SelectedGamer;
+                    selected = selectedGamer == gameData.getSelectedGamer();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupSounds)
                 {
-                    selected = gameData.Sounds;
+                    selected = gameData.getSounds();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupJump)
                 {
-                    selected = gameData.JumpRight;
+                    selected = gameData.getJumpRight();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupZoom)
                 {
-                    selected = gameData.AutoZoom;
+                    selected = gameData.getAutoZoom();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupAccel)
                 {
-                    selected = gameData.AccelActive;
+                    selected = gameData.getAccelActive();
                 }
                 pixmap.DrawInputButton(GetButtonRect(buttonGlyph), buttonGlyph, pressed, selected);
             }
-            if ((getPhase() == Def::Phase::MainSetup || getPhase() == Def::Phase::PlaySetup) && gameData.AccelActive)
+            if ((getPhase() == Def::Phase::MainSetup || getPhase() == Def::Phase::PlaySetup) && gameData.getAccelActive())
             {
                 accelSlider.Draw(pixmap);
             }
@@ -792,7 +792,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 case Def::ButtonGlyph::PlayAction:
                     {
-                        if (gameData.JumpRight)
+                        if (gameData.getJumpRight())
                         {
                             TinyRect result16 = TinyRect();
                             result16.LeftX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 1.2);
@@ -810,7 +810,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 case Def::ButtonGlyph::PlayJump:
                     {
-                        if (gameData.JumpRight)
+                        if (gameData.getJumpRight())
                         {
                             TinyRect result12 = TinyRect();
                             result12.LeftX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 1.2);
@@ -828,7 +828,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 case Def::ButtonGlyph::PlayDown:
                     {
-                        if (gameData.JumpRight)
+                        if (gameData.getJumpRight())
                         {
                             TinyRect result8 = TinyRect();
                             result8.LeftX = (int)(buttonSizeFactor1 * 0.2);
@@ -943,7 +943,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
             Microsoft::Devices::Sensors::AccelerometerReading sensorReading = e.getSensorReading();
             float y = ((Microsoft::Devices::Sensors::AccelerometerReading)(sensorReading)).getAcceleration().Y;
-            float sensitivityThreshold = (1.0f - (float)gameData.AccelSensitivity) * 0.06f + 0.04f;
+            float sensitivityThreshold = (1.0f - (float)gameData.getAccelSensitivity()) * 0.06f + 0.04f;
             float adjustedThreshold = (accelLastState ? (sensitivityThreshold * 0.6f) : sensitivityThreshold);
             if (y > adjustedThreshold)
             {

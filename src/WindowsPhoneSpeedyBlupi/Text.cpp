@@ -14,7 +14,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-        void Text::DrawText(Pixmap& pixmap, TinyPoint pos, string& text, double& size)
+        void Text::DrawText(Pixmap& pixmap, TinyPoint pos, string text, double size)
         {
             if (!text.empty())
             {
@@ -41,7 +41,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-        void Text::DrawTextCenter(Pixmap& pixmap, TinyPoint& pos, string& text, double& size)
+        void Text::DrawTextCenter(Pixmap& pixmap, TinyPoint& pos, string text, double size)
         {
             if (!text.empty())
             {

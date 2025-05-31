@@ -57,14 +57,14 @@ namespace WindowsPhoneSpeedyBlupi
                 rect.RightX = 124;
                 rect.TopY = 0;
                 rect.BottomY = 22;
-                m_pixmap.DrawPart(5, m_pos, rect, m_zoom);
+                m_pixmap.value().DrawPart(5, m_pos, rect, m_zoom);
                 if (num > 0)
                 {
                     rect.LeftX = 0;
                     rect.RightX = 6 + num;
                     rect.TopY = 22 * m_mode;
                     rect.BottomY = 22 * (m_mode + 1);
-                    m_pixmap.DrawPart(5, m_pos, rect, m_zoom);
+                    m_pixmap.value().DrawPart(5, m_pos, rect, m_zoom);
                 }
             }
         }

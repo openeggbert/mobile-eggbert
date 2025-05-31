@@ -29,16 +29,16 @@ namespace WindowsPhoneSpeedyBlupi
         byte data[TotalLength];
 
     public:
+    public: [[nodiscard]] byte getSelectedGamer() const; public: void setSelectedGamer(const byte& v);
+    public: [[nodiscard]] bool getSounds() const; public: void setSounds(const bool& v);
+    public: [[nodiscard]] bool getJumpRight() const; public: void setJumpRight(const bool& v);
+    public: [[nodiscard]] bool getAutoZoom() const; public: void setAutoZoom(const bool& v);
+    public: [[nodiscard]] bool getAccelActive() const; public: void setAccelActive(const bool& v);
+    public: [[nodiscard]] double getAccelSensitivity() const; public: void setAccelSensitivity(double v);
+    public: [[nodiscard]] int getNbVies() const; public: void setNbVies(const int& v);
+    public: [[nodiscard]] int getLastWorld() const; public: void setLastWorld(const int& v);
+    public: [[nodiscard]] int getGamerOffset() const; public: void setGamerOffset(const int& v);
 
-        NeoSdk::Property<byte> SelectedGamer;
-        NeoSdk::Property<bool> Sounds;
-        NeoSdk::Property<bool> JumpRight;
-        NeoSdk::Property<bool> AutoZoom;
-        NeoSdk::Property<bool> AccelActive;
-        NeoSdk::Property<double> AccelSensitivity;
-        NeoSdk::Property<int> NbVies;
-        NeoSdk::Property<int> LastWorld;
-        NeoSdk::Property<int> GamerOffset;
 
         GameData();
 

@@ -7,11 +7,11 @@
 #include <algorithm>
 
 namespace WindowsPhoneSpeedyBlupi {
-    string MyResource::LoadString(const ushort res)
+    const char *MyResource::LoadString(const ushort res)
     {
         auto it = resources.find(res);
         if (it != resources.end()) {
-            return it->second;
+            return it->second.c_str();
         }
         return DEFAULT_VALUE;
     }

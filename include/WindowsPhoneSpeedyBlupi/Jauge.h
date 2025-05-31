@@ -4,10 +4,10 @@
 
 #ifndef JAUGE_H
 #define JAUGE_H
-
-#include "Pixmap.h"
+#include <optional>
 
 namespace WindowsPhoneSpeedyBlupi {
+
     class Jauge {
     private:
         std::optional<Pixmap> m_pixmap;

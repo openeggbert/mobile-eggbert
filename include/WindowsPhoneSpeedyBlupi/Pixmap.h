@@ -7,7 +7,6 @@
 #include <optional>
 
 #include "Def.h"
-#include "Game1.h"
 
 #include "Microsoft/Xna/Framework/Vector2.h"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
@@ -47,7 +46,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         // void DrawChar(int rank, WindowsPhoneSpeedyBlupi::TinyPoint pos, double size);
         //////
     private:
-        const Game1 game1;
+        const Microsoft::Xna::Framework::Game game1;
 
         const Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
@@ -99,7 +98,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         public: [[nodiscard]] TinyRect getDrawBounds() const;
         public: [[nodiscard]] TinyPoint getOrigin() const;
 
-        Pixmap(Game1 &game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
+        Pixmap(Microsoft::Xna::Framework::Game &game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
 
         Pixmap(const Pixmap&);
         Pixmap& operator=(const Pixmap&);
@@ -115,7 +114,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         void UpdateGeometry();
 
     public:
-        void BackgroundCache(const string &name);
+        void BackgroundCache(const std::string &name);
 
          bool Start();
 

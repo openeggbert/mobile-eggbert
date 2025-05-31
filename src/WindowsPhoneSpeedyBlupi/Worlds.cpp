@@ -308,7 +308,7 @@ namespace WindowsPhoneSpeedyBlupi {
     void Worlds::WriteDecorField(const int line[], const int &arraySize) {
         for (int i = 0; i < arraySize; i++) {
             if (line[i] != -1) {
-                output << is(line[i]);
+                output << int_to_string(line[i]);
             }
             if (i < arraySize - 1) {
                 output << ",";
@@ -320,7 +320,7 @@ namespace WindowsPhoneSpeedyBlupi {
     void Worlds::WriteDoorsField(const int doors[], const int &arraySize) {
         for (int i = 0; i < arraySize; i++) {
             if (doors[i] != 1) {
-                output << is(doors[i]);
+                output << int_to_string(doors[i]);
             }
             if (i < arraySize - 1) {
                 output << ",";

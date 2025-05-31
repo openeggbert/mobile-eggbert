@@ -13,7 +13,6 @@
 #include "Pixmap.h"
 #include "Sound.h"
 #include "InputPad.h"
-#include "MyResource.h"
 #include "Microsoft/Xna/Framework/Game.h"
 #include "Microsoft/Xna/Framework/GameTime.h"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"

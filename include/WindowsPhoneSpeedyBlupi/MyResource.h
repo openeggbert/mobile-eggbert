@@ -280,7 +280,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     private: static const constexpr char* DEFAULT_VALUE = "???";
 
-    public: static string LoadString(ushort res);
+    public: static const char *LoadString(ushort res);
 
     private:
         static const bool initialized;

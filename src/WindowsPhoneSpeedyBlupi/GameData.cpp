@@ -7,21 +7,24 @@
 namespace WindowsPhoneSpeedyBlupi
 {
 
+    byte GameData::getSelectedGamer() const { return data[2]; } void GameData::setSelectedGamer(const byte& v) { data[2] = v; }
 
+    bool GameData::getSounds() const { return data[3] == 1; } void GameData::setSounds(const bool& v) {data[3] = (byte)(v ? 1u : 0u); }
+    bool GameData::getJumpRight() const { return data[4] == 1; } void GameData::setJumpRight(const bool& v) {data[4] = (byte)(v ? 1u : 0u); }
+    bool GameData::getAutoZoom() const { return data[5] == 1; } void GameData::setAutoZoom(const bool& v) {data[5] = (byte)(v ? 1u : 0u); }
+    bool GameData::getAccelActive() const { return data[6] == 1; } void GameData::setAccelActive(const bool& v) {data[6] = (byte)(v ? 1u : 0u); }
 
-    GameData::GameData() : data{},
+    double GameData::getAccelSensitivity() const { return (double)(int)data[7] / 100.0; }
+    void GameData::setAccelSensitivity(double v) {
+        v = std::max(v, 0.0),
+        v = std::min(v, 1.0);
+        data[7] = (byte)(v * 100.0);}
+    int GameData::getNbVies() const { return data[getGamerOffset()]; } void GameData::setNbVies(const int& v) {data[getGamerOffset()] = (byte)v;}
+    int GameData::getLastWorld() const { return data[getGamerOffset() + 1]; } void GameData::setLastWorld(const int& v) {data[getGamerOffset() + 1] = (byte)v;}
+    int GameData::getGamerOffset() const { return GetGamerOffset(getSelectedGamer()); }
 
-    SelectedGamer( [this]() { return data[2]; } , [this](byte value) {data[2] = value; }),
-    Sounds( [this]() { return data[3] == 1; } , [this](bool value) {data[3] = (byte)(value ? 1u : 0u); }),
-    JumpRight( [this]() { return data[4] == 1; } , [this](bool value) {data[4] = (byte)(value ? 1u : 0u);}),
-    AutoZoom( [this]() { return data[5] == 1; } , [this](bool value) {data[5] = (byte)(value ? 1u : 0u);}),
-    AccelActive( [this]() { return data[6] == 1; } , [this](bool value) {data[6] = (byte)(value ? 1u : 0u);}),
-    AccelSensitivity( [this]() { return (double)(int)data[7] / 100.0; } , [this](double value) {value = std::max(value, 0.0),
-        value = std::min(value, 1.0);
-        data[7] = (byte)(value * 100.0);}),
-    NbVies( [this]() { return data[GamerOffset]; } , [this](bool value) {data[GamerOffset] = (byte)value;}),
-    LastWorld( [this]() { return data[GamerOffset + 1]; } , [this](int value) {data[GamerOffset + 1] = (byte)value;}),
-    GamerOffset ([this]() { return GetGamerOffset(SelectedGamer); } )
+    GameData::GameData() : data{}
+
     {
 
         Initialize();
@@ -39,14 +42,14 @@ namespace WindowsPhoneSpeedyBlupi
 
         void GameData::Reset()
         {
-            Initialize(SelectedGamer);
+            Initialize(getSelectedGamer());
         }
 
         void GameData::GetDoors(int doors[])
         {
             for (int i = 0; i < DoorsLength; i++)
             {
-                doors[i] = data[GamerOffset + 10 + i];
+                doors[i] = data[getSelectedGamer() + 10 + i];
             }
         }
 
@@ -54,7 +57,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             for (int i = 0; i < DoorsLength; i++)
             {
-                data[GamerOffset + 10 + i] = (byte)doors[i];
+                data[getSelectedGamer() + 10 + i] = (byte)doors[i];
             }
         }
 
@@ -90,7 +93,7 @@ namespace WindowsPhoneSpeedyBlupi
             data[5] = 1;
             data[6] = 0;
             data[7] = 50;
-            SelectedGamer = 0;
+            setSelectedGamer(0);
             for (int i = 0; i < MaxGamer; i++)
             {
                 Initialize(i);

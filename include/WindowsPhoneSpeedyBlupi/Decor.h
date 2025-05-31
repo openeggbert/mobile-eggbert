@@ -10,6 +10,7 @@
 
 #include "Pixmap.h"
 #include "Sound.h"
+#include "Tables.h"
 #include "System/Random.h"
 #include "WindowsPhoneSpeedyBlupi/Helper.h"
 
