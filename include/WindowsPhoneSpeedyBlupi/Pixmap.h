@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "Def.h"
+#include "PixmapI.h"
 
 #include "Microsoft/Xna/Framework/Vector2.h"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
@@ -33,10 +34,12 @@ namespace WindowsPhoneSpeedyBlupi
 {
 using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-    class Pixmap
+    class Pixmap : public PixmapI
     {
 
     public:
+        virtual ~Pixmap() = default;
+
         //WindowsPhoneSpeedyBlupi::TinyPoint Origin;
         //
         // void DrawPart(int i, WindowsPhoneSpeedyBlupi::TinyPoint dest, const WindowsPhoneSpeedyBlupi::TinyRect & rect, double x);
@@ -95,48 +98,48 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         Microsoft::Xna::Framework::Graphics::SpriteEffects effect;
 
     public:
-        public: [[nodiscard]] TinyRect getDrawBounds() const;
+        public: [[nodiscard]] TinyRect getDrawBounds() const override;
         public: [[nodiscard]] TinyPoint getOrigin() const;
 
         Pixmap(Microsoft::Xna::Framework::Game &game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
 
         Pixmap(const Pixmap&);
         Pixmap& operator=(const Pixmap&);
-         TinyPoint HotSpotToHud(TinyPoint& pos);
+         TinyPoint HotSpotToHud(TinyPoint& pos) override;
 
-         void SetHotSpot(double zoom, double x, double y);
+         void SetHotSpot(double zoom, double x, double y) override;
 
-         void DrawInputButton(TinyRect rect, Def::ButtonGlyph &glyph, bool &pressed, bool &selected);
+         void DrawInputButton(TinyRect rect, Def::ButtonGlyph &glyph, bool &pressed, bool &selected) override;
 
-         void LoadContent();
+         void LoadContent() override;
 
     private:
         void UpdateGeometry();
 
     public:
-        void BackgroundCache(const std::string &name);
+        void BackgroundCache(const std::string &name) override;
 
-         bool Start();
+         bool Start() override;
 
-         bool Finish();
+         bool Finish() override;
 
-         void DrawBackground();
+         void DrawBackground() override;
 
-         void DrawChar(int rank, TinyPoint& pos, double size);
+         void DrawChar(int rank, TinyPoint& pos, double size) override;
 
-         void HudIcon(int channel, int rank, TinyPoint& pos);
+         void HudIcon(int channel, int rank, TinyPoint& pos) override;
 
-         void QuickIcon(int channel, int rank, TinyPoint& pos);
+         void QuickIcon(int channel, int rank, TinyPoint& pos) override;
 
-         void QuickIcon(int channel, int rank, TinyPoint& pos, double opacity, double rotation);
+         void QuickIcon(int channel, int rank, TinyPoint& pos, double opacity, double rotation) override;
 
-         bool DrawPart(int channel, TinyPoint& dest, TinyRect& rect);
+         bool DrawPart(int channel, TinyPoint& dest, TinyRect& rect) override;
 
-         bool DrawPart(int channel, TinyPoint& dest, TinyRect& rect, double zoom);
+         bool DrawPart(int channel, TinyPoint& dest, TinyRect& rect, double zoom) override;
 
-         void DrawIcon(int channel, int icon, TinyRect rect, double opacity, bool useHotSpot);
+         void DrawIcon(int channel, int icon, TinyRect rect, double opacity, bool useHotSpot) override;
 
-         void DrawIcon(int channel, int icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot);
+         void DrawIcon(int channel, int icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot) override;
 
     private:
         Microsoft::Xna::Framework::Rectangle GetSrcRectangle(Texture2D& bitmap, int bitmapGridX, int bitmapGridY, int iconWidth, int iconHeight, int gap, int icon);

@@ -133,6 +133,10 @@ namespace WindowsPhoneSpeedyBlupi {
             return true;
         }
 
+         bool Sound::PlayImage(int channel, TinyPoint &pos) {
+             return PlayImage(channel, pos, -1, false);
+         }
+
          bool Sound::PosImage(int channel, TinyPoint& pos)
         {
             return true;

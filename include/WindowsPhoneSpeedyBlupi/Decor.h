@@ -12,6 +12,7 @@
 #include "Sound.h"
 #include "Tables.h"
 #include "System/Random.h"
+#include "Jauge.h"
 #include "WindowsPhoneSpeedyBlupi/Helper.h"
 
 // // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439

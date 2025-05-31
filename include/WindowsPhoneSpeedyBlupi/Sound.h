@@ -6,6 +6,7 @@
 #define SOUND_H
 #include "Def.h"
 #include "GameData.h"
+#include "SoundI.h"
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.h"
 #include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.h"
 #include "Microsoft/Xna/Framework/Audio/SoundState.h"
@@ -22,8 +23,7 @@ namespace WindowsPhoneSpeedyBlupi {
 // using Microsoft.Xna.Framework.Audio;
 // using WindowsPhoneSpeedyBlupi;
 
-    class Game1;
-    class Sound
+    class Sound : public SoundI
     {
     private: class Play
         {
@@ -65,7 +65,10 @@ namespace WindowsPhoneSpeedyBlupi {
         1.0, 0.2, 1.0, 0.2, 1.0, 0.2, 1.0, 0.2, 1.0, 0.2
         };
 
-    public: static constexpr int MAXVOLUME = 20;
+    public:
+        virtual ~Sound() = default;
+
+        static constexpr int MAXVOLUME = 20;
 
     private: const Microsoft::Xna::Framework::Game game1;
 
@@ -82,36 +85,36 @@ namespace WindowsPhoneSpeedyBlupi {
         Sound& operator=(const Sound&);
 
     public:
-        void LoadContent();
+        void LoadContent() override;
 
-        bool Create();
+        bool Create() override;
 
-        void SetState(bool bState);
+        void SetState(bool bState) override;
 
-        void SetCDAudio(bool bAudio);
+        void SetCDAudio(bool bAudio) override;
 
-        bool GetEnable();
+        bool GetEnable() override;
 
-        void SetAudioVolume(int volume);
+        void SetAudioVolume(int volume) override;
 
-        int GetAudioVolume();
+        int GetAudioVolume() override;
 
-        void SetMidiVolume(int volume);
+        void SetMidiVolume(int volume) override;
 
-        int GetMidiVolume();
+        int GetMidiVolume() override;
 
-        void StopAll();
+        void StopAll() override;
 
-        bool PlayImage(int channel, TinyPoint& pos, int rank = -1, bool bLoop = false);
+        bool PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop) override;
+        bool PlayImage(int channel, TinyPoint& pos);
 
-        bool PosImage(int channel, TinyPoint& pos);
+        bool PosImage(int channel, TinyPoint& pos) override;
 
-        bool Stop(int channel);
+        bool Stop(int channel) override;
 
     private:
         double GetVolume(TinyPoint& pos);
         double GetBalance(TinyPoint& pos);
-
 
     };
 }

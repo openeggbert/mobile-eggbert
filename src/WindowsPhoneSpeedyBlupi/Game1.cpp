@@ -37,11 +37,11 @@ namespace WindowsPhoneSpeedyBlupi {
 
     Game1::Game1(): graphics(this),
                     gameData(), startTime(System::TimeSpan(0)),
-                    pixmap(this, graphics),
-                    sound(this, gameData),
+                    pixmap(*this, graphics),
+                    sound(*this, gameData),
                     decor(),
                     waitJauge(),
-                    inputPad(this, decor, pixmap, sound, gameData) {
+                    inputPad(*this, decor, pixmap, sound, gameData) {
 
         Exiting += [this](const Microsoft::Xna::Framework::ExitingEventArgs & args) {
         OnExiting(args);

@@ -48,9 +48,7 @@ namespace WindowsPhoneSpeedyBlupi {
         result.Y = (int) originY;
         return result;
     }
-    
 
-    
     Pixmap::Pixmap(Microsoft::Xna::Framework::Game& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
         game1(game1),
         graphics(graphics), spriteBatch(Microsoft::Xna::Framework::Graphics::SpriteBatch()), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
@@ -73,6 +71,12 @@ namespace WindowsPhoneSpeedyBlupi {
         return result;
     }
 
+    void Pixmap::SetHotSpot(const double zoom, const double x, const double y)
+    {
+        hotSpotZoom = zoom;
+        hotSpotX = x;
+        hotSpotY = y;
+    }
             void Pixmap::DrawInputButton(TinyRect rect, Def::ButtonGlyph& glyph, bool& pressed, bool& selected)
         {
             switch (glyph)
