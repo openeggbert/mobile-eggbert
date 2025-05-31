@@ -4,6 +4,18 @@
 
 #include "WindowsPhoneSpeedyBlupi/InputPad.h"
 
+#include "Microsoft/Devices/Sensors/AccelerometerFailedException.h"
+#include "Microsoft/Xna/Framework/Input/Keyboard.h"
+#include "Microsoft/Xna/Framework/Input/KeyboardState.h"
+#include "Microsoft/Xna/Framework/Input/Mouse.h"
+#include "Microsoft/Xna/Framework/Input/MouseState.h"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchCollection.h"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchLocation.h"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
+#include "System/UnauthorizedAccessException.h"
+#include "WindowsPhoneSpeedyBlupi/DDebug.h"
+#include "WindowsPhoneSpeedyBlupi/Misc.h"
+
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.InputPad
@@ -16,29 +28,23 @@
 // using Microsoft.Xna.Framework.Input.Touch;
 // using static WindowsPhoneSpeedyBlupi.EnvClasses;
 
-namespace WindowsPhoneSpeedyBlupi 
-{
+namespace WindowsPhoneSpeedyBlupi {
+    /** Properties : Start */
+    idata(Def::Phase, Phase, InputPad)
+    idata(int, SelectedGamer, InputPad)
+    idata(TinyPoint, PixmapOrigin, InputPad)
+    int InputPad::getTotalTouch() const { return touchCount; }
 
+    Def::ButtonGlyph InputPad::getButtonPressed() const {
+        Def::ButtonGlyph result = buttonPressed;
+        buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+        return result;
+    }
 
-
-InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData):
-        game1(game1),
-        decor(decor),
-        pixmap(pixmap),
-        sound(sound),
-        gameData(gameData),
-        accelSensor(Accelerometer()),
-        IMPL_PROP_AUTO(Def::Phase, Phase, Def::Phase::NonePhase),
-        IMPL_PROP_AUTO(int, SelectedGamer, 0),
-        IMPL_PROP_AUTO(TinyPoint, PixmapOrigin, TinyPoint()),
-        IMPL_PROP_CUSTOM_READONLY(int, TotalTouch, {return touchCount;}),
-        IMPL_PROP_CUSTOM_READONLY(Def::ButtonGlyph, ButtonPressed,{Def::ButtonGlyph result = buttonPressed;buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;return result;}),
-        IMPL_PROP_CUSTOM(bool, ShowCheatMenu,{return showCheatMenu;},{showCheatMenu = v;}),
-
-        ButtonGlyphs( [this, game1]()
-{
+    idata(bool, ShowCheatMenu, InputPad)
+    std::vector<Def::ButtonGlyph> InputPad::getButtonGlyphs() const {
             std::vector<Def::ButtonGlyph> glyphs;
-            switch (Phase)
+            switch (getPhase())
                 {
                     case Def::Phase::Init:
                         glyphs.push_back(Def::ButtonGlyph::InitGamerA);
@@ -46,11 +52,11 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                         glyphs.push_back(Def::ButtonGlyph::InitGamerC);
                         glyphs.push_back(Def::ButtonGlyph::InitSetup);
                         glyphs.push_back(Def::ButtonGlyph::InitPlay);
-                        if (game1.IsTrialMode)
+                        if (game1.getIsTrialMode())
                         {
                             glyphs.push_back(Def::ButtonGlyph::InitBuy);
                         }
-                        if (game1.IsRankingMode)
+                        if (game1.getIsRankingMode())
                         {
                             glyphs.push_back(Def::ButtonGlyph::InitRanking);
                         }
@@ -128,17 +134,22 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                 }
             return glyphs;
             }
-        ),
-        PadCenter( [this, pixmap, gameData]()
-        {
-            TinyRect drawBounds = pixmap.DrawBounds;
-            int x = gameData.JumpRight ? 100 : drawBounds.Width - 100;
-            return TinyPoint(x, drawBounds.Height - 100);
-        }
-        ),
+    TinyPoint InputPad::getPadCenter() const
+    {
+        TinyRect drawBounds = pixmap.getDrawBounds();
+        int x = gameData.JumpRight ? 100 : drawBounds.getWidth() - 100;
+        return TinyPoint(x, drawBounds.getHeight() - 100);
+    }
+    /** Properties : End */
+
+    InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData):
+        game1(game1),
+        decor(decor),
+        pixmap(pixmap),
+        sound(sound),
+        gameData(gameData),
+        accelSensor(Microsoft::Devices::Sensors::Accelerometer()),
         accelSlider(Slider(TinyPoint(320, 400), this->gameData.AccelSensitivity))
-
-
         {
             //IL_0037: Unknown result type (might be due to invalid IL or missing references)
             //IL_0041: Expected O, but got Unknown
@@ -155,8 +166,6 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
             lastButtonDown = Def::ButtonGlyph::NoneButtonGlyph;
             buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;
         }
-
-
 
         void InputPad::StartMission(int mission)
         {
@@ -191,7 +200,7 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
             {
                 using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
                 touches = TouchPanel::GetState();
-                touchCount = touches.Count;
+                touchCount = touches.getCount();
             }
 
             std::vector<TinyPoint> touchesOrClicks;
@@ -201,9 +210,9 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
             using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
             if(touchScreenIsSupported) for (TouchLocation item : touches)
             {
-                if (item.State == TouchLocationState::Pressed || item.State == TouchLocationState::Moved)
+                if (item.getState() == TouchLocationState::Pressed || item.getState() == TouchLocationState::Moved)
                 {
-                    TinyPoint touchPress = TinyPoint((int)item.Position.get().X, (int)item.Position.get().Y);
+                    TinyPoint touchPress = TinyPoint((int)item.getPosition().X, (int)item.getPosition().Y);
                     touchesOrClicks.push_back(touchPress);
                 }
             }
@@ -212,15 +221,15 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
             using Microsoft::Xna::Framework::Input::Mouse;
             using Microsoft::Xna::Framework::Input::ButtonState;
             MouseState mouseState = Mouse::GetState();
-            if (mouseState.LeftButton == ButtonState::Pressed)
+            if (mouseState.getLeftButton() == ButtonState::Pressed)
             {
                 touchCount++;
-                TinyPoint mouseClick(mouseState.X, mouseState.Y);
+                TinyPoint mouseClick(mouseState.getX(), mouseState.getY());
                 touchesOrClicks.push_back(mouseClick);
             }
 
-            float screenWidth = game1.getGraphics().GraphicsDevice.get().Viewport.get().Width;
-            float screenHeight = game1.getGraphics().GraphicsDevice.get().Viewport.get().Height;
+            float screenWidth = game1.getGraphics().getGraphicsDevice().getViewport().getWidth();
+            float screenHeight = game1.getGraphics().getGraphicsDevice().getViewport().getHeight();
             float screenRatio = screenWidth / screenHeight;
 
             if ((Def::PLATFORM == Def::Platform::Android && screenRatio > 1.3333333333333333) /*|| Env.IMPL.isKNI()*/)
@@ -290,7 +299,7 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
 
                 {
                     TinyPoint touchOrClick = keyboardPressed ? new TinyPoint(1, 1) : touchOrClickItem;
-                    if (!accelStarted && Misc::IsInside(GetPadBounds(PadCenter, padRadius), touchOrClick))
+                    if (!accelStarted && Misc::IsInside(GetPadBounds(getPadCenter(), padRadius), touchOrClick))
                     {
                         padPressed = true;
                         padTouchPos = touchOrClick;
@@ -316,9 +325,9 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                         }
                     }
 
-                    if ((Phase == Def::Phase::MainSetup || Phase == Def::Phase::PlaySetup) && accelSlider.Move(touchOrClick))
+                    if ((getPhase() == Def::Phase::MainSetup || getPhase() == Def::Phase::PlaySetup) && accelSlider.Move(touchOrClick))
                     {
-                        gameData.AccelSensitivity = accelSlider.Value;
+                        gameData.AccelSensitivity = accelSlider.getValue();
                     }
                     switch (pressedGlyph)
                     {
@@ -399,8 +408,8 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
             lastButtonDown = buttonGlyph;
             if (padPressed)
             {
-                DDebug::WriteLine("PadCenter.get().X=" + PadCenter.get().X);
-                DDebug::WriteLine("PadCenter.get().Y=" + PadCenter.get().Y);
+                DDebug::WriteLine("getPadCenter().X=" + getPadCenter().X);
+                DDebug::WriteLine("getPadCenter().Y=" + getPadCenter().Y);
                 DDebug::WriteLine("padTouchPos.X=" + padTouchPos.X);
                 DDebug::WriteLine("padTouchPos.Y=" + padTouchPos.Y);
                 DDebug::WriteLine("keyPressedUp=" + keyPressedUp);
@@ -410,32 +419,32 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                 {
                     if (keyPressedUp)
                     {
-                        padTouchPos.Y = PadCenter.get().Y - 30;
-                        padTouchPos.X = PadCenter.get().X;
-                        if (keyPressedLeft) padTouchPos.X = PadCenter.get().X - 30;
-                        if (keyPressedRight) padTouchPos.X = PadCenter.get().X + 30;
+                        padTouchPos.Y = getPadCenter().Y - 30;
+                        padTouchPos.X = getPadCenter().X;
+                        if (keyPressedLeft) padTouchPos.X = getPadCenter().X - 30;
+                        if (keyPressedRight) padTouchPos.X = getPadCenter().X + 30;
                     }
                     if (keyPressedDown) {
-                        padTouchPos.Y = PadCenter.get().Y + 30;
-                        padTouchPos.X = PadCenter.get().X;
-                        if (keyPressedLeft) padTouchPos.X = PadCenter.get().X - 30;
-                        if (keyPressedRight) padTouchPos.X = PadCenter.get().X + 30;
+                        padTouchPos.Y = getPadCenter().Y + 30;
+                        padTouchPos.X = getPadCenter().X;
+                        if (keyPressedLeft) padTouchPos.X = getPadCenter().X - 30;
+                        if (keyPressedRight) padTouchPos.X = getPadCenter().X + 30;
                     }
                     if (keyPressedLeft) {
-                        padTouchPos.X = PadCenter.get().X - 30;
-                        padTouchPos.Y = PadCenter.get().Y;
-                        if (keyPressedUp) padTouchPos.Y = PadCenter.get().Y - 30;
-                        if (keyPressedDown) padTouchPos.Y = PadCenter.get().Y + 30;
+                        padTouchPos.X = getPadCenter().X - 30;
+                        padTouchPos.Y = getPadCenter().Y;
+                        if (keyPressedUp) padTouchPos.Y = getPadCenter().Y - 30;
+                        if (keyPressedDown) padTouchPos.Y = getPadCenter().Y + 30;
                     }
                     if (keyPressedRight) {
-                        padTouchPos.X = PadCenter.get().X + 30;
-                        padTouchPos.Y = PadCenter.get().Y;
-                        if (keyPressedUp) padTouchPos.Y = PadCenter.get().Y - 30;
-                        if (keyPressedDown) padTouchPos.Y = PadCenter.get().Y + 30;
+                        padTouchPos.X = getPadCenter().X + 30;
+                        padTouchPos.Y = getPadCenter().Y;
+                        if (keyPressedUp) padTouchPos.Y = getPadCenter().Y - 30;
+                        if (keyPressedDown) padTouchPos.Y = getPadCenter().Y + 30;
                     }
                 }
-                double horizontalPosition = padTouchPos.X - PadCenter.get().X;
-                double verticalPosition = padTouchPos.Y - PadCenter.get().Y;
+                double horizontalPosition = padTouchPos.X - getPadCenter().X;
+                double verticalPosition = padTouchPos.Y - getPadCenter().Y;
 
                 if (horizontalPosition > 20.0)
                 {
@@ -477,8 +486,8 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
 
     Def::ButtonGlyph InputPad::ButtonDetect(TinyPoint touchOrClick)
         {
-            std::vector<Def::ButtonGlyph> buttonGlyphsVector = ButtonGlyphs.get();
-            for (auto i = ButtonGlyphs.get().rbegin(); i != ButtonGlyphs.get().rend(); i++)
+            std::vector<Def::ButtonGlyph> buttonGlyphsVector = getButtonGlyphs();
+            for (auto i = getButtonGlyphs().rbegin(); i != getButtonGlyphs().rend(); i++)
             {
                 Def::ButtonGlyph buttonGlyph = *i;
                 TinyRect buttonRect = GetButtonRect(buttonGlyph);
@@ -498,13 +507,13 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
 
     void InputPad::Draw()
         {
-            if (!accelStarted && Phase == Def::Phase::Play)
+            if (!accelStarted && getPhase() == Def::Phase::Play)
             {
-                pixmap.DrawIcon(14, 0, GetPadBounds(PadCenter, padRadius / 2), 1.0, false);
-                TinyPoint center = (padPressed ? padTouchPos : PadCenter);
+                pixmap.DrawIcon(14, 0, GetPadBounds(getPadCenter(), padRadius / 2), 1.0, false);
+                TinyPoint center = (padPressed ? padTouchPos : getPadCenter());
                 pixmap.DrawIcon(14, 1, GetPadBounds(center, padRadius / 2), 1.0, false);
             }
-            for (Def::ButtonGlyph buttonGlyph : ButtonGlyphs)
+            for (Def::ButtonGlyph buttonGlyph : getButtonGlyphs())
             {
                 bool pressed = VECTOR_CONTAINS(pressedGlyphs, buttonGlyph);
                 bool selected = false;
@@ -531,7 +540,7 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                 }
                 pixmap.DrawInputButton(GetButtonRect(buttonGlyph), buttonGlyph, pressed, selected);
             }
-            if ((Phase == Def::Phase::MainSetup || Phase == Def::Phase::PlaySetup) && gameData.AccelActive)
+            if ((getPhase() == Def::Phase::MainSetup || getPhase() == Def::Phase::PlaySetup) && gameData.AccelActive)
             {
                 accelSlider.Draw(pixmap);
             }
@@ -544,9 +553,9 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
 
     TinyRect InputPad::GetButtonRect(Def::ButtonGlyph glyph)
         {
-            TinyRect drawBounds = pixmap.DrawBounds;
-            double drawBoundsWidth = drawBounds.Width;
-            double drawBoundsHeight = drawBounds.Height;
+            TinyRect drawBounds = pixmap.getDrawBounds();
+            double drawBoundsWidth = drawBounds.getWidth();
+            double drawBoundsHeight = drawBounds.getHeight();
             double buttonSizeFactor1 = drawBoundsHeight / 5.0;
             double buttonSizeFactor2 = drawBoundsHeight * 140.0 / 480.0;
             double cheatButtonSizeFactor = drawBoundsHeight / 3.5;
@@ -622,100 +631,100 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                 case Def::ButtonGlyph::PauseMenu:
                     {
                         TinyRect result37 = TinyRect();
-                        result37.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * -0.21);
-                        result37.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 0.79);
-                        result37.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result37.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result37.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * -0.21);
+                        result37.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 0.79);
+                        result37.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result37.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result37;
                     }
                 case Def::ButtonGlyph::PauseBack:
                     {
                         TinyRect result36 = TinyRect();
-                        result36.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 0.79);
-                        result36.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 1.79);
-                        result36.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result36.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result36.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 0.79);
+                        result36.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 1.79);
+                        result36.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result36.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result36;
                     }
                 case Def::ButtonGlyph::PauseSetup:
                     {
                         TinyRect result35 = TinyRect();
-                        result35.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 1.79);
-                        result35.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 2.79);
-                        result35.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result35.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result35.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 1.79);
+                        result35.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 2.79);
+                        result35.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result35.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result35;
                     }
                 case Def::ButtonGlyph::PauseRestart:
                     {
                         TinyRect result34 = TinyRect();
-                        result34.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 2.79);
-                        result34.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 3.79);
-                        result34.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result34.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result34.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 2.79);
+                        result34.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 3.79);
+                        result34.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result34.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result34;
                     }
                 case Def::ButtonGlyph::PauseContinue:
                     {
                         TinyRect result33 = TinyRect();
-                        result33.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 3.79);
-                        result33.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 4.79);
-                        result33.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result33.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result33.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 3.79);
+                        result33.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 4.79);
+                        result33.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result33.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result33;
                     }
                 case Def::ButtonGlyph::ResumeMenu:
                     {
                         TinyRect result32 = TinyRect();
-                        result32.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 1.29);
-                        result32.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 2.29);
-                        result32.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result32.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result32.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 1.29);
+                        result32.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 2.29);
+                        result32.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result32.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result32;
                     }
                 case Def::ButtonGlyph::ResumeContinue:
                     {
                         TinyRect result31 = TinyRect();
-                        result31.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 2.29);
-                        result31.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 3.29);
-                        result31.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.2);
-                        result31.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.2);
+                        result31.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 2.29);
+                        result31.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 3.29);
+                        result31.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.2);
+                        result31.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.2);
                         return result31;
                     }
                 case Def::ButtonGlyph::WinLostReturn:
                     {
                         TinyRect result30 = TinyRect();
-                        result30.LeftX = (int)((double)PixmapOrigin.get().X + drawBoundsWidth - buttonSizeFactor1 * 2.2);
-                        result30.RightX = (int)((double)PixmapOrigin.get().X + drawBoundsWidth - buttonSizeFactor1 * 1.2);
-                        result30.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor1 * 0.2);
-                        result30.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor1 * 1.2);
+                        result30.LeftX = (int)((double)getPixmapOrigin().X + drawBoundsWidth - buttonSizeFactor1 * 2.2);
+                        result30.RightX = (int)((double)getPixmapOrigin().X + drawBoundsWidth - buttonSizeFactor1 * 1.2);
+                        result30.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor1 * 0.2);
+                        result30.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor1 * 1.2);
                         return result30;
                     }
                 case Def::ButtonGlyph::TrialBuy:
                     {
                         TinyRect result29 = TinyRect();
-                        result29.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 2.5);
-                        result29.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 3.5);
-                        result29.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.1);
-                        result29.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.1);
+                        result29.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 2.5);
+                        result29.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 3.5);
+                        result29.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.1);
+                        result29.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.1);
                         return result29;
                     }
                 case Def::ButtonGlyph::TrialCancel:
                     {
                         TinyRect result28 = TinyRect();
-                        result28.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 3.5);
-                        result28.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 4.5);
-                        result28.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.1);
-                        result28.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.1);
+                        result28.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 3.5);
+                        result28.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 4.5);
+                        result28.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.1);
+                        result28.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.1);
                         return result28;
                     }
                 case Def::ButtonGlyph::RankingContinue:
                     {
                         TinyRect result27 = TinyRect();
-                        result27.LeftX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 3.5);
-                        result27.RightX = (int)((double)PixmapOrigin.get().X + buttonSizeFactor2 * 4.5);
-                        result27.TopY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 2.1);
-                        result27.BottomY = (int)((double)PixmapOrigin.get().Y + buttonSizeFactor2 * 3.1);
+                        result27.LeftX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 3.5);
+                        result27.RightX = (int)((double)getPixmapOrigin().X + buttonSizeFactor2 * 4.5);
+                        result27.TopY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 2.1);
+                        result27.BottomY = (int)((double)getPixmapOrigin().Y + buttonSizeFactor2 * 3.1);
                         return result27;
                     }
                 case Def::ButtonGlyph::SetupSounds:
@@ -786,8 +795,8 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                         if (gameData.JumpRight)
                         {
                             TinyRect result16 = TinyRect();
-                            result16.LeftX = (int)((double)drawBounds.Width - buttonSizeFactor1 * 1.2);
-                            result16.RightX = (int)((double)drawBounds.Width - buttonSizeFactor1 * 0.2);
+                            result16.LeftX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 1.2);
+                            result16.RightX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 0.2);
                             result16.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 2.6);
                             result16.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.6);
                             return result16;
@@ -804,8 +813,8 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                         if (gameData.JumpRight)
                         {
                             TinyRect result12 = TinyRect();
-                            result12.LeftX = (int)((double)drawBounds.Width - buttonSizeFactor1 * 1.2);
-                            result12.RightX = (int)((double)drawBounds.Width - buttonSizeFactor1 * 0.2);
+                            result12.LeftX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 1.2);
+                            result12.RightX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 0.2);
                             result12.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
                             result12.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
                             return result12;
@@ -829,8 +838,8 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
                             return result8;
                         }
                         TinyRect result9 = TinyRect();
-                        result9.LeftX = (int)((double)drawBounds.Width - buttonSizeFactor1 * 1.2);
-                        result9.RightX = (int)((double)drawBounds.Width - buttonSizeFactor1 * 0.2);
+                        result9.LeftX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 1.2);
+                        result9.RightX = (int)((double)drawBounds.getWidth() - buttonSizeFactor1 * 0.2);
                         result9.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
                         result9.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
                         return result9;
@@ -927,13 +936,13 @@ InputPad::InputPad(Game1& game1, Decor& decor, Pixmap& pixmap, Sound& sound, Gam
         }
 
 
-        void InputPad::HandleAccelSensorCurrentValueChanged(Microsoft::Devices::Sensors::SensorReadingEventArgs<AccelerometerReading> e)
+        void InputPad::HandleAccelSensorCurrentValueChanged(Microsoft::Devices::Sensors::SensorReadingEventArgs<Microsoft::Devices::Sensors::AccelerometerReading> e)
         {
             //IL_0001: Unknown result type (might be due to invalid IL or missing references)
             //IL_0006: Unknown result type (might be due to invalid IL or missing references)
 
-            AccelerometerReading sensorReading = e.SensorReading;
-            float y = ((AccelerometerReading)(sensorReading)).Acceleration.get().Y;
+            Microsoft::Devices::Sensors::AccelerometerReading sensorReading = e.getSensorReading();
+            float y = ((Microsoft::Devices::Sensors::AccelerometerReading)(sensorReading)).getAcceleration().Y;
             float sensitivityThreshold = (1.0f - (float)gameData.AccelSensitivity) * 0.06f + 0.04f;
             float adjustedThreshold = (accelLastState ? (sensitivityThreshold * 0.6f) : sensitivityThreshold);
             if (y > adjustedThreshold)
