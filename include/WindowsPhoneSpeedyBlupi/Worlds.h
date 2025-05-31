@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 
-#include "NeoSdk/Property.h"
+#include "CNA/Prop.h"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
 #define is(i) std::to_string(i)
 

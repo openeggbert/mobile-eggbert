@@ -22,7 +22,7 @@
 #include "WindowsPhoneSpeedyBlupi/Pixmap.h"
 #include "WindowsPhoneSpeedyBlupi/Slider.h"
 #include "WindowsPhoneSpeedyBlupi/Sound.h"
-#include "NeoSdk/Property.h"
+#include "CNA/Prop.h"
 #include "System/UnauthorizedAccessException.h"
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 

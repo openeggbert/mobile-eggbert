@@ -5,7 +5,7 @@
 #ifndef SLIDER_H
 #define SLIDER_H
 #include "Pixmap.h"
-#include "NeoSdk/Property.h"
+#include "CNA/Prop.h"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
 #include "WindowsPhoneSpeedyBlupi/TinyRect.h"
 

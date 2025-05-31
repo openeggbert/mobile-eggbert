@@ -1,13 +1,18 @@
+#ifndef DDEBUG_H
+#define DDEBUG_H
+#include <string>
 
-#include "NeoSdk/Property.h"
+#include "CNA/Prop.h"
 
-namespace WindowsPhoneSpeedyBlupi
-{
+namespace WindowsPhoneSpeedyBlupi {
     //static class
     class DDebug {
-    private: static bool detailedDebugging;
-        NeoSdk::Property<bool> DetailedDebugging{ [this]() { return detailedDebugging; } , [this](bool value) {detailedDebugging = value; }};
+        ddata(bool, DetailedDebugging)
 
-    public: static void WriteLine(const std::string& msg);
+    public:
+        explicit DDebug(bool detailed_debugging);
+
+        static void WriteLine(const std::string &msg);
     };
 }
+#endif // DDEBUG_H

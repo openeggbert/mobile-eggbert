@@ -349,31 +349,16 @@ private: static constexpr int m_linkCaisseLength = MAXMOVEOBJECT;
         private: std::vector<ByeByeObject> byeByeObjects;
 
 public:
-    DEF_PROP_CUSTOM(TinyRect, DrawBounds)
-    DEF_PROP_AUTO(Def::ButtonGlyph, ButtonPressed, Def::ButtonGlyph::InitPlay)
+    [[nodiscard]] TinyRect getDrawBounds() const;
 
+public:
+    void setDrawBounds(const TinyRect &v);
 
-        private: static void MoveObjectCopy(MoveObject& dst, const MoveObject &src)
-        {
-            dst.type = src.type;
-            dst.stepAdvance = src.stepAdvance;
-            dst.stepRecede = src.stepRecede;
-            dst.timeStopStart = src.timeStopStart;
-            dst.timeStopEnd = src.timeStopEnd;
-            dst.posStart = src.posStart;
-            dst.posEnd = src.posEnd;
-            dst.posCurrent = src.posCurrent;
-            dst.step = src.step;
-            dst.time = src.time;
-            dst.phase = src.phase;
-            dst.channel = src.channel;
-            dst.icon = src.icon;
-        }
+    ddata(Def::ButtonGlyph, ButtonPressed)
 
-        public: Decor():
-    IMPL_PROP_CUSTOM(TinyRect, DrawBounds, {return m_drawBounds;},{m_drawBounds = v;}),
-    IMPL_PROP_AUTO(Def::ButtonGlyph, ButtonPressed)
+        private: static void MoveObjectCopy(MoveObject& dst, const MoveObject &src);
 
+        public: Decor()
         {
             for (int i = 0; i < 200; i++)
             {

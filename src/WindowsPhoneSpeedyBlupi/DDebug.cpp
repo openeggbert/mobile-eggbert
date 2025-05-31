@@ -1,13 +1,19 @@
-#include "../../include/WindowsPhoneSpeedyBlupi/DDebug.h"
+#include "WindowsPhoneSpeedyBlupi/DDebug.h"
 
-#include "NeoSdk/Property.h"
+#include <iostream>
+
 #define DEBUGGING_ENABLED false
-namespace WindowsPhoneSpeedyBlupi {
 
-    void DDebug::WriteLine(const std::string& msg) {
-        if (DEBUGGING_ENABLED) {
+namespace WindowsPhoneSpeedyBlupi {
+    idata(bool, DetailedDebugging, DDebug)
+
+    DDebug::DDebug(bool detailed_debugging)
+        : DetailedDebugging_(detailed_debugging) {
+    }
+
+    void DDebug::WriteLine(const std::string &msg) {
+        if constexpr (DEBUGGING_ENABLED) {
             std::cout << msg;
         }
     }
-
 }

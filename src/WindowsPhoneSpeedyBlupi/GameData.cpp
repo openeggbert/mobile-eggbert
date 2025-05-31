@@ -2,7 +2,6 @@
 // WindowsPhoneSpeedyBlupi.GameData
 
 
-#include "NeoSdk/Property.h"
 #include "WindowsPhoneSpeedyBlupi/GameData.h"
 
 namespace WindowsPhoneSpeedyBlupi
