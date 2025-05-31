@@ -26,7 +26,7 @@ namespace WindowsPhoneSpeedyBlupi
         TinyPoint tinyPoint2 = RotatePointRad(angle, p);
         int num = tinyPoint2.X - p.X;
         int num2 = tinyPoint2.Y - p.Y;
-        return {rect.Left - num, rect.Top - num2, rect.Width, rect.Height};
+        return {rect.getLeft() - num, rect.getTop() - num2, rect.Width, rect.Height};
     }
     double Misc::DegToRad(const double &angle)
     {
@@ -116,7 +116,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     bool Misc::IsRectEmpty(const TinyRect& rect)
     {
-        return rect.Width <= 0 || rect.Height <= 0;
+        return rect.getWidth() <= 0 || rect.getHeight() <= 0;
     }
 
 }

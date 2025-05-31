@@ -8,9 +8,7 @@
 
 #include "Def.h"
 #include "Game1.h"
-#include "Misc.h"
-#include "Tables.h"
-#include "Text.h"
+
 #include "Microsoft/Xna/Framework/Vector2.h"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
 #include "Microsoft/Xna/Framework/Graphics/SpriteBatch.h"
@@ -98,10 +96,10 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         Microsoft::Xna::Framework::Graphics::SpriteEffects effect;
 
     public:
-        NeoSdk::Property<TinyRect> DrawBounds;
-        NeoSdk::Property<TinyPoint> Origin;
+        public: [[nodiscard]] TinyRect getDrawBounds() const;
+        public: [[nodiscard]] TinyPoint getOrigin() const;
 
-         Pixmap(Game1& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics);
+        Pixmap(Game1 &game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
 
         Pixmap(const Pixmap&);
         Pixmap& operator=(const Pixmap&);

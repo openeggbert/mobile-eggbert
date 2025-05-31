@@ -16,19 +16,16 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    Jauge::Jauge():
-    m_mode(0),
-    m_bHide(true),
-    m_bMinimizeRedraw(false),
-    m_bRedraw(false),
-    m_zoom(1.0),
-    m_level(0),
-    Zoom( [this]() { return m_zoom;},[this](double value) {m_zoom = value;})
-    {
-
+    double Jauge::getZoom() const { return m_zoom; }
+    void Jauge::setZoom(const double &v) { m_zoom = v; }
+    Jauge::Jauge(): m_mode(0),
+                    m_bHide(true),
+                    m_bMinimizeRedraw(false),
+                    m_bRedraw(false),
+                    m_zoom(1.0),
+                    m_level(0) {
     }
 
-;
 
         bool Jauge::Create(Pixmap& pixmap, Sound& sound, TinyPoint pos, int mode, bool bMinimizeRedraw)
         {

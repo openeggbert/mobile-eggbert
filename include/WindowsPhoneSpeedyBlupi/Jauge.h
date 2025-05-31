@@ -5,14 +5,14 @@
 #ifndef JAUGE_H
 #define JAUGE_H
 
-#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
+#include "Pixmap.h"
 
 namespace WindowsPhoneSpeedyBlupi {
     class Jauge {
     private:
-        Pixmap m_pixmap;
+        std::optional<Pixmap> m_pixmap;
 
-        Sound m_sound;
+        std::optional<Sound> m_sound;
 
         bool m_bHide;
 
@@ -31,7 +31,7 @@ namespace WindowsPhoneSpeedyBlupi {
         double m_zoom;
 
     public:
-        NeoSdk::Property<double> Zoom;
+        public: [[nodiscard]] double getZoom() const; public: void setZoom(const double& v);
 
         Jauge();
 

@@ -14,6 +14,40 @@
 #include "Microsoft/Xna/Framework/Color.h"
 
 namespace WindowsPhoneSpeedyBlupi {
+
+    TinyRect Pixmap::getDrawBounds() const {
+        TinyRect result;
+        double screenWidth = graphics.getGraphicsDevice().getViewport().getWidth();
+        double screenHeight = graphics.getGraphicsDevice().getViewport().getHeight();
+        if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480) {
+            screenWidth = screenHeight * (640.0f / 480.0f);
+        }
+        if (screenWidth != 0.0 && screenHeight != 0.0) {
+            double num3;
+            double num4;
+            if (screenWidth / screenHeight < 1.3333333333333333) {
+                num3 = 640.0;
+                num4 = 640.0 * (screenHeight / screenWidth);
+            } else {
+                num3 = 480.0 * (screenWidth / screenHeight);
+                num4 = 480.0;
+            }
+            result.LeftX = 0;
+            result.RightX = (int) num3;
+            result.TopY = 0;
+            result.BottomY = (int) num4;
+        }
+        return result;
+    }
+    TinyPoint Pixmap::getOrigin() const {
+        TinyPoint result;
+        result.X = (int) originX;
+        result.Y = (int) originY;
+        return result;
+    }
+    
+
+    
     Pixmap::Pixmap(Game1& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics): game1(game1),
         graphics(graphics), spriteBatch(Microsoft::Xna::Framework::Graphics::SpriteBatch()), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
         bitmapObject(Texture2D()),
@@ -23,37 +57,7 @@ namespace WindowsPhoneSpeedyBlupi {
         bitmapBlupiYoupie(Texture2D()),
         bitmapGear(Texture2D()),
         bitmapBackground(Texture2D()),
-        origin(Microsoft::Xna::Framework::Vector2(0.0f,0.0f)),
-        DrawBounds([&]() {
-            TinyRect result;
-            double screenWidth = graphics.GraphicsDevice.get().Viewport.get().Width;
-            double screenHeight = graphics.GraphicsDevice.get().Viewport.get().Height;
-            if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480) {
-                screenWidth = screenHeight * (640.0f / 480.0f);
-            }
-            if (screenWidth != 0.0 && screenHeight != 0.0) {
-                double num3;
-                double num4;
-                if (screenWidth / screenHeight < 1.3333333333333333) {
-                    num3 = 640.0;
-                    num4 = 640.0 * (screenHeight / screenWidth);
-                } else {
-                    num3 = 480.0 * (screenWidth / screenHeight);
-                    num4 = 480.0;
-                }
-                result.LeftX = 0;
-                result.RightX = (int) num3;
-                result.TopY = 0;
-                result.BottomY = (int) num4;
-            }
-            return result;
-        }),
-        Origin([&]() {
-            TinyPoint result;
-            result.X = (int) originX;
-            result.Y = (int) originY;
-            return result;
-        }) {
+        origin(Microsoft::Xna::Framework::Vector2(0.0f,0.0f)) {
         effect = Microsoft::Xna::Framework::Graphics::SpriteEffects::None;
     }
 
@@ -149,7 +153,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     {
                         DrawIcon(14, 0, rect, pressed ? 0.6 : 1.0, false);
                         TinyPoint tinyPoint;
-                        tinyPoint.X = rect.LeftX + rect.Width / 2 - (int)originX;
+                        tinyPoint.X = rect.LeftX + rect.getWidth() / 2 - (int)originX;
                         tinyPoint.Y = rect.TopY + 28;
                         TinyPoint pos = tinyPoint;
                         Text::DrawTextCenter(this, pos, Decor::GetCheatTinyText(glyph), 1.0);
@@ -167,26 +171,26 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Pixmap::LoadContent()
         {
-            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(&(game1.GraphicsDevice.get()));
-            bitmapText = game1.Content.get().Load<Texture2D>("icons/text");
-            bitmapButton = game1.Content.get().Load<Texture2D>("icons/button");
-            bitmapJauge = game1.Content.get().Load<Texture2D>("icons/jauge");
-            bitmapBlupi = game1.Content.get().Load<Texture2D>("icons/blupi");
-            bitmapBlupi1 = game1.Content.get().Load<Texture2D>("icons/blupi1");
-            bitmapObject = game1.Content.get().Load<Texture2D>("icons/object-m");
-            bitmapElement = game1.Content.get().Load<Texture2D>("icons/element");
-            bitmapExplo = game1.Content.get().Load<Texture2D>("icons/explo");
-            bitmapPad = game1.Content.get().Load<Texture2D>("icons/pad");
-            bitmapSpeedyBlupi = game1.Content.get().Load<Texture2D>("backgrounds/speedyblupi");
-            bitmapBlupiYoupie = game1.Content.get().Load<Texture2D>("backgrounds/blupiyoupie");
-            bitmapGear = game1.Content.get().Load<Texture2D>("backgrounds/gear");
+            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(&(game1.getGraphicsDevice()));
+            bitmapText = game1.getContent().Load<Texture2D>("icons/text");
+            bitmapButton = game1.getContent().Load<Texture2D>("icons/button");
+            bitmapJauge = game1.getContent().Load<Texture2D>("icons/jauge");
+            bitmapBlupi = game1.getContent().Load<Texture2D>("icons/blupi");
+            bitmapBlupi1 = game1.getContent().Load<Texture2D>("icons/blupi1");
+            bitmapObject = game1.getContent().Load<Texture2D>("icons/object-m");
+            bitmapElement = game1.getContent().Load<Texture2D>("icons/element");
+            bitmapExplo = game1.getContent().Load<Texture2D>("icons/explo");
+            bitmapPad = game1.getContent().Load<Texture2D>("icons/pad");
+            bitmapSpeedyBlupi = game1.getContent().Load<Texture2D>("backgrounds/speedyblupi");
+            bitmapBlupiYoupie = game1.getContent().Load<Texture2D>("backgrounds/blupiyoupie");
+            bitmapGear = game1.getContent().Load<Texture2D>("backgrounds/gear");
             UpdateGeometry();
         }
 
         void Pixmap::UpdateGeometry()
         {
-            double screenWidth = graphics.GraphicsDevice.get().Viewport.get().Width;
-            double screenHeight = graphics.GraphicsDevice.get().Viewport.get().Height;
+            double screenWidth = graphics.getGraphicsDevice().getViewport().getWidth();
+            double screenHeight = graphics.getGraphicsDevice().getViewport().getHeight();
             if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480)
             {
                 screenWidth = screenHeight * (640.0f / 480.0f);
@@ -200,12 +204,12 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void Pixmap::BackgroundCache(const string &name)
         {
-            bitmapBackground = game1.Content.get().Load<Texture2D>("backgrounds/" + name);
+            bitmapBackground = game1.getContent().Load<Texture2D>("backgrounds/" + name);
         }
 
          bool Pixmap::Start()
         {
-            graphics.GraphicsDevice.get().Clear(Microsoft::Xna::Framework::CornflowerBlue);
+            graphics.getGraphicsDevice().Clear(Microsoft::Xna::Framework::CornflowerBlue);
             return true;
         }
 
@@ -216,8 +220,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Pixmap::DrawBackground()
         {
-            double screenWidth = graphics.GraphicsDevice.get().Viewport.get().Width;
-            double screenHeight = graphics.GraphicsDevice.get().Viewport.get().Height;
+            double screenWidth = graphics.getGraphicsDevice().getViewport().getWidth();
+            double screenHeight = graphics.getGraphicsDevice().getViewport().getHeight();
             if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480)
             {
                 screenWidth = screenHeight * (640.0f / 480.0f);
@@ -306,8 +310,8 @@ namespace WindowsPhoneSpeedyBlupi {
                 dest.X = (int)((double)dest.X + originX);
                 dest.Y = (int)((double)dest.Y + originY);
             }
-            Microsoft::Xna::Framework::Rectangle value = Microsoft::Xna::Framework::Rectangle(rect.LeftX, rect.TopY, rect.Width, rect.Height);
-            Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(dest.X, dest.Y, (int)((double)rect.Width * zoom), (int)((double)rect.Height * zoom));
+            Microsoft::Xna::Framework::Rectangle value = Microsoft::Xna::Framework::Rectangle(rect.LeftX, rect.TopY, rect.getWidth(), rect.getHeight());
+            Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(dest.X, dest.Y, (int)((double)rect.getWidth() * zoom), (int)((double)rect.getHeight() * zoom));
             spriteBatch.Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
             spriteBatch.Draw(bitmap.value(), destinationRectangle, value, Microsoft::Xna::Framework::White);
             spriteBatch.End();
@@ -325,7 +329,8 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 return;
             }
-            if (channel == 14 && !Microsoft::Xna::Framework::Input::Touch::TouchPanel::GetCapabilities().IsConnected)
+        using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
+            if (channel == 14 && !TouchPanel::GetCapabilities().getIsConnected())
             {
                 int padGameplayIconNumbers[] = { 0, 1, 2, 3, 30, 12, 23 };
                 for (int iconNumber : padGameplayIconNumbers)
@@ -447,11 +452,11 @@ namespace WindowsPhoneSpeedyBlupi {
                 spriteBatch.End();
             }
         }
-    
+
         Microsoft::Xna::Framework::Rectangle Pixmap::GetSrcRectangle(Texture2D& bitmap, int bitmapGridX, int bitmapGridY, int iconWidth, int iconHeight, int gap, int icon)
         {
-            int width = bitmap.Bounds.get().Width;
-            int height = bitmap.Bounds.get().Height;
+            int width = bitmap.getBounds().Width;
+            int height = bitmap.getBounds().Height;
             int num = icon % (width / bitmapGridX);
             int num2 = icon / (width / bitmapGridX);
             bitmapGridX += gap;
@@ -461,8 +466,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
         Microsoft::Xna::Framework::Rectangle Pixmap::GetDstRectangle(TinyRect& rect, int iconWidth, int iconHeight, bool useHotSpot)
         {
-            int finalWidth = ((rect.Width == 0) ? iconWidth : rect.Width);
-            int finalHeight = ((rect.Height == 0) ? iconHeight : rect.Height);
+            int finalWidth = ((rect.getWidth() == 0) ? iconWidth : rect.getWidth());
+            int finalHeight = ((rect.getHeight() == 0) ? iconHeight : rect.getHeight());
             int scaledLeftX = (int)((double)rect.LeftX * zoom);
             int scaledTopY = (int)((double)rect.TopY * zoom);
             int scaledRightX = (int)((double)scaledLeftX + (double)finalWidth * zoom);
@@ -521,8 +526,6 @@ namespace WindowsPhoneSpeedyBlupi {
                     return std::nullopt;;
             }
         }
-
-
 
 }
 

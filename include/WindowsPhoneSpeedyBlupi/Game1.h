@@ -112,7 +112,7 @@ protected: void OnActivated(std::any sender, System::Runtime::CompilerServices::
 
         protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args);
 
-protected:void Update(Microsoft::Xna::Framework::GameTime gameTime) override;
+protected:void Update(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
         private: void MissionBack();
 
@@ -122,7 +122,7 @@ protected:void Update(Microsoft::Xna::Framework::GameTime gameTime) override;
 
         private: void CheatAction(Def::ButtonGlyph glyph);
 
-        protected: void Draw(Microsoft::Xna::Framework::GameTime gameTime) override;
+        protected: void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
         private: void DrawBackgroundFade();
 

@@ -19,6 +19,7 @@
 #include "Microsoft/Xna/Framework/Input/MouseCursor.h"
 #include "System/Runtime/CompilerServices/EventArgs.h"
 #include "WindowsPhoneSpeedyBlupi/Helper.h"
+#include "WindowsPhoneSpeedyBlupi/Tables.h"
 
 namespace WindowsPhoneSpeedyBlupi {
     bool Game1::getIsRankingMode() const {
@@ -79,7 +80,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         waitJauge.Create(pixmap, sound, pos, 3, false);
         waitJauge.SetHide(false);
-        waitJauge.Zoom = 2.0;
+        waitJauge.setZoom(2.0);
         phase = Def::Phase::NonePhase;
         fadeOutPhase = Def::Phase::NonePhase;
 
@@ -125,7 +126,7 @@ namespace WindowsPhoneSpeedyBlupi {
         decor.CurrentDelete();
     }
 
-    void Game1::Update(Microsoft::Xna::Framework::GameTime gameTime) {
+    void Game1::Update(const Microsoft::Xna::Framework::GameTime& gameTime) {
         using Microsoft::Xna::Framework::Input::GamePad;
         using Microsoft::Xna::Framework::PlayerIndex;
         using Microsoft::Xna::Framework::Input::ButtonState;
@@ -169,7 +170,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 pixmap.LoadContent();
                 sound.LoadContent();
                 gameData.Read();
-                inputPad.setPixmapOrigin(pixmap.Origin);
+                inputPad.setPixmapOrigin(pixmap.getOrigin());
                 SetPhase(Def::Phase::Wait);
                 return;
             }
@@ -414,7 +415,7 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
 
-    void Game1::Draw(Microsoft::Xna::Framework::GameTime gameTime) override
+    void Game1::Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override
     {
         if (continueMission == 1)
         {
@@ -561,7 +562,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     {
                         rotation = (1.0 - num) * (1.0 - num) * 360.0 * 1.0;
                     }
-                    if (rect.Width > 0 && rect.Height > 0)
+                    if (rect.getWidth() > 0 && rect.getHeight() > 0)
                     {
                         pixmap.DrawIcon(16, 0, rect, 1.0, rotation, false);
                     }

@@ -45,7 +45,7 @@ class InputPad
 
          mutable std::vector<Def::ButtonGlyph> pressedGlyphs;
 
-         mutable Accelerometer accelSensor;
+         mutable Microsoft::Devices::Sensors::Accelerometer accelSensor;
 
          mutable Slider accelSlider;
 
