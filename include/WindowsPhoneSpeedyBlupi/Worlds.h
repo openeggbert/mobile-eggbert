@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "CNA/CnaHelper.h"
 #include "CNA/Prop.h"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
 #define int_to_string(i) std::to_string(i)
@@ -17,7 +18,6 @@
 
 namespace WindowsPhoneSpeedyBlupi {
     using std::string;
-    using byte = unsigned char;
 
 
     class Worlds {
@@ -47,10 +47,10 @@ namespace WindowsPhoneSpeedyBlupi {
         static std::string GetWorldFilename(int gamer, int rank);
 
     public:
-        static bool ReadGameData(byte data[], size_t dataSize);
+        static bool ReadGameData(CNA::byte data[], size_t dataSize);
 
     public:
-        static void WriteGameData(byte data[], size_t dataSize);
+        static void WriteGameData(std::byte data[], size_t dataSize);
 
     public:
         static void DeleteCurrentGame();

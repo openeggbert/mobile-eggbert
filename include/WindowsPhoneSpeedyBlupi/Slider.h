@@ -9,7 +9,6 @@
 
 namespace WindowsPhoneSpeedyBlupi {
 
-    using byte = unsigned char;
     class Slider
     {
     private: WindowsPhoneSpeedyBlupi::TinyPoint topLeftCorner;

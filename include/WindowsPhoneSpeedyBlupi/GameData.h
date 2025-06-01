@@ -12,7 +12,7 @@ namespace WindowsPhoneSpeedyBlupi
 {
 
     using ushort = unsigned short;
-    using byte = unsigned char;
+    using CNA::byte;
     class GameData
     {
     private:
