@@ -99,14 +99,12 @@ namespace WindowsPhoneSpeedyBlupi {
             return 0;
         }
 
-         void Sound::StopAll()
-        {
-            while (!plays.empty())
-            {
-                plays[0].Stop();
-                plays.erase(plays.begin());
-            }
-        }
+         void Sound::StopAll() {
+             for (auto &play: plays) {
+                 play.Stop();
+             }
+             plays.clear();
+         }
 
          bool Sound::PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop)
         {
@@ -127,7 +125,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         if (it->getIsFree()) {
                             it = plays.erase(it);
                         } else {
-                            ++it;
+                            it++;
                         }
 
                         if (plays.size() < 10) break;
@@ -153,18 +151,17 @@ namespace WindowsPhoneSpeedyBlupi {
          bool Sound::Stop(int channel)
         {
             size_t num = 0;
-            while (num < plays.size())
-            {
-                if (plays[num].getChannel() == channel)
-                {
-                    plays[num].Stop();
-                    plays.erase(plays.begin() + num);
-                }
-                else
-                {
-                    num++;
+
+            auto it = plays.begin();
+            while (it != plays.end()) {
+                if (it->getChannel() == channel) {
+                    it->Stop();
+                    it = plays.erase(it); // erase() returns the next valid iterator
+                } else {
+                    ++it;
                 }
             }
+
             return true;
         }
 

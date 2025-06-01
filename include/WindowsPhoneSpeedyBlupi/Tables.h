@@ -1551,6 +1551,9 @@ namespace WindowsPhoneSpeedyBlupi
 
         static short world_terminal[30];
 
+    private:
+        static const bool initialized;
+
     private: static void Init();
 
 

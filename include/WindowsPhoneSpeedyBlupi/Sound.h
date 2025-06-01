@@ -4,6 +4,8 @@
 
 #ifndef SOUND_H
 #define SOUND_H
+#include <list>
+
 #include "Def.h"
 #include "GameData.h"
 #include "SoundI.h"
@@ -74,7 +76,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     private: std::vector<Microsoft::Xna::Framework::Audio::SoundEffect> soundEffects;
 
-    private: std::vector<Play> plays;
+    private: std::list<Play> plays;
 
     private: double volume;
 

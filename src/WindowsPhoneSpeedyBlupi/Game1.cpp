@@ -39,8 +39,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
     Game1::Game1(): graphics(this),
                     gameData(), startTime(System::TimeSpan(0)),
-                    pixmap(std::make_unique<Pixmap>(this, graphics)),
-                    sound(std::make_unique<Sound>(*this, gameData)),
+                    pixmap(std::make_shared<Pixmap>(this, graphics)),
+                    sound(std::make_shared<Sound>(*this, gameData)),
                     decor(),
                     waitJauge(),
                     inputPad(this, decor, pixmap.get(), sound.get(), gameData) {

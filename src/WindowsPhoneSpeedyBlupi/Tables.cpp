@@ -172,7 +172,7 @@ namespace WindowsPhoneSpeedyBlupi {
             411, 416, 412, 417, 413, 418, 414, 419, 415, 420
             };
         }
-    const bool MyResource::initialized = (Init(), true);
+    const bool Tables::initialized = (Init(), true);
 
     }
 

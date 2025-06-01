@@ -51,9 +51,9 @@ private: static constexpr int cheatGesteLength = 10;
 
         private: readonly Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
-        private: readonly std::unique_ptr<PixmapI> pixmap;
+        private: readonly std::shared_ptr<PixmapI> pixmap;
 
-        private: readonly std::unique_ptr<SoundI> sound;
+        private: readonly std::shared_ptr<SoundI> sound;
 
         private: readonly Decor decor;
 

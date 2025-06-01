@@ -19,7 +19,7 @@ target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURC
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 
-target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE CNA NEO_SDK SDL3::SDL3)
+target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE CNA SDL3::SDL3)
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
