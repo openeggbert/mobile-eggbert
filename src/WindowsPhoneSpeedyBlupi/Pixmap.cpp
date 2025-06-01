@@ -4,6 +4,7 @@
 
 #include "WindowsPhoneSpeedyBlupi/Pixmap.h"
 
+#include "CNA/Platform.h"
 #include "Microsoft/Xna/Framework/Rectangle.h"
 #include "WindowsPhoneSpeedyBlupi/Decor.h"
 #include "WindowsPhoneSpeedyBlupi/Def.h"
@@ -22,7 +23,7 @@ namespace WindowsPhoneSpeedyBlupi {
         TinyRect result;
         double screenWidth = graphics.getGraphicsDevice().getViewport().getWidth();
         double screenHeight = graphics.getGraphicsDevice().getViewport().getHeight();
-        if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480) {
+        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480) {
             screenWidth = screenHeight * (640.0f / 480.0f);
         }
         if (screenWidth != 0.0 && screenHeight != 0.0) {
@@ -199,7 +200,7 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             double screenWidth = graphics.getGraphicsDevice().getViewport().getWidth();
             double screenHeight = graphics.getGraphicsDevice().getViewport().getHeight();
-            if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480)
+            if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
             {
                 screenWidth = screenHeight * (640.0f / 480.0f);
             }
@@ -230,7 +231,7 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             double screenWidth = graphics.getGraphicsDevice().getViewport().getWidth();
             double screenHeight = graphics.getGraphicsDevice().getViewport().getHeight();
-            if (Def::PLATFORM == Def::Platform::Android && screenHeight > 480)
+            if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
             {
                 screenWidth = screenHeight * (640.0f / 480.0f);
             }

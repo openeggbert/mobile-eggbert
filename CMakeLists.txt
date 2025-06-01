@@ -12,6 +12,12 @@ include_directories(../cna/include CNA)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
+        ../../cna/include/Microsoft/Devices/Sensors/SensorState.h
+        ../../cna/include/CNA/Platform.h
+        ../../cna/include/CNA/DesktopOS.h
+        ../../cna/src/CNA/Platform.cpp
+        ../../cna/include/System/IDisposable.h
+        ../../cna/src/Microsoft/Devices/Sensors/SensorFailedException.cpp
 )
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

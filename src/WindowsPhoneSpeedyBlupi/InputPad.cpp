@@ -4,6 +4,7 @@
 
 #include "WindowsPhoneSpeedyBlupi/InputPad.h"
 
+#include "CNA/Platform.h"
 #include "Microsoft/Devices/Sensors/AccelerometerFailedException.h"
 #include "Microsoft/Xna/Framework/Input/Keyboard.h"
 #include "Microsoft/Xna/Framework/Input/KeyboardState.h"
@@ -157,7 +158,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
             using Microsoft::Devices::Sensors::AccelerometerReading;
             using Microsoft::Devices::Sensors::SensorBase;
-            ((SensorBase<AccelerometerReading>) accelSensor).CurrentValueChanged +=
+            accelSensor.CurrentValueChanged +=
                     [this](
                 const Microsoft::Devices::Sensors::SensorReadingEventArgs<AccelerometerReading> &
                 sensor_reading_event_args) {
@@ -232,7 +233,7 @@ namespace WindowsPhoneSpeedyBlupi {
             float screenHeight = game1->getGraphics().getGraphicsDevice().getViewport().getHeight();
             float screenRatio = screenWidth / screenHeight;
 
-            if ((Def::PLATFORM == Def::Platform::Android && screenRatio > 1.3333333333333333) /*|| Env.IMPL.isKNI()*/)
+            if ((CNA::getCurrentPlatform() == CNA::Platform::Android && screenRatio > 1.3333333333333333) /*|| Env.IMPL.isKNI()*/)
             {
                 for (int i = 0; i < touchesOrClicks.size(); i++)
                 {

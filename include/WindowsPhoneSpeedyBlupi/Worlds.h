@@ -50,7 +50,7 @@ namespace WindowsPhoneSpeedyBlupi {
         static bool ReadGameData(CNA::byte data[], size_t dataSize);
 
     public:
-        static void WriteGameData(std::byte data[], size_t dataSize);
+        static void WriteGameData(CNA::byte data[], size_t dataSize);
 
     public:
         static void DeleteCurrentGame();

@@ -89,15 +89,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         return true;
     }
-    public:
-        enum Platform {
-            Desktop,
-            Android,
-            iOS,
-            Web
-        };
 
-    public: static constexpr Platform PLATFORM = Desktop; //todo
         public: static constexpr ushort LXIMAGE = 640;
 
         public: static constexpr ushort LYIMAGE = 480;
