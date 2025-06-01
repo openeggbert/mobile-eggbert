@@ -14,6 +14,7 @@
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
 #include "System/UnauthorizedAccessException.h"
 #include "WindowsPhoneSpeedyBlupi/DDebug.h"
+#include "WindowsPhoneSpeedyBlupi/Game1I.h"
 #include "WindowsPhoneSpeedyBlupi/Misc.h"
 
 
@@ -33,7 +34,7 @@ namespace WindowsPhoneSpeedyBlupi {
     idata(Def::Phase, Phase, InputPad)
     idata(int, SelectedGamer, InputPad)
     idata(TinyPoint, PixmapOrigin, InputPad)
-    int InputPad::getTotalTouch() const { return touchCount; }
+    int InputPad::getTotalTouch() const { return touchOrClickCount; }
 
     Def::ButtonGlyph InputPad::getButtonPressed() const {
         Def::ButtonGlyph result = buttonPressed;
@@ -200,11 +201,10 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
                 touches = TouchPanel::GetState();
-                touchCount = touches.getCount();
+                touchOrClickCount = touches.getCount();
             }
 
             std::vector<TinyPoint> touchesOrClicks;
-
 
             using Microsoft::Xna::Framework::Input::Touch::TouchLocation;
             using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
@@ -223,7 +223,7 @@ namespace WindowsPhoneSpeedyBlupi {
             MouseState mouseState = Mouse::GetState();
             if (mouseState.getLeftButton() == ButtonState::Pressed)
             {
-                touchCount++;
+                touchOrClickCount++;
                 TinyPoint mouseClick(mouseState.getX(), mouseState.getY());
                 touchesOrClicks.push_back(mouseClick);
             }
@@ -298,7 +298,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 keyPressedRight = keyPressed == Keys::Right ? true : keyPressedRight;
 
                 {
-                    TinyPoint touchOrClick = keyboardPressed ? new TinyPoint(1, 1) : touchOrClickItem;
+                    TinyPoint touchOrClick = keyboardPressed ? TinyPoint(1, 1) : touchOrClickItem;
                     if (!accelStarted && Misc::IsInside(GetPadBounds(getPadCenter(), padRadius), touchOrClick))
                     {
                         padPressed = true;
@@ -388,15 +388,22 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 }
             }
-            using Def::ButtonGlyph;
 
             if (
                 Def::notAnyOf(
                     buttonGlyph,
-                    std::vector{(ButtonGlyph) 0,ButtonGlyph::PlayAction,ButtonGlyph::Cheat11,ButtonGlyph::Cheat12,ButtonGlyph::Cheat21,ButtonGlyph::Cheat22,ButtonGlyph::Cheat31,ButtonGlyph::Cheat32}
+                    std::vector{
+                        Def::ButtonGlyph(0),
+                        Def::ButtonGlyph::PlayAction,
+                        Def::ButtonGlyph::Cheat11,
+                        Def::ButtonGlyph::Cheat12,
+                        Def::ButtonGlyph::Cheat21,
+                        Def::ButtonGlyph::Cheat22,
+                        Def::ButtonGlyph::Cheat31,
+                        Def::ButtonGlyph::Cheat32}
                 )
                 &&
-                lastButtonDown == ButtonGlyph::NoneButtonGlyph)
+                lastButtonDown == Def::ButtonGlyph::NoneButtonGlyph)
             {
                 TinyPoint pos(320, 240);
                 sound->PlayImage(0, pos);

@@ -123,9 +123,17 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
                 if (plays.size() >= 10) {
-                    plays.erase(std::remove_if(plays.begin(), plays.end(),
-                        [](const Play& p) { return p.getIsFree(); }), plays.end());
+                    for (auto it = plays.begin(); it != plays.end();) {
+                        if (it->getIsFree()) {
+                            it = plays.erase(it);
+                        } else {
+                            ++it;
+                        }
+
+                        if (plays.size() < 10) break;
+                    }
                 }
+
 
                 plays.emplace_back(soundEffects[channel], channel, (float)GetVolume(pos), (float)GetBalance(pos), 0.0, bLoop);
 

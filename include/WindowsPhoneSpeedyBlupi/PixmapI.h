@@ -15,7 +15,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     class PixmapI {
     protected:
-        ~PixmapI() = default;
+        virtual ~PixmapI() = default;
 
     public:
         [[nodiscard]] virtual TinyRect getDrawBounds() const = 0;

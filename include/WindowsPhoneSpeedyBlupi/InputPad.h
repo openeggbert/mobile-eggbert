@@ -5,7 +5,6 @@
 #ifndef INPUTPAD_H
 #define INPUTPAD_H
 
-#include "Game1I.h"
 #include "Microsoft/Devices/Sensors/Accelerometer.h"
 #include "Microsoft/Devices/Sensors/AccelerometerReading.h"
 #include "WindowsPhoneSpeedyBlupi/Decor.h"
@@ -16,8 +15,9 @@
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 
 namespace WindowsPhoneSpeedyBlupi {
+    class Game1I;
 
-class InputPad
+    class InputPad
     {
     private:
         static const int padRadius = 140;
@@ -48,7 +48,7 @@ class InputPad
 
         mutable Def::ButtonGlyph buttonPressed;
 
-         int touchCount = 0;
+         int touchOrClickCount = 0;
 
          bool accelStarted = false;;
 

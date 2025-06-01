@@ -179,7 +179,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Pixmap::LoadContent()
         {
-            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(&(game1->getGraphicsDevice()));//todo
+            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(game1->getGraphicsDevice());//todo
             bitmapText = game1->getContent().Load<Texture2D>("icons/text");
             bitmapButton = game1->getContent().Load<Texture2D>("icons/button");
             bitmapJauge = game1->getContent().Load<Texture2D>("icons/jauge");

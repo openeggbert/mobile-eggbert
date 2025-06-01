@@ -21,10 +21,10 @@ namespace WindowsPhoneSpeedyBlupi {
     protected:
         ~Game1I() = default;
     public:
-        virtual [[nodiscard]] bool getIsRankingMode() const = 0;
+        [[nodiscard]]virtual bool getIsRankingMode() const = 0;
 
     public:
-        virtual [[nodiscard]] bool getIsTrialMode() const = 0;
+        [[nodiscard]]virtual bool getIsTrialMode() const = 0;
 
     protected:
         virtual void Initialize() = 0;
