@@ -5,12 +5,14 @@
 #ifndef INPUTPAD_H
 #define INPUTPAD_H
 
+#include "Game1I.h"
 #include "Microsoft/Devices/Sensors/Accelerometer.h"
 #include "Microsoft/Devices/Sensors/AccelerometerReading.h"
 #include "WindowsPhoneSpeedyBlupi/Decor.h"
-#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
+#include "WindowsPhoneSpeedyBlupi/PixmapI.h"
 #include "WindowsPhoneSpeedyBlupi/Slider.h"
-#include "WindowsPhoneSpeedyBlupi/Sound.h"
+#include "WindowsPhoneSpeedyBlupi/SoundI.h"
+#include "WindowsPhoneSpeedyBlupi/Game1I.h"
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 
 namespace WindowsPhoneSpeedyBlupi {
@@ -19,13 +21,13 @@ class InputPad
     private:
         static const int padRadius = 140;
 
-         mutable Microsoft::Xna::Framework::Game game1;
+         mutable Game1I* game1;
 
          mutable Decor decor;
 
-         mutable Pixmap pixmap;
+         mutable PixmapI* pixmap;
 
-         mutable Sound sound;
+         mutable SoundI* sound;
 
          mutable GameData gameData;
 
@@ -72,7 +74,7 @@ class InputPad
         public: [[nodiscard]] TinyPoint getPadCenter() const;
 
     public:
-        InputPad(Microsoft::Xna::Framework::Game& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData);
+        InputPad(Game1I* game1, Decor& decor, PixmapI* pixmap, SoundI* sound, GameData& gameData);
 
         void StartMission(int mission);
 

@@ -4,7 +4,7 @@
 
 #ifndef TEXT_H
 #define TEXT_H
-#include "Pixmap.h"
+#include "PixmapI.h"
 
 //static class
 namespace WindowsPhoneSpeedyBlupi {
@@ -197,24 +197,24 @@ using std::string;
         };
 
     public:
-        static void DrawTextLeft(Pixmap& pixmap, TinyPoint& pos, string& text, double& size);
+        static void DrawTextLeft(PixmapI* pixmap, TinyPoint& pos, string& text, double& size);
 
-        static void DrawText(Pixmap &pixmap, TinyPoint pos, string text, double size);
+        static void DrawText(PixmapI* pixmap, TinyPoint pos, string text, double size);
 
-        static void DrawTextPente(Pixmap pixmap, TinyPoint pos, string text, int pente, double size);
+        static void DrawTextPente(PixmapI* pixmap, TinyPoint pos, string text, int pente, double size);
 
-        static void DrawTextCenter(Pixmap &pixmap, TinyPoint &pos, string text, double size);
+        static void DrawTextCenter(PixmapI* pixmap, TinyPoint &pos, string text, double size);
 
         static int GetTextWidth(const string &text, double size);
 
     private:
         static int GetOffset(char c);
 
-        static void DrawChar(const Pixmap& pixmap, TinyPoint& pos, const char& car, const double& size);
+        static void DrawChar(PixmapI* pixmap, TinyPoint& pos, const char& car, const double& size);
 
         static int GetCharWidth(char c, double size);
 
-        static void DrawCharSingle(Pixmap pixmap, TinyPoint pos, int rank, double size);
+        static void DrawCharSingle(PixmapI* pixmap, TinyPoint pos, int rank, double size);
     };
 
 }

@@ -3,8 +3,6 @@
 //
 
 #include "WindowsPhoneSpeedyBlupi/Slider.h"
-
-#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
 #include "WindowsPhoneSpeedyBlupi/Misc.h"
 
 
@@ -26,10 +24,10 @@ namespace WindowsPhoneSpeedyBlupi
         this->setValue(value);//to be checked
     }
 
-    void Slider::Draw(Pixmap& pixmap) {
+    void Slider::Draw(PixmapI* pixmap) {
         TinyPoint tinyPoint;
-        tinyPoint.X = getTopLeftCorner().X - pixmap.getOrigin().X;
-        tinyPoint.Y = getTopLeftCorner().Y - pixmap.getOrigin().Y;
+        tinyPoint.X = getTopLeftCorner().X - pixmap->getOrigin().X;
+        tinyPoint.Y = getTopLeftCorner().Y - pixmap->getOrigin().Y;
         TinyPoint dest = tinyPoint;
         TinyRect tinyRect;
         tinyRect.LeftX = 0;
@@ -37,7 +35,7 @@ namespace WindowsPhoneSpeedyBlupi
         tinyRect.TopY = 0;
         tinyRect.BottomY = 22;
         TinyRect rect = tinyRect;
-        pixmap.DrawPart(5, dest, rect, 2.0);
+        pixmap->DrawPart(5, dest, rect, 2.0);
         int num = (int)((double)(getPosRight() - getPosLeft()) * getValue());
         int num2 = getTopLeftCorner().Y + 22;
         int num3 = 94;
@@ -47,21 +45,21 @@ namespace WindowsPhoneSpeedyBlupi
         tinyRect2.TopY = num2 - num3 / 2;
         tinyRect2.BottomY = num2 + num3 / 2;
         rect = tinyRect2;
-        pixmap.DrawIcon(14, 1, rect, 1.0, false);
+        pixmap->DrawIcon(14, 1, rect, 1.0, false);
         TinyRect tinyRect3;
         tinyRect3.LeftX = getTopLeftCorner().X - 65;
         tinyRect3.RightX = getTopLeftCorner().X - 65 + 60;
         tinyRect3.TopY = getTopLeftCorner().Y - 10;
         tinyRect3.BottomY = getTopLeftCorner().Y - 10 + 60;
         rect = tinyRect3;
-        pixmap.DrawIcon(10, 37, rect, 1.0, false);
+        pixmap->DrawIcon(10, 37, rect, 1.0, false);
         TinyRect tinyRect4;
         tinyRect4.LeftX = getTopLeftCorner().X + 248 + 5;
         tinyRect4.RightX = getTopLeftCorner().X + 248 + 5 + 60;
         tinyRect4.TopY = getTopLeftCorner().Y - 10;
         tinyRect4.BottomY = getTopLeftCorner().Y - 10 + 60;
         rect = tinyRect4;
-        pixmap.DrawIcon(10, 38, rect, 1.0, false);
+        pixmap->DrawIcon(10, 38, rect, 1.0, false);
     }
 
         bool Slider::Move(TinyPoint& pos)

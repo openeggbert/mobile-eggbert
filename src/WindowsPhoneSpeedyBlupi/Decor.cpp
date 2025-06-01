@@ -126,7 +126,7 @@ namespace WindowsPhoneSpeedyBlupi {
         m_hotSpotCurrentY = 240.0;
     }
 
-    void Decor::Create(Sound& sound, Pixmap& pixmap, GameData& gameData)
+    void Decor::Create(SoundI* sound, PixmapI* pixmap, GameData& gameData)
     {
         m_sound = sound;
         m_pixmap = pixmap;
@@ -153,7 +153,7 @@ namespace WindowsPhoneSpeedyBlupi {
         std::ostringstream oss;
         oss << "decor" << std::setw(3) << std::setfill('0') << m_region;
         string name = oss.str();
-        m_pixmap.value().BackgroundCache(name);
+        m_pixmap->BackgroundCache(name);
         return true;
     }
 
@@ -394,7 +394,7 @@ void Decor::InitDecor()
 
         void Decor::ResetHotSpot()
         {
-            m_pixmap.value().SetHotSpot(1.0, getDrawBounds().getWidth() / 2, getDrawBounds().getHeight() / 2);
+            m_pixmap->SetHotSpot(1.0, getDrawBounds().getWidth() / 2, getDrawBounds().getHeight() / 2);
         }
 
         void Decor::MoveHotSpot()
@@ -466,7 +466,7 @@ void Decor::InitDecor()
             {
                 m_hotSpotCurrentX = std::max(m_hotSpotCurrentX - m_hotSpotStepX, m_hotSpotFinalX);
             }
-            m_pixmap.value().SetHotSpot(m_hotSpotCurrentZoom, m_hotSpotCurrentX, m_hotSpotCurrentY);
+            m_pixmap->SetHotSpot(m_hotSpotCurrentZoom, m_hotSpotCurrentX, m_hotSpotCurrentY);
         }
 
         bool Decor::BlitzActif(int celx, int cely)
@@ -505,7 +505,7 @@ void Decor::InitDecor()
                 rect.BottomY = 480;
                 for (int j = 0; j < 2; j++)
                 {
-                    m_pixmap.value().DrawPart(3, tinyPoint, rect);
+                    m_pixmap->DrawPart(3, tinyPoint, rect);
                     tinyPoint.Y += rect.getHeight() - num;
                     rect.TopY = 0;
                     rect.BottomY = 480;
@@ -545,7 +545,7 @@ void Decor::InitDecor()
                             {
                                 pos.Y -= 2;
                             }
-                            m_pixmap.value().QuickIcon(channel, num2, pos);
+                            m_pixmap->QuickIcon(channel, num2, pos);
                         }
                     }
                     tinyPoint.Y += 64;
@@ -563,7 +563,7 @@ void Decor::InitDecor()
                         int num2 = m_decor[i][j].icon;
                         if (num2 == 384 || num2 == 385)
                         {
-                            m_pixmap.value().QuickIcon(1, num2, tinyPoint);
+                            m_pixmap->QuickIcon(1, num2, tinyPoint);
                         }
                     }
                     tinyPoint.Y += 64;
@@ -591,12 +591,12 @@ void Decor::InitDecor()
                     {
                         int num2 = Tables::table_shield_blupi[m_time / 2 % 16];
                         tinyPoint.Y -= 2;
-                        m_pixmap.value().QuickIcon(10, num2, tinyPoint);
+                        m_pixmap->QuickIcon(10, num2, tinyPoint);
                         tinyPoint.Y += 2;
                         num2 = Tables::table_shieldloop[m_time / 2 % 5];
-                        m_pixmap.value().QuickIcon(10, num2, tinyPoint);
+                        m_pixmap->QuickIcon(10, num2, tinyPoint);
                     }
-                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
                 else if (m_blupiPower)
                 {
@@ -604,9 +604,9 @@ void Decor::InitDecor()
                     if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                     {
                         int num2 = Tables::table_magicloop[m_time / 2 % 5];
-                        m_pixmap.value().QuickIcon(10, num2, tinyPoint);
+                        m_pixmap->QuickIcon(10, num2, tinyPoint);
                     }
-                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
                 else if (m_blupiCloud)
                 {
@@ -618,26 +618,26 @@ void Decor::InitDecor()
                             int num2 = 48 + (m_time + k) / 1 % 6;
                             pos.X = tinyPoint.X - 34;
                             pos.Y = tinyPoint.Y - 34;
-                            m_pixmap.value().QuickIcon(9, num2, pos);
+                            m_pixmap->QuickIcon(9, num2, pos);
                         }
                     }
-                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
                 else if (m_blupiHide)
                 {
                     m_blupiSec = 4;
                     if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                     {
-                        m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 0.3, rotation);
+                        m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 0.3, rotation);
                     }
                     else
                     {
-                        m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                        m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                     }
                 }
                 else
                 {
-                    m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
+                    m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
                 }
             }
             for (int num3 = MAXMOVEOBJECT - 1; num3 >= 0; num3--)
@@ -660,7 +660,7 @@ void Decor::InitDecor()
                     {
                         opacity = (double)(20 - m_moveObject[num3].phase) * 0.3 / 20.0;
                     }
-                    m_pixmap.value().QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint, opacity, 0.0);
+                    m_pixmap->QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint, opacity, 0.0);
                     if (m_moveObject[num3].type == 30)
                     {
                         for (int l = 0; l < Tables::table_drinkoffsetLength; l++)
@@ -672,12 +672,12 @@ void Decor::InitDecor()
                             tinyPoint2.Y = tinyPoint.Y - num4 * 3;
                             TinyPoint pos2 = tinyPoint2;
                             double opacity2 = (50.0 - (double)num4) / 50.0;
-                            m_pixmap.value().QuickIcon(10, rank, pos2, opacity2, 0.0);
+                            m_pixmap->QuickIcon(10, rank, pos2, opacity2, 0.0);
                         }
                     }
                     if (m_bDrawSecret && m_moveObject[num3].type == 12 && m_moveObject[num3].icon != 32 && m_moveObject[num3].icon != 33 && m_moveObject[num3].icon != 34)
                     {
-                        m_pixmap.value().QuickIcon(1, 214, tinyPoint);
+                        m_pixmap->QuickIcon(1, 214, tinyPoint);
                     }
                 }
             }
@@ -711,7 +711,7 @@ void Decor::InitDecor()
                         switch (num2)
                         {
                             default:
-                                m_pixmap.value().QuickIcon(1, num2, pos);
+                                m_pixmap->QuickIcon(1, num2, pos);
                                 break;
                             case 68:
                             case 91:
@@ -766,7 +766,7 @@ void Decor::InitDecor()
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
-                    m_pixmap.value().QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
+                    m_pixmap->QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
                 }
             }
             tinyPoint.X = m_drawBounds.LeftX - posDecor.X % 64;
@@ -782,18 +782,18 @@ void Decor::InitDecor()
                         if (num2 == 68)
                         {
                             num2 = Tables::table_decor_lave[(i * 13 + j * 7 + m_time / 2) % 8];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 373)
                         {
                             num2 = ((!m_blupiFocus) ? Tables::table_decor_piege2[(i * 13 + j * 7 + m_time / 2) % 4] : Tables::table_decor_piege1[(i * 13 + j * 7 + m_time / 4) % 16]);
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 404 || num2 == 410)
                         {
                             num2 = Tables::table_decor_goutte[(i * 13 + j * 7 + m_time / 2) % 48];
                             pos.Y -= 9;
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                             if (num2 >= 404 && num2 <= 407)
                             {
                                 m_decor[i][j].icon = 404;
@@ -806,73 +806,73 @@ void Decor::InitDecor()
                         if (num2 == 317)
                         {
                             num2 = Tables::table_decor_ecraseur[m_time / 3 % 10];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 378)
                         {
                             num2 = Tables::table_decor_scie[(i * 13 + j * 7 + m_time / 1) % 6];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 324)
                         {
                             num2 = Tables::table_decor_temp[m_time / 4 % 20];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 92)
                         {
                             num2 = Tables::table_decor_eau1[(i * 13 + j * 7 + m_time / 3) % 6];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 91)
                         {
                             int num5 = 3 + (i * 17 + j * 13) % 3;
                             num2 = Tables::table_decor_eau2[(i * 11 + j * 7 + m_time / num5) % 6];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 305 && BlitzActif(i, j))
                         {
                             num2 = m_random.Next(305, 308);
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 110)
                         {
                             num2 = Tables::table_decor_ventg[m_time / 1 % 4];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 114)
                         {
                             num2 = Tables::table_decor_ventd[m_time / 1 % 4];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 118)
                         {
                             num2 = Tables::table_decor_venth[m_time / 1 % 4];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 122)
                         {
                             num2 = Tables::table_decor_ventb[m_time / 1 % 4];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 126)
                         {
                             num2 = Tables::table_decor_ventillog[m_time / 2 % 3];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 129)
                         {
                             num2 = Tables::table_decor_ventillod[m_time / 2 % 3];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 132)
                         {
                             num2 = Tables::table_decor_ventilloh[m_time / 2 % 3];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 135)
                         {
                             num2 = Tables::table_decor_ventillob[m_time / 2 % 3];
-                            m_pixmap.value().QuickIcon(1, num2, pos);
+                            m_pixmap->QuickIcon(1, num2, pos);
                         }
                     }
                     tinyPoint.Y += 64;
@@ -886,14 +886,14 @@ void Decor::InitDecor()
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
-                    m_pixmap.value().QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
+                    m_pixmap->QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
                 }
             }
             if (m_blupiFront)
             {
                 tinyPoint.X = m_drawBounds.LeftX + m_blupiPos.X - posDecor.X;
                 tinyPoint.Y = m_drawBounds.TopY + m_blupiPos.Y - posDecor.Y;
-                m_pixmap.value().QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint);
+                m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint);
             }
             DrawInfo();
             VoyageDraw();
@@ -907,63 +907,63 @@ void Decor::InitDecor()
             pos.Y = 417;
             for (int i = 0; i < m_nbVies; i++)
             {
-                m_pixmap.value().HudIcon(2, 48, pos);
+                m_pixmap->HudIcon(2, 48, pos);
                 pos.X += 16;
             }
             pos.X = 570;
             pos.Y = 442;
             for (int i = 0; i < m_blupiBullet; i++)
             {
-                m_pixmap.value().HudIcon(10, 176, pos);
+                m_pixmap->HudIcon(10, 176, pos);
                 pos.X += 4;
             }
             if (m_blupiPerso > 0)
             {
                 pos.X = 0;
                 pos.Y = 438;
-                m_pixmap.value().HudIcon(4, 108, pos);
+                m_pixmap->HudIcon(4, 108, pos);
                 string text = Helper::formatString("= {0}", STRING_VECTOR(std::to_string(m_blupiPerso)));
                 pos.X = 32;
                 pos.Y = 452;
-                Text::DrawText(m_pixmap.value(), pos, text, 0.7);
+                Text::DrawText(m_pixmap, pos, text, 0.7);
             }
             if (m_blupiDynamite > 0)
             {
                 pos.X = 505;
                 pos.Y = 414;
-                m_pixmap.value().HudIcon(10, 252, pos);
+                m_pixmap->HudIcon(10, 252, pos);
             }
             if (((uint)m_blupiCle & (true ? 1u : 0u)) != 0)
             {
                 pos.X = 520;
                 pos.Y = 418;
-                m_pixmap.value().HudIcon(10, 215, pos);
+                m_pixmap->HudIcon(10, 215, pos);
             }
             if (((uint)m_blupiCle & 2u) != 0)
             {
                 pos.X = 530;
                 pos.Y = 418;
-                m_pixmap.value().HudIcon(10, 222, pos);
+                m_pixmap->HudIcon(10, 222, pos);
             }
             if (((uint)m_blupiCle & 4u) != 0)
             {
                 pos.X = 540;
                 pos.Y = 418;
-                m_pixmap.value().HudIcon(10, 229, pos);
+                m_pixmap->HudIcon(10, 229, pos);
             }
             if ((m_mission != 1 && m_mission % 10 != 0) || m_bPrivate)
             {
                 TinyRect tinyRect = TinyRect();
-                tinyRect.LeftX = 410 + m_pixmap.value().getOrigin().X;
-                tinyRect.RightX = 510 + m_pixmap.value().getOrigin().X;
+                tinyRect.LeftX = 410 + m_pixmap->getOrigin().X;
+                tinyRect.RightX = 510 + m_pixmap->getOrigin().X;
                 tinyRect.TopY = 445;
                 tinyRect.BottomY = 480;
                 TinyRect rect = tinyRect;
-                m_pixmap.value().DrawIcon(14, 15, rect, 0.6, false);
+                m_pixmap->DrawIcon(14, 15, rect, 0.6, false);
                 string text = Helper::formatString("{0}/{1}", std::vector{ToString(m_nbTresor), ToString(m_totalTresor)});
                 pos.X = 460;
                 pos.Y = 450;
-                Text::DrawTextCenter(m_pixmap.value(), pos, text, 1.0);
+                Text::DrawTextCenter(m_pixmap, pos, text, 1.0);
             }
             for (int i = 0; i < 2; i++)
             {
@@ -1008,19 +1008,19 @@ void Decor::InitDecor()
                     string text = MyResource::LoadString(array[i + 5] + num3);
                     if (text != "")
                     {
-                        TinyRect drawBounds = m_pixmap.value().getDrawBounds();
+                        TinyRect drawBounds = m_pixmap->getDrawBounds();
                         TinyRect tinyRect2 = TinyRect();
                         tinyRect2.LeftX = 0;
                         tinyRect2.RightX = drawBounds.getWidth();
                         tinyRect2.TopY = 0;
                         tinyRect2.BottomY = 40;
                         TinyRect rect2 = tinyRect2;
-                        m_pixmap.value().DrawIcon(14, 15, rect2, 1.0, false);
+                        m_pixmap->DrawIcon(14, 15, rect2, 1.0, false);
                         double num4 = Text::GetTextWidth(text, 1.0);
                         double num5 = std::min(640.0 / num4, 1.0);
                         pos.X = 320;
                         pos.Y = 5 + (int)((1.0 - num5) * 35.0 * 0.6);
-                        Text::DrawTextCenter(m_pixmap.value(), pos, text, num5);
+                        Text::DrawTextCenter(m_pixmap, pos, text, num5);
                     }
                     break;
                 }
@@ -1279,7 +1279,7 @@ void Decor::InitDecor()
             {
                 pos.X -= m_posDecor.X;
                 pos.Y -= m_posDecor.Y;
-                m_sound.value().PosImage(m_blupiMotorSound, pos);
+                m_sound->PosImage(m_blupiMotorSound, pos);
             }
         }
 
@@ -4897,7 +4897,7 @@ void Decor::InitDecor()
                     celSwitch.Y = 418;
                     tinyPoint2.X = celBridge.X * 64 - m_posDecor.X;
                     tinyPoint2.Y = celBridge.Y * 64 - m_posDecor.Y;
-                    VoyageInit(celSwitch, m_pixmap.value().HotSpotToHud(tinyPoint2), 214 + (num - 334) * 7, 10);
+                    VoyageInit(celSwitch, m_pixmap->HotSpotToHud(tinyPoint2), 214 + (num - 334) * 7, 10);
                 }
             }
             if (!m_blupiHelico && !m_blupiSuspend && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiSkate && !m_blupiJeep && !m_blupiTank && !m_blupiJeep && m_blupiFocus)
@@ -4994,7 +4994,7 @@ void Decor::InitDecor()
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                     tinyPoint2.X = 570;
                     tinyPoint2.Y = 430;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), tinyPoint2, 177, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 177, 10);
                     m_blupiBullet += 10;
                     if (m_blupiBullet > 10)
                     {
@@ -5197,7 +5197,7 @@ void Decor::InitDecor()
                     TinyPoint end2;
                     end2.X = 430;
                     end2.Y = 430;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end2, 6, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end2, 6, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5211,7 +5211,7 @@ void Decor::InitDecor()
                     TinyPoint end3;
                     end3.X = 520;
                     end3.Y = 418;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end3, 215, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end3, 215, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5225,7 +5225,7 @@ void Decor::InitDecor()
                     TinyPoint end4;
                     end4.X = 530;
                     end4.Y = 418;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end4, 222, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end4, 222, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5239,7 +5239,7 @@ void Decor::InitDecor()
                     TinyPoint end5;
                     end5.X = 540;
                     end5.Y = 418;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), end5, 229, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end5, 229, 10);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, -60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 60);
                     ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
@@ -5250,7 +5250,7 @@ void Decor::InitDecor()
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), VoyageGetPosVie(m_nbVies + 1), 21, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), VoyageGetPosVie(m_nbVies + 1), 21, 10);
                 }
                 if (m_moveObject[icon].type == 25 && !m_blupiShield && !m_blupiHide && !m_blupiPower && m_blupiFocus)
                 {
@@ -5332,7 +5332,7 @@ void Decor::InitDecor()
                             celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                             tinyPoint2.X = 0;
                             tinyPoint2.Y = 438;
-                            VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), tinyPoint2, 108, 4);
+                            VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 108, 4);
                         }
                     }
                     else if (!m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
@@ -5356,7 +5356,7 @@ void Decor::InitDecor()
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                     tinyPoint2.X = 505;
                     tinyPoint2.Y = 414;
-                    VoyageInit(m_pixmap.value().HotSpotToHud(celSwitch), tinyPoint2, 252, 10);
+                    VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 252, 10);
                     m_blupiAction = 86;
                     m_blupiPhase = 0;
                     m_blupiFocus = false;
@@ -5614,7 +5614,7 @@ void Decor::InitDecor()
                     TinyPoint posDecor = GetPosDecor(m_blupiPos);
                     celSwitch.X = m_blupiPos.X - posDecor.X - 30;
                     celSwitch.Y = m_blupiPos.Y - posDecor.Y;
-                    VoyageInit(VoyageGetPosVie(m_nbVies), m_pixmap.value().HotSpotToHud(celSwitch), 48, 2);
+                    VoyageInit(VoyageGetPosVie(m_nbVies), m_pixmap->HotSpotToHud(celSwitch), 48, 2);
                 }
                 else
                 {
@@ -5802,7 +5802,7 @@ void Decor::InitDecor()
                 pos.Y = m_blupiPos.Y - m_posDecor.Y;
                 pos2.X = m_blupiPos.X - m_posDecor.X;
                 pos2.Y = m_blupiPos.Y - m_posDecor.Y - 300;
-                VoyageInit(m_pixmap.value().HotSpotToHud(pos), m_pixmap.value().HotSpotToHud(pos2), 230, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 230, 10);
                 PlaySound(74, m_blupiPos);
             }
             if (m_blupiAction == 76)
@@ -5811,7 +5811,7 @@ void Decor::InitDecor()
                 pos.Y = m_blupiPos.Y - m_posDecor.Y;
                 pos2.X = m_blupiPos.X - m_posDecor.X;
                 pos2.Y = m_blupiPos.Y - m_posDecor.Y - 2000;
-                VoyageInit(m_pixmap.value().HotSpotToHud(pos), m_pixmap.value().HotSpotToHud(pos2), 40, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 40, 10);
                 PlaySound(74, m_blupiPos);
             }
             if (m_blupiAction == 77)
@@ -8926,7 +8926,7 @@ void Decor::InitDecor()
                 tinyPoint.X = m_drawBounds.LeftX + (int)byeByeObject.posX - posDecor.X;
                 tinyPoint.Y = m_drawBounds.TopY + (int)byeByeObject.posY - posDecor.Y;
                 TinyPoint pos = tinyPoint;
-                m_pixmap.value().QuickIcon(byeByeObject.channel, byeByeObject.icon, pos, 1.0, byeByeObject.rotation);
+                m_pixmap->QuickIcon(byeByeObject.channel, byeByeObject.icon, pos, 1.0, byeByeObject.rotation);
             }
         }
 
@@ -9101,7 +9101,7 @@ void Decor::InitDecor()
             pos.Y = m_voyageStart.Y + (m_voyageEnd.Y - m_voyageStart.Y) * num / m_voyageTotal;
             if (m_voyageIcon != 40 || m_voyageChannel != 10 || num != 0)
             {
-                m_pixmap.value().HudIcon(m_voyageChannel, m_voyageIcon, pos);
+                m_pixmap->HudIcon(m_voyageChannel, m_voyageIcon, pos);
             }
             if (m_voyageIcon == 40 && m_voyageChannel == 10)
             {

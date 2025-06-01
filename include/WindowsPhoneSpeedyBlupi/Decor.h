@@ -6,10 +6,8 @@
 #define DECOR_H
 #include <cmath>
 
-#include "Game1.h"
-
-#include "Pixmap.h"
-#include "Sound.h"
+#include "PixmapI.h"
+#include "SoundI.h"
 #include "Tables.h"
 #include "System/Random.h"
 #include "Jauge.h"
@@ -101,9 +99,9 @@ class Decor {
 
         private: static constexpr int OVERHEIGHT = 80;
 
-        private: std::optional<Sound> m_sound;
+        private: SoundI* m_sound;
 
-        private: std::optional<Pixmap> m_pixmap;
+        private: PixmapI* m_pixmap;
 
         private: GameData m_gameData;
 
@@ -363,7 +361,7 @@ public:
 
         public: Decor();
 
-        public: void Create(Sound& sound, Pixmap& pixmap, GameData& gameData);
+        public: void Create(SoundI* sound, PixmapI* pixmap, GameData& gameData);
 
         public: bool LoadImages();
 

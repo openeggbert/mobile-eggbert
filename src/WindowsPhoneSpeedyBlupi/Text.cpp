@@ -6,7 +6,7 @@
 
 namespace WindowsPhoneSpeedyBlupi {
 
-        void Text::DrawTextLeft(Pixmap& pixmap, TinyPoint& pos, string& text, double& size)
+        void Text::DrawTextLeft(PixmapI* pixmap, TinyPoint& pos, string& text, double& size)
         {
             if (!text.empty())
             {
@@ -14,7 +14,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-        void Text::DrawText(Pixmap& pixmap, TinyPoint pos, string text, double size)
+        void Text::DrawText(PixmapI* pixmap, TinyPoint pos, string text, double size)
         {
             if (!text.empty())
             {
@@ -25,7 +25,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-        void Text::DrawTextPente(Pixmap pixmap, TinyPoint pos, string text, int pente, double size)
+        void Text::DrawTextPente(PixmapI* pixmap, TinyPoint pos, string text, int pente, double size)
         {
             if (!text.empty())
             {
@@ -41,7 +41,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-        void Text::DrawTextCenter(Pixmap& pixmap, TinyPoint& pos, string text, double size)
+        void Text::DrawTextCenter(PixmapI* pixmap, TinyPoint& pos, string text, double size)
         {
             if (!text.empty())
             {
@@ -82,7 +82,7 @@ namespace WindowsPhoneSpeedyBlupi {
             return c;
         }
 
-        void Text::DrawChar(const Pixmap& pixmap, TinyPoint& pos, const char& car, const double& size)
+        void Text::DrawChar(PixmapI* pixmap, TinyPoint& pos, const char& car, const double& size)
         {
             TinyPoint pos2;
             int num = (short)car * 6;
@@ -105,8 +105,8 @@ namespace WindowsPhoneSpeedyBlupi {
             return (int)((double)(table_width[table_char[(short)c * 6]] + 1) * size);
         }
 
-        void Text::DrawCharSingle(Pixmap pixmap, TinyPoint pos, int rank, double size)
+        void Text::DrawCharSingle(PixmapI* pixmap, TinyPoint pos, int rank, double size)
         {
-            pixmap.DrawChar(rank, pos, size);
+            pixmap->DrawChar(rank, pos, size);
         }
 }

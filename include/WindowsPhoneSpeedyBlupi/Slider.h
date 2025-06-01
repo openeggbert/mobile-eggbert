@@ -4,10 +4,8 @@
 
 #ifndef SLIDER_H
 #define SLIDER_H
-#include "Pixmap.h"
-#include "CNA/Prop.h"
+#include "WindowsPhoneSpeedyBlupi/PixmapI.h"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
-#include "WindowsPhoneSpeedyBlupi/TinyRect.h"
 
 namespace WindowsPhoneSpeedyBlupi {
 
@@ -30,7 +28,7 @@ namespace WindowsPhoneSpeedyBlupi {
 */
 
 
-    public: void Draw(Pixmap& pixmap);
+    public: void Draw(PixmapI* pixmap);
 
     public: bool Move(TinyPoint &pos);
     };

@@ -52,11 +52,11 @@ namespace WindowsPhoneSpeedyBlupi {
                         glyphs.push_back(Def::ButtonGlyph::InitGamerC);
                         glyphs.push_back(Def::ButtonGlyph::InitSetup);
                         glyphs.push_back(Def::ButtonGlyph::InitPlay);
-                        if (game1.getIsTrialMode())
+                        if (game1->getIsTrialMode())
                         {
                             glyphs.push_back(Def::ButtonGlyph::InitBuy);
                         }
-                        if (game1.getIsRankingMode())
+                        if (game1->getIsRankingMode())
                         {
                             glyphs.push_back(Def::ButtonGlyph::InitRanking);
                         }
@@ -136,13 +136,13 @@ namespace WindowsPhoneSpeedyBlupi {
             }
     TinyPoint InputPad::getPadCenter() const
     {
-        TinyRect drawBounds = pixmap.getDrawBounds();
+        TinyRect drawBounds = pixmap->getDrawBounds();
         int x = gameData.getJumpRight() ? 100 : drawBounds.getWidth() - 100;
         return TinyPoint(x, drawBounds.getHeight() - 100);
     }
     /** Properties : End */
 
-    InputPad::InputPad(Microsoft::Xna::Framework::Game& game1, Decor& decor, Pixmap& pixmap, Sound& sound, GameData& gameData):
+    InputPad::InputPad(Game1I* game1, Decor& decor, PixmapI* pixmap, SoundI* sound, GameData& gameData):
         game1(game1),
         decor(decor),
         pixmap(pixmap),
@@ -228,8 +228,8 @@ namespace WindowsPhoneSpeedyBlupi {
                 touchesOrClicks.push_back(mouseClick);
             }
 
-            float screenWidth = game1.getGraphics().getGraphicsDevice().getViewport().getWidth();
-            float screenHeight = game1.getGraphics().getGraphicsDevice().getViewport().getHeight();
+            float screenWidth = game1->getGraphics().getGraphicsDevice().getViewport().getWidth();
+            float screenHeight = game1->getGraphics().getGraphicsDevice().getViewport().getHeight();
             float screenRatio = screenWidth / screenHeight;
 
             if ((Def::PLATFORM == Def::Platform::Android && screenRatio > 1.3333333333333333) /*|| Env.IMPL.isKNI()*/)
@@ -276,7 +276,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             if (newKeyboardState.IsKeyDown(Keys::F11))
             {
-                game1.ToggleFullScreen ();
+                game1->ToggleFullScreen ();
                 DDebug::WriteLine("F11 was pressed.");
             }
 
@@ -399,7 +399,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 lastButtonDown == ButtonGlyph::NoneButtonGlyph)
             {
                 TinyPoint pos(320, 240);
-                sound.PlayImage(0, pos);
+                sound->PlayImage(0, pos);
             }
             if (buttonGlyph == Def::ButtonGlyph::NoneButtonGlyph && lastButtonDown != 0)
             {
@@ -509,9 +509,9 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             if (!accelStarted && getPhase() == Def::Phase::Play)
             {
-                pixmap.DrawIcon(14, 0, GetPadBounds(getPadCenter(), padRadius / 2), 1.0, false);
+                pixmap->DrawIcon(14, 0, GetPadBounds(getPadCenter(), padRadius / 2), 1.0, false);
                 TinyPoint center = (padPressed ? padTouchPos : getPadCenter());
-                pixmap.DrawIcon(14, 1, GetPadBounds(center, padRadius / 2), 1.0, false);
+                pixmap->DrawIcon(14, 1, GetPadBounds(center, padRadius / 2), 1.0, false);
             }
             for (Def::ButtonGlyph buttonGlyph : getButtonGlyphs())
             {
@@ -538,7 +538,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 {
                     selected = gameData.getAccelActive();
                 }
-                pixmap.DrawInputButton(GetButtonRect(buttonGlyph), buttonGlyph, pressed, selected);
+                pixmap->DrawInputButton(GetButtonRect(buttonGlyph), buttonGlyph, pressed, selected);
             }
             if ((getPhase() == Def::Phase::MainSetup || getPhase() == Def::Phase::PlaySetup) && gameData.getAccelActive())
             {
@@ -553,7 +553,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     TinyRect InputPad::GetButtonRect(Def::ButtonGlyph glyph)
         {
-            TinyRect drawBounds = pixmap.getDrawBounds();
+            TinyRect drawBounds = pixmap->getDrawBounds();
             double drawBoundsWidth = drawBounds.getWidth();
             double drawBoundsHeight = drawBounds.getHeight();
             double buttonSizeFactor1 = drawBoundsHeight / 5.0;

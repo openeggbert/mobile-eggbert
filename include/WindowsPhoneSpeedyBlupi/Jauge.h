@@ -13,7 +13,7 @@ namespace WindowsPhoneSpeedyBlupi {
     class Jauge {
     private:
         PixmapI* m_pixmap;
-
+        //Todo: Check (m_sound is not used).
         SoundI* m_sound;
 
         bool m_bHide;
@@ -37,7 +37,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         Jauge();
 
-        bool Create(PixmapI& pixmap, SoundI& sound, TinyPoint pos, int mode, bool bMinimizeRedraw);
+        bool Create(PixmapI* pixmap, SoundI* sound, TinyPoint pos, int mode, bool bMinimizeRedraw);
 
         void Draw();
 

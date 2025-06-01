@@ -9,9 +9,10 @@
 
 #include "Decor.h"
 #include "Def.h"
+#include "Game1I.h"
 #include "Jauge.h"
-#include "Pixmap.h"
-#include "Sound.h"
+#include "PixmapI.h"
+#include "SoundI.h"
 #include "InputPad.h"
 #include "Microsoft/Xna/Framework/Game.h"
 #include "Microsoft/Xna/Framework/GameTime.h"
@@ -22,7 +23,7 @@
 #define readonly mutable
 
 namespace WindowsPhoneSpeedyBlupi {
-class Game1 : public Microsoft::Xna::Framework::Game {
+class Game1 : public Microsoft::Xna::Framework::Game, public Game1I {
 public:
 private: static constexpr int waitTableLength = 24;
         private: static constexpr double waitTable[waitTableLength] =
@@ -50,9 +51,9 @@ private: static constexpr int cheatGesteLength = 10;
 
         private: readonly Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
-        private: readonly Pixmap pixmap;
+        private: readonly PixmapI* pixmap;
 
-        private: readonly Sound sound;
+        private: readonly SoundI* sound;
 
         private: readonly Decor decor;
 
