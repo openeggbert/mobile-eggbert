@@ -21,6 +21,8 @@
 #include "System/Runtime/CompilerServices/EventArgs.h"
 #include "WindowsPhoneSpeedyBlupi/Helper.h"
 #include "WindowsPhoneSpeedyBlupi/MyResource.h"
+#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
+#include "WindowsPhoneSpeedyBlupi/Sound.h"
 #include "WindowsPhoneSpeedyBlupi/Tables.h"
 #include "WindowsPhoneSpeedyBlupi/Text.h"
 
@@ -37,11 +39,11 @@ namespace WindowsPhoneSpeedyBlupi {
 
     Game1::Game1(): graphics(this),
                     gameData(), startTime(System::TimeSpan(0)),
-                    pixmap(*this, graphics),
-                    sound(*this, gameData),
+                    pixmap(std::make_unique<Pixmap>(&*this, graphics)),
+                    sound(std::make_unique<Sound>(*this, gameData)),
                     decor(),
                     waitJauge(),
-                    inputPad(*this, decor, pixmap, sound, gameData) {
+                    inputPad(this, decor, pixmap.get(), sound.get(), gameData) {
 
         Exiting += [this](const Microsoft::Xna::Framework::ExitingEventArgs & args) {
         OnExiting(args);
@@ -69,14 +71,14 @@ namespace WindowsPhoneSpeedyBlupi {
         missionToStart2 = -1;
 
 
-        decor.Create(sound, pixmap, gameData);
+        decor.Create(sound.get(), pixmap.get(), gameData);
         TinyPoint pos
         {
             196,
             426
         };
 
-        waitJauge.Create(pixmap, sound, pos, 3, false);
+        waitJauge.Create(pixmap.get(), sound.get(), pos, 3, false);
         waitJauge.SetHide(false);
         waitJauge.setZoom(2.0);
         phase = Def::Phase::NonePhase;
@@ -93,7 +95,7 @@ namespace WindowsPhoneSpeedyBlupi {
         Microsoft::Xna::Framework::Game::Initialize();
     }
     void Game1::LoadContent() {
-        pixmap.BackgroundCache("wait");
+        pixmap->BackgroundCache("wait");
     }
     void Game1::UnloadContent () {
 
@@ -165,10 +167,10 @@ namespace WindowsPhoneSpeedyBlupi {
             if (phase == Def::Phase::First)
             {
                 startTime = gameTime.getTotalGameTime();
-                pixmap.LoadContent();
-                sound.LoadContent();
+                pixmap->LoadContent();
+                sound->LoadContent();
                 gameData.Read();
-                inputPad.setPixmapOrigin(pixmap.getOrigin());
+                inputPad.setPixmapOrigin(pixmap->getOrigin());
                 SetPhase(Def::Phase::Wait);
                 return;
             }
@@ -421,7 +423,7 @@ namespace WindowsPhoneSpeedyBlupi {
         }
         if (phase == Def::Phase::Wait || phase == Def::Phase::Init || phase == Def::Phase::Pause || phase == Def::Phase::Resume || phase == Def::Phase::Lost || phase == Def::Phase::Win || phase == Def::Phase::MainSetup || phase == Def::Phase::PlaySetup || phase == Def::Phase::Trial || phase == Def::Phase::Ranking)
         {
-            pixmap.DrawBackground();
+            pixmap->DrawBackground();
             if (fadeOutPhase == Def::Phase::NonePhase && missionToStart1 != -1)
             {
                 missionToStart2 = missionToStart1;
@@ -481,7 +483,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     rect = tinyRect2;
                     opacity = 1.0;
                 }
-                pixmap.DrawIcon(15, 0, rect, opacity, false);
+                pixmap->DrawIcon(15, 0, rect, opacity, false);
             }
             if (phase == Def::Phase::Init)
             {
@@ -508,7 +510,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyRect3.TopY = (int)(280.0 - 190.0 * num);
                 tinyRect3.BottomY = (int)(280.0 + 190.0 * num);
                 TinyRect rect = tinyRect3;
-                pixmap.DrawIcon(16, 0, rect, opacity, 0.0, false);
+                pixmap->DrawIcon(16, 0, rect, opacity, 0.0, false);
             }
             if (phase == Def::Phase::Pause || phase == Def::Phase::Resume)
             {
@@ -523,7 +525,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     tinyRect4.TopY = (int)(190.0 - 190.0 * num);
                     tinyRect4.BottomY = (int)(190.0 + 190.0 * num);
                     TinyRect rect = tinyRect4;
-                    pixmap.DrawIcon(16, 0, rect, opacity, 0.0, false);
+                    pixmap->DrawIcon(16, 0, rect, opacity, 0.0, false);
                 }
                 else if (fadeOutPhase == Def::Phase::PlaySetup)
                 {
@@ -535,7 +537,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     tinyRect5.TopY = 0;
                     tinyRect5.BottomY = 0;
                     TinyRect rect = tinyRect5;
-                    pixmap.DrawIcon(16, 0, rect, 1.0, 0.0, false);
+                    pixmap->DrawIcon(16, 0, rect, 1.0, 0.0, false);
                 }
                 else
                 {
@@ -562,7 +564,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                     if (rect.getWidth() > 0 && rect.getHeight() > 0)
                     {
-                        pixmap.DrawIcon(16, 0, rect, 1.0, rotation, false);
+                        pixmap->DrawIcon(16, 0, rect, 1.0, rotation, false);
                     }
                 }
             }
@@ -591,7 +593,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyRect7.TopY = 0;
                 tinyRect7.BottomY = 160;
                 TinyRect rect = tinyRect7;
-                pixmap.DrawIcon(15, 0, rect, num * num, false);
+                pixmap->DrawIcon(15, 0, rect, num * num, false);
                 TinyRect tinyRect8 = TinyRect();
                 tinyRect8.LeftX = 487;
                 tinyRect8.RightX = 713;
@@ -606,8 +608,8 @@ namespace WindowsPhoneSpeedyBlupi {
                 TinyRect rect3 = tinyRect9;
                 double opacity = 0.5 - num * 0.4;
                 double rotation = (0.0 - num2) * 100.0 * 2.5;
-                pixmap.DrawIcon(17, 0, rect2, opacity, rotation, false);
-                pixmap.DrawIcon(17, 0, rect3, opacity, (0.0 - rotation) * 0.5, false);
+                pixmap->DrawIcon(17, 0, rect2, opacity, rotation, false);
+                pixmap->DrawIcon(17, 0, rect3, opacity, (0.0 - rotation) * 0.5, false);
             }
             if (phase == Def::Phase::Lost)
             {
@@ -625,7 +627,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 }
                 if (rect.getWidth() > 0 && rect.getHeight() > 0)
                 {
-                    pixmap.DrawIcon(16, 0, rect, 1.0, rotation, false);
+                    pixmap->DrawIcon(16, 0, rect, 1.0, rotation, false);
                 }
             }
             if (phase == Def::Phase::Win)
@@ -637,7 +639,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyRect11.TopY = (int)(238.0 - 190.0 * num);
                 tinyRect11.BottomY = (int)(238.0 + 190.0 * num);
                 TinyRect rect = tinyRect11;
-                pixmap.DrawIcon(16, 0, rect, 1.0, 0.0, false);
+                pixmap->DrawIcon(16, 0, rect, 1.0, 0.0, false);
             }
         }
 
@@ -645,7 +647,7 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             if (phase == Def::Phase::Init)
             {
-                TinyRect drawBounds = pixmap.getDrawBounds();
+                TinyRect drawBounds = pixmap->getDrawBounds();
                 int width = drawBounds.getWidth();
                 int height = drawBounds.getHeight();
                 TinyRect tinyRect = TinyRect();
@@ -654,14 +656,14 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyRect.TopY = height - 325;
                 tinyRect.BottomY = height - 10;
                 TinyRect rect = tinyRect;
-                pixmap.DrawIcon(14, 15, rect, 0.3, false);
+                pixmap->DrawIcon(14, 15, rect, 0.3, false);
                 TinyRect tinyRect2 = TinyRect();
                 tinyRect2.LeftX = width - 170;
                 tinyRect2.RightX = width - 10;
                 tinyRect2.TopY = height - ((getIsTrialMode() || getIsRankingMode()) ? 325 : 195);
                 tinyRect2.BottomY = height - 10;
                 rect = tinyRect2;
-                pixmap.DrawIcon(14, 15, rect, 0.3, false);
+                pixmap->DrawIcon(14, 15, rect, 0.3, false);
             }
         }
 
@@ -720,17 +722,17 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyPoint.X = 360;
                 tinyPoint.Y = 50;
                 TinyPoint pos = tinyPoint;
-                Text::DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL1), 0.9);
+                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL1), 0.9);
                 pos.Y += 40;
-                Text::DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL2), 0.7);
+                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL2), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL3), 0.7);
+                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL3), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL4), 0.7);
+                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL4), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL5), 0.7);
+                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL5), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap, pos, MyResource::LoadString(MyResource::TX_TRIAL6), 0.7);
+                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL6), 0.7);
                 DrawTextUnderButton(Def::ButtonGlyph::TrialBuy, MyResource::TX_BUTTON_BUY);
                 DrawTextUnderButton(Def::ButtonGlyph::TrialCancel, MyResource::TX_BUTTON_BACK);
             }
@@ -748,29 +750,29 @@ namespace WindowsPhoneSpeedyBlupi {
             int secondaryDoors;
             gameData.GetGamerInfo(gamer, nbVies, mainDoors, secondaryDoors);
             TinyPoint tinyPoint;
-            tinyPoint.X = buttonRect.RightX + 5 - pixmap.getOrigin().X;
-            tinyPoint.Y = buttonRect.TopY + 3 - pixmap.getOrigin().Y;
+            tinyPoint.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
+            tinyPoint.Y = buttonRect.TopY + 3 - pixmap->getOrigin().Y;
             TinyPoint pos = tinyPoint;
             string text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_TITLE), STRING_VECTOR(std::to_string(static_cast<char>(65 + gamer))));
-            Text::DrawText(pixmap, pos, text, 0.7);
+            Text::DrawText(pixmap.get(), pos, text, 0.7);
             TinyPoint tinyPoint2;
-            tinyPoint2.X = buttonRect.RightX + 5 - pixmap.getOrigin().X;
-            tinyPoint2.Y = buttonRect.TopY + 25 - pixmap.getOrigin().Y;
+            tinyPoint2.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
+            tinyPoint2.Y = buttonRect.TopY + 25 - pixmap->getOrigin().Y;
             pos = tinyPoint2;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_MDOORS), STRING_VECTOR(std::to_string(mainDoors)));
-            Text::DrawText(pixmap, pos, text, 0.45);
+            Text::DrawText(pixmap.get(), pos, text, 0.45);
             TinyPoint tinyPoint3;
-            tinyPoint3.X = buttonRect.RightX + 5 - pixmap.getOrigin().X;
-            tinyPoint3.Y = buttonRect.TopY + 39 - pixmap.getOrigin().Y;
+            tinyPoint3.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
+            tinyPoint3.Y = buttonRect.TopY + 39 - pixmap->getOrigin().Y;
             pos = tinyPoint3;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_SDOORS), STRING_VECTOR(std::to_string(secondaryDoors)));
-            Text::DrawText(pixmap, pos, text, 0.45);
+            Text::DrawText(pixmap.get(), pos, text, 0.45);
             TinyPoint tinyPoint4;
-            tinyPoint4.X = buttonRect.RightX + 5 - pixmap.getOrigin().X;
-            tinyPoint4.Y = buttonRect.TopY + 53 - pixmap.getOrigin().Y;
+            tinyPoint4.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
+            tinyPoint4.Y = buttonRect.TopY + 53 - pixmap->getOrigin().Y;
             pos = tinyPoint4;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_LIFES), STRING_VECTOR(std::to_string(nbVies)));
-            Text::DrawText(pixmap, pos, text, 0.45);
+            Text::DrawText(pixmap.get(), pos, text, 0.45);
         }
 
         void Game1::DrawTextRightButton(Def::ButtonGlyph glyph, int res)
@@ -785,20 +787,20 @@ namespace WindowsPhoneSpeedyBlupi {
             if (array.size() == 2)
             {
                 TinyPoint tinyPoint;
-                tinyPoint.X = buttonRect.RightX + 10 - pixmap.getOrigin().X;
-                tinyPoint.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 20 - pixmap.getOrigin().Y;
+                tinyPoint.X = buttonRect.RightX + 10 - pixmap->getOrigin().X;
+                tinyPoint.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 20 - pixmap->getOrigin().Y;
                 TinyPoint pos = tinyPoint;
-                Text::DrawText(pixmap, pos, array[0], 0.7);
+                Text::DrawText(pixmap.get(), pos, array[0], 0.7);
                 pos.Y += 24;
-                Text::DrawText(pixmap, pos, array[1], 0.7);
+                Text::DrawText(pixmap.get(), pos, array[1], 0.7);
             }
             else
             {
                 TinyPoint tinyPoint2;
-                tinyPoint2.X = buttonRect.RightX + 10 - pixmap.getOrigin().X;
-                tinyPoint2.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 8 - pixmap.getOrigin().Y;
+                tinyPoint2.X = buttonRect.RightX + 10 - pixmap->getOrigin().X;
+                tinyPoint2.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 8 - pixmap->getOrigin().Y;
                 TinyPoint pos2 = tinyPoint2;
-                Text::DrawText(pixmap, pos2, text, 0.7);
+                Text::DrawText(pixmap.get(), pos2, text, 0.7);
             }
         }
 
@@ -806,11 +808,11 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             TinyRect buttonRect = inputPad.GetButtonRect(glyph);
             TinyPoint tinyPoint;
-            tinyPoint.X = (buttonRect.LeftX + buttonRect.RightX) / 2 - pixmap.getOrigin().X;
-            tinyPoint.Y = buttonRect.BottomY + 2 - pixmap.getOrigin().Y;
+            tinyPoint.X = (buttonRect.LeftX + buttonRect.RightX) / 2 - pixmap->getOrigin().X;
+            tinyPoint.Y = buttonRect.BottomY + 2 - pixmap->getOrigin().Y;
             TinyPoint pos = tinyPoint;
             string text = MyResource::LoadString(res);
-            Text::DrawTextCenter(pixmap, pos, text, 0.7);
+            Text::DrawTextCenter(pixmap.get(), pos, text, 0.7);
         }
 
         void Game1::DrawWaitProgress()
@@ -836,7 +838,7 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.X = 10;
             tinyPoint.Y = 20;
             TinyPoint pos = tinyPoint;
-            Text::DrawText(pixmap, pos, ToString(inputPad.getTotalTouch()), 1.0);
+            Text::DrawText(pixmap.get(), pos, ToString(inputPad.getTotalTouch()), 1.0);
         }
 
         void Game1::SetGamer(int gamer)
@@ -891,30 +893,30 @@ namespace WindowsPhoneSpeedyBlupi {
             switch (this->phase)
             {
                 case Def::Phase::Init:
-                    pixmap.BackgroundCache("init");
+                    pixmap->BackgroundCache("init");
                     break;
                 case Def::Phase::Pause:
                 case Def::Phase::Resume:
-                    pixmap.BackgroundCache("pause");
+                    pixmap->BackgroundCache("pause");
                     break;
                 case Def::Phase::Lost:
-                    pixmap.BackgroundCache("lost");
+                    pixmap->BackgroundCache("lost");
                     break;
                 case Def::Phase::Win:
-                    pixmap.BackgroundCache("win");
+                    pixmap->BackgroundCache("win");
                     break;
                 case Def::Phase::MainSetup:
                 case Def::Phase::PlaySetup:
-                    pixmap.BackgroundCache("setup");
+                    pixmap->BackgroundCache("setup");
                     break;
                 case Def::Phase::Trial:
-                    pixmap.BackgroundCache("trial");
+                    pixmap->BackgroundCache("trial");
                     break;
                 case Def::Phase::Ranking:
-                    pixmap.BackgroundCache("pause");
+                    pixmap->BackgroundCache("pause");
                     break;
                 case Def::Phase::Play:
-                    decor.setDrawBounds(pixmap.getDrawBounds());
+                    decor.setDrawBounds(pixmap->getDrawBounds());
                     break;
             }
             if (this->phase == Def::Phase::Play && mission > 0)

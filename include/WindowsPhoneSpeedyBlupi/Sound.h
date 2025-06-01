@@ -10,9 +10,7 @@
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.h"
 #include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.h"
 #include "Microsoft/Xna/Framework/Audio/SoundState.h"
-#include "CNA/Prop.h"
 #include "Microsoft/Xna/Framework/Game.h"
-
 
 namespace WindowsPhoneSpeedyBlupi {
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439

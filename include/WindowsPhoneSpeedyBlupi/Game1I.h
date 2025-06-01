@@ -17,7 +17,7 @@
 #define readonly mutable
 
 namespace WindowsPhoneSpeedyBlupi {
-    class Game1I : public Microsoft::Xna::Framework::Game {
+    class Game1I {
     protected:
         ~Game1I() = default;
     public:
@@ -109,6 +109,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
     public:
         virtual Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() = 0;
+        ////
+        dgetter(Microsoft::Xna::Framework::Content::ContentManager, Content)
+        dgetter(Microsoft::Xna::Framework::Graphics::GraphicsDevice, GraphicsDevice)
     };
 }
 

@@ -12,10 +12,11 @@
 #include "WindowsPhoneSpeedyBlupi/PixmapI.h"
 #include "WindowsPhoneSpeedyBlupi/Slider.h"
 #include "WindowsPhoneSpeedyBlupi/SoundI.h"
-#include "WindowsPhoneSpeedyBlupi/Game1I.h"
+
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 
 namespace WindowsPhoneSpeedyBlupi {
+
 class InputPad
     {
     private:

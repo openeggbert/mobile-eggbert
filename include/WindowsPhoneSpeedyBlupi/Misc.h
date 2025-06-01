@@ -8,7 +8,6 @@
 #include "TinyRect.h"
 #include "Microsoft/Xna/Framework/Rectangle.h"
 
-
 namespace WindowsPhoneSpeedyBlupi {
 
 using WindowsPhoneSpeedyBlupi::TinyPoint;

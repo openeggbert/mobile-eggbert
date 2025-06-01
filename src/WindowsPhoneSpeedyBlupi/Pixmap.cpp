@@ -49,7 +49,7 @@ namespace WindowsPhoneSpeedyBlupi {
         return result;
     }
 
-    Pixmap::Pixmap(Microsoft::Xna::Framework::Game& game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
+    Pixmap::Pixmap(Game1I* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
         game1(game1),
         graphics(graphics), spriteBatch(Microsoft::Xna::Framework::Graphics::SpriteBatch()), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
         bitmapObject(Texture2D()),
@@ -164,7 +164,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         tinyPoint.X = rect.LeftX + rect.getWidth() / 2 - (int)originX;
                         tinyPoint.Y = rect.TopY + 28;
                         TinyPoint pos = tinyPoint;
-                        Text::DrawTextCenter(*this, pos, Decor::GetCheatTinyText(glyph), 1.0);
+                        Text::DrawTextCenter(this, pos, Decor::GetCheatTinyText(glyph), 1.0);
                         break;
                     }
                 case Def::ButtonGlyph::Cheat11:
@@ -179,19 +179,19 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Pixmap::LoadContent()
         {
-            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(&(game1.getGraphicsDevice()));
-            bitmapText = game1.getContent().Load<Texture2D>("icons/text");
-            bitmapButton = game1.getContent().Load<Texture2D>("icons/button");
-            bitmapJauge = game1.getContent().Load<Texture2D>("icons/jauge");
-            bitmapBlupi = game1.getContent().Load<Texture2D>("icons/blupi");
-            bitmapBlupi1 = game1.getContent().Load<Texture2D>("icons/blupi1");
-            bitmapObject = game1.getContent().Load<Texture2D>("icons/object-m");
-            bitmapElement = game1.getContent().Load<Texture2D>("icons/element");
-            bitmapExplo = game1.getContent().Load<Texture2D>("icons/explo");
-            bitmapPad = game1.getContent().Load<Texture2D>("icons/pad");
-            bitmapSpeedyBlupi = game1.getContent().Load<Texture2D>("backgrounds/speedyblupi");
-            bitmapBlupiYoupie = game1.getContent().Load<Texture2D>("backgrounds/blupiyoupie");
-            bitmapGear = game1.getContent().Load<Texture2D>("backgrounds/gear");
+            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(&(game1->getGraphicsDevice()));//todo
+            bitmapText = game1->getContent().Load<Texture2D>("icons/text");
+            bitmapButton = game1->getContent().Load<Texture2D>("icons/button");
+            bitmapJauge = game1->getContent().Load<Texture2D>("icons/jauge");
+            bitmapBlupi = game1->getContent().Load<Texture2D>("icons/blupi");
+            bitmapBlupi1 = game1->getContent().Load<Texture2D>("icons/blupi1");
+            bitmapObject = game1->getContent().Load<Texture2D>("icons/object-m");
+            bitmapElement = game1->getContent().Load<Texture2D>("icons/element");
+            bitmapExplo = game1->getContent().Load<Texture2D>("icons/explo");
+            bitmapPad = game1->getContent().Load<Texture2D>("icons/pad");
+            bitmapSpeedyBlupi = game1->getContent().Load<Texture2D>("backgrounds/speedyblupi");
+            bitmapBlupiYoupie = game1->getContent().Load<Texture2D>("backgrounds/blupiyoupie");
+            bitmapGear = game1->getContent().Load<Texture2D>("backgrounds/gear");
             UpdateGeometry();
         }
 
@@ -212,7 +212,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void Pixmap::BackgroundCache(const string &name)
         {
-            bitmapBackground = game1.getContent().Load<Texture2D>("backgrounds/" + name);
+            bitmapBackground = game1->getContent().Load<Texture2D>("backgrounds/" + name);
         }
 
          bool Pixmap::Start()

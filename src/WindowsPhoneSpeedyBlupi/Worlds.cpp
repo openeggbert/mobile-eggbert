@@ -155,7 +155,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
 
     void Worlds::GetIntArrayField(const string lines[], int lineCount, const string &section, int rank,
-                                  const string &name, int array[], int &arraySize) {
+                                  const string &name, int array[], int arraySize) {
         arraySize = 0;
         for (int i = 0; i < lineCount; i++) {
             const string &text = lines[i];

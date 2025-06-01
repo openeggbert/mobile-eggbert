@@ -6,8 +6,6 @@
 #include <string>
 #include <sstream>
 
-#include "CNA/Prop.h"
-
 namespace WindowsPhoneSpeedyBlupi
 {
     struct TinyRect

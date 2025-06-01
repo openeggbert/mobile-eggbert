@@ -13,7 +13,6 @@
 // using WindowsPhoneSpeedyBlupi;
 // using static WindowsPhoneSpeedyBlupi.Def;
 
-
 namespace WindowsPhoneSpeedyBlupi
 {
 

@@ -1211,14 +1211,14 @@ void Decor::InitDecor()
             {
                 pos.X -= m_posDecor.X;
                 pos.Y -= m_posDecor.Y;
-                m_sound.value().PlayImage(sound, pos);
+                m_sound->PlayImage(sound, pos);
             }
         }
 
          void Decor::StopSound()
         {
             m_blupiMotorSound = 0;
-            m_sound.value().StopAll();
+            m_sound->StopAll();
         }
 
          void Decor::StartSound()
@@ -1228,7 +1228,7 @@ void Decor::InitDecor()
 
         void Decor::StopSound(int sound)
         {
-            m_sound.value().Stop(sound);
+            m_sound->Stop(sound);
         }
 
         void Decor::AdaptMotorVehicleSound()
@@ -1255,20 +1255,20 @@ void Decor::InitDecor()
                 blupiPos.Y -= m_posDecor.Y;
                 if (m_blupiMotorSound == 0 && num != 0)
                 {
-                    m_sound.value().PlayImage(channel, blupiPos);
+                    m_sound->PlayImage(channel, blupiPos);
                 }
                 if (m_blupiMotorSound != 0 && num == 0)
                 {
-                    m_sound.value().PlayImage(channel2, blupiPos);
+                    m_sound->PlayImage(channel2, blupiPos);
                 }
                 if (m_blupiMotorSound != 0)
                 {
-                    m_sound.value().Stop(m_blupiMotorSound);
+                    m_sound->Stop(m_blupiMotorSound);
                 }
                 m_blupiMotorSound = num;
                 if (m_blupiMotorSound != 0)
                 {
-                    m_sound.value().PlayImage(m_blupiMotorSound, blupiPos, -1, true);
+                    m_sound->PlayImage(m_blupiMotorSound, blupiPos, -1, true);
                 }
             }
         }
@@ -8957,46 +8957,46 @@ void Decor::InitDecor()
             {
                 m_voyageTotal = 40;
                 m_nbVies--;
-                m_sound.value().PlayImage(9, end, -1, false);
+                m_sound->PlayImage(9, end, -1, false);
             }
             if (m_voyageIcon == 21 && m_voyageChannel == 10)
             {
-                m_sound.value().PlayImage(12, start, -1, false);
+                m_sound->PlayImage(12, start, -1, false);
             }
             if (m_voyageIcon == 6 && m_voyageChannel == 10)
             {
                 if (m_nbTresor == m_totalTresor - 1)
                 {
-                    m_sound.value().PlayImage(19, start, -1, false);
+                    m_sound->PlayImage(19, start, -1, false);
                 }
                 else
                 {
-                    m_sound.value().PlayImage(11, start, -1, false);
+                    m_sound->PlayImage(11, start, -1, false);
                 }
             }
             if (m_voyageIcon == 215 && m_voyageChannel == 10)
             {
-                m_sound.value().PlayImage(11, start, -1, false);
+                m_sound->PlayImage(11, start, -1, false);
             }
             if (m_voyageIcon == 222 && m_voyageChannel == 10)
             {
-                m_sound.value().PlayImage(11, start, -1, false);
+                m_sound->PlayImage(11, start, -1, false);
             }
             if (m_voyageIcon == 229 && m_voyageChannel == 10)
             {
-                m_sound.value().PlayImage(11, start, -1, false);
+                m_sound->PlayImage(11, start, -1, false);
             }
             if (m_voyageIcon == 108 && m_voyageChannel == 4)
             {
-                m_sound.value().PlayImage(60, start, -1, false);
+                m_sound->PlayImage(60, start, -1, false);
             }
             if (m_voyageIcon == 252 && m_voyageChannel == 10)
             {
-                m_sound.value().PlayImage(60, start, -1, false);
+                m_sound->PlayImage(60, start, -1, false);
             }
             if (m_voyageIcon == 177 && m_voyageChannel == 10)
             {
-                m_sound.value().PlayImage(54, start, -1, false);
+                m_sound->PlayImage(54, start, -1, false);
             }
             if (m_voyageIcon == 230 && m_voyageChannel == 10)
             {
@@ -9039,42 +9039,42 @@ void Decor::InitDecor()
                     {
                         m_nbVies++;
                     }
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 6 && m_voyageChannel == 10)
                 {
                     m_nbTresor++;
                     OpenDoorsTresor();
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 215 && m_voyageChannel == 10)
                 {
                     m_blupiCle |= 1;
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 222 && m_voyageChannel == 10)
                 {
                     m_blupiCle |= 2;
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 229 && m_voyageChannel == 10)
                 {
                     m_blupiCle |= 4;
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 108 && m_voyageChannel == 4)
                 {
                     m_blupiPerso++;
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 252 && m_voyageChannel == 10)
                 {
                     m_blupiDynamite++;
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 if (m_voyageIcon == 177 && m_voyageChannel == 10)
                 {
-                    m_sound.value().PlayImage(3, m_voyageEnd, -1, false);
+                    m_sound->PlayImage(3, m_voyageEnd, -1, false);
                 }
                 m_voyageIcon = -1;
             }
@@ -9884,8 +9884,8 @@ void Decor::InitDecor()
             }
             InitDecor();
             auto linesVector = Helper::split(text, '\n');
-            auto lines = lines.ToArray();
-            int linesLength = lines.Length;
+            string* lines = linesVector.data();
+            int linesLength = linesVector.size();
             Worlds::GetIntField(lines, linesLength,  "DescFile", 0, "_version_");
             m_posDecor = Worlds::GetPointField(lines, linesLength,  "DescFile", 0, "_posDecor_");
             m_dimDecor = Worlds::GetPointField(lines, linesLength,  "DescFile", 0, "_dimDecor_");
@@ -9967,16 +9967,16 @@ void Decor::InitDecor()
             m_nbLinkCaisse = Worlds::GetIntField(lines, linesLength,  "DescFile", 0, "_nbLinkCaisse_");
             m_sucettePos = Worlds::GetPointField(lines, linesLength,  "DescFile", 0, "_sucettePos_");
             m_sucetteType = Worlds::GetIntField(lines, linesLength,  "DescFile", 0, "_sucetteType_");
-            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_RankCaisse_", m_rankCaisse);
-            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_LinkCaisse_", m_linkCaisse);
-            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_BalleTraj_", m_balleTraj);
-            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_MoveTraj_", m_moveTraj);
-            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_Doors_", m_doors);
+            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_RankCaisse_", m_rankCaisse, m_rankCaisseLength);
+            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_LinkCaisse_", m_linkCaisse, m_linkCaisseLength);
+            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_BalleTraj_", m_balleTraj, m_balleTrajLength);
+            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_MoveTraj_", m_moveTraj, m_moveTrajLength);
+            Worlds::GetIntArrayField(lines, linesLength,  "DescFile", 0, "_Doors_", m_doors, m_doorsLength);
             for (int i = 0; i < 100; i++)
             {
                 for (int j = 0; j < 100; j++)
                 {
-                    auto decorField = Worlds::GetDecorField(lines, "Decor", j, i);
+                    auto decorField = Worlds::GetDecorField(lines, linesLength, "Decor", j, i);
                     m_decor[j][ i].icon =  decorField != 0 ? decorField : -1;
                 }
             }
@@ -9984,7 +9984,7 @@ void Decor::InitDecor()
             {
                 for (int l = 0; l < 100; l++)
                 {
-                    auto decorField = Worlds::GetDecorField(lines, "BigDecor", l, k);
+                    auto decorField = Worlds::GetDecorField(lines, linesLength, "BigDecor", l, k);
                     m_bigDecor[l][ k].icon = decorField != 0? decorField : -1;
                 }
             }
@@ -9994,31 +9994,31 @@ void Decor::InitDecor()
             }
             for (int n = 0; n < MAXMOVEOBJECT; n++)
             {
-                int intField = Worlds::GetIntField(lines, "MoveObject", n, "type");
+                int intField = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "type");
                 if (intField == 0)
                 {
                     break;
                 }
-                int intField2 = Worlds::GetIntField(lines, "MoveObject", n, "index");
+                int intField2 = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "index");
                 m_moveObject[intField2].type = intField;
-                m_moveObject[intField2].stepAdvance = Worlds::GetIntField(lines, "MoveObject", n, "stepAdvance");
-                m_moveObject[intField2].stepRecede = Worlds::GetIntField(lines, "MoveObject", n, "stepRecede");
-                m_moveObject[intField2].timeStopStart = Worlds::GetIntField(lines, "MoveObject", n, "timeStopStart");
-                m_moveObject[intField2].timeStopEnd = Worlds::GetIntField(lines, "MoveObject", n, "timeStopEnd");
-                m_moveObject[intField2].posStart = Worlds::GetPointField(lines, "MoveObject", n, "posStart");
-                m_moveObject[intField2].posEnd = Worlds::GetPointField(lines, "MoveObject", n, "posEnd");
-                m_moveObject[intField2].posCurrent = Worlds::GetPointField(lines, "MoveObject", n, "posCurrent");
-                m_moveObject[intField2].step = Worlds::GetIntField(lines, "MoveObject", n, "step");
-                m_moveObject[intField2].time = Worlds::GetIntField(lines, "MoveObject", n, "time");
-                m_moveObject[intField2].phase = Worlds::GetIntField(lines, "MoveObject", n, "phase");
-                m_moveObject[intField2].channel = Worlds::GetIntField(lines, "MoveObject", n, "channel");
-                m_moveObject[intField2].icon = Worlds::GetIntField(lines, "MoveObject", n, "icon");
+                m_moveObject[intField2].stepAdvance = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "stepAdvance");
+                m_moveObject[intField2].stepRecede = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "stepRecede");
+                m_moveObject[intField2].timeStopStart = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "timeStopStart");
+                m_moveObject[intField2].timeStopEnd = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "timeStopEnd");
+                m_moveObject[intField2].posStart = Worlds::GetPointField(lines, linesLength, "MoveObject", n, "posStart");
+                m_moveObject[intField2].posEnd = Worlds::GetPointField(lines, linesLength, "MoveObject", n, "posEnd");
+                m_moveObject[intField2].posCurrent = Worlds::GetPointField(lines, linesLength, "MoveObject", n, "posCurrent");
+                m_moveObject[intField2].step = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "step");
+                m_moveObject[intField2].time = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "time");
+                m_moveObject[intField2].phase = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "phase");
+                m_moveObject[intField2].channel = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "channel");
+                m_moveObject[intField2].icon = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "icon");
             }
             for (int num = 0; num < 2; num++)
             {
-                m_jauges[num].SetHide(Worlds::GetBoolField(lines, "Jauge", num, "hide"));
-                m_jauges[num].SetMode(Worlds::GetIntField(lines, "Jauge", num, "mode"));
-                m_jauges[num].SetLevel(Worlds::GetIntField(lines, "Jauge", num, "level"));
+                m_jauges[num].SetHide(Worlds::GetBoolField(lines, linesLength, "Jauge", num, "hide"));
+                m_jauges[num].SetMode(Worlds::GetIntField(lines, linesLength, "Jauge", num, "mode"));
+                m_jauges[num].SetLevel(Worlds::GetIntField(lines, linesLength, "Jauge", num, "level"));
             }
             return true;
         }

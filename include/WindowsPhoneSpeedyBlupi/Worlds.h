@@ -62,8 +62,8 @@ namespace WindowsPhoneSpeedyBlupi {
         static void WriteCurrentGame(string &data);
 
     public:
-        static void GetIntArrayField(const string lines[], int lineCount, const string &section, int rank,
-                                     const string &name, int array[], int &arraySize);
+        static void GetIntArrayField(string lines[], int lineCount, const string &section, int rank,
+                                     const string &name, int array[], int arraySize);
 
 
         static bool GetBoolField(const string lines[], int lineCount, const string &section, int rank,
