@@ -10,16 +10,33 @@ namespace WindowsPhoneSpeedyBlupi {
     int Sound::Play::getChannel() const { return channel; }
     bool Sound::Play::getIsFree() const { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
 
-
+    /**
+     * @brief Constructs a Play object to manage and play a sound effect instance with specified parameters.
+     *
+     * This constructor initializes a sound effect instance for playback with customization options
+     * such as volume, balance, pitch, and looping behavior. It also applies pre-defined volume
+     * and pitch adjustments based on the specified channel using a lookup table.
+     *
+     * @param se A reference to the SoundEffect object that provides the sound data.
+     * @param channel An integer representing the audio channel to assign this sound effect.
+     *                Channel influences volume and pitch adjustments from the lookup table.
+     * @param volume A double specifying the initial playback volume. This is further adjusted
+     *               based on the specified channel.
+     * @param balance A double specifying the stereo panning of the sound. Value ranges typically
+     *                between -1.0 (full left) to 1.0 (full right).
+     * @param pitch A double specifying the pitch adjustment of the sound. Values greater than 0
+     *              increase the pitch, while values less than 0 lower it (minimum is clamped to 0.0).
+     * @param isLooped A boolean indicating whether the sound effect should loop continuously.
+     */
     Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped):
         channel(channel),
         sei(se.CreateInstance())
     {
-        int num = channel * 2;
-        if (num >= 0 && num < tableVolumePitchLength)
+        int tableVolumePitchLengthIndex = channel * 2;
+        if (tableVolumePitchLengthIndex >= 0 && tableVolumePitchLengthIndex < tableVolumePitchLength)
         {
-            volume *= tableVolumePitch[num];
-            pitch = tableVolumePitch[num + 1];
+            volume *= tableVolumePitch[tableVolumePitchLengthIndex];
+            pitch = tableVolumePitch[tableVolumePitchLengthIndex + 1];
         }
 
         sei.setVolume((float)volume);
@@ -37,13 +54,11 @@ namespace WindowsPhoneSpeedyBlupi {
     game1(game1),
     gameData(gameData)
     {
-
         // soundEffects = new List<SoundEffect>();
         // plays = new List<Play>();
         volume = 1.0;
         Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolume(1.0f);
     }
-
 
         void Sound::LoadContent()
         {
@@ -62,8 +77,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
         }
 
-     bool Sound::Create()
-        {
+        bool Sound::Create() {
             return true;
         }
 

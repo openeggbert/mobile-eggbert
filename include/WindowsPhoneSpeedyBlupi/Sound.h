@@ -23,17 +23,25 @@ namespace WindowsPhoneSpeedyBlupi {
 // using Microsoft.Xna.Framework.Audio;
 // using WindowsPhoneSpeedyBlupi;
 
-    class Sound : public SoundI
+/**
+ * @class Sound
+ * @brief The Sound class is responsible for managing audio playback and controlling sound attributes.
+ *
+ * This class provides functionality to either load, play, pause, stop, and manage audio files.
+ * It also allows configuration and control over sound properties such as volume and looping.
+ */
+class Sound : public SoundI
     {
     private: class Play
         {
     private: Microsoft::Xna::Framework::Audio::SoundEffectInstance sei;
     private: const int channel;
 
+        MIGRATED_FROM_CSHARP_PROPERTY
         public: [[nodiscard]] int getChannel() const;
+
+        MIGRATED_FROM_CSHARP_PROPERTY
         public: [[nodiscard]] bool getIsFree() const;
-
-
 
     public: Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped);
 
@@ -41,6 +49,19 @@ namespace WindowsPhoneSpeedyBlupi {
         };
 
     private: static constexpr short tableVolumePitchLength = 200;
+
+        /**
+         * @var tableVolumePitch
+         * @brief A lookup table containing preset volume and pitch adjustment values for audio playback.
+         *
+         * This static and constant array is used to determine the volume scalar and pitch values
+         * for sound effects during playback. It provides efficient access to predefined adjustments
+         * to ensure consistent audio behavior across channels and effects.
+         *
+         * Each pair of elements in the array corresponds to a specific audio configuration,
+         * where the first value represents a volume multiplier and the second value represents
+         * the pitch adjustment factor.
+         */
     private: static constexpr double tableVolumePitch[tableVolumePitchLength] =
         {
         1.0, 0.0, 0.5, 1.0, 0.5, 1.0, 1.0, 0.2, 1.0, 0.2,
