@@ -67,7 +67,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 for (int i = 0; i <= 92; i++)
                 {
                     std::ostringstream oss;
-                    oss << "sounds/sound" << std::setw(3) << std::setfill('0') << i;
+                    oss << "sounds/sound" << std::setw(3) << std::setfill('0') << i << ".wav";
                     std::string assetName = oss.str();
 
                     using Microsoft::Xna::Framework::Audio::SoundEffect;
