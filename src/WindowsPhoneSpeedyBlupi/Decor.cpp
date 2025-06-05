@@ -394,7 +394,7 @@ void Decor::InitDecor()
 
         void Decor::ResetHotSpot()
         {
-            m_pixmap->SetHotSpot(1.0, getDrawBounds().getWidth() / 2, getDrawBounds().getHeight() / 2);
+            m_pixmap->SetHotSpot(1.0, getDrawBounds().getWidthProperty() / 2, getDrawBounds().getHeightProperty() / 2);
         }
 
         void Decor::MoveHotSpot()
@@ -412,7 +412,7 @@ void Decor::InitDecor()
             {
                 flag = false;
             }
-            if (!m_gameData.getAutoZoom())
+            if (!m_gameData.getAutoZoomProperty())
             {
                 flag = false;
             }
@@ -444,8 +444,8 @@ void Decor::InitDecor()
             else
             {
                 m_hotSpotFinalZoom = 1.0;
-                m_hotSpotFinalX = getDrawBounds().getWidth() / 2;
-                m_hotSpotFinalY = getDrawBounds().getHeight() / 2;
+                m_hotSpotFinalX = getDrawBounds().getWidthProperty() / 2;
+                m_hotSpotFinalY = getDrawBounds().getHeightProperty() / 2;
             }
             m_hotSpotStepZoom = 1.0 / 30.0;
             m_hotSpotStepX = 10.0;
@@ -506,11 +506,11 @@ void Decor::InitDecor()
                 for (int j = 0; j < 2; j++)
                 {
                     m_pixmap->DrawPart(3, tinyPoint, rect);
-                    tinyPoint.Y += rect.getHeight() - num;
+                    tinyPoint.Y += rect.getHeightProperty() - num;
                     rect.TopY = 0;
                     rect.BottomY = 480;
                 }
-                tinyPoint.X += rect.getWidth() - num;
+                tinyPoint.X += rect.getWidthProperty() - num;
                 rect.LeftX = 0;
                 rect.RightX = 640;
                 if (tinyPoint.X > m_drawBounds.RightX)
@@ -519,10 +519,10 @@ void Decor::InitDecor()
                 }
             }
             tinyPoint.X = m_drawBounds.LeftX - posDecor.X % 64 - 64;
-            for (int i = posDecor.X / 64 - 1; i < posDecor.X / 64 + m_drawBounds.getWidth() / 64 + 3; i++)
+            for (int i = posDecor.X / 64 - 1; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 3; i++)
             {
                 tinyPoint.Y = m_drawBounds.TopY - posDecor.Y % 64 + 2 - 64;
-                for (int j = posDecor.Y / 64 - 1; j < posDecor.Y / 64 + m_drawBounds.getHeight() / 64 + 2; j++)
+                for (int j = posDecor.Y / 64 - 1; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
                 {
                     if (i >= 0 && i < 100 && j >= 0 && j < 100)
                     {
@@ -553,10 +553,10 @@ void Decor::InitDecor()
                 tinyPoint.X += 64;
             }
             tinyPoint.X = m_drawBounds.LeftX - posDecor.X % 64;
-            for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidth() / 64 + 2; i++)
+            for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2; i++)
             {
                 tinyPoint.Y = m_drawBounds.TopY - posDecor.Y % 64;
-                for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeight() / 64 + 2; j++)
+                for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
                 {
                     if (i >= 0 && i < 100 && j >= 0 && j < 100 && m_decor[i][j].icon != -1)
                     {
@@ -642,7 +642,7 @@ void Decor::InitDecor()
             }
             for (int num3 = MAXMOVEOBJECT - 1; num3 >= 0; num3--)
             {
-                if (m_moveObject[num3].type != 0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidth() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeight() && (m_moveObject[num3].type < 8 || m_moveObject[num3].type > 11) && (m_moveObject[num3].type < 90 || m_moveObject[num3].type > 95) && (m_moveObject[num3].type < 98 || m_moveObject[num3].type > 100) && m_moveObject[num3].type != 53 && m_moveObject[num3].type != 1 && m_moveObject[num3].type != 47 && m_moveObject[num3].type != 48)
+                if (m_moveObject[num3].type != 0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidthProperty() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty() && (m_moveObject[num3].type < 8 || m_moveObject[num3].type > 11) && (m_moveObject[num3].type < 90 || m_moveObject[num3].type > 95) && (m_moveObject[num3].type < 98 || m_moveObject[num3].type > 100) && m_moveObject[num3].type != 53 && m_moveObject[num3].type != 1 && m_moveObject[num3].type != 47 && m_moveObject[num3].type != 48)
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
@@ -682,10 +682,10 @@ void Decor::InitDecor()
                 }
             }
             tinyPoint.X = m_drawBounds.LeftX - posDecor.X % 64;
-            for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidth() / 64 + 2; i++)
+            for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2; i++)
             {
                 tinyPoint.Y = m_drawBounds.TopY - posDecor.Y % 64;
-                for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeight() / 64 + 2; j++)
+                for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
                 {
                     if (i >= 0 && i < 100 && j >= 0 && j < 100 && m_decor[i][j].icon != -1)
                     {
@@ -762,7 +762,7 @@ void Decor::InitDecor()
             }
             for (int num3 = 0; num3 < MAXMOVEOBJECT; num3++)
             {
-                if ((m_moveObject[num3].type == 1 || m_moveObject[num3].type == 47 || m_moveObject[num3].type == 48) && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidth() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeight())
+                if ((m_moveObject[num3].type == 1 || m_moveObject[num3].type == 47 || m_moveObject[num3].type == 48) && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidthProperty() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty())
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
@@ -770,10 +770,10 @@ void Decor::InitDecor()
                 }
             }
             tinyPoint.X = m_drawBounds.LeftX - posDecor.X % 64;
-            for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidth() / 64 + 2; i++)
+            for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2; i++)
             {
                 tinyPoint.Y = m_drawBounds.TopY - posDecor.Y % 64;
-                for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeight() / 64 + 2; j++)
+                for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
                 {
                     if (i >= 0 && i < 100 && j >= 0 && j < 100 && m_decor[i][j].icon != -1)
                     {
@@ -882,7 +882,7 @@ void Decor::InitDecor()
             ByeByeDraw(posDecor);
             for (int num3 = 0; num3 < MAXMOVEOBJECT; num3++)
             {
-                if (m_moveObject[num3].type != 0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidth() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeight() && ((m_moveObject[num3].type >= 8 && m_moveObject[num3].type <= 11) || (m_moveObject[num3].type >= 90 && m_moveObject[num3].type <= 95) || (m_moveObject[num3].type >= 98 && m_moveObject[num3].type <= 100) || m_moveObject[num3].type == 53))
+                if (m_moveObject[num3].type != 0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidthProperty() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty() && ((m_moveObject[num3].type >= 8 && m_moveObject[num3].type <= 11) || (m_moveObject[num3].type >= 90 && m_moveObject[num3].type <= 95) || (m_moveObject[num3].type >= 98 && m_moveObject[num3].type <= 100) || m_moveObject[num3].type == 53))
                 {
                     tinyPoint.X = m_drawBounds.LeftX + m_moveObject[num3].posCurrent.X - posDecor.X;
                     tinyPoint.Y = m_drawBounds.TopY + m_moveObject[num3].posCurrent.Y - posDecor.Y;
@@ -954,8 +954,8 @@ void Decor::InitDecor()
             if ((m_mission != 1 && m_mission % 10 != 0) || m_bPrivate)
             {
                 TinyRect tinyRect = TinyRect();
-                tinyRect.LeftX = 410 + m_pixmap->getOrigin().X;
-                tinyRect.RightX = 510 + m_pixmap->getOrigin().X;
+                tinyRect.LeftX = 410 + m_pixmap->getOriginProperty().X;
+                tinyRect.RightX = 510 + m_pixmap->getOriginProperty().X;
                 tinyRect.TopY = 445;
                 tinyRect.BottomY = 480;
                 TinyRect rect = tinyRect;
@@ -1001,17 +1001,17 @@ void Decor::InitDecor()
                 if (num >= array[i] && num <= array[i + 1] && num2 >= array[i + 2] && num2 <= array[i + 3] && IsDisplayInfo(array[i + 4]))
                 {
                     int num3 = 0;
-                    if (m_gameData.getAccelActive())
+                    if (m_gameData.getAccelActiveProperty())
                     {
                         num3 = 10000;
                     }
                     string text = MyResource::LoadString(array[i + 5] + num3);
                     if (text != "")
                     {
-                        TinyRect drawBounds = m_pixmap->getDrawBounds();
+                        TinyRect drawBounds = m_pixmap->getDrawBoundsProperty();
                         TinyRect tinyRect2 = TinyRect();
                         tinyRect2.LeftX = 0;
-                        tinyRect2.RightX = drawBounds.getWidth();
+                        tinyRect2.RightX = drawBounds.getWidthProperty();
                         tinyRect2.TopY = 0;
                         tinyRect2.BottomY = 40;
                         TinyRect rect2 = tinyRect2;
@@ -1074,7 +1074,7 @@ void Decor::InitDecor()
                 {
                     posDecor.X += 3 * Tables::table_decor_action[i + 2 + m_decorPhase * 2];
                     posDecor.Y += 3 * Tables::table_decor_action[i + 2 + m_decorPhase * 2 + 1];
-                    int num = ((m_dimDecor.X != 0) ? (6400 - m_drawBounds.getWidth()) : 0);
+                    int num = ((m_dimDecor.X != 0) ? (6400 - m_drawBounds.getWidthProperty()) : 0);
                     if (posDecor.X < 0)
                     {
                         posDecor.X = 0;
@@ -1083,7 +1083,7 @@ void Decor::InitDecor()
                     {
                         posDecor.X = num;
                     }
-                    num = ((m_dimDecor.Y != 0) ? (6400 - m_drawBounds.getHeight()) : 0);
+                    num = ((m_dimDecor.Y != 0) ? (6400 - m_drawBounds.getHeightProperty()) : 0);
                     if (posDecor.Y < 0)
                     {
                         posDecor.Y = 0;
@@ -3201,9 +3201,9 @@ void Decor::InitDecor()
                     end.X += (int)m_blupiVitesseX;
                 }
                 MoveObjectPollution();
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     rect.LeftX = m_blupiPos.X + 20;
                     rect.RightX = m_blupiPos.X + 22;
                     rect.TopY = m_blupiPos.Y + 60 - 2;
@@ -3322,9 +3322,9 @@ void Decor::InitDecor()
                 }
                 end.X += (int)m_blupiVitesseX;
                 MoveObjectPollution();
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     rect.LeftX = m_blupiPos.X + 20;
                     rect.RightX = m_blupiPos.X + 22;
                     rect.TopY = m_blupiPos.Y + 60 - 2;
@@ -3606,9 +3606,9 @@ void Decor::InitDecor()
                 }
                 m_blupiOffsetY = std::abs(m_blupiRealRotation / 2);
                 MoveObjectPollution();
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     celSwitch.X = m_blupiPos.X;
                     celSwitch.Y = m_blupiPos.Y - BLUPIFLOOR;
                     ObjectStart(celSwitch, 19, 0);
@@ -3738,9 +3738,9 @@ void Decor::InitDecor()
                 }
                 end.X += (int)m_blupiVitesseX;
                 MoveObjectPollution();
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !flag2 && m_blupiTransport == -1)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     celSwitch.X = m_blupiPos.X;
                     celSwitch.Y = m_blupiPos.Y;
                     ObjectStart(celSwitch, 28, 0);
@@ -3800,9 +3800,9 @@ void Decor::InitDecor()
                     m_blupiVitesseX = 0.0;
                 }
                 end.X += (int)m_blupiVitesseX;
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !flag2 && !m_blupiAir && m_blupiTransport == -1 && m_blupiVitesseX < 8.0)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !flag2 && !m_blupiAir && m_blupiTransport == -1 && m_blupiVitesseX < 8.0)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     m_blupiSkate = false;
                     m_blupiAction = 43;
                     m_blupiPhase = 0;
@@ -4091,11 +4091,11 @@ void Decor::InitDecor()
                     PlaySound(35, end);
                 }
             }
-            if (getButtonPressed() == Def::ButtonGlyph::PlayAction && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiTank && !m_blupiJeep && !m_blupiSkate && !flag2 && m_blupiTransport == -1 && m_blupiFocus)
+            if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiTank && !m_blupiJeep && !m_blupiSkate && !flag2 && m_blupiTransport == -1 && m_blupiFocus)
             {
                 if (m_blupiDynamite > 0)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     rect.LeftX = end.X + 18;
                     rect.RightX = end.X + 20;
                     rect.TopY = end.Y + 60 - 2;
@@ -4117,7 +4117,7 @@ void Decor::InitDecor()
                 }
                 else if (m_blupiPerso > 0)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     icon = MoveObjectDetect(end, bNear);
                     if (icon == -1 || m_moveObject[icon].type != 200)
                     {
@@ -4808,9 +4808,9 @@ void Decor::InitDecor()
                     m_blupiRestart = true;
                     m_blupiAir = true;
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && (num26 == -1 || !bNear) && IsSwitch(m_blupiPos, celSwitch) && !m_blupiOver && !m_blupiBalloon && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && (num26 == -1 || !bNear) && IsSwitch(m_blupiPos, celSwitch) && !m_blupiOver && !m_blupiBalloon && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     ActiveSwitch(m_decor[celSwitch.X][ celSwitch.Y].icon == 385, celSwitch);
                     m_blupiAction = 82;
                     m_blupiPhase = 0;
@@ -4918,9 +4918,9 @@ void Decor::InitDecor()
             }
             if (icon != -1 && bNear)
             {
-                if (m_moveObject[icon].type == 13 && (getButtonPressed() == Def::ButtonGlyph::PlayAction || IsFloatingObject(icon)) && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (m_moveObject[icon].type == 13 && (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction || IsFloatingObject(icon)) && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4935,9 +4935,9 @@ void Decor::InitDecor()
                         m_jauges[1].SetHide(true);
                     }
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 46 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 46 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4951,9 +4951,9 @@ void Decor::InitDecor()
                         m_jauges[1].SetHide(true);
                     }
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 19 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 19 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -4969,9 +4969,9 @@ void Decor::InitDecor()
                         m_jauges[1].SetHide(true);
                     }
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 28 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 28 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
@@ -5001,9 +5001,9 @@ void Decor::InitDecor()
                         m_blupiBullet = 10;
                     }
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 24 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 24 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     m_scrollAdd.X = 0;
                     m_scrollAdd.Y = 0;
                     m_blupiAction = 42;
@@ -5263,9 +5263,9 @@ void Decor::InitDecor()
                     m_blupiPosMagic = m_blupiPos;
                     m_jauges[1].SetHide(false);
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 26 && !m_blupiShield && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 26 && !m_blupiShield && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     m_sucettePos = m_moveObject[icon].posCurrent;
                     m_sucetteType = m_moveObject[icon].type;
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5289,9 +5289,9 @@ void Decor::InitDecor()
                     ObjectStart(m_blupiPos, 41, 10);
                     ObjectStart(m_blupiPos, 41, -10);
                 }
-                if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 30 && !m_blupiShield && !m_blupiCloud && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
+                if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_moveObject[icon].type == 30 && !m_blupiShield && !m_blupiCloud && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && m_blupiFocus)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     m_sucettePos = m_moveObject[icon].posCurrent;
                     m_sucetteType = m_moveObject[icon].type;
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5324,9 +5324,9 @@ void Decor::InitDecor()
                 {
                     if (m_moveObject[icon].type == 200)
                     {
-                        if (m_blupiPerso < 5 && getButtonPressed() == Def::ButtonGlyph::PlayAction)
+                        if (m_blupiPerso < 5 && getButtonPressedProperty() == Def::ButtonGlyph::PlayAction)
                         {
-                            setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                            setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                             ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                             celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                             celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
@@ -5348,9 +5348,9 @@ void Decor::InitDecor()
                         m_decorPhase = 0;
                     }
                 }
-                if (m_moveObject[icon].type == 55 && m_blupiFocus && m_blupiDynamite == 0 && (m_voyageIcon != 252 || m_voyageChannel != 10) && getButtonPressed() == Def::ButtonGlyph::PlayAction)
+                if (m_moveObject[icon].type == 55 && m_blupiFocus && m_blupiDynamite == 0 && (m_voyageIcon != 252 || m_voyageChannel != 10) && getButtonPressedProperty() == Def::ButtonGlyph::PlayAction)
                 {
-                    setButtonPressed(Def::ButtonGlyph::NoneButtonGlyph);
+                    setButtonPressedProperty(Def::ButtonGlyph::NoneButtonGlyph);
                     ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                     celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                     celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
@@ -5594,7 +5594,7 @@ void Decor::InitDecor()
                 m_blupiPhase = 0;
                 m_blupiFocus = true;
             }
-            if (getButtonPressed() == Def::ButtonGlyph::PlayAction && m_blupiAction == 1)
+            if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && m_blupiAction == 1)
             {
                 m_blupiAction = 84;
                 m_blupiPhase = 0;
@@ -5832,9 +5832,9 @@ void Decor::InitDecor()
             }
             else
             {
-                result.X = pos.X - m_drawBounds.getWidth() / 2;
+                result.X = pos.X - m_drawBounds.getWidthProperty() / 2;
                 result.X = std::max(result.X, 0);
-                result.X = std::min(result.X, 6400 - m_drawBounds.getWidth());
+                result.X = std::min(result.X, 6400 - m_drawBounds.getWidthProperty());
             }
             if (m_dimDecor.Y == 0)
             {
@@ -5842,9 +5842,9 @@ void Decor::InitDecor()
             }
             else
             {
-                result.Y = pos.Y - m_drawBounds.getHeight() / 2;
+                result.Y = pos.Y - m_drawBounds.getHeightProperty() / 2;
                 result.Y = std::max(result.Y, 0);
-                result.Y = std::min(result.Y, 6400 - m_drawBounds.getHeight());
+                result.Y = std::min(result.Y, 6400 - m_drawBounds.getHeightProperty());
             }
             return result;
         }

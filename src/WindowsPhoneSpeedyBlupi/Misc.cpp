@@ -115,7 +115,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     bool Misc::IsRectEmpty(const TinyRect& rect)
     {
-        return rect.getWidth() <= 0 || rect.getHeight() <= 0;
+        return rect.getWidthProperty() <= 0 || rect.getHeightProperty() <= 0;
     }
 
 }

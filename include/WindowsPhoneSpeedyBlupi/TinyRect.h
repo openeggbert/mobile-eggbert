@@ -25,8 +25,8 @@ namespace WindowsPhoneSpeedyBlupi
 
         }
 
-        public: [[nodiscard]] int getWidth() const;
-        public: [[nodiscard]] int getHeight() const;
+        public: [[nodiscard]] int getWidthProperty() const;
+        public: [[nodiscard]] int getHeightProperty() const;
 
         std::string ToString() const
         {;

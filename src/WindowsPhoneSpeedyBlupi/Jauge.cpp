@@ -16,8 +16,8 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    double Jauge::getZoom() const { return m_zoom; }
-    void Jauge::setZoom(const double &v) { m_zoom = v; }
+    double Jauge::getZoomProperty() const { return m_zoom; }
+    void Jauge::setZoomProperty(const double &v) { m_zoom = v; }
     Jauge::Jauge(): m_mode(0),
                     m_bHide(true),
                     m_bMinimizeRedraw(false),

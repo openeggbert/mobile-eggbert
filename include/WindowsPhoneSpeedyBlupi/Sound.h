@@ -7,6 +7,7 @@
 #include <list>
 
 #include "Def.h"
+#include "Game1I.h"
 #include "GameData.h"
 #include "SoundI.h"
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.h"
@@ -37,11 +38,9 @@ class Sound : public SoundI
     private: Microsoft::Xna::Framework::Audio::SoundEffectInstance sei;
     private: const int channel;
 
-        MIGRATED_FROM_CSHARP_PROPERTY
-        public: [[nodiscard]] int getChannel() const;
+        public: [[nodiscard]] int getChannelProperty() const;
 
-        MIGRATED_FROM_CSHARP_PROPERTY
-        public: [[nodiscard]] bool getIsFree() const;
+        public: [[nodiscard]] bool getIsFreeProperty() const;
 
     public: Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped);
 
@@ -91,7 +90,7 @@ class Sound : public SoundI
 
         static constexpr int MAXVOLUME = 20;
 
-    private: const Microsoft::Xna::Framework::Game game1;
+    private: const Game1I* game1;
 
     private: const GameData gameData;
 
@@ -101,7 +100,7 @@ class Sound : public SoundI
 
     private: double volume;
 
-    public: Sound(Microsoft::Xna::Framework::Game& game1, GameData& gameData);
+    public: Sound(Game1I* game1, GameData& gameData);
         Sound(const Sound&);
         Sound& operator=(const Sound&);
 

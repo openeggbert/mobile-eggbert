@@ -99,8 +99,8 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         Microsoft::Xna::Framework::Graphics::SpriteEffects effect;
 
     public:
-        public: [[nodiscard]] TinyRect getDrawBounds() const override;
-        public: [[nodiscard]] TinyPoint getOrigin() const;
+        public: [[nodiscard]] TinyRect getDrawBoundsProperty() const override;
+        public: [[nodiscard]] TinyPoint getOriginProperty() const;
 
         Pixmap(Game1I* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
 

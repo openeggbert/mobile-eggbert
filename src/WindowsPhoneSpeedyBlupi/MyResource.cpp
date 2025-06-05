@@ -7,7 +7,10 @@
 #include <algorithm>
 
 namespace WindowsPhoneSpeedyBlupi {
-    const char *MyResource::LoadString(const ushort res)
+    std::unordered_map<ushort, std::string> MyResource::resources = {
+        // optional: initialize with default values
+    };
+    const char* MyResource::LoadString(const ushort res)
     {
         auto it = resources.find(res);
         if (it != resources.end()) {

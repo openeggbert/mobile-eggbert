@@ -29,15 +29,15 @@ namespace WindowsPhoneSpeedyBlupi
         byte data[TotalLength];
 
     public:
-    public: [[nodiscard]] byte getSelectedGamer() const; public: void setSelectedGamer(const byte& v);
-    public: [[nodiscard]] bool getSounds() const; public: void setSounds(const bool& v);
-    public: [[nodiscard]] bool getJumpRight() const; public: void setJumpRight(const bool& v);
-    public: [[nodiscard]] bool getAutoZoom() const; public: void setAutoZoom(const bool& v);
-    public: [[nodiscard]] bool getAccelActive() const; public: void setAccelActive(const bool& v);
-    public: [[nodiscard]] double getAccelSensitivity() const; public: void setAccelSensitivity(double v);
-    public: [[nodiscard]] int getNbVies() const; public: void setNbVies(const int& v);
-    public: [[nodiscard]] int getLastWorld() const; public: void setLastWorld(const int& v);
-    public: [[nodiscard]] int getGamerOffset() const; public: void setGamerOffset(const int& v);
+    public: [[nodiscard]] byte getSelectedGamerProperty() const; public: void setSelectedGamerProperty(const byte& v);
+    public: [[nodiscard]] bool getSoundsProperty() const; public: void setSoundsProperty(const bool& v);
+    public: [[nodiscard]] bool getJumpRightProperty() const; public: void setJumpRightProperty(const bool& v);
+    public: [[nodiscard]] bool getAutoZoomProperty() const; public: void setAutoZoomProperty(const bool& v);
+    public: [[nodiscard]] bool getAccelActiveProperty() const; public: void setAccelActiveProperty(const bool& v);
+    public: [[nodiscard]] double getAccelSensitivityProperty() const; public: void setAccelSensitivityProperty(double v);
+    public: [[nodiscard]] int getNbViesProperty() const; public: void setNbViesProperty(const int& v);
+    public: [[nodiscard]] int getLastWorldProperty() const; public: void setLastWorldProperty(const int& v);
+    public: [[nodiscard]] int getGamerOffsetProperty() const; public: void setGamerOffset(const int& v);
 
 
         GameData();

@@ -7,8 +7,8 @@
 #include <algorithm>
 
 namespace WindowsPhoneSpeedyBlupi {
-    int Sound::Play::getChannel() const { return channel; }
-    bool Sound::Play::getIsFree() const { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
+    int Sound::Play::getChannelProperty() const { return channel; }
+    bool Sound::Play::getIsFreeProperty() const { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
 
     /**
      * @brief Constructs a Play object to manage and play a sound effect instance with specified parameters.
@@ -39,10 +39,10 @@ namespace WindowsPhoneSpeedyBlupi {
             pitch = tableVolumePitch[tableVolumePitchLengthIndex + 1];
         }
 
-        sei.setVolume((float)volume);
-        sei.setPan((float)balance);
-        sei.setPitch((float)(pitch < 0.0 ? 0.0: pitch));
-        sei.setIsLooped(isLooped);
+        sei.setVolumeProperty((float)volume);
+        sei.setPanProperty((float)balance);
+        sei.setPitchProperty((float)(pitch < 0.0 ? 0.0: pitch));
+        sei.setIsLoopedProperty(isLooped);
         sei.Play();
     }
     void Sound::Play::Stop()
@@ -50,14 +50,14 @@ namespace WindowsPhoneSpeedyBlupi {
         sei.Stop();
     }
 
-    Sound::Sound(Microsoft::Xna::Framework::Game& game1, GameData& gameData):
+    Sound::Sound(Game1I* game1, GameData& gameData):
     game1(game1),
     gameData(gameData)
     {
         // soundEffects = new List<SoundEffect>();
         // plays = new List<Play>();
         volume = 1.0;
-        Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolume(1.0f);
+        Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolumeProperty(1.0f);
     }
 
         void Sound::LoadContent()
@@ -71,7 +71,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     std::string assetName = oss.str();
 
                     using Microsoft::Xna::Framework::Audio::SoundEffect;
-                    SoundEffect item = game1.getContent().Load<SoundEffect>(assetName);
+                    SoundEffect item = game1->getContentProperty().Load<SoundEffect>(assetName);
                     soundEffects.push_back(item);
                 }
             }
@@ -122,7 +122,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
          bool Sound::PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop)
         {
-            if (!gameData.getSounds())
+            if (!gameData.getSoundsProperty())
             {
                 return true;
             }
@@ -130,13 +130,13 @@ namespace WindowsPhoneSpeedyBlupi {
             {
 
                 if (channel != 10 && std::any_of(plays.begin(), plays.end(),
-    [channel](const Play& p) { return p.getChannel() == channel && !p.getIsFree(); })) {
+    [channel](const Play& p) { return p.getChannelProperty() == channel && !p.getIsFreeProperty(); })) {
                     return true;
     }
 
                 if (plays.size() >= 10) {
                     for (auto it = plays.begin(); it != plays.end();) {
-                        if (it->getIsFree()) {
+                        if (it->getIsFreeProperty()) {
                             it = plays.erase(it);
                         } else {
                             it++;
@@ -168,7 +168,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
             auto it = plays.begin();
             while (it != plays.end()) {
-                if (it->getChannel() == channel) {
+                if (it->getChannelProperty() == channel) {
                     it->Stop();
                     it = plays.erase(it); // erase() returns the next valid iterator
                 } else {

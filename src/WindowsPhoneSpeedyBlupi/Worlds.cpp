@@ -22,6 +22,8 @@
 #include <iostream>
 
 namespace WindowsPhoneSpeedyBlupi {
+
+    std::stringstream Worlds::output;
     //static class
     igetterstatic(std::string, GameDataFilename, Worlds, "SpeedyBlupi")
     igetterstatic(std::string, CurrentGameFilename, Worlds, "CurrentGame")
@@ -65,9 +67,9 @@ namespace WindowsPhoneSpeedyBlupi {
     bool Worlds::ReadGameData(CNA::byte data[], size_t dataSize) {
         std::cout << "ReadGameData" << std::endl;
 
-        std::ifstream file(getGameDataFilename(), std::ios::binary);
+        std::ifstream file(getGameDataFilenameProperty(), std::ios::binary);
         if (!file.is_open()) {
-            string gdf = getGameDataFilename();
+            string gdf = getGameDataFilenameProperty();
             std::cerr << "Fatal error. Loading game data failed: " << gdf << std::endl;
             return false;
         }
@@ -93,9 +95,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         std::cout << "WriteGameData" << std::endl;
 
-        std::ofstream file(getGameDataFilename(), std::ios::binary | std::ios::trunc);
+        std::ofstream file(getGameDataFilenameProperty(), std::ios::binary | std::ios::trunc);
         if (!file.is_open()) {
-            string gdf = getGameDataFilename();
+            string gdf = getGameDataFilenameProperty();
             std::cerr << "Fatal error. Writing game data failed: " << gdf << std::endl;
             return;
         }
@@ -107,7 +109,7 @@ namespace WindowsPhoneSpeedyBlupi {
     void Worlds::DeleteCurrentGame() {
         std::cout << "DeleteCurrentGame" << std::endl;
 
-        const std::filesystem::path path{getCurrentGameFilename()};
+        const std::filesystem::path path{getCurrentGameFilenameProperty()};
         try {
             if (std::filesystem::exists(path)) {
                 std::filesystem::remove(path);
@@ -120,9 +122,9 @@ namespace WindowsPhoneSpeedyBlupi {
     string Worlds::ReadCurrentGame() {
         std::cout << "ReadCurrentGame" << std::endl;
 
-        std::ifstream file(getCurrentGameFilename(), std::ios::binary);
+        std::ifstream file(getCurrentGameFilenameProperty(), std::ios::binary);
         if (!file.is_open()) {
-            string cgf = getCurrentGameFilename();
+            string cgf = getCurrentGameFilenameProperty();
             std::cerr << "Fatal error. Loading current game failed: " << cgf << std::endl;
             return "";
         }
@@ -146,7 +148,7 @@ namespace WindowsPhoneSpeedyBlupi {
     void Worlds::WriteCurrentGame(string &data) {
         std::cout << "WriteCurrentGame" << std::endl;
 
-        std::ofstream file(getCurrentGameFilename(), std::ios::out | std::ios::binary);
+        std::ofstream file(getCurrentGameFilenameProperty(), std::ios::out | std::ios::binary);
         if (file.is_open()) {
             file.write(data.c_str(), data.size());
             file.close();

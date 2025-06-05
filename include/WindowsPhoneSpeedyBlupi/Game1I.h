@@ -21,10 +21,10 @@ namespace WindowsPhoneSpeedyBlupi {
     protected:
         ~Game1I() = default;
     public:
-        [[nodiscard]]virtual bool getIsRankingMode() const = 0;
+        [[nodiscard]]virtual bool getIsRankingModeProperty() const = 0;
 
     public:
-        [[nodiscard]]virtual bool getIsTrialMode() const = 0;
+        [[nodiscard]]virtual bool getIsTrialModeProperty() const = 0;
 
     protected:
         virtual void Initialize() = 0;
@@ -110,9 +110,15 @@ namespace WindowsPhoneSpeedyBlupi {
     public:
         virtual Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() = 0;
         ////
-        dgetter(Microsoft::Xna::Framework::Content::ContentManager, Content)
-        dgetter(Microsoft::Xna::Framework::Graphics::GraphicsDevice, GraphicsDevice)
+
+
+    public:
+        [[nodiscard]] virtual Microsoft::Xna::Framework::Content::ContentManager getContentProperty() const = 0;
+
+    public:
+        [[nodiscard]] virtual Microsoft::Xna::Framework::Graphics::GraphicsDevice getGraphicsDeviceProperty() const = 0;
     };
+
 }
 
 #endif //GAME1I_H

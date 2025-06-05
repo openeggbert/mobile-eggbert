@@ -18,9 +18,9 @@ namespace WindowsPhoneSpeedyBlupi {
         virtual ~PixmapI() = default;
 
     public:
-        [[nodiscard]] virtual TinyRect getDrawBounds() const = 0;
+        [[nodiscard]] virtual TinyRect getDrawBoundsProperty() const = 0;
 
-        [[nodiscard]] virtual TinyPoint getOrigin() const = 0;
+        [[nodiscard]] virtual TinyPoint getOriginProperty() const = 0;
 
         virtual TinyPoint HotSpotToHud(TinyPoint &pos) = 0;
 

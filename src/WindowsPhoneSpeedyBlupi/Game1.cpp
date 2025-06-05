@@ -27,7 +27,7 @@
 #include "WindowsPhoneSpeedyBlupi/Text.h"
 
 namespace WindowsPhoneSpeedyBlupi {
-    bool Game1::getIsRankingMode() const {
+    bool Game1::getIsRankingModeProperty() const {
         if (!simulateTrialMode)
         {
             return isTrialMode;
@@ -35,12 +35,12 @@ namespace WindowsPhoneSpeedyBlupi {
         return true;
     }
 
-    bool Game1::getIsTrialMode() const { return false ; }
+    bool Game1::getIsTrialModeProperty() const { return false ; }
 
     Game1::Game1(): graphics(this),
                     gameData(), startTime(System::TimeSpan(0)),
                     pixmap(std::make_shared<Pixmap>(this, graphics)),
-                    sound(std::make_shared<Sound>(*this, gameData)),
+                    sound(std::make_shared<Sound>(this, gameData)),
                     decor(),
                     waitJauge(),
                     inputPad(this, decor, pixmap.get(), sound.get(), gameData) {
@@ -56,17 +56,17 @@ namespace WindowsPhoneSpeedyBlupi {
 
         bool touchPanelConnected = true;
         using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
-        if (!TouchPanel::GetCapabilities().getIsConnected()) {
-            Game::setIsMouseVisible(true);
+        if (!TouchPanel::GetCapabilities().getIsConnectedProperty()) {
+            Game::setIsMouseVisibleProperty(true);
             using Microsoft::Xna::Framework::Input::Mouse;
             using Microsoft::Xna::Framework::Input::MouseCursor;
             Mouse::SetCursor(MouseCursor::Arrow); //TODO: Is it XNA 4.0?
         }
 
-        graphics.setIsFullScreen(false);
-        Game::getContent().setRootDirectory("Content");
-        Game::setTargetElapsedTime(System::TimeSpan::FromTicks(500000L));
-        Game::setInactiveSleepTime(System::TimeSpan::FromSeconds(1.0));
+        graphics.setIsFullScreenProperty(false);
+        Game::getContentProperty().setRootDirectoryProperty("Content");
+        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(500000L));
+        Game::setInactiveSleepTimeProperty(System::TimeSpan::FromSeconds(1.0));
         missionToStart1 = -1;
         missionToStart2 = -1;
 
@@ -80,7 +80,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         waitJauge.Create(pixmap.get(), sound.get(), pos, 3, false);
         waitJauge.SetHide(false);
-        waitJauge.setZoom(2.0);
+        waitJauge.setZoomProperty(2.0);
         phase = Def::Phase::NonePhase;
         fadeOutPhase = Def::Phase::NonePhase;
 
@@ -130,7 +130,7 @@ namespace WindowsPhoneSpeedyBlupi {
         using Microsoft::Xna::Framework::Input::GamePad;
         using Microsoft::Xna::Framework::PlayerIndex;
         using Microsoft::Xna::Framework::Input::ButtonState;
-            if (GamePad::GetState(PlayerIndex::One).getButtons().getBack() == ButtonState::Pressed)
+            if (GamePad::GetState(PlayerIndex::One).getButtonsProperty().getBackProperty() == ButtonState::Pressed)
             {
                 if (phase == Def::Phase::Play)
                 {
@@ -166,11 +166,11 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             if (phase == Def::Phase::First)
             {
-                startTime = gameTime.getTotalGameTime();
+                startTime = gameTime.getTotalGameTimeProperty();
                 pixmap->LoadContent();
                 sound->LoadContent();
                 gameData.Read();
-                inputPad.setPixmapOrigin(pixmap->getOrigin());
+                inputPad.setPixmapOriginProperty(pixmap->getOriginProperty());
                 SetPhase(Def::Phase::Wait);
                 return;
             }
@@ -185,7 +185,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         return;
                     }
                 }
-                long num = gameTime.getTotalGameTime().getTicks() - startTime.getTicks();
+                long num = gameTime.getTotalGameTimeProperty().getTicks() - startTime.getTicks();
                 waitProgress = (double)num / 50000000.0;
                 if (waitProgress > 1.0)
                 {
@@ -194,7 +194,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 return;
             }
             inputPad.Update();
-            Def::ButtonGlyph buttonPressed = inputPad.getButtonPressed();
+            Def::ButtonGlyph buttonPressed = inputPad.getButtonPressedProperty();
             if (buttonPressed >= Def::ButtonGlyph::InitGamerA && buttonPressed <= Def::ButtonGlyph::InitGamerC)
             {
                 SetGamer((int)(buttonPressed - 1));
@@ -209,19 +209,19 @@ namespace WindowsPhoneSpeedyBlupi {
                     SetPhase(Def::Phase::PlaySetup);
                     return;
                 case Def::ButtonGlyph::SetupSounds:
-                    gameData.setSounds(!gameData.getSounds());
+                    gameData.setSoundsProperty(!gameData.getSoundsProperty());
                     gameData.Write();
                     return;
                 case Def::ButtonGlyph::SetupJump:
-                    gameData.setJumpRight(!gameData.getJumpRight());
+                    gameData.setJumpRightProperty(!gameData.getJumpRightProperty());
                     gameData.Write();
                     return;
                 case Def::ButtonGlyph::SetupZoom:
-                    gameData.setAutoZoom(!gameData.getAutoZoom());
+                    gameData.setAutoZoomProperty(!gameData.getAutoZoomProperty());
                     gameData.Write();
                     return;
                 case Def::ButtonGlyph::SetupAccel:
-                    gameData.setAccelActive(!gameData.getAccelActive());
+                    gameData.setAccelActiveProperty(!gameData.getAccelActiveProperty());
                     gameData.Write();
                     return;
                 case Def::ButtonGlyph::SetupReset:
@@ -288,7 +288,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         if (cheatGesteIndex == cheatGesteLength)
                         {
                             cheatGesteIndex = 0;
-                            inputPad.setShowCheatMenu(true);
+                            inputPad.setShowCheatMenuProperty(true);
                         }
                     }
                     else
@@ -309,7 +309,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             if (phase == Def::Phase::Play)
             {
-                decor.setButtonPressed(buttonPressed);
+                decor.setButtonPressedProperty(buttonPressed);
                 decor.MoveStep();
                 int num2 = decor.IsTerminated();
                 if (num2 == -1)
@@ -345,7 +345,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     void Game1::StartMission(int mission)
     {
-        if (mission > 20 && mission % 10 > 1 && getIsTrialMode())
+        if (mission > 20 && mission % 10 > 1 && getIsTrialModeProperty())
         {
             SetPhase(Def::Phase::Trial);
             return;
@@ -353,15 +353,15 @@ namespace WindowsPhoneSpeedyBlupi {
         this->mission = mission;
         if (this->mission != 1)
         {
-            gameData.setLastWorld(this->mission / 10);
+            gameData.setLastWorldProperty(this->mission / 10);
         }
         decor.Read(0, this->mission, false);
         decor.LoadImages();
         decor.SetMission(this->mission);
-        decor.SetNbVies(gameData.getNbVies());
+        decor.SetNbVies(gameData.getNbViesProperty());
         decor.InitializeDoors(gameData);
         decor.AdaptDoors(false);
-        decor.MainSwitchInitialize(gameData.getLastWorld());
+        decor.MainSwitchInitialize(gameData.getLastWorldProperty());
         decor.PlayPrepare(false);
         decor.StartSound();
         inputPad.StartMission(this->mission);
@@ -373,7 +373,7 @@ namespace WindowsPhoneSpeedyBlupi {
         mission = decor.GetMission();
         if (mission != 1)
         {
-            gameData.setLastWorld(mission / 10);
+            gameData.setLastWorldProperty(mission / 10);
         }
         decor.LoadImages();
         decor.StartSound();
@@ -562,7 +562,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     {
                         rotation = (1.0 - num) * (1.0 - num) * 360.0 * 1.0;
                     }
-                    if (rect.getWidth() > 0 && rect.getHeight() > 0)
+                    if (rect.getWidthProperty() > 0 && rect.getHeightProperty() > 0)
                     {
                         pixmap->DrawIcon(16, 0, rect, 1.0, rotation, false);
                     }
@@ -625,7 +625,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 {
                     rotation = (1.0 - num) * (1.0 - num) * 360.0 * 6.0;
                 }
-                if (rect.getWidth() > 0 && rect.getHeight() > 0)
+                if (rect.getWidthProperty() > 0 && rect.getHeightProperty() > 0)
                 {
                     pixmap->DrawIcon(16, 0, rect, 1.0, rotation, false);
                 }
@@ -647,9 +647,9 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             if (phase == Def::Phase::Init)
             {
-                TinyRect drawBounds = pixmap->getDrawBounds();
-                int width = drawBounds.getWidth();
-                int height = drawBounds.getHeight();
+                TinyRect drawBounds = pixmap->getDrawBoundsProperty();
+                int width = drawBounds.getWidthProperty();
+                int height = drawBounds.getHeightProperty();
                 TinyRect tinyRect = TinyRect();
                 tinyRect.LeftX = 10;
                 tinyRect.RightX = 260;
@@ -660,7 +660,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 TinyRect tinyRect2 = TinyRect();
                 tinyRect2.LeftX = width - 170;
                 tinyRect2.RightX = width - 10;
-                tinyRect2.TopY = height - ((getIsTrialMode() || getIsRankingMode()) ? 325 : 195);
+                tinyRect2.TopY = height - ((getIsTrialModeProperty() || getIsRankingModeProperty()) ? 325 : 195);
                 tinyRect2.BottomY = height - 10;
                 rect = tinyRect2;
                 pixmap->DrawIcon(14, 15, rect, 0.3, false);
@@ -676,11 +676,11 @@ namespace WindowsPhoneSpeedyBlupi {
                 DrawButtonGamerText(Def::ButtonGlyph::InitGamerC, 2);
                 DrawTextUnderButton(Def::ButtonGlyph::InitPlay, MyResource::TX_BUTTON_PLAY);
                 DrawTextRightButton(Def::ButtonGlyph::InitSetup, MyResource::TX_BUTTON_SETUP);
-                if (getIsTrialMode())
+                if (getIsTrialModeProperty())
                 {
                     DrawTextUnderButton(Def::ButtonGlyph::InitBuy, MyResource::TX_BUTTON_BUY);
                 }
-                if (getIsRankingMode())
+                if (getIsRankingModeProperty())
                 {
                     DrawTextUnderButton(Def::ButtonGlyph::InitRanking, MyResource::TX_BUTTON_RANKING);
                 }
@@ -712,7 +712,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 DrawTextRightButton(Def::ButtonGlyph::SetupAccel, MyResource::TX_BUTTON_SETUP_ACCEL);
                 if (phase == Def::Phase::MainSetup)
                 {
-                    string text = Helper::formatString(MyResource::LoadString(MyResource::TX_BUTTON_SETUP_RESET), STRING_VECTOR(std::to_string(static_cast<char>(65 + gameData.getSelectedGamer()))));
+                    string text = Helper::formatString(MyResource::LoadString(MyResource::TX_BUTTON_SETUP_RESET), STRING_VECTOR(std::to_string(static_cast<char>(65 + gameData.getSelectedGamerProperty()))));
                     DrawTextRightButton(Def::ButtonGlyph::SetupReset, text);
                 }
             }
@@ -750,26 +750,26 @@ namespace WindowsPhoneSpeedyBlupi {
             int secondaryDoors;
             gameData.GetGamerInfo(gamer, nbVies, mainDoors, secondaryDoors);
             TinyPoint tinyPoint;
-            tinyPoint.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
-            tinyPoint.Y = buttonRect.TopY + 3 - pixmap->getOrigin().Y;
+            tinyPoint.X = buttonRect.RightX + 5 - pixmap->getOriginProperty().X;
+            tinyPoint.Y = buttonRect.TopY + 3 - pixmap->getOriginProperty().Y;
             TinyPoint pos = tinyPoint;
             string text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_TITLE), STRING_VECTOR(std::to_string(static_cast<char>(65 + gamer))));
             Text::DrawText(pixmap.get(), pos, text, 0.7);
             TinyPoint tinyPoint2;
-            tinyPoint2.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
-            tinyPoint2.Y = buttonRect.TopY + 25 - pixmap->getOrigin().Y;
+            tinyPoint2.X = buttonRect.RightX + 5 - pixmap->getOriginProperty().X;
+            tinyPoint2.Y = buttonRect.TopY + 25 - pixmap->getOriginProperty().Y;
             pos = tinyPoint2;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_MDOORS), STRING_VECTOR(std::to_string(mainDoors)));
             Text::DrawText(pixmap.get(), pos, text, 0.45);
             TinyPoint tinyPoint3;
-            tinyPoint3.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
-            tinyPoint3.Y = buttonRect.TopY + 39 - pixmap->getOrigin().Y;
+            tinyPoint3.X = buttonRect.RightX + 5 - pixmap->getOriginProperty().X;
+            tinyPoint3.Y = buttonRect.TopY + 39 - pixmap->getOriginProperty().Y;
             pos = tinyPoint3;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_SDOORS), STRING_VECTOR(std::to_string(secondaryDoors)));
             Text::DrawText(pixmap.get(), pos, text, 0.45);
             TinyPoint tinyPoint4;
-            tinyPoint4.X = buttonRect.RightX + 5 - pixmap->getOrigin().X;
-            tinyPoint4.Y = buttonRect.TopY + 53 - pixmap->getOrigin().Y;
+            tinyPoint4.X = buttonRect.RightX + 5 - pixmap->getOriginProperty().X;
+            tinyPoint4.Y = buttonRect.TopY + 53 - pixmap->getOriginProperty().Y;
             pos = tinyPoint4;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_LIFES), STRING_VECTOR(std::to_string(nbVies)));
             Text::DrawText(pixmap.get(), pos, text, 0.45);
@@ -787,8 +787,8 @@ namespace WindowsPhoneSpeedyBlupi {
             if (array.size() == 2)
             {
                 TinyPoint tinyPoint;
-                tinyPoint.X = buttonRect.RightX + 10 - pixmap->getOrigin().X;
-                tinyPoint.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 20 - pixmap->getOrigin().Y;
+                tinyPoint.X = buttonRect.RightX + 10 - pixmap->getOriginProperty().X;
+                tinyPoint.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 20 - pixmap->getOriginProperty().Y;
                 TinyPoint pos = tinyPoint;
                 Text::DrawText(pixmap.get(), pos, array[0], 0.7);
                 pos.Y += 24;
@@ -797,8 +797,8 @@ namespace WindowsPhoneSpeedyBlupi {
             else
             {
                 TinyPoint tinyPoint2;
-                tinyPoint2.X = buttonRect.RightX + 10 - pixmap->getOrigin().X;
-                tinyPoint2.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 8 - pixmap->getOrigin().Y;
+                tinyPoint2.X = buttonRect.RightX + 10 - pixmap->getOriginProperty().X;
+                tinyPoint2.Y = (buttonRect.TopY + buttonRect.BottomY) / 2 - 8 - pixmap->getOriginProperty().Y;
                 TinyPoint pos2 = tinyPoint2;
                 Text::DrawText(pixmap.get(), pos2, text, 0.7);
             }
@@ -808,8 +808,8 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             TinyRect buttonRect = inputPad.GetButtonRect(glyph);
             TinyPoint tinyPoint;
-            tinyPoint.X = (buttonRect.LeftX + buttonRect.RightX) / 2 - pixmap->getOrigin().X;
-            tinyPoint.Y = buttonRect.BottomY + 2 - pixmap->getOrigin().Y;
+            tinyPoint.X = (buttonRect.LeftX + buttonRect.RightX) / 2 - pixmap->getOriginProperty().X;
+            tinyPoint.Y = buttonRect.BottomY + 2 - pixmap->getOriginProperty().Y;
             TinyPoint pos = tinyPoint;
             string text = MyResource::LoadString(res);
             Text::DrawTextCenter(pixmap.get(), pos, text, 0.7);
@@ -838,12 +838,12 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.X = 10;
             tinyPoint.Y = 20;
             TinyPoint pos = tinyPoint;
-            Text::DrawText(pixmap.get(), pos, ToString(inputPad.getTotalTouch()), 1.0);
+            Text::DrawText(pixmap.get(), pos, ToString(inputPad.getTotalTouchProperty()), 1.0);
         }
 
         void Game1::SetGamer(int gamer)
         {
-            gameData.setSelectedGamer(gamer);
+            gameData.setSelectedGamerProperty(gamer);
             gameData.Write();
         }
 
@@ -884,9 +884,9 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             this->phase = phase;
             fadeOutPhase = Def::Phase::NonePhase;
-            inputPad.setPhase(this->phase);
+            inputPad.setPhaseProperty(this->phase);
             playSetup = this->phase == Def::Phase::PlaySetup;
-            isTrialMode = Microsoft::Xna::Framework::GamerServices::Guide::IsTrialMode;
+            isTrialMode = Microsoft::Xna::Framework::GamerServices::Guide::getIsTrialModeProperty();
             phaseTime = 0;
             missionToStart2 = -1;
             decor.StopSound();
@@ -916,7 +916,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     pixmap->BackgroundCache("pause");
                     break;
                 case Def::Phase::Play:
-                    decor.setDrawBounds(pixmap->getDrawBounds());
+                    decor.setDrawBounds(pixmap->getDrawBoundsProperty());
                     break;
             }
             if (this->phase == Def::Phase::Play && mission > 0)
@@ -927,7 +927,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void Game1::MemorizeGamerProgress()
         {
-            gameData.setNbVies(decor.GetNbVies());
+            gameData.setNbViesProperty(decor.GetNbVies());
             decor.MemorizeDoors(gameData);
             gameData.Write();
         }
@@ -936,14 +936,20 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             this->graphics.ToggleFullScreen();
         }
-        bool Game1::IsFullScreen() { return this->graphics.getIsFullScreen(); }
+        bool Game1::IsFullScreen() { return this->graphics.getIsFullScreenProperty(); }
 
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager Game1::getGraphics()
         {
             return graphics;
         }
 
+        Microsoft::Xna::Framework::Content::ContentManager Game1::getContentProperty() const {
+        return Microsoft::Xna::Framework::Content::ContentManager();
+        }
 
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice Game1::getGraphicsDeviceProperty() const {
+        return Microsoft::Xna::Framework::Graphics::GraphicsDevice();
+        }
 }
 
 

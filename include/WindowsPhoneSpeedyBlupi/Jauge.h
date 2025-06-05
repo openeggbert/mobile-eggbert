@@ -33,7 +33,7 @@ namespace WindowsPhoneSpeedyBlupi {
         double m_zoom;
 
     public:
-        public: [[nodiscard]] double getZoom() const; public: void setZoom(const double& v);
+        public: [[nodiscard]] double getZoomProperty() const; public: void setZoomProperty(const double& v);
 
         Jauge();
 

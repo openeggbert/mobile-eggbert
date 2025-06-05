@@ -7,21 +7,21 @@
 namespace WindowsPhoneSpeedyBlupi
 {
 
-    byte GameData::getSelectedGamer() const { return data[2]; } void GameData::setSelectedGamer(const byte& v) { data[2] = v; }
+    byte GameData::getSelectedGamerProperty() const { return data[2]; } void GameData::setSelectedGamerProperty(const byte& v) { data[2] = v; }
 
-    bool GameData::getSounds() const { return data[3] == 1; } void GameData::setSounds(const bool& v) {data[3] = (byte)(v ? 1u : 0u); }
-    bool GameData::getJumpRight() const { return data[4] == 1; } void GameData::setJumpRight(const bool& v) {data[4] = (byte)(v ? 1u : 0u); }
-    bool GameData::getAutoZoom() const { return data[5] == 1; } void GameData::setAutoZoom(const bool& v) {data[5] = (byte)(v ? 1u : 0u); }
-    bool GameData::getAccelActive() const { return data[6] == 1; } void GameData::setAccelActive(const bool& v) {data[6] = (byte)(v ? 1u : 0u); }
+    bool GameData::getSoundsProperty() const { return data[3] == 1; } void GameData::setSoundsProperty(const bool& v) {data[3] = (byte)(v ? 1u : 0u); }
+    bool GameData::getJumpRightProperty() const { return data[4] == 1; } void GameData::setJumpRightProperty(const bool& v) {data[4] = (byte)(v ? 1u : 0u); }
+    bool GameData::getAutoZoomProperty() const { return data[5] == 1; } void GameData::setAutoZoomProperty(const bool& v) {data[5] = (byte)(v ? 1u : 0u); }
+    bool GameData::getAccelActiveProperty() const { return data[6] == 1; } void GameData::setAccelActiveProperty(const bool& v) {data[6] = (byte)(v ? 1u : 0u); }
 
-    double GameData::getAccelSensitivity() const { return (double)(int)data[7] / 100.0; }
-    void GameData::setAccelSensitivity(double v) {
+    double GameData::getAccelSensitivityProperty() const { return (double)(int)data[7] / 100.0; }
+    void GameData::setAccelSensitivityProperty(double v) {
         v = std::max(v, 0.0),
         v = std::min(v, 1.0);
         data[7] = (byte)(v * 100.0);}
-    int GameData::getNbVies() const { return data[getGamerOffset()]; } void GameData::setNbVies(const int& v) {data[getGamerOffset()] = (byte)v;}
-    int GameData::getLastWorld() const { return data[getGamerOffset() + 1]; } void GameData::setLastWorld(const int& v) {data[getGamerOffset() + 1] = (byte)v;}
-    int GameData::getGamerOffset() const { return GetGamerOffset(getSelectedGamer()); }
+    int GameData::getNbViesProperty() const { return data[getGamerOffsetProperty()]; } void GameData::setNbViesProperty(const int& v) {data[getGamerOffsetProperty()] = (byte)v;}
+    int GameData::getLastWorldProperty() const { return data[getGamerOffsetProperty() + 1]; } void GameData::setLastWorldProperty(const int& v) {data[getGamerOffsetProperty() + 1] = (byte)v;}
+    int GameData::getGamerOffsetProperty() const { return GetGamerOffset(getSelectedGamerProperty()); }
 
     GameData::GameData() : data{}
 
@@ -42,14 +42,14 @@ namespace WindowsPhoneSpeedyBlupi
 
         void GameData::Reset()
         {
-            Initialize(getSelectedGamer());
+            Initialize(getSelectedGamerProperty());
         }
 
         void GameData::GetDoors(int doors[])
         {
             for (int i = 0; i < DoorsLength; i++)
             {
-                doors[i] = data[getSelectedGamer() + 10 + i];
+                doors[i] = data[getSelectedGamerProperty() + 10 + i];
             }
         }
 
@@ -57,7 +57,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             for (int i = 0; i < DoorsLength; i++)
             {
-                data[getSelectedGamer() + 10 + i] = (byte)doors[i];
+                data[getSelectedGamerProperty() + 10 + i] = (byte)doors[i];
             }
         }
 
@@ -93,7 +93,7 @@ namespace WindowsPhoneSpeedyBlupi
             data[5] = 1;
             data[6] = 0;
             data[7] = 50;
-            setSelectedGamer(0);
+            setSelectedGamerProperty(0);
             for (int i = 0; i < MaxGamer; i++)
             {
                 Initialize(i);
