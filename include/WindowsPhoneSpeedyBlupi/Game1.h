@@ -110,7 +110,7 @@ protected: void OnDeactivated(std::any sender, System::Runtime::CompilerServices
 
 protected: void OnActivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) override;
 
-protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args);
+protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
 
 protected:void Update(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
