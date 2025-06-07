@@ -43,7 +43,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     sound(std::make_shared<Sound>(this, gameData)),
                     decor(),
                     waitJauge(),
-                    inputPad(this, decor, pixmap.get(), sound.get(), gameData) {
+                    inputPad(this, &decor, pixmap.get(), sound.get(), gameData) {
 
         Exiting += [this](const Microsoft::Xna::Framework::ExitingEventArgs & args) {
         OnExiting(args);
@@ -185,7 +185,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         return;
                     }
                 }
-                long num = gameTime.getTotalGameTimeProperty().getTicks() - startTime.getTicks();
+                long num = gameTime.getTotalGameTimeProperty().getTicksProperty() - startTime.getTicksProperty();
                 waitProgress = (double)num / 50000000.0;
                 if (waitProgress > 1.0)
                 {

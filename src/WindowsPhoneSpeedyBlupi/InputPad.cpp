@@ -144,7 +144,7 @@ namespace WindowsPhoneSpeedyBlupi {
     }
     /** Properties : End */
 
-    InputPad::InputPad(Game1I* game1, Decor& decor, PixmapI* pixmap, SoundI* sound, GameData& gameData):
+    InputPad::InputPad(Game1I* game1, Decor* decor, PixmapI* pixmap, SoundI* sound, GameData& gameData):
         game1(game1),
         decor(decor),
         pixmap(pixmap),
@@ -487,9 +487,9 @@ namespace WindowsPhoneSpeedyBlupi {
                     verticalChange = 1.0;
                 }
             }
-            decor.SetSpeedX(horizontalChange);
-            decor.SetSpeedY(verticalChange);
-            decor.KeyChange(keyPress);
+            decor->SetSpeedX(horizontalChange);
+            decor->SetSpeedY(verticalChange);
+            decor->KeyChange(keyPress);
         }
 
     Def::ButtonGlyph InputPad::ButtonDetect(TinyPoint touchOrClick)

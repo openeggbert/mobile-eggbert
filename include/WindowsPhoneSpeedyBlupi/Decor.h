@@ -345,7 +345,7 @@ private: static constexpr int m_linkCaisseLength = MAXMOVEOBJECT;
         private: double m_hotSpotOutLag;
 
         private:
-    System::Random m_random;
+    std::unique_ptr<System::Random> m_random;
 
         private: std::vector<ByeByeObject> byeByeObjects;
 

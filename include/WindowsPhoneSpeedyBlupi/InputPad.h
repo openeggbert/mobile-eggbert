@@ -24,7 +24,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
          mutable Game1I* game1;
 
-         mutable Decor decor;
+         mutable Decor* decor;
 
          mutable PixmapI* pixmap;
 
@@ -75,7 +75,7 @@ namespace WindowsPhoneSpeedyBlupi {
         public: [[nodiscard]] TinyPoint getPadCenterProperty() const;
 
     public:
-        InputPad(Game1I* game1, Decor& decor, PixmapI* pixmap, SoundI* sound, GameData& gameData);
+        InputPad(Game1I* game1, Decor* decor, PixmapI* pixmap, SoundI* sound, GameData& gameData);
 
         void StartMission(int mission);
 

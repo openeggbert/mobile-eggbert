@@ -323,7 +323,7 @@ void Decor::InitDecor()
                 m_moveObject[i].time = 0;
                 if (m_moveObject[i].type == 5 || m_moveObject[i].type == 6 || m_moveObject[i].type == 25 || m_moveObject[i].type == 26 || m_moveObject[i].type == 40 || m_moveObject[i].type == 2 || m_moveObject[i].type == 3 || m_moveObject[i].type == 96 || m_moveObject[i].type == 97)
                 {
-                    m_moveObject[i].phase = m_random.Next(23);
+                    m_moveObject[i].phase = m_random.get()->Next(23);
                 }
                 if (m_moveObject[i].type == 23)
                 {
@@ -831,7 +831,7 @@ void Decor::InitDecor()
                         }
                         if (num2 == 305 && BlitzActif(i, j))
                         {
-                            num2 = m_random.Next(305, 308);
+                            num2 = m_random.get()->Next(305, 308);
                             m_pixmap->QuickIcon(1, num2, pos);
                         }
                         if (num2 == 110)
@@ -5766,7 +5766,7 @@ void Decor::InitDecor()
             }
             else
             {
-                m_blupiAction = ((m_random.Next() % 2 == 0) ? action1 : action2);
+                m_blupiAction = ((m_random.get()->Next() % 2 == 0) ? action1 : action2);
             }
             m_blupiPhase = 0;
             m_blupiFocus = false;
@@ -6082,7 +6082,7 @@ void Decor::InitDecor()
                         return;
                     }
                     num = 58;
-                    tinyPoint.X = m_random.Next(-10, 10);
+                    tinyPoint.X = m_random.get()->Next(-10, 10);
                     tinyPoint.Y = 22;
                 }
                 else
@@ -8106,8 +8106,8 @@ void Decor::InitDecor()
                                 int channel = m_moveObject[m_linkCaisse[l]].channel;
                                 int icon2 = m_moveObject[m_linkCaisse[l]].icon;
                                 TinyPoint posCurrent = m_moveObject[m_linkCaisse[l]].posCurrent;
-                                double num = m_random.Next(7, 23);
-                                if (m_random.Next(0, 100) % 2 == 0)
+                                double num = m_random.get()->Next(7, 23);
+                                if (m_random.get()->Next(0, 100) % 2 == 0)
                                 {
                                     num = 0.0 - num;
                                 }
@@ -8865,8 +8865,8 @@ void Decor::InitDecor()
             byeByeObject.rotationSpeed = rotationSpeed;
             byeByeObject.animationSpeed = animationSpeed;
             ByeByeObject byeByeObject2 = byeByeObject;
-            int num = m_random.Next(0, 10);
-            if (m_random.Next(0, 1000) % 2 == 0)
+            int num = m_random.get()->Next(0, 10);
+            if (m_random.get()->Next(0, 1000) % 2 == 0)
             {
                 byeByeObject2.speedX = num + 10;
             }
@@ -9109,8 +9109,8 @@ void Decor::InitDecor()
                 pos.X -= 34;
                 pos.X += m_posDecor.X;
                 pos.Y += m_posDecor.Y;
-                int num2 = array[m_random.Next(0, 6)];
-                int num3 = m_random.Next(-10, 10);
+                int num2 = array[m_random.get()->Next(0, 6)];
+                int num3 = m_random.get()->Next(-10, 10);
                 if (num == 0)
                 {
                     num2 /= 2;
@@ -9529,29 +9529,29 @@ void Decor::InitDecor()
                 if (num2 == Tables::table_adapt_decor[i])
                 {
                     num2 = Tables::table_adapt_decor[i / 16 * 16 + num];
-                    if (num2 == 35 && m_random.Next() % 2 == 0)
+                    if (num2 == 35 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 156;
                     }
                     if (num2 == 251)
                     {
-                        num2 = m_random.Next(251, 253);
+                        num2 = m_random.get()->Next(251, 253);
                     }
-                    if (num2 == 254 && m_random.Next() % 2 == 0)
+                    if (num2 == 254 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 255;
                     }
-                    if (num2 == 347 && m_random.Next() % 2 == 0)
+                    if (num2 == 347 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 362;
                     }
-                    if (num2 == 348 && m_random.Next() % 2 == 0)
+                    if (num2 == 348 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 363;
                     }
                     if (num2 == 341)
                     {
-                        num2 = m_random.Next(341, 346);
+                        num2 = m_random.get()->Next(341, 346);
                     }
                     m_decor[x][ y].icon = num2;
                     return;
@@ -9597,19 +9597,19 @@ void Decor::InitDecor()
                         num &= -9;
                     }
                     num2 = Tables::table_adapt_fromage[num];
-                    if (num2 == 268 && m_random.Next() % 2 == 0)
+                    if (num2 == 268 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 279;
                     }
-                    if (num2 == 269 && m_random.Next() % 2 == 0)
+                    if (num2 == 269 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 280;
                     }
-                    if (num2 == 264 && m_random.Next() % 2 == 0)
+                    if (num2 == 264 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 281;
                     }
-                    if (num2 == 265 && m_random.Next() % 2 == 0)
+                    if (num2 == 265 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 282;
                     }
@@ -9655,15 +9655,15 @@ void Decor::InitDecor()
                         num &= -9;
                     }
                     num2 = Tables::table_adapt_fromage[num + 16];
-                    if (num2 == 289 && m_random.Next() % 2 == 0)
+                    if (num2 == 289 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 300;
                     }
-                    if (num2 == 285 && m_random.Next() % 2 == 0)
+                    if (num2 == 285 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 302;
                     }
-                    if (num2 == 286 && m_random.Next() % 2 == 0)
+                    if (num2 == 286 && m_random.get()->Next() % 2 == 0)
                     {
                         num2 = 303;
                     }
