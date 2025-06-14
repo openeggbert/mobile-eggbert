@@ -65,7 +65,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         graphics.setIsFullScreenProperty(false);
         Game::getContentProperty().setRootDirectoryProperty("Content");
-        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(500000L));
+        Game::setTargetElapsedTimeProperty(nullptr);//(&System::TimeSpan::FromTicks(500000L));//todo
         Game::setInactiveSleepTimeProperty(System::TimeSpan::FromSeconds(1.0));
         missionToStart1 = -1;
         missionToStart2 = -1;
@@ -126,7 +126,7 @@ namespace WindowsPhoneSpeedyBlupi {
         decor.CurrentDelete();
     }
 
-    void Game1::Update(const Microsoft::Xna::Framework::GameTime& gameTime) {
+    void Game1::Update(Microsoft::Xna::Framework::GameTime &gameTime) {
         using Microsoft::Xna::Framework::Input::GamePad;
         using Microsoft::Xna::Framework::PlayerIndex;
         using Microsoft::Xna::Framework::Input::ButtonState;

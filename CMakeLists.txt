@@ -12,7 +12,6 @@ include_directories(../cna/include CNA)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
-        ../../cna/src/System/Exception.cpp
 )
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

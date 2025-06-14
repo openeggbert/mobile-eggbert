@@ -112,7 +112,7 @@ protected: void OnActivated(std::any sender, System::Runtime::CompilerServices::
 
 protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
 
-protected:void Update(const Microsoft::Xna::Framework::GameTime& gameTime) override;
+protected:void Update(Microsoft::Xna::Framework::GameTime &gameTime) override;
 
 private: void MissionBack();
 

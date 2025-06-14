@@ -45,7 +45,7 @@ namespace WindowsPhoneSpeedyBlupi {
         virtual void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) = 0;
 
     protected:
-        virtual void Update(const Microsoft::Xna::Framework::GameTime &gameTime) = 0;
+        virtual void Update(Microsoft::Xna::Framework::GameTime &gameTime) = 0;
 
     private:
         virtual void MissionBack() = 0;
