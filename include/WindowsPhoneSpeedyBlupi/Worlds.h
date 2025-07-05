@@ -30,7 +30,7 @@ namespace WindowsPhoneSpeedyBlupi {
          * This property is initialized using a lambda function that returns the default game data filename,
          * which is "SpeedyBlupi".
          */
-        dgetterstatic(std::string, GameDataFilename)
+        DEF_PROP(std::string, GameDataFilename, getter1, setter0, member1, static1, constret0, ref0, constmet0)
 
         /**
          * @brief Represents a static property that holds the filename for the current game.
@@ -38,7 +38,7 @@ namespace WindowsPhoneSpeedyBlupi {
          * This property is initialized using a lambda function that returns the default filename
          * for the current game, which is "CurrentGame".
          */
-        dgetterstatic(std::string, CurrentGameFilename)
+        DEF_PROP(std::string, CurrentGameFilename, getter1, setter0, member1, static1, constret0, ref0, constmet0)
 
     public:
         static std::vector<std::string> ReadWorld(int gamer, int rank);

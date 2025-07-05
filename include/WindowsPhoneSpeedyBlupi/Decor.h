@@ -355,7 +355,7 @@ public:
 public:
     void setDrawBounds(const TinyRect &v);
 
-    ddata(Def::ButtonGlyph, ButtonPressed)
+    DDATA(Def::ButtonGlyph, ButtonPressed)
 
         private: static void MoveObjectCopy(MoveObject& dst, const MoveObject &src);
 

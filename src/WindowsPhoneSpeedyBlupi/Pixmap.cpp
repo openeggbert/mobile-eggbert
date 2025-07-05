@@ -19,7 +19,7 @@
 
 namespace WindowsPhoneSpeedyBlupi {
 
-    TinyRect Pixmap::getDrawBoundsProperty() const {
+    TinyRect Pixmap::getDrawBoundsProperty() {
         TinyRect result;
         double screenWidth = graphics.getGraphicsDeviceProperty().getViewportProperty().getWidthProperty();
         double screenHeight = graphics.getGraphicsDeviceProperty().getViewportProperty().getHeightProperty();

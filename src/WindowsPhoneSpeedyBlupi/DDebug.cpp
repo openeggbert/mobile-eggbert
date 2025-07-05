@@ -5,7 +5,7 @@
 #define DEBUGGING_ENABLED false
 
 namespace WindowsPhoneSpeedyBlupi {
-    idata(bool, DetailedDebugging, DDebug)
+    IDATA(bool, DetailedDebugging, DDebug)
 
     DDebug::DDebug(bool detailed_debugging)
         : DetailedDebugging_(detailed_debugging) {

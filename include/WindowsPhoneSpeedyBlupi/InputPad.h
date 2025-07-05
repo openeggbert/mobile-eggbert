@@ -64,12 +64,12 @@ namespace WindowsPhoneSpeedyBlupi {
 
     public:
 
-        ddata(Def::Phase, Phase)
-        ddata(int, SelectedGamer)
-        ddata(TinyPoint, PixmapOrigin)
+        DDATA(Def::Phase, Phase)
+        DDATA(int, SelectedGamer)
+        DDATA(TinyPoint, PixmapOrigin)
         public: [[nodiscard]] int getTotalTouchProperty() const;
         public: [[nodiscard]] Def::ButtonGlyph getButtonPressedProperty() const;
-        ddata(bool , ShowCheatMenu)
+        DDATA(bool , ShowCheatMenu)
         public: [[nodiscard]] std::vector<Def::ButtonGlyph> getButtonGlyphsProperty() const;
         // Returns the point of the center of the pad on the screen.
         public: [[nodiscard]] TinyPoint getPadCenterProperty() const;

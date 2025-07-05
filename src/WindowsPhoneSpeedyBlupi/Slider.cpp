@@ -14,7 +14,7 @@ namespace WindowsPhoneSpeedyBlupi
 {
 
     TinyPoint Slider::getTopLeftCorner() const { return topLeftCorner ; }
-    idata(double, Value, Slider)
+    IDATA(double, Value, Slider)
     int Slider::getPosLeft() const { return getTopLeftCorner().X + 22; }
     int Slider::getPosRight() const { return getTopLeftCorner().X + 248 - 22;; }
 

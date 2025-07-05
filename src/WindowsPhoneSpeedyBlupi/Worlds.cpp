@@ -25,8 +25,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
     std::stringstream Worlds::output;
     //static class
-    igetterstatic(std::string, GameDataFilename, Worlds, "SpeedyBlupi")
-    igetterstatic(std::string, CurrentGameFilename, Worlds, "CurrentGame")
+    std::string Worlds::getGameDataFilenameProperty() { return "SpeedyBlupi"; }
+    std::string Worlds::getCurrentGameFilenameProperty() { return "CurrentGame"; }
 
     std::vector<std::string> Worlds::ReadWorld(int gamer, int rank) {
         string worldFilename = GetWorldFilename(gamer, rank);

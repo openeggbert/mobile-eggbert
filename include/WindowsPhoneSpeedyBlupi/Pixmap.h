@@ -52,7 +52,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
     private:
         const Game1I* game1;
 
-        const Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
+        Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
         double zoom = 0.0f;
 
@@ -99,7 +99,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         Microsoft::Xna::Framework::Graphics::SpriteEffects effect;
 
     public:
-        public: [[nodiscard]] TinyRect getDrawBoundsProperty() const override;
+        public: [[nodiscard]] TinyRect getDrawBoundsProperty() override;
         public: [[nodiscard]] TinyPoint getOriginProperty() const;
 
         Pixmap(Game1I* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);

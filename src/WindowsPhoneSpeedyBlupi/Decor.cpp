@@ -11,7 +11,7 @@
 namespace WindowsPhoneSpeedyBlupi {
     TinyRect Decor::getDrawBounds() const { return m_drawBounds; }
     void Decor::setDrawBounds(const TinyRect &v) { m_drawBounds = v; }
-    idata(Def::ButtonGlyph, ButtonPressed, Decor)
+    IDATA(Def::ButtonGlyph, ButtonPressed, Decor)
 
     void Decor::MoveObjectCopy(MoveObject& dst, const MoveObject &src)
     {

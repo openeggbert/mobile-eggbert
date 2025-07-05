@@ -7,7 +7,7 @@
 namespace WindowsPhoneSpeedyBlupi {
     //static class
     class DDebug {
-        ddata(bool, DetailedDebugging)
+        DDATA(bool, DetailedDebugging)
 
     public:
         explicit DDebug(bool detailed_debugging);

@@ -32,9 +32,9 @@
 
 namespace WindowsPhoneSpeedyBlupi {
     /** Properties : Start */
-    idata(Def::Phase, Phase, InputPad)
-    idata(int, SelectedGamer, InputPad)
-    idata(TinyPoint, PixmapOrigin, InputPad)
+    IDATA(Def::Phase, Phase, InputPad)
+    IDATA(int, SelectedGamer, InputPad)
+    IDATA(TinyPoint, PixmapOrigin, InputPad)
     int InputPad::getTotalTouchProperty() const { return touchOrClickCount; }
 
     Def::ButtonGlyph InputPad::getButtonPressedProperty() const {
@@ -43,7 +43,7 @@ namespace WindowsPhoneSpeedyBlupi {
         return result;
     }
 
-    idata(bool, ShowCheatMenu, InputPad)
+    IDATA(bool, ShowCheatMenu, InputPad)
     std::vector<Def::ButtonGlyph> InputPad::getButtonGlyphsProperty() const {
             std::vector<Def::ButtonGlyph> glyphs;
             switch (getPhaseProperty())

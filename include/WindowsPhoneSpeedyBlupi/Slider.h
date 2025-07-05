@@ -15,7 +15,7 @@ namespace WindowsPhoneSpeedyBlupi {
     private: double value;
 
     public: [[nodiscard]] WindowsPhoneSpeedyBlupi::TinyPoint getTopLeftCorner() const;
-    ddata(double, Value)
+    DDATA(double, Value)
     public: [[nodiscard]] int getPosLeft() const;
     public: [[nodiscard]] int getPosRight() const;
 
