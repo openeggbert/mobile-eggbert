@@ -5,7 +5,8 @@
 //using static WindowsPhoneSpeedyBlupi.Def;
 #ifndef GAMEDATA_H
 #define GAMEDATA_H
-#include "Worlds.h"
+#include "Worlds.hpp"
+#include "CNA/CnaHelper.hpp"
 
 
 namespace WindowsPhoneSpeedyBlupi

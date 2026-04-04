@@ -2,7 +2,9 @@
 // Created by robertvokac on 5/24/25.
 //
 
-#include "WindowsPhoneSpeedyBlupi/Text.h"
+#include "WindowsPhoneSpeedyBlupi/Text.hpp"
+
+#include <cstdint>
 
 namespace WindowsPhoneSpeedyBlupi {
 
@@ -66,20 +68,23 @@ namespace WindowsPhoneSpeedyBlupi {
             return num;
         }
 
-        int Text::GetOffset(char c)
+        // PORTED
+        int Text::GetOffset(char16_t c)
         {
             for (int i = 0; i < 15; i++)
             {
-                if ((short)c == table_accents[i])
+                if (static_cast<std::uint16_t>(c) == table_accents[i])
                 {
                     return 15 + i;
                 }
             }
-            if (c < '\0' || c > '\u0080')
+
+            if (c > u'\u0080')
             {
                 return 1;
             }
-            return c;
+
+            return static_cast<int>(c);
         }
 
         void Text::DrawChar(PixmapI* pixmap, TinyPoint& pos, const char& car, const double& size)

@@ -2,20 +2,20 @@
 // Created by robertvokac on 5/24/25.
 //
 
-#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
+#include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
 
-#include "CNA/Platform.h"
-#include "Microsoft/Xna/Framework/Rectangle.h"
-#include "WindowsPhoneSpeedyBlupi/Decor.h"
-#include "WindowsPhoneSpeedyBlupi/Def.h"
+#include "CNA/Platform.hpp"
+#include "Microsoft/Xna/Framework/Rectangle.hpp"
+#include "WindowsPhoneSpeedyBlupi/Decor.hpp"
+#include "WindowsPhoneSpeedyBlupi/Def.hpp"
 
-#include "Microsoft/Xna/Framework/Graphics/BlendState.h"
-#include "Microsoft/Xna/Framework/Graphics/SpriteSortMode.h"
-#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
-#include "Microsoft/Xna/Framework/Color.h"
-#include "WindowsPhoneSpeedyBlupi/Misc.h"
-#include "WindowsPhoneSpeedyBlupi/Tables.h"
-#include "WindowsPhoneSpeedyBlupi/Text.h"
+#include "Microsoft/Xna/Framework/Graphics/BlendState.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SpriteSortMode.hpp"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
+#include "Microsoft/Xna/Framework/Color.hpp"
+#include "WindowsPhoneSpeedyBlupi/Misc.hpp"
+#include "WindowsPhoneSpeedyBlupi/Tables.hpp"
+#include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 

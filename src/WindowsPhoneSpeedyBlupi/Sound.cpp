@@ -2,7 +2,7 @@
 // Created by robertvokac on 5/24/25.
 //
 
-#include "WindowsPhoneSpeedyBlupi/Sound.h"
+#include "WindowsPhoneSpeedyBlupi/Sound.hpp"
 
 #include <algorithm>
 

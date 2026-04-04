@@ -3,11 +3,11 @@
 //
 
 
-#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
-#include "WindowsPhoneSpeedyBlupi/Sound.h"
-#include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
+#include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
+#include "WindowsPhoneSpeedyBlupi/Sound.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
-#include "WindowsPhoneSpeedyBlupi/Jauge.h"
+#include "WindowsPhoneSpeedyBlupi/Jauge.hpp"
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Jauge

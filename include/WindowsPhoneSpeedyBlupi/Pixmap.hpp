@@ -6,18 +6,18 @@
 #define PIXMAP_H
 #include <optional>
 
-#include "Def.h"
-#include "Game1I.h"
-#include "PixmapI.h"
+#include "Def.hpp"
+#include "Game1I.hpp"
+#include "PixmapI.hpp"
 
-#include "Microsoft/Xna/Framework/Vector2.h"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
-#include "Microsoft/Xna/Framework/Graphics/SpriteBatch.h"
-#include "Microsoft/Xna/Framework/Graphics/SpriteEffects.h"
-#include "Microsoft/Xna/Framework/Graphics/Texture2D.h"
-#include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
-#include "WindowsPhoneSpeedyBlupi/TinyRect.h"
-#include "Microsoft/Xna/Framework/Rectangle.h"
+#include "Microsoft/Xna/Framework/Vector2.hpp"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SpriteEffects.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"
+#include "Microsoft/Xna/Framework/Rectangle.hpp"
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // WindowsPhoneSpeedyBlupi.Pixmap

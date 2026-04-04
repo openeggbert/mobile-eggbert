@@ -5,12 +5,12 @@
 #ifndef INPUTPAD_H
 #define INPUTPAD_H
 
-#include "Microsoft/Devices/Sensors/Accelerometer.h"
-#include "Microsoft/Devices/Sensors/AccelerometerReading.h"
-#include "WindowsPhoneSpeedyBlupi/Decor.h"
-#include "WindowsPhoneSpeedyBlupi/PixmapI.h"
-#include "WindowsPhoneSpeedyBlupi/Slider.h"
-#include "WindowsPhoneSpeedyBlupi/SoundI.h"
+#include "Microsoft/Devices/Sensors/Accelerometer.hpp"
+#include "Microsoft/Devices/Sensors/AccelerometerReading.hpp"
+#include "WindowsPhoneSpeedyBlupi/Decor.hpp"
+#include "WindowsPhoneSpeedyBlupi/PixmapI.hpp"
+#include "WindowsPhoneSpeedyBlupi/Slider.hpp"
+#include "WindowsPhoneSpeedyBlupi/SoundI.hpp"
 
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 

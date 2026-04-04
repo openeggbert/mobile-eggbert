@@ -16,7 +16,7 @@
 // #endif
 
 
-#include "WindowsPhoneSpeedyBlupi/Worlds.h"
+#include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
 #include <fstream>
 #include <iostream>

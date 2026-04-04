@@ -2,7 +2,7 @@
 #define DDEBUG_H
 #include <string>
 
-#include "CNA/Prop.h"
+#include "CNA/Prop.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
     //static class

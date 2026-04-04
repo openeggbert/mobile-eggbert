@@ -6,12 +6,12 @@
 #define DECOR_H
 #include <cmath>
 
-#include "PixmapI.h"
-#include "SoundI.h"
-#include "Tables.h"
-#include "System/Random.h"
-#include "Jauge.h"
-#include "WindowsPhoneSpeedyBlupi/Helper.h"
+#include "PixmapI.hpp"
+#include "SoundI.hpp"
+#include "Tables.hpp"
+#include "System/Random.hpp"
+#include "Jauge.hpp"
+#include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 
 // // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
 // // WindowsPhoneSpeedyBlupi.Decor

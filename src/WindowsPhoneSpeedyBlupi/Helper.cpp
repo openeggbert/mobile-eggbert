@@ -2,7 +2,7 @@
 // Created by robertvokac on 5/28/25.
 //
 
-#include "WindowsPhoneSpeedyBlupi/Helper.h"
+#include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 namespace WindowsPhoneSpeedyBlupi {
     std::string Helper::formatString(const std::string& format, const std::vector<std::string>& args) {
         std::string result = format;

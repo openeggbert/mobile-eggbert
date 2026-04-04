@@ -1,7 +1,7 @@
 //using WindowsPhoneSpeedyBlupi;
 #include <iostream>
 
-#include "WindowsPhoneSpeedyBlupi/MyResource.h"
+#include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include <locale>
 #include <string>
 #include <algorithm>

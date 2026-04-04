@@ -1,4 +1,4 @@
-#include "WindowsPhoneSpeedyBlupi/DDebug.h"
+#include "WindowsPhoneSpeedyBlupi/DDebug.hpp"
 
 #include <iostream>
 

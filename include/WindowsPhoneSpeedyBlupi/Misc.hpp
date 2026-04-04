@@ -4,9 +4,9 @@
 
 #ifndef MISC_H
 #define MISC_H
-#include "TinyPoint.h"
-#include "TinyRect.h"
-#include "Microsoft/Xna/Framework/Rectangle.h"
+#include "TinyPoint.hpp"
+#include "TinyRect.hpp"
+#include "Microsoft/Xna/Framework/Rectangle.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 

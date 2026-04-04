@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "Microsoft/Xna/Framework/Game.h"
-#include "WindowsPhoneSpeedyBlupi/Game1.h"
+#include "Microsoft/Xna/Framework/Game.hpp"
+#include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
 int main(int argc, char *args[]) {
     WindowsPhoneSpeedyBlupi::Game1 *game = new WindowsPhoneSpeedyBlupi::Game1();

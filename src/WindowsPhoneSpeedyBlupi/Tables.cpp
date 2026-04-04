@@ -1,8 +1,8 @@
 //using WindowsPhoneSpeedyBlupi;
 #include <iostream>
-#include "WindowsPhoneSpeedyBlupi/Tables.h"
+#include "WindowsPhoneSpeedyBlupi/Tables.hpp"
 
-#include "WindowsPhoneSpeedyBlupi/MyResource.h"
+#include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 

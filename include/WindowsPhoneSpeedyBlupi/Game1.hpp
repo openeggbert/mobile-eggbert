@@ -7,18 +7,18 @@
 
 #include <any>
 
-#include "Decor.h"
-#include "Def.h"
-#include "Game1I.h"
-#include "Jauge.h"
-#include "PixmapI.h"
-#include "SoundI.h"
-#include "InputPad.h"
-#include "Microsoft/Xna/Framework/Game.h"
-#include "Microsoft/Xna/Framework/GameTime.h"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
-#include "System/TimeSpan.h"
-#include "System/Runtime/CompilerServices/EventArgs.h"
+#include "Decor.hpp"
+#include "Def.hpp"
+#include "Game1I.hpp"
+#include "Jauge.hpp"
+#include "PixmapI.hpp"
+#include "SoundI.hpp"
+#include "InputPad.hpp"
+#include "Microsoft/Xna/Framework/Game.hpp"
+#include "Microsoft/Xna/Framework/GameTime.hpp"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "System/TimeSpan.hpp"
+#include "System/Runtime/CompilerServices/EventArgs.hpp"
 
 #define readonly mutable
 

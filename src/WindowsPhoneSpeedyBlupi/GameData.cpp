@@ -2,7 +2,7 @@
 // WindowsPhoneSpeedyBlupi.GameData
 
 
-#include "WindowsPhoneSpeedyBlupi/GameData.h"
+#include "WindowsPhoneSpeedyBlupi/GameData.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {

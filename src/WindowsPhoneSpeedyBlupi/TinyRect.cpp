@@ -1,4 +1,4 @@
-#include "WindowsPhoneSpeedyBlupi/TinyRect.h"
+#include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"
 namespace WindowsPhoneSpeedyBlupi {
 
     int TinyRect::getWidthProperty() const { return RightX - LeftX;  }

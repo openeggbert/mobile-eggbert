@@ -4,7 +4,7 @@
 
 #ifndef SOUNDI_H
 #define SOUNDI_H
-#include "GameData.h"
+#include "GameData.hpp"
 
 
 namespace WindowsPhoneSpeedyBlupi {

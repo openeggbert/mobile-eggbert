@@ -4,11 +4,11 @@
 #ifndef PIXMAPI_H
 #define PIXMAPI_H
 
-#include "Def.h"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
-#include "Microsoft/Xna/Framework/Graphics/Texture2D.h"
-#include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
-#include "WindowsPhoneSpeedyBlupi/TinyRect.h"
+#include "Def.hpp"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
     using Microsoft::Xna::Framework::Graphics::Texture2D;

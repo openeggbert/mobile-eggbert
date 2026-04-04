@@ -4,7 +4,7 @@
 
 #ifndef TEXT_H
 #define TEXT_H
-#include "PixmapI.h"
+#include "PixmapI.hpp"
 
 //static class
 namespace WindowsPhoneSpeedyBlupi {
@@ -173,7 +173,7 @@ using std::string;
         1, 0, 0, -1, 0, 0
         };
 
-        static constexpr short table_accents[15] =
+        static constexpr std::uint8_t table_accents[15] =
         {
         252, 224, 226, 233, 232, 235, 234, 239, 238, 244,
         249, 251, 228, 246, 231
@@ -208,7 +208,7 @@ using std::string;
         static int GetTextWidth(const string &text, double size);
 
     private:
-        static int GetOffset(char c);
+        static int GetOffset(char16_t c);
 
         static void DrawChar(PixmapI* pixmap, TinyPoint& pos, const char& car, const double& size);
 

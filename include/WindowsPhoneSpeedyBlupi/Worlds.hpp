@@ -10,9 +10,9 @@
 #include <string>
 #include <vector>
 
-#include "CNA/CnaHelper.h"
-#include "CNA/Prop.h"
-#include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
+#include "CNA/CnaHelper.hpp"
+#include "CNA/Prop.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 #define int_to_string(i) std::to_string(i)
 
 

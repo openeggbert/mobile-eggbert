@@ -2,21 +2,21 @@
 // Created by robertvokac on 5/25/25.
 //
 
-#include "WindowsPhoneSpeedyBlupi/InputPad.h"
+#include "WindowsPhoneSpeedyBlupi/InputPad.hpp"
 
-#include "CNA/Platform.h"
-#include "Microsoft/Devices/Sensors/AccelerometerFailedException.h"
-#include "Microsoft/Xna/Framework/Input/Keyboard.h"
-#include "Microsoft/Xna/Framework/Input/KeyboardState.h"
-#include "Microsoft/Xna/Framework/Input/Mouse.h"
-#include "Microsoft/Xna/Framework/Input/MouseState.h"
-#include "Microsoft/Xna/Framework/Input/Touch/TouchCollection.h"
-#include "Microsoft/Xna/Framework/Input/Touch/TouchLocation.h"
-#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
-#include "System/UnauthorizedAccessException.h"
-#include "WindowsPhoneSpeedyBlupi/DDebug.h"
-#include "WindowsPhoneSpeedyBlupi/Game1I.h"
-#include "WindowsPhoneSpeedyBlupi/Misc.h"
+#include "CNA/Platform.hpp"
+#include "Microsoft/Devices/Sensors/AccelerometerFailedException.hpp"
+#include "Microsoft/Xna/Framework/Input/Keyboard.hpp"
+#include "Microsoft/Xna/Framework/Input/KeyboardState.hpp"
+#include "Microsoft/Xna/Framework/Input/Mouse.hpp"
+#include "Microsoft/Xna/Framework/Input/MouseState.hpp"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchCollection.hpp"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchLocation.hpp"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
+#include "System/UnauthorizedAccessException.hpp"
+#include "WindowsPhoneSpeedyBlupi/DDebug.hpp"
+#include "WindowsPhoneSpeedyBlupi/Game1I.hpp"
+#include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439

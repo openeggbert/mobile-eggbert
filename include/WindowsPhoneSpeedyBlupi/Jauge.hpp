@@ -5,8 +5,8 @@
 #ifndef JAUGE_H
 #define JAUGE_H
 #include <optional>
-#include "PixmapI.h"
-#include "SoundI.h"
+#include "PixmapI.hpp"
+#include "SoundI.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 

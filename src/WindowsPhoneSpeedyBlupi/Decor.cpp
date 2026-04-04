@@ -2,11 +2,11 @@
 // Created by robertvokac on 5/24/25.
 //
 
-#include "WindowsPhoneSpeedyBlupi/Decor.h"
+#include "WindowsPhoneSpeedyBlupi/Decor.hpp"
 
-#include "WindowsPhoneSpeedyBlupi/Misc.h"
-#include "WindowsPhoneSpeedyBlupi/MyResource.h"
-#include "WindowsPhoneSpeedyBlupi/Text.h"
+#include "WindowsPhoneSpeedyBlupi/Misc.hpp"
+#include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
+#include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
     TinyRect Decor::getDrawBounds() const { return m_drawBounds; }

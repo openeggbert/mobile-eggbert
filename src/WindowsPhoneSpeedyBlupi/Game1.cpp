@@ -9,22 +9,22 @@
 // using WindowsPhoneSpeedyBlupi;
 // using static System.Net.Mime.MediaTypeNames;
 
-#include "WindowsPhoneSpeedyBlupi/Game1.h"
+#include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
 #include <cmath>
 
-#include "Microsoft/Xna/Framework/GamerServices/Guide.h"
-#include "Microsoft/Xna/Framework/Input/GamePad.h"
-#include "Microsoft/Xna/Framework/Input/Mouse.h"
-#include "Microsoft/Xna/Framework/Input/MouseCursor.h"
-#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.h"
-#include "System/Runtime/CompilerServices/EventArgs.h"
-#include "WindowsPhoneSpeedyBlupi/Helper.h"
-#include "WindowsPhoneSpeedyBlupi/MyResource.h"
-#include "WindowsPhoneSpeedyBlupi/Pixmap.h"
-#include "WindowsPhoneSpeedyBlupi/Sound.h"
-#include "WindowsPhoneSpeedyBlupi/Tables.h"
-#include "WindowsPhoneSpeedyBlupi/Text.h"
+#include "Microsoft/Xna/Framework/GamerServices/Guide.hpp"
+#include "Microsoft/Xna/Framework/Input/GamePad.hpp"
+#include "Microsoft/Xna/Framework/Input/Mouse.hpp"
+#include "Microsoft/Xna/Framework/Input/MouseCursor.hpp"
+#include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
+#include "System/Runtime/CompilerServices/EventArgs.hpp"
+#include "WindowsPhoneSpeedyBlupi/Helper.hpp"
+#include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
+#include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
+#include "WindowsPhoneSpeedyBlupi/Sound.hpp"
+#include "WindowsPhoneSpeedyBlupi/Tables.hpp"
+#include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
     bool Game1::getIsRankingModeProperty() const {

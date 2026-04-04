@@ -4,8 +4,8 @@
 
 #ifndef SLIDER_H
 #define SLIDER_H
-#include "WindowsPhoneSpeedyBlupi/PixmapI.h"
-#include "WindowsPhoneSpeedyBlupi/TinyPoint.h"
+#include "WindowsPhoneSpeedyBlupi/PixmapI.hpp"
+#include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 

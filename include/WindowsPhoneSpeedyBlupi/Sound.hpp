@@ -6,14 +6,14 @@
 #define SOUND_H
 #include <list>
 
-#include "Def.h"
-#include "Game1I.h"
-#include "GameData.h"
-#include "SoundI.h"
-#include "Microsoft/Xna/Framework/Audio/SoundEffect.h"
-#include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.h"
-#include "Microsoft/Xna/Framework/Audio/SoundState.h"
-#include "Microsoft/Xna/Framework/Game.h"
+#include "Def.hpp"
+#include "Game1I.hpp"
+#include "GameData.hpp"
+#include "SoundI.hpp"
+#include "Microsoft/Xna/Framework/Audio/SoundEffect.hpp"
+#include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp"
+#include "Microsoft/Xna/Framework/Audio/SoundState.hpp"
+#include "Microsoft/Xna/Framework/Game.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439

@@ -7,12 +7,12 @@
 
 #include <any>
 
-#include "Def.h"
-#include "InputPad.h"
-#include "Microsoft/Xna/Framework/Game.h"
-#include "Microsoft/Xna/Framework/GameTime.h"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.h"
-#include "System/Runtime/CompilerServices/EventArgs.h"
+#include "Def.hpp"
+#include "InputPad.hpp"
+#include "Microsoft/Xna/Framework/Game.hpp"
+#include "Microsoft/Xna/Framework/GameTime.hpp"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "System/Runtime/CompilerServices/EventArgs.hpp"
 
 #define readonly mutable
 
