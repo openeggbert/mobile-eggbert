@@ -158,7 +158,7 @@ bool IsFullScreen();
         [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager getContentProperty() const;
 
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice getGraphicsDeviceProperty() const;
-        [[nodiscard]] const std::string& GetTypeName() const;
+        GetTypeNameHPP()
 
 };
 

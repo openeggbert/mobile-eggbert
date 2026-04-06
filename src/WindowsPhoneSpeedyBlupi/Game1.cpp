@@ -954,11 +954,7 @@ namespace WindowsPhoneSpeedyBlupi {
         return Microsoft::Xna::Framework::Graphics::GraphicsDevice();
         }
 
-        const std::string& Game1::GetTypeName() const
-        {
-            const static string type_name = "WindowsPhoneSpeedyBlupi::Game1";
-            return type_name;
-        }
+        GetTypeNameCPP(Game1, "WindowsPhoneSpeedyBlupi::Game1")
 }
 
 
