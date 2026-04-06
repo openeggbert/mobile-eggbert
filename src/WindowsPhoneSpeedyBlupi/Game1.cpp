@@ -18,7 +18,7 @@
 #include "Microsoft/Xna/Framework/Input/Mouse.hpp"
 #include "Microsoft/Xna/Framework/Input/MouseCursor.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
-#include "System/Runtime/CompilerServices/EventArgs.hpp"
+#include "System/EventArgs.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
@@ -44,10 +44,12 @@ namespace WindowsPhoneSpeedyBlupi {
                     decor(),
                     waitJauge(),
                     inputPad(this, &decor, pixmap.get(), sound.get(), gameData) {
-
-        Exiting += [this](const Microsoft::Xna::Framework::ExitingEventArgs & args) {
-        OnExiting(args);
-        };
+        Exiting += [this](
+            System::Object* /*sender*/,
+            const Microsoft::Xna::Framework::ExitingEventArgs& args)
+            {
+                OnExiting(args);
+            };
 
 #if KNI
         Deactivated += OnDeactivated;
@@ -102,7 +104,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     }
 
-    void Game1::OnDeactivated(std::any sender, System::Runtime::CompilerServices::EventArgs args)
+    void Game1::OnDeactivated(std::any sender, System::EventArgs args)
     {
         if (phase == Def::Phase::Play)
         {
@@ -117,7 +119,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     }
 
-    void Game1::OnActivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) {
+    void Game1::OnActivated(std::any sender, System::EventArgs args) {
         continueMission = 1;
         Game::OnActivated(sender, args);
     }
@@ -950,6 +952,12 @@ namespace WindowsPhoneSpeedyBlupi {
 
         Microsoft::Xna::Framework::Graphics::GraphicsDevice Game1::getGraphicsDeviceProperty() const {
         return Microsoft::Xna::Framework::Graphics::GraphicsDevice();
+        }
+
+        const std::string& Game1::GetTypeName() const
+        {
+            const static string type_name = "WindowsPhoneSpeedyBlupi::Game1";
+            return type_name;
         }
 }
 

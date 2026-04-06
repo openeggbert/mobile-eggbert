@@ -12,7 +12,7 @@
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "Microsoft/Xna/Framework/GameTime.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
-#include "System/Runtime/CompilerServices/EventArgs.hpp"
+#include "System/EventArgs.hpp"
 
 #define readonly mutable
 
@@ -36,10 +36,10 @@ namespace WindowsPhoneSpeedyBlupi {
         virtual void UnloadContent() = 0;
 
     protected:
-        virtual void OnDeactivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) = 0;
+        virtual void OnDeactivated(std::any sender, System::EventArgs args) = 0;
 
     protected:
-        virtual void OnActivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) = 0;
+        virtual void OnActivated(std::any sender, System::EventArgs args) = 0;
 
     protected:
         virtual void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) = 0;

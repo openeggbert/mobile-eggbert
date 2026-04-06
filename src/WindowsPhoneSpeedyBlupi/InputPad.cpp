@@ -159,11 +159,13 @@ namespace WindowsPhoneSpeedyBlupi {
             using Microsoft::Devices::Sensors::AccelerometerReading;
             using Microsoft::Devices::Sensors::SensorBase;
             accelSensor.CurrentValueChanged +=
-                    [this](
-                const Microsoft::Devices::Sensors::SensorReadingEventArgs<AccelerometerReading> &
-                sensor_reading_event_args) {
-                        HandleAccelSensorCurrentValueChanged(sensor_reading_event_args);
-                    };
+                [this](
+                System::Object* /*sender*/,
+                const Microsoft::Devices::Sensors::SensorReadingEventArgs<AccelerometerReading>&
+                sensor_reading_event_args)
+                {
+                    HandleAccelSensorCurrentValueChanged(sensor_reading_event_args);
+                };
 
             lastButtonDown = Def::ButtonGlyph::NoneButtonGlyph;
             buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;

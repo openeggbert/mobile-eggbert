@@ -18,7 +18,7 @@
 #include "Microsoft/Xna/Framework/GameTime.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
 #include "System/TimeSpan.hpp"
-#include "System/Runtime/CompilerServices/EventArgs.hpp"
+#include "System/EventArgs.hpp"
 
 #define readonly mutable
 
@@ -106,9 +106,9 @@ protected: void LoadContent () override;
 
 protected: void UnloadContent () override;
 
-protected: void OnDeactivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) override;
+protected: void OnDeactivated(std::any sender, System::EventArgs args) override;
 
-protected: void OnActivated(std::any sender, System::Runtime::CompilerServices::EventArgs args) override;
+protected: void OnActivated(std::any sender, System::EventArgs args) override;
 
 protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
 
@@ -151,16 +151,15 @@ private: void SetPhase(Def::Phase phase, int mission);
 private: void MemorizeGamerProgress();
 
 public: void ToggleFullScreen();
-public: bool IsFullScreen();
+bool IsFullScreen();
 
-public:
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics();
 
-public:
         [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager getContentProperty() const;
 
-public:
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice getGraphicsDeviceProperty() const;
+        [[nodiscard]] const std::string& GetTypeName() const;
+
 };
 
 };
