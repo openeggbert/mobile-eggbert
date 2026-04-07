@@ -6,7 +6,7 @@
 #define HELPER_H
 #include <regex>
 #include <string>
-#define ToString(a) std::to_string(a)
+#define TO_STRING(a) std::to_string(a)
 #define STRING_VECTOR(items) std::vector<string>{items}
 
 namespace WindowsPhoneSpeedyBlupi {

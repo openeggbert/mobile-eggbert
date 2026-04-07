@@ -841,7 +841,7 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.X = 10;
             tinyPoint.Y = 20;
             TinyPoint pos = tinyPoint;
-            Text::DrawText(pixmap.get(), pos, ToString(inputPad.getTotalTouchProperty()), 1.0);
+            Text::DrawText(pixmap.get(), pos, TO_STRING(inputPad.getTotalTouchProperty()), 1.0);
         }
 
         void Game1::SetGamer(int gamer)

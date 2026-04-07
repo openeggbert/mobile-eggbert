@@ -960,7 +960,7 @@ void Decor::InitDecor()
                 tinyRect.BottomY = 480;
                 TinyRect rect = tinyRect;
                 m_pixmap->DrawIcon(14, 15, rect, 0.6, false);
-                string text = Helper::formatString("{0}/{1}", std::vector{ToString(m_nbTresor), ToString(m_totalTresor)});
+                string text = Helper::formatString("{0}/{1}", std::vector{TO_STRING(m_nbTresor), TO_STRING(m_totalTresor)});
                 pos.X = 460;
                 pos.Y = 450;
                 Text::DrawTextCenter(m_pixmap, pos, text, 1.0);
