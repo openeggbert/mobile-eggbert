@@ -68,7 +68,7 @@ namespace WindowsPhoneSpeedyBlupi {
         graphics.setIsFullScreenProperty(false);
         string content = "Content";
         Game::getContentProperty().setRootDirectoryProperty(content);
-        Game::setTargetElapsedTimeProperty(nullptr);//(&System::TimeSpan::FromTicks(500000L));//todo
+        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(500000L));
         Game::setInactiveSleepTimeProperty(System::TimeSpan::FromSeconds(1.0));
         missionToStart1 = -1;
         missionToStart2 = -1;
@@ -452,7 +452,7 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             DrawWaitProgress();
         }
-        Game1::Draw(gameTime);
+        Game::Draw(gameTime);
     }
 
 
