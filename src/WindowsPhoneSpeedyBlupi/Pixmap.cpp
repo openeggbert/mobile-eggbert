@@ -21,8 +21,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
     TinyRect Pixmap::getDrawBoundsProperty() {
         TinyRect result;
-        double screenWidth = graphics.getGraphicsDeviceProperty().getViewportProperty().getWidthProperty();
-        double screenHeight = graphics.getGraphicsDeviceProperty().getViewportProperty().getHeightProperty();
+        double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
+        double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
         if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480) {
             screenWidth = screenHeight * (640.0f / 480.0f);
         }
@@ -180,7 +180,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Pixmap::LoadContent()
         {
-            Microsoft::Xna::Framework::Graphics::GraphicsDevice graphicsDeviceProperty = game1-> getGraphicsDeviceProperty();
+            Microsoft::Xna::Framework::Graphics::GraphicsDevice& graphicsDeviceProperty = game1-> getGraphicsDeviceProperty();
             spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(graphicsDeviceProperty);//todo
             bitmapText = game1->getContentProperty().Load<Texture2D>("icons/text");
             bitmapButton = game1->getContentProperty().Load<Texture2D>("icons/button");
@@ -199,8 +199,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void Pixmap::UpdateGeometry()
         {
-            double screenWidth = graphics.getGraphicsDeviceProperty().getViewportProperty().getWidthProperty();
-            double screenHeight = graphics.getGraphicsDeviceProperty().getViewportProperty().getHeightProperty();
+            double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
+            double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
             if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
             {
                 screenWidth = screenHeight * (640.0f / 480.0f);
@@ -219,7 +219,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
          bool Pixmap::Start()
         {
-            graphics.getGraphicsDeviceProperty().Clear(Microsoft::Xna::Framework::CornflowerBlue);
+            graphics.getGraphicsDeviceProperty()->Clear(Microsoft::Xna::Framework::CornflowerBlue);
             return true;
         }
 
@@ -230,8 +230,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Pixmap::DrawBackground()
         {
-            double screenWidth = graphics.getGraphicsDeviceProperty().getViewportProperty().getWidthProperty();
-            double screenHeight = graphics.getGraphicsDeviceProperty().getViewportProperty().getHeightProperty();
+            double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
+            double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
             if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
             {
                 screenWidth = screenHeight * (640.0f / 480.0f);

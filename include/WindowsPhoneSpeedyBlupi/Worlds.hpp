@@ -47,10 +47,10 @@ namespace WindowsPhoneSpeedyBlupi {
         static std::string GetWorldFilename(int gamer, int rank);
 
     public:
-        static bool ReadGameData(CNA::byte data[], size_t dataSize);
+        static bool ReadGameData(CNA::bytecs data[], size_t dataSize);
 
     public:
-        static void WriteGameData(CNA::byte data[], size_t dataSize);
+        static void WriteGameData(CNA::bytecs data[], size_t dataSize);
 
     public:
         static void DeleteCurrentGame();

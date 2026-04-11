@@ -90,7 +90,7 @@ class Sound : public SoundI
 
         static constexpr int MAXVOLUME = 20;
 
-    private: const Game1I* game1;
+    private: Game1I* game1;
 
     private: const GameData gameData;
 

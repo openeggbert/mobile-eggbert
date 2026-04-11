@@ -13,24 +13,24 @@ namespace WindowsPhoneSpeedyBlupi
 {
 
     using ushort = unsigned short;
-    using CNA::byte;
+    using CNA::bytecs;
     class GameData
     {
     private:
-        static constexpr byte HeaderLength = 10;
+        static constexpr bytecs HeaderLength = 10;
 
-        static constexpr byte DoorsLength = 200;
+        static constexpr bytecs DoorsLength = 200;
 
-        static constexpr byte GamerLength = 10 + DoorsLength;
+        static constexpr bytecs GamerLength = 10 + DoorsLength;
 
-        static constexpr byte MaxGamer = 3;
+        static constexpr bytecs MaxGamer = 3;
 
         static constexpr ushort TotalLength = HeaderLength + GamerLength * MaxGamer;
 
-        byte data[TotalLength];
+        bytecs data[TotalLength];
 
     public:
-    public: [[nodiscard]] byte getSelectedGamerProperty() const; public: void setSelectedGamerProperty(const byte& v);
+    public: [[nodiscard]] bytecs getSelectedGamerProperty() const; public: void setSelectedGamerProperty(const bytecs& v);
     public: [[nodiscard]] bool getSoundsProperty() const; public: void setSoundsProperty(const bool& v);
     public: [[nodiscard]] bool getJumpRightProperty() const; public: void setJumpRightProperty(const bool& v);
     public: [[nodiscard]] bool getAutoZoomProperty() const; public: void setAutoZoomProperty(const bool& v);

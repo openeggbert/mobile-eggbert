@@ -14,7 +14,6 @@
 #include "Microsoft/Xna/Framework/Input/Touch/TouchLocation.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "System/UnauthorizedAccessException.hpp"
-#include "WindowsPhoneSpeedyBlupi/DDebug.hpp"
 #include "WindowsPhoneSpeedyBlupi/Game1I.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 
@@ -231,8 +230,8 @@ namespace WindowsPhoneSpeedyBlupi {
                 touchesOrClicks.push_back(mouseClick);
             }
 
-            float screenWidth = game1->getGraphics().getGraphicsDeviceProperty().getViewportProperty().getWidthProperty();
-            float screenHeight = game1->getGraphics().getGraphicsDeviceProperty().getViewportProperty().getHeightProperty();
+            float screenWidth = game1->getGraphics().getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
+            float screenHeight = game1->getGraphics().getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
             float screenRatio = screenWidth / screenHeight;
 
             if ((CNA::getCurrentPlatform() == CNA::Platform::Android && screenRatio > 1.3333333333333333) /*|| Env.IMPL.isKNI()*/)
@@ -251,12 +250,12 @@ namespace WindowsPhoneSpeedyBlupi {
                     float widthRatio = 640 / screenWidth;
 
                     {
-                    WindowsPhoneSpeedyBlupi::DDebug::WriteLine("-----");
-                    DDebug::WriteLine("originalX=" + std::to_string(originalX));
-                    DDebug::WriteLine("originalY=" + std::to_string(originalY));
-                    DDebug::WriteLine("heightRatio=" + std::to_string(heightRatio));
-                    DDebug::WriteLine("widthRatio=" + std::to_string(widthRatio));
-                    DDebug::WriteLine("widthHeightRatio=" + std::to_string(widthHeightRatio));
+                    CNA::Logger::Debug("-----");
+                    CNA::Logger::Debug("originalX=" + std::to_string(originalX));
+                    CNA::Logger::Debug("originalY=" + std::to_string(originalY));
+                    CNA::Logger::Debug("heightRatio=" + std::to_string(heightRatio));
+                    CNA::Logger::Debug("widthRatio=" + std::to_string(widthRatio));
+                    CNA::Logger::Debug("widthHeightRatio=" + std::to_string(widthHeightRatio));
                     }
                     if (screenHeight> 480) {
                     touchOrClick.X = (int)(originalX * heightRatio);
@@ -264,8 +263,8 @@ namespace WindowsPhoneSpeedyBlupi {
                     touchesOrClicks[i] = touchOrClick;
                     }
 
-                    DDebug::WriteLine("new X" + touchOrClick.X);
-                    DDebug::WriteLine("new Y" + touchOrClick.Y);
+                    CNA::Logger::Debug("new X" + touchOrClick.X);
+                    CNA::Logger::Debug("new Y" + touchOrClick.Y);
                 }
             }
             using Microsoft::Xna::Framework::Input::KeyboardState;
@@ -280,7 +279,7 @@ namespace WindowsPhoneSpeedyBlupi {
             if (newKeyboardState.IsKeyDown(Keys::F11))
             {
                 game1->ToggleFullScreen ();
-                DDebug::WriteLine("F11 was pressed.");
+                CNA::Logger::Debug("F11 was pressed.");
             }
 
             bool keyPressedUp = false;
@@ -311,9 +310,9 @@ namespace WindowsPhoneSpeedyBlupi {
                     {
                         padPressed = true;
                     }
-                    DDebug::WriteLine("padPressed=" + padPressed);
+                    CNA::Logger::Debug("padPressed=" + padPressed);
                     Def::ButtonGlyph pressedGlyph = ButtonDetect(touchOrClick);
-                    DDebug::WriteLine("buttonGlyph2 =" + pressedGlyph);
+                    CNA::Logger::Debug("buttonGlyph2 =" + pressedGlyph);
                     if (pressedGlyph != 0)
                     {
                         pressedGlyphs.push_back(pressedGlyph);
@@ -335,7 +334,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     switch (pressedGlyph)
                     {
                         case Def::ButtonGlyph::PlayJump:
-                            DDebug::WriteLine("Jumping detected");
+                            CNA::Logger::Debug("Jumping detected");
                             accelWaitZero = false;
                             keyPress |= 1;
                             break;
@@ -418,14 +417,14 @@ namespace WindowsPhoneSpeedyBlupi {
             lastButtonDown = buttonGlyph;
             if (padPressed)
             {
-                DDebug::WriteLine("getPadCenter().X=" + getPadCenterProperty().X);
-                DDebug::WriteLine("getPadCenter().Y=" + getPadCenterProperty().Y);
-                DDebug::WriteLine("padTouchPos.X=" + padTouchPos.X);
-                DDebug::WriteLine("padTouchPos.Y=" + padTouchPos.Y);
-                DDebug::WriteLine("keyPressedUp=" + keyPressedUp);
-                DDebug::WriteLine("keyPressedDown=" + keyPressedDown);
-                DDebug::WriteLine("keyPressedLeft=" + keyPressedLeft);
-                DDebug::WriteLine("keyPressedRight=" + keyPressedRight);
+                CNA::Logger::Debug("getPadCenter().X=" + getPadCenterProperty().X);
+                CNA::Logger::Debug("getPadCenter().Y=" + getPadCenterProperty().Y);
+                CNA::Logger::Debug("padTouchPos.X=" + padTouchPos.X);
+                CNA::Logger::Debug("padTouchPos.Y=" + padTouchPos.Y);
+                CNA::Logger::Debug("keyPressedUp=" + keyPressedUp);
+                CNA::Logger::Debug("keyPressedDown=" + keyPressedDown);
+                CNA::Logger::Debug("keyPressedLeft=" + keyPressedLeft);
+                CNA::Logger::Debug("keyPressedRight=" + keyPressedRight);
                 {
                     if (keyPressedUp)
                     {
@@ -459,24 +458,24 @@ namespace WindowsPhoneSpeedyBlupi {
                 if (horizontalPosition > 20.0)
                 {
                     horizontalChange += 1.0;
-                    DDebug::WriteLine(" horizontalChange += 1.0;");
+                    CNA::Logger::Debug(" horizontalChange += 1.0;");
                 }
                 if (horizontalPosition < -20.0)
                 {
                     horizontalChange -= 1.0;
-                    DDebug::WriteLine(" horizontalChange -= 1.0;");
+                    CNA::Logger::Debug(" horizontalChange -= 1.0;");
 
                 }
                 if (verticalPosition > 20.0)
                 {
                     verticalChange += 1.0;
-                    DDebug::WriteLine(" verticalPosition += 1.0;");
+                    CNA::Logger::Debug(" verticalPosition += 1.0;");
 
                 }
                 if (verticalPosition < -20.0)
                 {
                     verticalChange -= 1.0;
-                    DDebug::WriteLine(" verticalPosition -= 1.0;");
+                    CNA::Logger::Debug(" verticalPosition -= 1.0;");
                 }
 
             }

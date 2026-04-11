@@ -50,7 +50,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         // void DrawChar(int rank, WindowsPhoneSpeedyBlupi::TinyPoint pos, double size);
         //////
     private:
-        const Game1I* game1;
+        Game1I* game1;
 
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 

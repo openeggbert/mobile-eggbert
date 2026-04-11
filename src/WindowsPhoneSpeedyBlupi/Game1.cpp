@@ -946,12 +946,12 @@ namespace WindowsPhoneSpeedyBlupi {
             return graphics;
         }
 
-        Microsoft::Xna::Framework::Content::ContentManager Game1::getContentProperty() const {
-        return Microsoft::Xna::Framework::Content::ContentManager();
+        Microsoft::Xna::Framework::Content::ContentManager& Game1::getContentProperty() {
+        return Game::getContentProperty();
         }
 
-        Microsoft::Xna::Framework::Graphics::GraphicsDevice Game1::getGraphicsDeviceProperty() const {
-        return Microsoft::Xna::Framework::Graphics::GraphicsDevice();
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& Game1::getGraphicsDeviceProperty() {
+        return Game::getGraphicsDeviceProperty();
         }
 
         GetTypeNameCPP(Game1, "WindowsPhoneSpeedyBlupi::Game1")

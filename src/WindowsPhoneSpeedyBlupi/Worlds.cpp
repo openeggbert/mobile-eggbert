@@ -64,7 +64,7 @@ namespace WindowsPhoneSpeedyBlupi {
         return oss.str();
     }
 
-    bool Worlds::ReadGameData(CNA::byte data[], size_t dataSize) {
+    bool Worlds::ReadGameData(CNA::bytecs data[], size_t dataSize) {
         std::cout << "ReadGameData" << std::endl;
 
         std::ifstream file(getGameDataFilenameProperty(), std::ios::binary);
@@ -89,7 +89,7 @@ namespace WindowsPhoneSpeedyBlupi {
         }
     }
 
-    void Worlds::WriteGameData(CNA::byte data[], size_t dataSize) {
+    void Worlds::WriteGameData(CNA::bytecs data[], size_t dataSize) {
         std::cout << "WriteGameData" << std::endl;
 
 

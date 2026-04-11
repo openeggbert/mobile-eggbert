@@ -111,12 +111,9 @@ namespace WindowsPhoneSpeedyBlupi {
         virtual Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() = 0;
         ////
 
+        [[nodiscard]] virtual Microsoft::Xna::Framework::Content::ContentManager& getContentProperty() = 0;
 
-    public:
-        [[nodiscard]] virtual Microsoft::Xna::Framework::Content::ContentManager getContentProperty() const = 0;
-
-    public:
-        [[nodiscard]] virtual Microsoft::Xna::Framework::Graphics::GraphicsDevice getGraphicsDeviceProperty() const = 0;
+        [[nodiscard]] virtual Microsoft::Xna::Framework::Graphics::GraphicsDevice& getGraphicsDeviceProperty() = 0;
     };
 
 }

@@ -150,14 +150,15 @@ private: void SetPhase(Def::Phase phase, int mission);
 
 private: void MemorizeGamerProgress();
 
-public: void ToggleFullScreen();
-bool IsFullScreen();
+public:
+        void ToggleFullScreen();
+        bool IsFullScreen();
 
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics();
 
-        [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager getContentProperty() const;
+        [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager& getContentProperty();
 
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice getGraphicsDeviceProperty() const;
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice& getGraphicsDeviceProperty();
         GetTypeNameHPP()
 
 };
