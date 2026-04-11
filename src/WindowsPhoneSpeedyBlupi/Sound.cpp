@@ -8,7 +8,7 @@
 
 namespace WindowsPhoneSpeedyBlupi {
     int Sound::Play::getChannelProperty() const { return channel; }
-    bool Sound::Play::getIsFreeProperty() const { return sei.State == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
+    bool Sound::Play::getIsFreeProperty() const { return sei.getStateProperty() == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
 
     /**
      * @brief Constructs a Play object to manage and play a sound effect instance with specified parameters.
@@ -60,23 +60,34 @@ namespace WindowsPhoneSpeedyBlupi {
         Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolumeProperty(1.0f);
     }
 
-        void Sound::LoadContent()
+    void Sound::LoadContent()
+    {
+        if (!Def::getHasSound())
         {
-            if (Def::getHasSound())
-            {
-                for (int i = 0; i <= 92; i++)
-                {
-                    std::ostringstream oss;
-                    oss << "sounds/sound" << std::setw(3) << std::setfill('0') << i << ".wav";
-                    std::string assetName = oss.str();
-
-                    using Microsoft::Xna::Framework::Audio::SoundEffect;
-                    SoundEffect item = game1->getContentProperty().Load<SoundEffect>(assetName);
-                    soundEffects.push_back(item);
-                }
-            }
+            return;
         }
 
+        static constexpr CNA::intcs SOUND_COUNT = 93;
+
+        soundEffects.clear();
+        soundEffects.reserve(SOUND_COUNT);
+
+        using Microsoft::Xna::Framework::Audio::SoundEffect;
+
+        for (CNA::intcs i = 0; i < SOUND_COUNT; ++i)
+        {
+            std::ostringstream oss;
+            oss << "sounds/sound"
+                << std::setw(3)
+                << std::setfill('0')
+                << i
+                << ".wav";
+
+            soundEffects.push_back(
+                game1->getContentProperty().Load<SoundEffect>(oss.str())
+            );
+        }
+    }
         bool Sound::Create() {
             return true;
         }

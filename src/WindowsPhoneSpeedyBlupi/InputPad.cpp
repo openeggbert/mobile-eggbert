@@ -211,7 +211,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
             using Microsoft::Xna::Framework::Input::Touch::TouchLocation;
             using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
-            if(touchScreenIsSupported) for (TouchLocation item : touches)
+            if(touchScreenIsSupported) for (const TouchLocation& item : touches)
             {
                 if (item.getStateProperty() == TouchLocationState::Pressed || item.getStateProperty() == TouchLocationState::Moved)
                 {
