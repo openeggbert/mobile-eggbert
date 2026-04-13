@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "CNA/CnaHelper.hpp"
-#include "CNA/Prop.hpp"
+#include "CppDotNet/CppDotNetHelper.hpp"
+#include "CppDotNet/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 #define int_to_string(i) std::to_string(i)
 
@@ -47,10 +47,10 @@ namespace WindowsPhoneSpeedyBlupi {
         static std::string GetWorldFilename(int gamer, int rank);
 
     public:
-        static bool ReadGameData(CNA::bytecs data[], size_t dataSize);
+        static bool ReadGameData(CppDotNet::bytecs data[], size_t dataSize);
 
     public:
-        static void WriteGameData(CNA::bytecs data[], size_t dataSize);
+        static void WriteGameData(CppDotNet::bytecs data[], size_t dataSize);
 
     public:
         static void DeleteCurrentGame();

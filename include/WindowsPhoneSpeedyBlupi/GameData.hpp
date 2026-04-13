@@ -6,14 +6,14 @@
 #ifndef GAMEDATA_H
 #define GAMEDATA_H
 #include "Worlds.hpp"
-#include "CNA/CnaHelper.hpp"
+#include "CppDotNet/CppDotNetHelper.hpp"
 
 
 namespace WindowsPhoneSpeedyBlupi
 {
 
     using ushort = unsigned short;
-    using CNA::bytecs;
+    using CppDotNet::bytecs;
     class GameData
     {
     private:
