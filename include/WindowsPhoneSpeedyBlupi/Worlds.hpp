@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "CppDotNet/CppDotNetHelper.hpp"
+#include "System/Text/StringBuilder.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
@@ -30,8 +31,7 @@ namespace WindowsPhoneSpeedyBlupi
         ~Worlds() = delete;
 
     private:
-        static std::stringstream output;
-
+        static System::Text::StringBuilder output;
         /**
          * @brief Gets the filename used for game data storage.
          *

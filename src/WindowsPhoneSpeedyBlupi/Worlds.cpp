@@ -1,7 +1,6 @@
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
 #include <algorithm>
-#include <charconv>
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
@@ -17,7 +16,7 @@ namespace WindowsPhoneSpeedyBlupi
 {
     using log = CNA::Logger;
 
-    std::stringstream Worlds::output;
+    System::Text::StringBuilder Worlds::output;
 
     namespace
     {
@@ -85,12 +84,16 @@ namespace WindowsPhoneSpeedyBlupi
 
         [[nodiscard]] bool TryParseBool(const std::string& s, bool& result)
         {
-            if (s == "True" || s == "true")
+            std::string lower = s;
+            std::transform(lower.begin(), lower.end(), lower.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+            if (lower == "true")
             {
                 result = true;
                 return true;
             }
-            if (s == "False" || s == "false")
+            if (lower == "false")
             {
                 result = false;
                 return true;
@@ -518,48 +521,47 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Worlds::WriteClear()
     {
-        output.str("");
-        output.clear();
+        output.Clear();
     }
 
     void Worlds::WriteSection(const string& section)
     {
-        output << section;
-        output << ": ";
+        output.Append(section);
+        output.Append(": ");
     }
 
     void Worlds::WriteIntArrayField(const string& name, const intcs array[], intcs arraySize)
     {
-        output << name;
-        output << "=";
+        output.Append(name);
+        output.Append("=");
         for (intcs i = 0; i < arraySize; i++)
         {
             if (array[i] != 0)
             {
-                output << array[i];
+                output.Append(array[i]);
             }
             if (i < arraySize - 1)
             {
-                output << ",";
+                output.Append(",");
             }
         }
-        output << " ";
+        output.Append(" ");
     }
 
     void Worlds::WriteBoolField(const string& name, bool n)
     {
-        output << name;
-        output << "=";
-        output << (n ? "True" : "False");
-        output << " ";
+        output.Append(name);
+        output.Append("=");
+        output.Append(n ? "True" : "False");
+        output.Append(" ");
     }
 
     void Worlds::WriteIntField(const string& name, intcs n)
     {
-        output << name;
-        output << "=";
-        output << n;
-        output << " ";
+        output.Append(name);
+        output.Append("=");
+        output.Append(n);
+        output.Append(" ");
     }
 
     void Worlds::WriteDoubleField(const string& name, double n)
@@ -568,20 +570,20 @@ namespace WindowsPhoneSpeedyBlupi
         ss.imbue(std::locale::classic());
         ss << std::setprecision(15) << n;
 
-        output << name;
-        output << "=";
-        output << ss.str();
-        output << " ";
+        output.Append(name);
+        output.Append("=");
+        output.Append(ss.str());
+        output.Append(" ");
     }
 
     void Worlds::WritePointField(const string& name, TinyPoint p)
     {
-        output << name;
-        output << "=";
-        output << p.X;
-        output << ";";
-        output << p.Y;
-        output << " ";
+        output.Append(name);
+        output.Append("=");
+        output.Append(p.X);
+        output.Append(";");
+        output.Append(p.Y);
+        output.Append(" ");
     }
 
     void Worlds::WriteDecorField(const intcs line[], intcs arraySize)
@@ -590,14 +592,14 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (line[i] != -1)
             {
-                output << line[i];
+                output.Append(line[i]);
             }
             if (i < arraySize - 1)
             {
-                output << ",";
+                output.Append(",");
             }
         }
-        output << "\n";
+        output.Append("\n");
     }
 
     void Worlds::WriteDoorsField(const intcs doors[], intcs arraySize)
@@ -606,23 +608,23 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (doors[i] != 1)
             {
-                output << doors[i];
+                output.Append(doors[i]);
             }
             if (i < arraySize - 1)
             {
-                output << ",";
+                output.Append(",");
             }
         }
-        output << "\n";
+        output.Append("\n");
     }
 
     void Worlds::WriteEndSection()
     {
-        output << "\n";
+        output.Append("\n");
     }
 
     string Worlds::GetWriteString()
     {
-        return output.str();
+        return output.ToString();
     }
 }
