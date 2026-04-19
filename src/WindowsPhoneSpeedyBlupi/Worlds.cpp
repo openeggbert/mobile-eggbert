@@ -11,39 +11,25 @@
 #include <vector>
 
 #include "CNA/Logger.hpp"
+#include "Microsoft/Xna/Framework/TitleContainer.hpp"
+#include "System/Exception.hpp"
+#include "System/String.hpp"
+#include "System/IO/FileMode.hpp"
+#include "System/IO/StreamReader.hpp"
+#include "System/IO/IsolatedStorage/IsolatedStorageException.hpp"
+#include "System/IO/IsolatedStorage/IsolatedStorageFile.hpp"
+#include "System/IO/IsolatedStorage/IsolatedStorageFileStream.hpp"
+#include "System/Text/Encoding.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
     using log = CNA::Logger;
+    using String = System::String;
 
     System::Text::StringBuilder Worlds::output;
 
     namespace
     {
-        [[nodiscard]] bool StartsWith(const std::string& text, const std::string& prefix)
-        {
-            return text.size() >= prefix.size() &&
-                   text.compare(0, prefix.size(), prefix) == 0;
-        }
-
-        [[nodiscard]] std::vector<std::string> Split(const std::string& text, char delimiter)
-        {
-            std::vector<std::string> result;
-            std::stringstream ss(text);
-            std::string item;
-            while (std::getline(ss, item, delimiter))
-            {
-                result.push_back(item);
-            }
-
-            if (!text.empty() && text.back() == delimiter)
-            {
-                result.emplace_back();
-            }
-
-            return result;
-        }
-
         [[nodiscard]] bool TryParseInt(const std::string& s, intcs& result)
         {
             try
@@ -120,109 +106,191 @@ namespace WindowsPhoneSpeedyBlupi
 
         const std::string worldFilename = GetWorldFilename(gamer, rank);
 
-        std::ifstream file(worldFilename, std::ios::binary);
-        if (!file.is_open())
+        string text;
+        bool loaded = false;
+
+        try
         {
+            auto stream = Microsoft::Xna::Framework::TitleContainer::OpenStream(worldFilename);
+            System::IO::StreamReader streamReader(stream.get());
+            text = streamReader.ReadToEnd();
+            stream->Close();
+            loaded = true;
+        }
+        catch (const System::Exception& e)
+        {
+            log::Error(e.getMessageProperty());
             log::Error("Fatal error. Loading world failed: " + worldFilename);
+
+            //Environment.Exit(1);
+        }
+        catch (const std::exception& e)
+        {
+            log::Error(e.what());
+            log::Error("Fatal error. Loading world failed: " + worldFilename);
+        }
+
+        // if (String::IsEmpty(text))
+        // {
+        //     return std::nullopt;
+        // }
+
+        if (!loaded)
+        {
             return std::nullopt;
         }
-
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string text = buffer.str();
-
-        std::vector<std::string> lines;
-        std::stringstream textStream(text);
-        std::string line;
-        while (std::getline(textStream, line, '\n'))
-        {
-            lines.push_back(line);
-        }
-
-        return lines;
+        return String::Split(text, '\n');
     }
 
     std::string Worlds::GetWorldFilename(intcs gamer, intcs rank)
     {
         (void)gamer;
 
-        std::ostringstream oss;
-        oss << "worlds/world" << std::setw(3) << std::setfill('0') << rank << ".txt";
-        return oss.str();
+        // std::ostringstream oss;
+        // oss << "worlds/world" << std::setw(3) << std::setfill('0') << rank << ".txt";
+        // return oss.str();
+
+        return System::String::Format(
+            "worlds/world{0}.txt",
+            System::String::ToString(rank, 3)
+            );
     }
 
     bool Worlds::ReadGameData(bytecs data[], size_t dataSize)
     {
         log::Debug("ReadGameData");
 
-        std::ifstream file(getGameDataFilenameProperty(), std::ios::binary);
-        if (!file.is_open())
+        auto userStoreForApplication = System::IO::IsolatedStorage::IsolatedStorageFile::GetUserStoreForApplication();
+        if (userStoreForApplication.FileExists(getGameDataFilenameProperty()))
         {
-            return false;
+            try
+            {
+                auto isolatedStorageFileStream =
+                    userStoreForApplication.OpenFile(
+                        getGameDataFilenameProperty(),
+                        System::IO::FileMode::Open);
+
+                const intcs count = std::min(
+                    static_cast<intcs>(dataSize),
+                    isolatedStorageFileStream.getLengthProperty());
+
+                isolatedStorageFileStream.Read(data, 0, count);
+                isolatedStorageFileStream.Close();
+                return true;
+            }
+            catch (const System::IO::IsolatedStorage::IsolatedStorageException&)
+            {
+                return false;
+            }
         }
+        return false;
+    }
 
-        file.seekg(0, std::ios::end);
-        const std::streamsize length = file.tellg();
-        if (length < 0)
-        {
-            return false;
-        }
-
-        file.seekg(0, std::ios::beg);
-        const size_t count = std::min<size_t>(dataSize, static_cast<size_t>(length));
-
-        file.read(reinterpret_cast<char*>(data), static_cast<std::streamsize>(count));
-        return file.good() || file.eof();
+    System::IO::IsolatedStorage::IsolatedStorageFile getUserStoreForApplication()
+    {
+        return System::IO::IsolatedStorage::IsolatedStorageFile::GetUserStoreForApplication();
     }
 
     void Worlds::WriteGameData(const bytecs data[], size_t dataSize)
     {
         log::Debug("WriteGameData");
 
-        std::ofstream file(getGameDataFilenameProperty(), std::ios::binary | std::ios::trunc);
-        if (!file.is_open())
-        {
-            log::Error("Writing game data failed: " + getGameDataFilenameProperty());
-            return;
-        }
+        auto userStoreForApplication = getUserStoreForApplication();
 
-        file.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(dataSize));
+        try
+        {
+            auto isolatedStorageFileStream =
+                userStoreForApplication.OpenFile(
+                    getGameDataFilenameProperty(),
+                    System::IO::FileMode::Create);
+
+            isolatedStorageFileStream.Write(
+                data,
+                0,
+                static_cast<CppDotNet::intcs>(dataSize));
+
+            isolatedStorageFileStream.Close();
+        }
+        catch (const System::IO::IsolatedStorage::IsolatedStorageException& e)
+        {
+            log::Error(e.getMessageProperty());
+        }
     }
 
     void Worlds::DeleteCurrentGame()
     {
         log::Debug("DeleteCurrentGame");
 
-        std::remove(getCurrentGameFilenameProperty().c_str());
+        auto userStoreForApplication = getUserStoreForApplication();
+        try
+        {
+            userStoreForApplication.DeleteFile(getCurrentGameFilenameProperty());
+        }
+        catch (...)
+        {
+        }
     }
 
     std::optional<string> Worlds::ReadCurrentGame()
     {
         log::Debug("ReadCurrentGame");
 
-        std::ifstream file(getCurrentGameFilenameProperty(), std::ios::binary);
-        if (!file.is_open())
+        auto userStoreForApplication = getUserStoreForApplication();
+
+        if (!userStoreForApplication.FileExists(getCurrentGameFilenameProperty()))
         {
             return std::nullopt;
         }
 
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        return buffer.str();
-    }
+        try
+        {
+            auto stream =
+                userStoreForApplication.OpenFile(
+                    getCurrentGameFilenameProperty(),
+                    System::IO::FileMode::Open);
 
+            const intcs length = stream.getLengthProperty();
+            if (length <= 0)
+            {
+                return string{};
+            }
+
+            std::vector<bytecs> buffer(static_cast<size_t>(length));
+
+            stream.Read(
+                buffer.data(),
+                0,
+                length);
+
+            return System::Text::Encoding::UTF8()->GetString(
+                buffer.data(),
+                0,
+                length);
+        }
+        catch (const System::IO::IsolatedStorage::IsolatedStorageException&)
+        {
+            return std::nullopt;
+        }
+    }
     void Worlds::WriteCurrentGame(const string& data)
     {
         log::Debug("WriteCurrentGame");
 
-        std::ofstream file(getCurrentGameFilenameProperty(), std::ios::binary | std::ios::trunc);
-        if (!file.is_open())
-        {
-            log::Error("Writing current game failed: " + getCurrentGameFilenameProperty());
-            return;
-        }
+        auto userStoreForApplication = getUserStoreForApplication();
 
-        file.write(data.data(), static_cast<std::streamsize>(data.size()));
+        auto isolatedStorageFileStream =
+            userStoreForApplication.OpenFile(
+                getCurrentGameFilenameProperty(),
+                System::IO::FileMode::Create);
+
+        std::vector<bytecs> bytes = System::Text::Encoding::UTF8()->GetBytes(data);
+
+        isolatedStorageFileStream.Write(
+            bytes.data(),
+            0,
+            static_cast<intcs>(bytes.size()));
+
+        isolatedStorageFileStream.Close();
     }
 
     void Worlds::GetIntArrayField(
@@ -238,7 +306,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             const string& text = lines[i];
 
-            if (!StartsWith(text, section + ":") || rank-- != 0)
+            if (!String::StartsWith(text, section + ":") || rank-- != 0)
             {
                 continue;
             }
@@ -256,7 +324,7 @@ namespace WindowsPhoneSpeedyBlupi
                 break;
             }
 
-            const std::vector<std::string> values = Split(text.substr(start, end - start), ',');
+            const std::vector<std::string> values = String::Split(text.substr(start, end - start), ',');
 
             for (intcs j = 0; j < static_cast<intcs>(values.size()) && j < arraySize; j++)
             {
@@ -275,114 +343,105 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
-    bool Worlds::GetBoolField(
-        const string lines[],
-        intcs lineCount,
-        const string& section,
-        intcs rank,
-        const string& name)
+    namespace
     {
-        for (intcs i = 0; i < lineCount; i++)
+        [[nodiscard]] std::optional<std::string> TryGetFieldValueText(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs rank,
+            const string& name)
         {
-            const string& text = lines[i];
-            if (StartsWith(text, section + ":") && rank-- == 0)
+            for (intcs i = 0; i < lineCount; i++)
             {
-                std::size_t num = text.find(name + "=");
-                if (num == string::npos)
-                {
-                    return false;
-                }
+                const string& text = lines[i];
 
-                num += name.length() + 1;
-                const std::size_t num2 = text.find(" ", num);
-                if (num2 == string::npos)
+                if (String::StartsWith(text, section + ":") && rank-- == 0)
                 {
-                    return false;
-                }
+                    std::size_t num = text.find(name + "=");
+                    if (num == string::npos)
+                    {
+                        return std::nullopt;
+                    }
 
-                const string value = text.substr(num, num2 - num);
-                bool result = false;
-                if (TryParseBool(value, result))
-                {
-                    return result;
+                    num += name.length() + 1;
+
+                    const std::size_t num2 = text.find(" ", num);
+                    if (num2 == string::npos)
+                    {
+                        return std::nullopt;
+                    }
+
+                    return text.substr(num, num2 - num);
                 }
-                return false;
             }
+
+            return std::nullopt;
         }
+    }
+    bool Worlds::GetBoolField(
+     const string lines[],
+     intcs lineCount,
+     const string& section,
+     intcs rank,
+     const string& name)
+    {
+        const auto valueText = TryGetFieldValueText(lines, lineCount, section, rank, name);
+        if (!valueText.has_value())
+        {
+            return false;
+        }
+
+        bool result = false;
+        if (TryParseBool(valueText.value(), result))
+        {
+            return result;
+        }
+
         return false;
     }
 
     intcs Worlds::GetIntField(
-        const string lines[],
-        intcs lineCount,
-        const string& section,
-        intcs rank,
-        const string& name)
+      const string lines[],
+      intcs lineCount,
+      const string& section,
+      intcs rank,
+      const string& name)
     {
-        for (intcs i = 0; i < lineCount; i++)
+        const auto valueText = TryGetFieldValueText(lines, lineCount, section, rank, name);
+        if (!valueText.has_value())
         {
-            const string& text = lines[i];
-            if (StartsWith(text, section + ":") && rank-- == 0)
-            {
-                std::size_t num = text.find(name + "=");
-                if (num == string::npos)
-                {
-                    return 0;
-                }
-
-                num += name.length() + 1;
-                const std::size_t num2 = text.find(" ", num);
-                if (num2 == string::npos)
-                {
-                    return 0;
-                }
-
-                const string s = text.substr(num, num2 - num);
-                intcs result = 0;
-                if (TryParseInt(s, result))
-                {
-                    return result;
-                }
-                return 0;
-            }
+            return 0;
         }
+
+        intcs result = 0;
+        if (TryParseInt(valueText.value(), result))
+        {
+            return result;
+        }
+
         return 0;
     }
 
     double Worlds::GetDoubleField(
-        const string lines[],
-        intcs lineCount,
-        const string& section,
-        intcs rank,
-        const string& name)
+       const string lines[],
+       intcs lineCount,
+       const string& section,
+       intcs rank,
+       const string& name)
     {
-        for (intcs i = 0; i < lineCount; i++)
+        const auto valueText = TryGetFieldValueText(lines, lineCount, section, rank, name);
+        if (!valueText.has_value())
         {
-            const string& text = lines[i];
-            if (StartsWith(text, section + ":") && rank-- == 0)
-            {
-                std::size_t num = text.find(name + "=");
-                if (num == string::npos)
-                {
-                    return 0.0;
-                }
-
-                num += name.length() + 1;
-                const std::size_t num2 = text.find(" ", num);
-                if (num2 == string::npos)
-                {
-                    return 0.0;
-                }
-
-                const string s = text.substr(num, num2 - num);
-                double result = 0.0;
-                if (TryParseDouble(s, result))
-                {
-                    return result;
-                }
-                return 0.0;
-            }
+            return 0.0;
         }
+
+        double result = 0.0;
+        if (TryParseDouble(valueText.value(), result))
+        {
+            return result;
+        }
+
         return 0.0;
     }
 
@@ -396,7 +455,7 @@ namespace WindowsPhoneSpeedyBlupi
         for (intcs i = 0; i < lineCount; i++)
         {
             const string& text = lines[i];
-            if (StartsWith(text, section + ":") && rank-- == 0)
+            if (String::StartsWith(text, section + ":") && rank-- == 0)
             {
                 std::size_t num = text.find(name + "=");
                 if (num == string::npos)
@@ -451,8 +510,8 @@ namespace WindowsPhoneSpeedyBlupi
     {
         for (intcs i = 0; i < lineCount; i++)
         {
-            string text = lines[i];
-            if (StartsWith(text, section + ":"))
+            const string& text = lines[i];
+            if (String::StartsWith(text, section + ":"))
             {
                 const intcs rowIndex = i + 1 + x;
                 if (rowIndex < 0 || rowIndex >= lineCount)
@@ -461,7 +520,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
 
                 text = lines[rowIndex];
-                const std::vector<std::string> parts = Split(text, ',');
+                const std::vector<std::string> parts = String::Split(text, ',');
 
                 if (y < 0 || y >= static_cast<intcs>(parts.size()))
                 {
@@ -496,13 +555,13 @@ namespace WindowsPhoneSpeedyBlupi
         for (intcs i = 0; i < lineCount; i++)
         {
             const string& text = lines[i];
-            if (!StartsWith(text, section + ":"))
+            if (!String::StartsWith(text, section + ":"))
             {
                 continue;
             }
 
             const string payload = text.substr(section.length() + 2);
-            const std::vector<std::string> parts = Split(payload, ',');
+            const std::vector<std::string> parts = String::Split(payload, ',');
 
             for (intcs j = 0; j < static_cast<intcs>(parts.size()) && j < doorsSize; j++)
             {

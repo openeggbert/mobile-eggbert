@@ -6,8 +6,6 @@
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
 int main(int argc, char *args[]) {
-    WindowsPhoneSpeedyBlupi::Game1 *game = new WindowsPhoneSpeedyBlupi::Game1();
-    game->Run();
-
-    delete game;
+    WindowsPhoneSpeedyBlupi::Game1 game;
+    game.Run();
 }
