@@ -4,6 +4,8 @@
 
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
 
+#include <iomanip>
+
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
@@ -9877,13 +9879,13 @@ void Decor::InitDecor()
 
          bool Decor::CurrentRead()
         {
-            string text = Worlds::ReadCurrentGame();
-            if (text == "")
+            const std::optional<string>& text = Worlds::ReadCurrentGame();
+            if (!text.has_value() || text.value().empty())
             {
                 return false;
             }
             InitDecor();
-            auto linesVector = Helper::split(text, '\n');
+            auto linesVector = Helper::split(text.value(), '\n');
             string* lines = linesVector.data();
             int linesLength = linesVector.size();
             Worlds::GetIntField(lines, linesLength,  "DescFile", 0, "_version_");
@@ -9977,7 +9979,7 @@ void Decor::InitDecor()
                 for (int j = 0; j < 100; j++)
                 {
                     auto decorField = Worlds::GetDecorField(lines, linesLength, "Decor", j, i);
-                    m_decor[j][ i].icon =  decorField != 0 ? decorField : -1;
+                    m_decor[j][ i].icon =  decorField.value_or(-1);
                 }
             }
             for (int k = 0; k < 100; k++)
@@ -9985,7 +9987,7 @@ void Decor::InitDecor()
                 for (int l = 0; l < 100; l++)
                 {
                     auto decorField = Worlds::GetDecorField(lines, linesLength, "BigDecor", l, k);
-                    m_bigDecor[l][ k].icon = decorField != 0? decorField : -1;
+                    m_bigDecor[l][ k].icon = decorField.value_or(-1);
                 }
             }
             for (int m = 0; m < MAXMOVEOBJECT; m++)
@@ -10026,7 +10028,7 @@ void Decor::InitDecor()
          bool Decor::Read(int gamer, int rank, bool bUser)
         {
             InitDecor();
-            auto arrayVector = Worlds::ReadWorld(gamer, rank);
+            auto arrayVector = Worlds::ReadWorld(gamer, rank).value();
             auto vectorSize = arrayVector.size();
             string* array = arrayVector.data();
             if (arrayVector.empty())
@@ -10043,7 +10045,7 @@ void Decor::InitDecor()
             {
                 for (int j = 0; j < 100; j++)
                 {
-                    int decorField = Worlds::GetDecorField(array, vectorSize, "Decor", j, i);
+                    int decorField = Worlds::GetDecorField(array, vectorSize, "Decor", j, i).value_or(-1);
                     m_decor[j][ i].icon =  decorField != 0 ? decorField : -1;
                 }
             }
@@ -10051,7 +10053,7 @@ void Decor::InitDecor()
             {
                 for (int l = 0; l < 100; l++)
                 {
-                    int decorField = Worlds::GetDecorField(array, vectorSize, "BigDecor", l, k);
+                    int decorField = Worlds::GetDecorField(array, vectorSize, "BigDecor", l, k).value_or(-1);
                     m_bigDecor[l][ k].icon = decorField != 0 ? decorField : -1;
                 }
             }

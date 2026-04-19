@@ -1,127 +1,331 @@
 #pragma once
 
-#include <filesystem>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "CppDotNet/CppDotNetHelper.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
-#define int_to_string(i) std::to_string(i)
 
-namespace WindowsPhoneSpeedyBlupi {
+namespace WindowsPhoneSpeedyBlupi
+{
+    using CppDotNet::bytecs;
+    using CppDotNet::intcs;
     using std::string;
 
-    class Worlds {
+    /**
+     * @brief Provides static helper methods for loading, reading, and writing world
+     * and save-game data.
+     *
+     * This class is a C++ port of the original C# static class Worlds from
+     * WindowsPhoneSpeedyBlupi.
+     *
+     * @note Status: Partial
+     */
+    class Worlds
+    {
     public:
         Worlds() = delete;
         ~Worlds() = delete;
+
     private:
         static std::stringstream output;
 
         /**
-         * @brief Represents a static property that holds the filename for the game's data.
+         * @brief Gets the filename used for game data storage.
          *
-         * This property is initialized using a lambda function that returns the default game data filename,
-         * which is "SpeedyBlupi".
+         * Corresponds to the original C# static read-only property GameDataFilename.
+         *
+         * @return Reference to the game data filename.
+         *
+         * @note Status: Ported
          */
-         [[nodiscard]] static const std::string & getGameDataFilenameProperty() ;
+        [[nodiscard]] static const std::string& getGameDataFilenameProperty();
 
         /**
-         * @brief Represents a static property that holds the filename for the current game.
+         * @brief Gets the filename used for current game storage.
          *
-         * This property is initialized using a lambda function that returns the default filename
-         * for the current game, which is "CurrentGame".
+         * Corresponds to the original C# static read-only property CurrentGameFilename.
+         *
+         * @return Reference to the current game filename.
+         *
+         * @note Status: Ported
          */
-         [[nodiscard]] static const std::string & getCurrentGameFilenameProperty() ;
+        [[nodiscard]] static const std::string& getCurrentGameFilenameProperty();
 
     public:
-        static std::vector<std::string> ReadWorld(intcs gamer, intcs rank);
+        /**
+         * @brief Reads a world text file and splits it into lines.
+         *
+         * In the original C# code, this method returns null on failure.
+         * In this C++ port, std::nullopt represents that state.
+         *
+         * @param gamer Gamer identifier. Present for compatibility with original signature.
+         * @param rank World rank.
+         * @return Optional vector of lines; std::nullopt on failure.
+         *
+         * @note Status: Partial
+         */
+        static std::optional<std::vector<std::string>> ReadWorld(intcs gamer, intcs rank);
 
     private:
+        /**
+         * @brief Gets the filename for a world by rank.
+         *
+         * Corresponds to the original C# method GetWorldFilename.
+         *
+         * @param gamer Gamer identifier. Present for compatibility with original signature.
+         * @param rank World rank.
+         * @return World filename.
+         *
+         * @note Status: Ported
+         */
         static std::string GetWorldFilename(intcs gamer, intcs rank);
 
     public:
-        static bool ReadGameData(CppDotNet::bytecs data[], size_t dataSize);
+        /**
+         * @brief Reads game data into the provided byte buffer.
+         *
+         * @param data Destination buffer.
+         * @param dataSize Size of destination buffer.
+         * @return True on success; otherwise false.
+         *
+         * @note Status: Partial
+         */
+        static bool ReadGameData(bytecs data[], size_t dataSize);
 
-        static void WriteGameData(CppDotNet::bytecs data[], size_t dataSize);
+        /**
+         * @brief Writes game data from the provided byte buffer.
+         *
+         * @param data Source buffer.
+         * @param dataSize Size of source buffer.
+         *
+         * @note Status: Partial
+         */
+        static void WriteGameData(const bytecs data[], size_t dataSize);
 
+        /**
+         * @brief Deletes the current game save file if it exists.
+         *
+         * @note Status: Partial
+         */
         static void DeleteCurrentGame();
 
-        static string ReadCurrentGame();
+        /**
+         * @brief Reads the current game save text.
+         *
+         * In the original C# code, this method returns null on failure.
+         * In this C++ port, std::nullopt represents that state.
+         *
+         * @return Optional save text; std::nullopt on failure.
+         *
+         * @note Status: Partial
+         */
+        static std::optional<string> ReadCurrentGame();
 
-        static void WriteCurrentGame(const string &data);
+        /**
+         * @brief Writes the current game save text.
+         *
+         * @param data Save text.
+         *
+         * @note Status: Partial
+         */
+        static void WriteCurrentGame(const string& data);
 
-        static void GetIntArrayField(string lines[], intcs lineCount, const string& section, intcs rank,
-                                     const string& name, intcs array[], intcs arraySize);
+        /**
+         * @brief Reads an integer array field from a section line.
+         *
+         * Mirrors the behavior of the original C# method as closely as practical.
+         * Failed element parses are written as 0.
+         *
+         * @param lines Input lines.
+         * @param lineCount Number of lines.
+         * @param section Section name.
+         * @param rank Zero-based occurrence rank within the section.
+         * @param name Field name.
+         * @param array Output array.
+         * @param arraySize Size of output array.
+         *
+         * @note Status: Partial
+         */
+        static void GetIntArrayField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs rank,
+            const string& name,
+            intcs array[],
+            intcs arraySize);
 
-        static bool GetBoolField(const string lines[], intcs lineCount, const string &section, intcs rank,
-                                 const string &name);
+        /**
+         * @brief Reads a boolean field from a section line.
+         *
+         * Returns false on failure, matching the original C# behavior.
+         *
+         * @note Status: Ported
+         */
+        static bool GetBoolField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs rank,
+            const string& name);
 
-        static int GetIntField(const string lines[], intcs lineCount, const string &section, intcs rank,
-                               const string &name);
+        /**
+         * @brief Reads an integer field from a section line.
+         *
+         * Returns 0 on failure, matching the original C# behavior.
+         *
+         * @note Status: Ported
+         */
+        static intcs GetIntField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs rank,
+            const string& name);
 
-        static double GetDoubleField(const string lines[], intcs lineCount, const string &section, intcs rank,
-                                     const string &name);
+        /**
+         * @brief Reads a double field from a section line.
+         *
+         * Returns 0.0 on failure, matching the original C# behavior.
+         *
+         * @note Status: Partial
+         */
+        static double GetDoubleField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs rank,
+            const string& name);
 
-    private:
-        template<typename T>
+        /**
+         * @brief Reads a TinyPoint field from a section line.
+         *
+         * Returns default TinyPoint on failure, matching the original C# behavior.
+         *
+         * @note Status: Ported
+         */
+        static TinyPoint GetPointField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs rank,
+            const string& name);
 
-        static T GetTypedField(const string lines[], intcs lineCount, const string &section, intcs rank,
-                               const string &name) {
-            for (intcs i = 0; i < lineCount; i++) {
-                const string &text = lines[i];
-                if (!text.starts_with(section + ":") || rank-- != 0) {
-                    continue;
-                }
-                size_t num = text.find(name + "=");
-                if (num == string::npos) return T{};
+        /**
+         * @brief Reads a decor field from a decor section.
+         *
+         * Corresponds to the original C# method returning int?.
+         * std::nullopt represents null.
+         *
+         * @note Status: Ported
+         */
+        static std::optional<intcs> GetDecorField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs x,
+            intcs y);
 
-                num += name.length() + 1;
-                size_t num2 = text.find(" ", num);
-                if (num2 == string::npos) return T{};
+        /**
+         * @brief Reads door values from a section line.
+         *
+         * @param lines Input lines.
+         * @param lineCount Number of lines.
+         * @param section Section name.
+         * @param doors Output array.
+         * @param doorsSize Size of output array.
+         *
+         * @note Status: Partial
+         */
+        static void GetDoorsField(
+            const string lines[],
+            intcs lineCount,
+            const string& section,
+            intcs doors[],
+            intcs doorsSize);
 
-                string value = text.substr(num, num2 - num);
-                if constexpr (std::is_same_v<T, bool>) {
-                    return value == "true";
-                } else if constexpr (std::is_same_v<T, int>) {
-                    return stoi(value);
-                } else if constexpr (std::is_same_v<T, double>) {
-                    return stod(value);
-                }
-            }
-            return T{};
-        }
-
-    public:
-        static TinyPoint GetPointField(const string lines[], intcs lineCount, const string &section, intcs rank,
-                                       const string &name);
-
-        static int GetDecorField(const string lines[], intcs lineCount, const string &section, intcs x, intcs y);
-
-        static void GetDoorsField(const string lines[], intcs lineCount, const string &section, intcs doors[],
-                                  intcs &doorCount);
-
+        /**
+         * @brief Clears the write buffer.
+         *
+         * @note Status: Ported
+         */
         static void WriteClear();
 
-        static void WriteSection(const string &section);
+        /**
+         * @brief Starts a new section in the write buffer.
+         *
+         * @param section Section name.
+         *
+         * @note Status: Ported
+         */
+        static void WriteSection(const string& section);
 
-        static void WriteIntArrayField(const string &name, const intcs array[], const intcs &arraySize);
+        /**
+         * @brief Writes an integer array field to the write buffer.
+         *
+         * @note Status: Ported
+         */
+        static void WriteIntArrayField(const string& name, const intcs array[], intcs arraySize);
 
-        static void WriteBoolField(const std::string &name, bool n);
+        /**
+         * @brief Writes a boolean field to the write buffer.
+         *
+         * @note Status: Partial
+         */
+        static void WriteBoolField(const string& name, bool n);
 
-        static void WriteIntField(const string &name, intcs n);
+        /**
+         * @brief Writes an integer field to the write buffer.
+         *
+         * @note Status: Ported
+         */
+        static void WriteIntField(const string& name, intcs n);
 
-        static void WriteDoubleField(const std::string &name, double n);
+        /**
+         * @brief Writes a double field to the write buffer.
+         *
+         * @note Status: Partial
+         */
+        static void WriteDoubleField(const string& name, double n);
 
-        static void WritePointField(const string &name, TinyPoint p);
+        /**
+         * @brief Writes a TinyPoint field to the write buffer.
+         *
+         * @note Status: Ported
+         */
+        static void WritePointField(const string& name, TinyPoint p);
 
-        static void WriteDecorField(const intcs line[], const intcs &arraySize);
+        /**
+         * @brief Writes one decor line to the write buffer.
+         *
+         * @note Status: Ported
+         */
+        static void WriteDecorField(const intcs line[], intcs arraySize);
 
-        static void WriteDoorsField(const intcs doors[], const intcs &arraySize);
+        /**
+         * @brief Writes one doors line to the write buffer.
+         *
+         * @note Status: Ported
+         */
+        static void WriteDoorsField(const intcs doors[], intcs arraySize);
 
+        /**
+         * @brief Ends the current section in the write buffer.
+         *
+         * @note Status: Ported
+         */
         static void WriteEndSection();
 
+        /**
+         * @brief Gets the accumulated write buffer string.
+         *
+         * @return Serialized text.
+         *
+         * @note Status: Ported
+         */
         static string GetWriteString();
     };
 }
