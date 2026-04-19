@@ -154,7 +154,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 return;
             }
             phaseTime++;
-            if (fadeOutPhase != 0)
+            if (fadeOutPhase != Def::Phase::None)
             {
                 if (phaseTime >= 20)
                 {
@@ -200,7 +200,7 @@ namespace WindowsPhoneSpeedyBlupi {
             Def::ButtonGlyph buttonPressed = inputPad.getButtonPressedProperty();
             if (buttonPressed >= Def::ButtonGlyph::InitGamerA && buttonPressed <= Def::ButtonGlyph::InitGamerC)
             {
-                SetGamer((int)(buttonPressed - 1));
+                SetGamer((int)(static_cast<intcs>(buttonPressed) - 1));
                 return;
             }
             switch (buttonPressed)
@@ -300,7 +300,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                     break;
                 default:
-                    if (buttonPressed != 0)
+                    if (buttonPressed != Def::ButtonGlyph::None)
                     {
                         cheatGesteIndex = 0;
                     }
@@ -478,7 +478,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 }
                 else
                 {
-                    num = ((fadeOutPhase != 0) ? (1.0 - num * 2.0) : (1.0 - (1.0 - num) * (1.0 - num)));
+                    num = ((fadeOutPhase != Def::Phase::None) ? (1.0 - num * 2.0) : (1.0 - (1.0 - num) * (1.0 - num)));
                     TinyRect tinyRect2 = TinyRect();
                     tinyRect2.Left = 80;
                     tinyRect2.Right = 720;
@@ -586,7 +586,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 {
                     num2 = 1.0 + ((double)phaseTime - 20.0) / 400.0;
                 }
-                if (fadeOutPhase != 0)
+                if (fadeOutPhase != Def::Phase::None)
                 {
                     num = 1.0 - num;
                     num2 = 1.0 - num2;

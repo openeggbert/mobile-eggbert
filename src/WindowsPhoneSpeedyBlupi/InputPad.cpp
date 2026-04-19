@@ -311,8 +311,8 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                     CNA::Logger::Debug("padPressed=" + padPressed);
                     Def::ButtonGlyph pressedGlyph = ButtonDetect(touchOrClick);
-                    CNA::Logger::Debug("buttonGlyph2 =" + pressedGlyph);
-                    if (pressedGlyph != 0)
+                    CNA::Logger::Debug("buttonGlyph2 =" + static_cast<intcs>(pressedGlyph));
+                    if (pressedGlyph != Def::ButtonGlyph::None)
                     {
                         pressedGlyphs.push_back(pressedGlyph);
                     }
@@ -391,10 +391,9 @@ namespace WindowsPhoneSpeedyBlupi {
             }
 
             if (
-                Def::notAnyOf(
-                    buttonGlyph,
-                    std::vector{
-                        Def::ButtonGlyph(0),
+                Def::isNotOneOf(
+                    buttonGlyph,{
+                        Def::ButtonGlyph::None,
                         Def::ButtonGlyph::PlayAction,
                         Def::ButtonGlyph::Cheat11,
                         Def::ButtonGlyph::Cheat12,
@@ -409,7 +408,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 TinyPoint pos(320, 240);
                 sound->PlayImage(0, pos);
             }
-            if (buttonGlyph == Def::ButtonGlyph::None && lastButtonDown != 0)
+            if (buttonGlyph == Def::ButtonGlyph::None && lastButtonDown != Def::ButtonGlyph::None)
             {
                 buttonPressed = lastButtonDown;
             }
@@ -527,7 +526,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 bool selected = false;
                 if (buttonGlyph >= Def::ButtonGlyph::InitGamerA && buttonGlyph <= Def::ButtonGlyph::InitGamerC)
                 {
-                    int selectedGamer = (int)(buttonGlyph - 1);
+                    int selectedGamer = (int)(static_cast<intcs>(buttonGlyph) - 1);
                     selected = selectedGamer == gameData.getSelectedGamerProperty();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupSounds)
@@ -569,7 +568,7 @@ namespace WindowsPhoneSpeedyBlupi {
             double cheatButtonSizeFactor = drawBoundsHeight / 3.5;
             if (glyph >= Def::ButtonGlyph::Cheat1 && glyph <= Def::ButtonGlyph::Cheat9)
             {
-                int cheatNumber = (int)(glyph - 35);
+                int cheatNumber = (int)(static_cast<intcs>(glyph) - 35);
                 TinyRect result = TinyRect();
                 result.Left = 80 * cheatNumber;
                 result.Right = 80 * (cheatNumber + 1);
