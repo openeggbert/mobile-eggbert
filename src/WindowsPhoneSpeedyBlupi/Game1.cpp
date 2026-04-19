@@ -19,6 +19,7 @@
 #include "Microsoft/Xna/Framework/Input/MouseCursor.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "System/EventArgs.hpp"
+#include "System/String.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
@@ -787,7 +788,7 @@ namespace WindowsPhoneSpeedyBlupi {
         void Game1::DrawTextRightButton(Def::ButtonGlyph glyph, string text)
         {
             TinyRect buttonRect = inputPad.GetButtonRect(glyph);
-            std::vector<std::string> array = Helper::split(text, '\n');
+            std::vector<std::string> array = System::String::Split(text, '\n');
             if (array.size() == 2)
             {
                 TinyPoint tinyPoint;

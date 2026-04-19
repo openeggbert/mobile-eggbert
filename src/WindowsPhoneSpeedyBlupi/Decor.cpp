@@ -6,6 +6,7 @@
 
 #include <iomanip>
 
+#include "System/String.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
@@ -9885,7 +9886,7 @@ void Decor::InitDecor()
                 return false;
             }
             InitDecor();
-            auto linesVector = Helper::split(text.value(), '\n');
+            auto linesVector = System::String::Split(text.value(), '\n');
             string* lines = linesVector.data();
             int linesLength = linesVector.size();
             Worlds::GetIntField(lines, linesLength,  "DescFile", 0, "_version_");

@@ -12,16 +12,5 @@ namespace WindowsPhoneSpeedyBlupi {
         }
         return result;
     }
-    std::vector<std::string> Helper::split(const std::string& text, char delimiter) {
-        std::vector<std::string> result;
-        std::stringstream ss(text);
-        std::string item;
-
-        while (std::getline(ss, item, delimiter)) {
-            result.push_back(item);
-        }
-
-        return result;
-    }
 
 }
