@@ -1,22 +1,24 @@
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.Def
+#pragma once
 
-//using Microsoft.Xna.Framework.Input;
-//using static WindowsPhoneSpeedyBlupi.Def;
-#ifndef DEF_H
-#define DEF_H
+#include <algorithm>
 #include <vector>
+
+#include "CppDotNet/CppDotNetHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using ushort = unsigned short;
+
+    using CppDotNet::intcs;
+
 //static class
     class Def
     {
 
-    public: enum Phase
+    public:
+
+        enum class Phase
         {
-            NonePhase,
+            None,
             First,
             Wait,
             Init,
@@ -31,9 +33,9 @@ namespace WindowsPhoneSpeedyBlupi
             Ranking
         };
 
-    public: enum ButtonGlyph
+        enum class ButtonGlyph
         {
-            NoneButtonGlyph,
+            None,
             InitGamerA,
             InitGamerB,
             InitGamerC,
@@ -79,630 +81,634 @@ namespace WindowsPhoneSpeedyBlupi
             Cheat9
         };
 
-
-
-    public: static bool notAnyOf(const ButtonGlyph& buttonGlyphToBeChecked, const std::vector<ButtonGlyph>& buttonGlyphs) {
-        for (auto buttonGlyph : buttonGlyphs) {
-            if (buttonGlyph == buttonGlyphToBeChecked) {
-                return false;
-            }
+        /**
+         * 
+         * @param buttonGlyphToBeChecked 
+         * @param buttonGlyphs 
+         * @return
+         * @note Additional
+         */
+        static bool notAnyOf(const ButtonGlyph& buttonGlyphToBeChecked, const std::vector<ButtonGlyph>& buttonGlyphs)
+        {
+            return std::ranges::none_of(buttonGlyphs, [&buttonGlyphToBeChecked](const auto& buttonGlyph)
+            {
+                return buttonGlyph == buttonGlyphToBeChecked;
+            });
         }
-        return true;
-    }
 
-        public: static constexpr ushort LXIMAGE = 640;
+        static constexpr intcs LXIMAGE = 640;
 
-        public: static constexpr ushort LYIMAGE = 480;
+        static constexpr intcs LYIMAGE = 480;
 
-        public: static constexpr ushort MAXCELX = 100;
+        static constexpr intcs MAXCELX = 100;
 
-        public: static constexpr ushort MAXCELY = 100;
+        static constexpr intcs MAXCELY = 100;
 
-        public: static constexpr ushort DIMOBJX = 64;
+        static constexpr intcs DIMOBJX = 64;
 
-        public: static constexpr ushort DIMOBJY = 64;
+        static constexpr intcs DIMOBJY = 64;
 
-        public: static constexpr ushort DIMBLUPIX = 60;
+        static constexpr intcs DIMBLUPIX = 60;
 
-        public: static constexpr ushort DIMBLUPIY = 60;
+        static constexpr intcs DIMBLUPIY = 60;
 
-        public: static constexpr ushort DIMEXPLOX = 128;
+        static constexpr intcs DIMEXPLOX = 128;
 
-        public: static constexpr ushort DIMEXPLOY = 128;
+        static constexpr intcs DIMEXPLOY = 128;
 
-        public: static constexpr ushort DIMBUTTONX = 40;
+        static constexpr intcs DIMBUTTONX = 40;
 
-        public: static constexpr ushort DIMBUTTONY = 40;
+        static constexpr intcs DIMBUTTONY = 40;
 
-        public: static constexpr ushort DIMJAUGEX = 124;
+        static constexpr intcs DIMJAUGEX = 124;
 
-        public: static constexpr ushort DIMJAUGEY = 22;
+        static constexpr intcs DIMJAUGEY = 22;
 
-        public: static constexpr ushort POSSTATX = 12;
+        static constexpr intcs POSSTATX = 12;
 
-        public: static constexpr ushort POSSTATY = 220;
+        static constexpr intcs POSSTATY = 220;
 
-        public: static constexpr ushort DIMSTATX = 60;
+        static constexpr intcs DIMSTATX = 60;
 
-        public: static constexpr ushort DIMSTATY = 30;
+        static constexpr intcs DIMSTATY = 30;
 
-        public: static constexpr ushort DIMTEXTX = 32;
+        static constexpr intcs DIMTEXTX = 32;
 
-        public: static constexpr ushort DIMTEXTY = 32;
+        static constexpr intcs DIMTEXTY = 32;
 
-        public: static constexpr ushort CHOBJECT = 1;
+        static constexpr intcs CHOBJECT = 1;
 
-        public: static constexpr ushort CHBLUPI = 2;
+        static constexpr intcs CHBLUPI = 2;
 
-        public: static constexpr ushort CHDECOR = 3;
+        static constexpr intcs CHDECOR = 3;
 
-        public: static constexpr ushort CHBUTTON = 4;
+        static constexpr intcs CHBUTTON = 4;
 
-        public: static constexpr ushort CHJAUGE = 5;
+        static constexpr intcs CHJAUGE = 5;
 
-        public: static constexpr ushort CHTEXT = 6;
+        static constexpr intcs CHTEXT = 6;
 
-        public: static constexpr ushort CHEXPLO = 9;
+        static constexpr intcs CHEXPLO = 9;
 
-        public: static constexpr ushort CHELEMENT = 10;
+        static constexpr intcs CHELEMENT = 10;
 
-        public: static constexpr ushort CHBLUPI1 = 11;
+        static constexpr intcs CHBLUPI1 = 11;
 
-        public: static constexpr ushort CHBLUPI2 = 12;
+        static constexpr intcs CHBLUPI2 = 12;
 
-        public: static constexpr ushort CHBLUPI3 = 13;
+        static constexpr intcs CHBLUPI3 = 13;
 
-        public: static constexpr ushort CHPAD = 14;
+        static constexpr intcs CHPAD = 14;
 
-        public: static constexpr ushort CHSPEEDYBLUPI = 15;
+        static constexpr intcs CHSPEEDYBLUPI = 15;
 
-        public: static constexpr ushort CHBLUPIYOUPIE = 16;
+        static constexpr intcs CHBLUPIYOUPIE = 16;
 
-        public: static constexpr ushort CHGEAR = 17;
+        static constexpr intcs CHGEAR = 17;
 
-        public: static constexpr ushort ACTION_STOP = 1;
+        static constexpr intcs ACTION_STOP = 1;
 
-        public: static constexpr ushort ACTION_MARCH = 2;
+        static constexpr intcs ACTION_MARCH = 2;
 
-        public: static constexpr ushort ACTION_TURN = 3;
+        static constexpr intcs ACTION_TURN = 3;
 
-        public: static constexpr ushort ACTION_JUMP = 4;
+        static constexpr intcs ACTION_JUMP = 4;
 
-        public: static constexpr ushort ACTION_AIR = 5;
+        static constexpr intcs ACTION_AIR = 5;
 
-        public: static constexpr ushort ACTION_DOWN = 6;
+        static constexpr intcs ACTION_DOWN = 6;
 
-        public: static constexpr ushort ACTION_UP = 7;
+        static constexpr intcs ACTION_UP = 7;
 
-        public: static constexpr ushort ACTION_VERTIGO = 8;
+        static constexpr intcs ACTION_VERTIGO = 8;
 
-        public: static constexpr ushort ACTION_RECEDE = 9;
+        static constexpr intcs ACTION_RECEDE = 9;
 
-        public: static constexpr ushort ACTION_ADVANCE = 10;
+        static constexpr intcs ACTION_ADVANCE = 10;
 
-        public: static constexpr ushort ACTION_CLEAR1 = 11;
+        static constexpr intcs ACTION_CLEAR1 = 11;
 
-        public: static constexpr ushort ACTION_SET = 12;
+        static constexpr intcs ACTION_SET = 12;
 
-        public: static constexpr ushort ACTION_WIN = 13;
+        static constexpr intcs ACTION_WIN = 13;
 
-        public: static constexpr ushort ACTION_PUSH = 14;
+        static constexpr intcs ACTION_PUSH = 14;
 
-        public: static constexpr ushort ACTION_STOPHELICO = 15;
+        static constexpr intcs ACTION_STOPHELICO = 15;
 
-        public: static constexpr ushort ACTION_MARCHHELICO = 16;
+        static constexpr intcs ACTION_MARCHHELICO = 16;
 
-        public: static constexpr ushort ACTION_TURNHELICO = 17;
+        static constexpr intcs ACTION_TURNHELICO = 17;
 
-        public: static constexpr ushort ACTION_STOPNAGE = 18;
+        static constexpr intcs ACTION_STOPNAGE = 18;
 
-        public: static constexpr ushort ACTION_MARCHNAGE = 19;
+        static constexpr intcs ACTION_MARCHNAGE = 19;
 
-        public: static constexpr ushort ACTION_TURNNAGE = 20;
+        static constexpr intcs ACTION_TURNNAGE = 20;
 
-        public: static constexpr ushort ACTION_STOPSURF = 21;
+        static constexpr intcs ACTION_STOPSURF = 21;
 
-        public: static constexpr ushort ACTION_MARCHSURF = 22;
+        static constexpr intcs ACTION_MARCHSURF = 22;
 
-        public: static constexpr ushort ACTION_TURNSURF = 23;
+        static constexpr intcs ACTION_TURNSURF = 23;
 
-        public: static constexpr ushort ACTION_DROWN = 24;
+        static constexpr intcs ACTION_DROWN = 24;
 
-        public: static constexpr ushort ACTION_STOPJEEP = 25;
+        static constexpr intcs ACTION_STOPJEEP = 25;
 
-        public: static constexpr ushort ACTION_MARCHJEEP = 26;
+        static constexpr intcs ACTION_MARCHJEEP = 26;
 
-        public: static constexpr ushort ACTION_TURNJEEP = 27;
+        static constexpr intcs ACTION_TURNJEEP = 27;
 
-        public: static constexpr ushort ACTION_STOPPOP = 28;
+        static constexpr intcs ACTION_STOPPOP = 28;
 
-        public: static constexpr ushort ACTION_POP = 29;
+        static constexpr intcs ACTION_POP = 29;
 
-        public: static constexpr ushort ACTION_BYE = 30;
+        static constexpr intcs ACTION_BYE = 30;
 
-        public: static constexpr ushort ACTION_STOPSUSPEND = 31;
+        static constexpr intcs ACTION_STOPSUSPEND = 31;
 
-        public: static constexpr ushort ACTION_MARCHSUSPEND = 32;
+        static constexpr intcs ACTION_MARCHSUSPEND = 32;
 
-        public: static constexpr ushort ACTION_TURNSUSPEND = 33;
+        static constexpr intcs ACTION_TURNSUSPEND = 33;
 
-        public: static constexpr ushort ACTION_JUMPSUSPEND = 34;
+        static constexpr intcs ACTION_JUMPSUSPEND = 34;
 
-        public: static constexpr ushort ACTION_HIDE = 35;
+        static constexpr intcs ACTION_HIDE = 35;
 
-        public: static constexpr ushort ACTION_JUMPAIE = 36;
+        static constexpr intcs ACTION_JUMPAIE = 36;
 
-        public: static constexpr ushort ACTION_STOPSKATE = 37;
+        static constexpr intcs ACTION_STOPSKATE = 37;
 
-        public: static constexpr ushort ACTION_MARCHSKATE = 38;
+        static constexpr intcs ACTION_MARCHSKATE = 38;
 
-        public: static constexpr ushort ACTION_TURNSKATE = 39;
+        static constexpr intcs ACTION_TURNSKATE = 39;
 
-        public: static constexpr ushort ACTION_JUMPSKATE = 40;
+        static constexpr intcs ACTION_JUMPSKATE = 40;
 
-        public: static constexpr ushort ACTION_AIRSKATE = 41;
+        static constexpr intcs ACTION_AIRSKATE = 41;
 
-        public: static constexpr ushort ACTION_TAKESKATE = 42;
+        static constexpr intcs ACTION_TAKESKATE = 42;
 
-        public: static constexpr ushort ACTION_DEPOSESKATE = 43;
+        static constexpr intcs ACTION_DEPOSESKATE = 43;
 
-        public: static constexpr ushort ACTION_OUF1a = 44;
+        static constexpr intcs ACTION_OUF1a = 44;
 
-        public: static constexpr ushort ACTION_OUF1b = 45;
+        static constexpr intcs ACTION_OUF1b = 45;
 
-        public: static constexpr ushort ACTION_OUF2 = 46;
+        static constexpr intcs ACTION_OUF2 = 46;
 
-        public: static constexpr ushort ACTION_OUF3 = 47;
+        static constexpr intcs ACTION_OUF3 = 47;
 
-        public: static constexpr ushort ACTION_OUF4 = 48;
+        static constexpr intcs ACTION_OUF4 = 48;
 
-        public: static constexpr ushort ACTION_SUCETTE = 49;
+        static constexpr intcs ACTION_SUCETTE = 49;
 
-        public: static constexpr ushort ACTION_STOPTANK = 50;
+        static constexpr intcs ACTION_STOPTANK = 50;
 
-        public: static constexpr ushort ACTION_MARCHTANK = 51;
+        static constexpr intcs ACTION_MARCHTANK = 51;
 
-        public: static constexpr ushort ACTION_TURNTANK = 52;
+        static constexpr intcs ACTION_TURNTANK = 52;
 
-        public: static constexpr ushort ACTION_FIRETANK = 53;
+        static constexpr intcs ACTION_FIRETANK = 53;
 
-        public: static constexpr ushort ACTION_GLU = 54;
+        static constexpr intcs ACTION_GLU = 54;
 
-        public: static constexpr ushort ACTION_DRINK = 55;
+        static constexpr intcs ACTION_DRINK = 55;
 
-        public: static constexpr ushort ACTION_CHARGE = 56;
+        static constexpr intcs ACTION_CHARGE = 56;
 
-        public: static constexpr ushort ACTION_ELECTRO = 57;
+        static constexpr intcs ACTION_ELECTRO = 57;
 
-        public: static constexpr ushort ACTION_HELICOGLU = 58;
+        static constexpr intcs ACTION_HELICOGLU = 58;
 
-        public: static constexpr ushort ACTION_TURNAIR = 59;
+        static constexpr intcs ACTION_TURNAIR = 59;
 
-        public: static constexpr ushort ACTION_STOPMARCH = 60;
+        static constexpr intcs ACTION_STOPMARCH = 60;
 
-        public: static constexpr ushort ACTION_STOPJUMP = 61;
+        static constexpr intcs ACTION_STOPJUMP = 61;
 
-        public: static constexpr ushort ACTION_STOPJUMPh = 62;
+        static constexpr intcs ACTION_STOPJUMPh = 62;
 
-        public: static constexpr ushort ACTION_MOCKERY = 63;
+        static constexpr intcs ACTION_MOCKERY = 63;
 
-        public: static constexpr ushort ACTION_MOCKERYi = 64;
+        static constexpr intcs ACTION_MOCKERYi = 64;
 
-        public: static constexpr ushort ACTION_OUF5 = 65;
+        static constexpr intcs ACTION_OUF5 = 65;
 
-        public: static constexpr ushort ACTION_BALLOON = 66;
+        static constexpr intcs ACTION_BALLOON = 66;
 
-        public: static constexpr ushort ACTION_STOPOVER = 67;
+        static constexpr intcs ACTION_STOPOVER = 67;
 
-        public: static constexpr ushort ACTION_MARCHOVER = 68;
+        static constexpr intcs ACTION_MARCHOVER = 68;
 
-        public: static constexpr ushort ACTION_TURNOVER = 69;
+        static constexpr intcs ACTION_TURNOVER = 69;
 
-        public: static constexpr ushort ACTION_RECEDEq = 70;
+        static constexpr intcs ACTION_RECEDEq = 70;
 
-        public: static constexpr ushort ACTION_ADVANCEq = 71;
+        static constexpr intcs ACTION_ADVANCEq = 71;
 
-        public: static constexpr ushort ACTION_STOPECRASE = 72;
+        static constexpr intcs ACTION_STOPECRASE = 72;
 
-        public: static constexpr ushort ACTION_MARCHECRASE = 73;
+        static constexpr intcs ACTION_MARCHECRASE = 73;
 
-        public: static constexpr ushort ACTION_TELEPORTE = 74;
+        static constexpr intcs ACTION_TELEPORTE = 74;
 
-        public: static constexpr ushort ACTION_CLEAR2 = 75;
+        static constexpr intcs ACTION_CLEAR2 = 75;
 
-        public: static constexpr ushort ACTION_CLEAR3 = 76;
+        static constexpr intcs ACTION_CLEAR3 = 76;
 
-        public: static constexpr ushort ACTION_CLEAR4 = 77;
+        static constexpr intcs ACTION_CLEAR4 = 77;
 
-        public: static constexpr ushort ACTION_CLEAR5 = 78;
+        static constexpr intcs ACTION_CLEAR5 = 78;
 
-        public: static constexpr ushort ACTION_CLEAR6 = 79;
+        static constexpr intcs ACTION_CLEAR6 = 79;
 
-        public: static constexpr ushort ACTION_CLEAR7 = 80;
+        static constexpr intcs ACTION_CLEAR7 = 80;
 
-        public: static constexpr ushort ACTION_CLEAR8 = 81;
+        static constexpr intcs ACTION_CLEAR8 = 81;
 
-        public: static constexpr ushort ACTION_SWITCH = 82;
+        static constexpr intcs ACTION_SWITCH = 82;
 
-        public: static constexpr ushort ACTION_MOCKERYp = 83;
+        static constexpr intcs ACTION_MOCKERYp = 83;
 
-        public: static constexpr ushort ACTION_NON = 84;
+        static constexpr intcs ACTION_NON = 84;
 
-        public: static constexpr ushort ACTION_SLOWDOWNSKATE = 85;
+        static constexpr intcs ACTION_SLOWDOWNSKATE = 85;
 
-        public: static constexpr ushort ACTION_TAKEDYNAMITE = 86;
+        static constexpr intcs ACTION_TAKEDYNAMITE = 86;
 
-        public: static constexpr ushort ACTION_PUTDYNAMITE = 87;
+        static constexpr intcs ACTION_PUTDYNAMITE = 87;
 
-        public: static constexpr ushort DIR_LEFT = 1;
+        static constexpr intcs DIR_LEFT = 1;
 
-        public: static constexpr ushort DIR_RIGHT = 2;
+        static constexpr intcs DIR_RIGHT = 2;
 
-        public: static constexpr ushort SEC_SHIELD = 1;
+        static constexpr intcs SEC_SHIELD = 1;
 
-        public: static constexpr ushort SEC_POWER = 2;
+        static constexpr intcs SEC_POWER = 2;
 
-        public: static constexpr ushort SEC_CLOUD = 3;
+        static constexpr intcs SEC_CLOUD = 3;
 
-        public: static constexpr ushort SEC_HIDE = 4;
+        static constexpr intcs SEC_HIDE = 4;
 
-        public: static constexpr ushort TYPE_ASCENSEUR = 1;
+        static constexpr intcs TYPE_ASCENSEUR = 1;
 
-        public: static constexpr ushort TYPE_BOMBEDOWN = 2;
+        static constexpr intcs TYPE_BOMBEDOWN = 2;
 
-        public: static constexpr ushort TYPE_BOMBEUP = 3;
+        static constexpr intcs TYPE_BOMBEUP = 3;
 
-        public: static constexpr ushort TYPE_BULLDOZER = 4;
+        static constexpr intcs TYPE_BULLDOZER = 4;
 
-        public: static constexpr ushort TYPE_TRESOR = 5;
+        static constexpr intcs TYPE_TRESOR = 5;
 
-        public: static constexpr ushort TYPE_EGG = 6;
+        static constexpr intcs TYPE_EGG = 6;
 
-        public: static constexpr ushort TYPE_GOAL = 7;
+        static constexpr intcs TYPE_GOAL = 7;
 
-        public: static constexpr ushort TYPE_EXPLO1 = 8;
+        static constexpr intcs TYPE_EXPLO1 = 8;
 
-        public: static constexpr ushort TYPE_EXPLO2 = 9;
+        static constexpr intcs TYPE_EXPLO2 = 9;
 
-        public: static constexpr ushort TYPE_EXPLO3 = 10;
+        static constexpr intcs TYPE_EXPLO3 = 10;
 
-        public: static constexpr ushort TYPE_EXPLO4 = 11;
+        static constexpr intcs TYPE_EXPLO4 = 11;
 
-        public: static constexpr ushort TYPE_CAISSE = 12;
+        static constexpr intcs TYPE_CAISSE = 12;
 
-        public: static constexpr ushort TYPE_HELICO = 13;
+        static constexpr intcs TYPE_HELICO = 13;
 
-        public: static constexpr ushort TYPE_PLOUF = 14;
+        static constexpr intcs TYPE_PLOUF = 14;
 
-        public: static constexpr ushort TYPE_BLUP = 15;
+        static constexpr intcs TYPE_BLUP = 15;
 
-        public: static constexpr ushort TYPE_BOMBEMOVE = 16;
+        static constexpr intcs TYPE_BOMBEMOVE = 16;
 
-        public: static constexpr ushort TYPE_POISSON = 17;
+        static constexpr intcs TYPE_POISSON = 17;
 
-        public: static constexpr ushort TYPE_TOMATES = 18;
+        static constexpr intcs TYPE_TOMATES = 18;
 
-        public: static constexpr ushort TYPE_JEEP = 19;
+        static constexpr intcs TYPE_JEEP = 19;
 
-        public: static constexpr ushort TYPE_OISEAU = 20;
+        static constexpr intcs TYPE_OISEAU = 20;
 
-        public: static constexpr ushort TYPE_CLE = 21;
+        static constexpr intcs TYPE_CLE = 21;
 
-        public: static constexpr ushort TYPE_DOOR = 22;
+        static constexpr intcs TYPE_DOOR = 22;
 
-        public: static constexpr ushort TYPE_BALLE = 23;
+        static constexpr intcs TYPE_BALLE = 23;
 
-        public: static constexpr ushort TYPE_SKATE = 24;
+        static constexpr intcs TYPE_SKATE = 24;
 
-        public: static constexpr ushort TYPE_SHIELD = 25;
+        static constexpr intcs TYPE_SHIELD = 25;
 
-        public: static constexpr ushort TYPE_POWER = 26;
+        static constexpr intcs TYPE_POWER = 26;
 
-        public: static constexpr ushort TYPE_MAGICTRACK = 27;
+        static constexpr intcs TYPE_MAGICTRACK = 27;
 
-        public: static constexpr ushort TYPE_TANK = 28;
+        static constexpr intcs TYPE_TANK = 28;
 
-        public: static constexpr ushort TYPE_BULLET = 29;
+        static constexpr intcs TYPE_BULLET = 29;
 
-        public: static constexpr ushort TYPE_DRINK = 30;
+        static constexpr intcs TYPE_DRINK = 30;
 
-        public: static constexpr ushort TYPE_CHARGE = 31;
+        static constexpr intcs TYPE_CHARGE = 31;
 
-        public: static constexpr ushort TYPE_BLUPIHELICO = 32;
+        static constexpr intcs TYPE_BLUPIHELICO = 32;
 
-        public: static constexpr ushort TYPE_BLUPITANK = 33;
+        static constexpr intcs TYPE_BLUPITANK = 33;
 
-        public: static constexpr ushort TYPE_GLU = 34;
+        static constexpr intcs TYPE_GLU = 34;
 
-        public: static constexpr ushort TYPE_TIPLOUF = 35;
+        static constexpr intcs TYPE_TIPLOUF = 35;
 
-        public: static constexpr ushort TYPE_POLLUTION = 36;
+        static constexpr intcs TYPE_POLLUTION = 36;
 
-        public: static constexpr ushort TYPE_CLEAR = 37;
+        static constexpr intcs TYPE_CLEAR = 37;
 
-        public: static constexpr ushort TYPE_ELECTRO = 38;
+        static constexpr intcs TYPE_ELECTRO = 38;
 
-        public: static constexpr ushort TYPE_TRESORTRACK = 39;
+        static constexpr intcs TYPE_TRESORTRACK = 39;
 
-        public: static constexpr ushort TYPE_INVERT = 40;
+        static constexpr intcs TYPE_INVERT = 40;
 
-        public: static constexpr ushort TYPE_INVERTSTART = 41;
+        static constexpr intcs TYPE_INVERTSTART = 41;
 
-        public: static constexpr ushort TYPE_INVERTSTOP = 42;
+        static constexpr intcs TYPE_INVERTSTOP = 42;
 
-        public: static constexpr ushort TYPE_GUEPE = 44;
+        static constexpr intcs TYPE_GUEPE = 44;
 
-        public: static constexpr ushort TYPE_OVER = 46;
+        static constexpr intcs TYPE_OVER = 46;
 
-        public: static constexpr ushort TYPE_ASCENSEURs = 47;
+        static constexpr intcs TYPE_ASCENSEURs = 47;
 
-        public: static constexpr ushort TYPE_ASCENSEURsi = 48;
+        static constexpr intcs TYPE_ASCENSEURsi = 48;
 
-        public: static constexpr ushort TYPE_CLE1 = 49;
+        static constexpr intcs TYPE_CLE1 = 49;
 
-        public: static constexpr ushort TYPE_CLE2 = 50;
+        static constexpr intcs TYPE_CLE2 = 50;
 
-        public: static constexpr ushort TYPE_CLE3 = 51;
+        static constexpr intcs TYPE_CLE3 = 51;
 
-        public: static constexpr ushort TYPE_BRIDGE = 52;
+        static constexpr intcs TYPE_BRIDGE = 52;
 
-        public: static constexpr ushort TYPE_TENTACULE = 53;
+        static constexpr intcs TYPE_TENTACULE = 53;
 
-        public: static constexpr ushort TYPE_CREATURE = 54;
+        static constexpr intcs TYPE_CREATURE = 54;
 
-        public: static constexpr ushort TYPE_DYNAMITE = 55;
+        static constexpr intcs TYPE_DYNAMITE = 55;
 
-        public: static constexpr ushort TYPE_DYNAMITEf = 56;
+        static constexpr intcs TYPE_DYNAMITEf = 56;
 
-        public: static constexpr ushort TYPE_SHIELDTRACK = 57;
+        static constexpr intcs TYPE_SHIELDTRACK = 57;
 
-        public: static constexpr ushort TYPE_HIDETRACK = 58;
+        static constexpr intcs TYPE_HIDETRACK = 58;
 
-        public: static constexpr ushort TYPE_EXPLO5 = 90;
+        static constexpr intcs TYPE_EXPLO5 = 90;
 
-        public: static constexpr ushort TYPE_EXPLO6 = 91;
+        static constexpr intcs TYPE_EXPLO6 = 91;
 
-        public: static constexpr ushort TYPE_EXPLO7 = 92;
+        static constexpr intcs TYPE_EXPLO7 = 92;
 
-        public: static constexpr ushort TYPE_EXPLO8 = 93;
+        static constexpr intcs TYPE_EXPLO8 = 93;
 
-        public: static constexpr ushort TYPE_EXPLO9 = 94;
+        static constexpr intcs TYPE_EXPLO9 = 94;
 
-        public: static constexpr ushort TYPE_EXPLO10 = 95;
+        static constexpr intcs TYPE_EXPLO10 = 95;
 
-        public: static constexpr ushort TYPE_BOMBEFOLLOW1 = 96;
+        static constexpr intcs TYPE_BOMBEFOLLOW1 = 96;
 
-        public: static constexpr ushort TYPE_BOMBEFOLLOW2 = 97;
+        static constexpr intcs TYPE_BOMBEFOLLOW2 = 97;
 
-        public: static constexpr ushort TYPE_SPLOUTCH1 = 98;
+        static constexpr intcs TYPE_SPLOUTCH1 = 98;
 
-        public: static constexpr ushort TYPE_SPLOUTCH2 = 99;
+        static constexpr intcs TYPE_SPLOUTCH2 = 99;
 
-        public: static constexpr ushort TYPE_SPLOUTCH3 = 100;
+        static constexpr intcs TYPE_SPLOUTCH3 = 100;
 
-        public: static constexpr ushort TYPE_BOMBEPERSO1 = 200;
+        static constexpr intcs TYPE_BOMBEPERSO1 = 200;
 
-        public: static constexpr ushort TYPE_BOMBEPERSO2 = 201;
+        static constexpr intcs TYPE_BOMBEPERSO2 = 201;
 
-        public: static constexpr ushort TYPE_BOMBEPERSO3 = 202;
+        static constexpr intcs TYPE_BOMBEPERSO3 = 202;
 
-        public: static constexpr ushort TYPE_BOMBEPERSO4 = 203;
+        static constexpr intcs TYPE_BOMBEPERSO4 = 203;
 
-        public: static constexpr ushort STEP_STOPSTART = 1;
+        static constexpr intcs STEP_STOPSTART = 1;
 
-        public: static constexpr ushort STEP_ADVANCE = 2;
+        static constexpr intcs STEP_ADVANCE = 2;
 
-        public: static constexpr ushort STEP_STOPEND = 3;
+        static constexpr intcs STEP_STOPEND = 3;
 
-        public: static constexpr ushort STEP_RECEDE = 4;
+        static constexpr intcs STEP_RECEDE = 4;
 
-        public: static constexpr ushort DECOR_EXPLO1 = 1;
+        static constexpr intcs DECOR_EXPLO1 = 1;
 
-        public: static constexpr ushort DECOR_EXPLO2 = 2;
+        static constexpr intcs DECOR_EXPLO2 = 2;
 
-        public: static constexpr ushort DECOR_EXPLO3 = 3;
+        static constexpr intcs DECOR_EXPLO3 = 3;
 
-        public: static constexpr ushort DECOR_EXPLO4 = 4;
+        static constexpr intcs DECOR_EXPLO4 = 4;
 
-        public: static constexpr ushort DECOR_BALLOON = 5;
+        static constexpr intcs DECOR_BALLOON = 5;
 
-        public: static constexpr ushort SOUND_CLICK = 0;
+        static constexpr intcs SOUND_CLICK = 0;
 
-        public: static constexpr ushort SOUND_JUMP1 = 1;
+        static constexpr intcs SOUND_JUMP1 = 1;
 
-        public: static constexpr ushort SOUND_JUMP2 = 2;
+        static constexpr intcs SOUND_JUMP2 = 2;
 
-        public: static constexpr ushort SOUND_JUMPEND = 3;
+        static constexpr intcs SOUND_JUMPEND = 3;
 
-        public: static constexpr ushort SOUND_JUMPTOC = 4;
+        static constexpr intcs SOUND_JUMPTOC = 4;
 
-        public: static constexpr ushort SOUND_TURN = 5;
+        static constexpr intcs SOUND_TURN = 5;
 
-        public: static constexpr ushort SOUND_VERTIGO = 6;
+        static constexpr intcs SOUND_VERTIGO = 6;
 
-        public: static constexpr ushort SOUND_DOWN = 7;
+        static constexpr intcs SOUND_DOWN = 7;
 
-        public: static constexpr ushort SOUND_FALL = 8;
+        static constexpr intcs SOUND_FALL = 8;
 
-        public: static constexpr ushort SOUND_NEW = 9;
+        static constexpr intcs SOUND_NEW = 9;
 
-        public: static constexpr ushort SOUND_BOUM = 10;
+        static constexpr intcs SOUND_BOUM = 10;
 
-        public: static constexpr ushort SOUND_TRESOR = 11;
+        static constexpr intcs SOUND_TRESOR = 11;
 
-        public: static constexpr ushort SOUND_EGG = 12;
+        static constexpr intcs SOUND_EGG = 12;
 
-        public: static constexpr ushort SOUND_ENDKO = 13;
+        static constexpr intcs SOUND_ENDKO = 13;
 
-        public: static constexpr ushort SOUND_ENDOK = 14;
+        static constexpr intcs SOUND_ENDOK = 14;
 
-        public: static constexpr ushort SOUND_HELICOSTART = 15;
+        static constexpr intcs SOUND_HELICOSTART = 15;
 
-        public: static constexpr ushort SOUND_HELICOHIGH = 16;
+        static constexpr intcs SOUND_HELICOHIGH = 16;
 
-        public: static constexpr ushort SOUND_HELICOSTOP = 17;
+        static constexpr intcs SOUND_HELICOSTOP = 17;
 
-        public: static constexpr ushort SOUND_HELICOLOW = 18;
+        static constexpr intcs SOUND_HELICOLOW = 18;
 
-        public: static constexpr ushort SOUND_LASTTRESOR = 19;
+        static constexpr intcs SOUND_LASTTRESOR = 19;
 
-        public: static constexpr ushort SOUND_UP = 20;
+        static constexpr intcs SOUND_UP = 20;
 
-        public: static constexpr ushort SOUND_LOOKUP = 21;
+        static constexpr intcs SOUND_LOOKUP = 21;
 
-        public: static constexpr ushort SOUND_JUMP0 = 22;
+        static constexpr intcs SOUND_JUMP0 = 22;
 
-        public: static constexpr ushort SOUND_PLOUF = 23;
+        static constexpr intcs SOUND_PLOUF = 23;
 
-        public: static constexpr ushort SOUND_BLUP = 24;
+        static constexpr intcs SOUND_BLUP = 24;
 
-        public: static constexpr ushort SOUND_SURF = 25;
+        static constexpr intcs SOUND_SURF = 25;
 
-        public: static constexpr ushort SOUND_DROWN = 26;
+        static constexpr intcs SOUND_DROWN = 26;
 
-        public: static constexpr ushort SOUND_ERROR = 27;
+        static constexpr intcs SOUND_ERROR = 27;
 
-        public: static constexpr ushort SOUND_JEEPSTART = 28;
+        static constexpr intcs SOUND_JEEPSTART = 28;
 
-        public: static constexpr ushort SOUND_JEEPHIGH = 29;
+        static constexpr intcs SOUND_JEEPHIGH = 29;
 
-        public: static constexpr ushort SOUND_JEEPSTOP = 30;
+        static constexpr intcs SOUND_JEEPSTOP = 30;
 
-        public: static constexpr ushort SOUND_JEEPLOW = 31;
+        static constexpr intcs SOUND_JEEPLOW = 31;
 
-        public: static constexpr ushort SOUND_BYE = 32;
+        static constexpr intcs SOUND_BYE = 32;
 
-        public: static constexpr ushort SOUND_DOOR = 33;
+        static constexpr intcs SOUND_DOOR = 33;
 
-        public: static constexpr ushort SOUND_SUSPENDTOC = 34;
+        static constexpr intcs SOUND_SUSPENDTOC = 34;
 
-        public: static constexpr ushort SOUND_SUSPENDJUMP = 35;
+        static constexpr intcs SOUND_SUSPENDJUMP = 35;
 
-        public: static constexpr ushort SOUND_SINGE = 36;
+        static constexpr intcs SOUND_SINGE = 36;
 
-        public: static constexpr ushort SOUND_PATIENT = 37;
+        static constexpr intcs SOUND_PATIENT = 37;
 
-        public: static constexpr ushort SOUND_PUSH = 38;
+        static constexpr intcs SOUND_PUSH = 38;
 
-        public: static constexpr ushort SOUND_POP = 39;
+        static constexpr intcs SOUND_POP = 39;
 
-        public: static constexpr ushort SOUND_JUMPAIE = 40;
+        static constexpr intcs SOUND_JUMPAIE = 40;
 
-        public: static constexpr ushort SOUND_RESSORT = 41;
+        static constexpr intcs SOUND_RESSORT = 41;
 
-        public: static constexpr ushort SOUND_STARTSHIELD = 42;
+        static constexpr intcs SOUND_STARTSHIELD = 42;
 
-        public: static constexpr ushort SOUND_STOPSHIELD = 43;
+        static constexpr intcs SOUND_STOPSHIELD = 43;
 
-        public: static constexpr ushort SOUND_STARTPOWER = 44;
+        static constexpr intcs SOUND_STARTPOWER = 44;
 
-        public: static constexpr ushort SOUND_STOPPOWER = 45;
+        static constexpr intcs SOUND_STOPPOWER = 45;
 
-        public: static constexpr ushort SOUND_OUF1 = 46;
+        static constexpr intcs SOUND_OUF1 = 46;
 
-        public: static constexpr ushort SOUND_OUF2 = 47;
+        static constexpr intcs SOUND_OUF2 = 47;
 
-        public: static constexpr ushort SOUND_OUF3 = 48;
+        static constexpr intcs SOUND_OUF3 = 48;
 
-        public: static constexpr ushort SOUND_OUF4 = 49;
+        static constexpr intcs SOUND_OUF4 = 49;
 
-        public: static constexpr ushort SOUND_SUCETTE = 50;
+        static constexpr intcs SOUND_SUCETTE = 50;
 
-        public: static constexpr ushort SOUND_GLU = 51;
+        static constexpr intcs SOUND_GLU = 51;
 
-        public: static constexpr ushort SOUND_FIREOK = 52;
+        static constexpr intcs SOUND_FIREOK = 52;
 
-        public: static constexpr ushort SOUND_FIREKO = 53;
+        static constexpr intcs SOUND_FIREKO = 53;
 
-        public: static constexpr ushort SOUND_TAKEGLU = 54;
+        static constexpr intcs SOUND_TAKEGLU = 54;
 
-        public: static constexpr ushort SOUND_STARTCLOUD = 55;
+        static constexpr intcs SOUND_STARTCLOUD = 55;
 
-        public: static constexpr ushort SOUND_STOPCLOUD = 56;
+        static constexpr intcs SOUND_STOPCLOUD = 56;
 
-        public: static constexpr ushort SOUND_DRINK = 57;
+        static constexpr intcs SOUND_DRINK = 57;
 
-        public: static constexpr ushort SOUND_CHARGE = 58;
+        static constexpr intcs SOUND_CHARGE = 58;
 
-        public: static constexpr ushort SOUND_ELECTRO = 59;
+        static constexpr intcs SOUND_ELECTRO = 59;
 
-        public: static constexpr ushort SOUND_PERSOTAKE = 60;
+        static constexpr intcs SOUND_PERSOTAKE = 60;
 
-        public: static constexpr ushort SOUND_PERSOPOSE = 61;
+        static constexpr intcs SOUND_PERSOPOSE = 61;
 
-        public: static constexpr ushort SOUND_STARTHIDE = 62;
+        static constexpr intcs SOUND_STARTHIDE = 62;
 
-        public: static constexpr ushort SOUND_STOPHIDE = 63;
+        static constexpr intcs SOUND_STOPHIDE = 63;
 
-        public: static constexpr ushort SOUND_TIPLOUF = 64;
+        static constexpr intcs SOUND_TIPLOUF = 64;
 
-        public: static constexpr ushort SOUND_MOCKERY = 65;
+        static constexpr intcs SOUND_MOCKERY = 65;
 
-        public: static constexpr ushort SOUND_INVERTSTART = 66;
+        static constexpr intcs SOUND_INVERTSTART = 66;
 
-        public: static constexpr ushort SOUND_INVERTSTOP = 67;
+        static constexpr intcs SOUND_INVERTSTOP = 67;
 
-        public: static constexpr ushort SOUND_OVERSTOP = 68;
+        static constexpr intcs SOUND_OVERSTOP = 68;
 
-        public: static constexpr ushort SOUND_BLITZ = 69;
+        static constexpr intcs SOUND_BLITZ = 69;
 
-        public: static constexpr ushort SOUND_ECRASE = 70;
+        static constexpr intcs SOUND_ECRASE = 70;
 
-        public: static constexpr ushort SOUND_TELEPORTE = 71;
+        static constexpr intcs SOUND_TELEPORTE = 71;
 
-        public: static constexpr ushort SOUND_BRIDGE1 = 72;
+        static constexpr intcs SOUND_BRIDGE1 = 72;
 
-        public: static constexpr ushort SOUND_BRIDGE2 = 73;
+        static constexpr intcs SOUND_BRIDGE2 = 73;
 
-        public: static constexpr ushort SOUND_ANGEL = 74;
+        static constexpr intcs SOUND_ANGEL = 74;
 
-        public: static constexpr ushort SOUND_SCIE = 75;
+        static constexpr intcs SOUND_SCIE = 75;
 
-        public: static constexpr ushort SOUND_SWITCHOFF = 76;
+        static constexpr intcs SOUND_SWITCHOFF = 76;
 
-        public: static constexpr ushort SOUND_SWITCHON = 77;
+        static constexpr intcs SOUND_SWITCHON = 77;
 
-        public: static constexpr ushort SOUND_JUMPENDb = 78;
+        static constexpr intcs SOUND_JUMPENDb = 78;
 
-        public: static constexpr ushort SOUND_JUMPTOCb = 79;
+        static constexpr intcs SOUND_JUMPTOCb = 79;
 
-        public: static constexpr ushort SOUND_JUMPENDm = 80;
+        static constexpr intcs SOUND_JUMPENDm = 80;
 
-        public: static constexpr ushort SOUND_JUMPTOCm = 81;
+        static constexpr intcs SOUND_JUMPTOCm = 81;
 
-        public: static constexpr ushort SOUND_JUMPENDg = 82;
+        static constexpr intcs SOUND_JUMPENDg = 82;
 
-        public: static constexpr ushort SOUND_JUMPTOCg = 83;
+        static constexpr intcs SOUND_JUMPTOCg = 83;
 
-        public: static constexpr ushort SOUND_JUMPENDo = 84;
+        static constexpr intcs SOUND_JUMPENDo = 84;
 
-        public: static constexpr ushort SOUND_JUMPTOCo = 85;
+        static constexpr intcs SOUND_JUMPTOCo = 85;
 
-        public: static constexpr ushort SOUND_JUMPENDk = 86;
+        static constexpr intcs SOUND_JUMPENDk = 86;
 
-        public: static constexpr ushort SOUND_JUMPTOCk = 87;
+        static constexpr intcs SOUND_JUMPTOCk = 87;
 
-        public: static constexpr ushort SOUND_JUMPENDf = 88;
+        static constexpr intcs SOUND_JUMPENDf = 88;
 
-        public: static constexpr ushort SOUND_JUMPTOCf = 89;
+        static constexpr intcs SOUND_JUMPTOCf = 89;
 
-        public: static constexpr ushort SOUND_JUMPENDh = 90;
+        static constexpr intcs SOUND_JUMPENDh = 90;
 
-        public: static constexpr ushort SOUND_JUMPTOCh = 91;
+        static constexpr intcs SOUND_JUMPTOCh = 91;
 
-        public: static constexpr ushort SOUND_FOLLOW = 92;
+        static constexpr intcs SOUND_FOLLOW = 92;
 
-        public: static constexpr ushort KEY_JUMP = 1;
+        static constexpr intcs KEY_JUMP = 1;
 
-        public: static constexpr ushort KEY_FIRE = 2;
+        static constexpr intcs KEY_FIRE = 2;
 
-        public: static constexpr ushort KEY_DOWN = 4;
+        static constexpr intcs KEY_DOWN = 4;
 
-        static constexpr bool getHasSound(){return true;}
+        static constexpr bool getHasSoundProperty(){return true;}
 
-        static constexpr bool getEasyMove(){ return true;}
+        static constexpr bool getEasyMoveProperty(){ return true;}
 
     };
 
 }
-#endif // DEF_H
+

@@ -62,7 +62,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     void Sound::LoadContent()
     {
-        if (!Def::getHasSound())
+        if (!Def::getHasSoundProperty())
         {
             return;
         }

@@ -84,8 +84,8 @@ namespace WindowsPhoneSpeedyBlupi {
         waitJauge.Create(pixmap.get(), sound.get(), pos, 3, false);
         waitJauge.SetHide(false);
         waitJauge.setZoomProperty(2.0);
-        phase = Def::Phase::NonePhase;
-        fadeOutPhase = Def::Phase::NonePhase;
+        phase = Def::Phase::None;
+        fadeOutPhase = Def::Phase::None;
 
         SetPhase(Def::Phase::First);
     }
@@ -428,7 +428,7 @@ namespace WindowsPhoneSpeedyBlupi {
         if (phase == Def::Phase::Wait || phase == Def::Phase::Init || phase == Def::Phase::Pause || phase == Def::Phase::Resume || phase == Def::Phase::Lost || phase == Def::Phase::Win || phase == Def::Phase::MainSetup || phase == Def::Phase::PlaySetup || phase == Def::Phase::Trial || phase == Def::Phase::Ranking)
         {
             pixmap->DrawBackground();
-            if (fadeOutPhase == Def::Phase::NonePhase && missionToStart1 != -1)
+            if (fadeOutPhase == Def::Phase::None && missionToStart1 != -1)
             {
                 missionToStart2 = missionToStart1;
                 missionToStart1 = -1;
@@ -436,7 +436,7 @@ namespace WindowsPhoneSpeedyBlupi {
             else
             {
                 DrawBackgroundFade();
-                if (fadeOutPhase == Def::Phase::NonePhase)
+                if (fadeOutPhase == Def::Phase::None)
                 {
                     DrawButtonsBackground();
                     inputPad.Draw();
@@ -498,7 +498,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     opacity = (1.0 - num) * (1.0 - num);
                     num = 1.0;
                 }
-                else if (fadeOutPhase == Def::Phase::NonePhase)
+                else if (fadeOutPhase == Def::Phase::None)
                 {
                     num = 0.5 + num / 2.0;
                     opacity = std::min(num * num, 1.0);
@@ -546,7 +546,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 else
                 {
                     double num;
-                    if (fadeOutPhase == Def::Phase::NonePhase)
+                    if (fadeOutPhase == Def::Phase::None)
                     {
                         num = std::min((double)phaseTime / 15.0, 1.0);
                     }
@@ -862,7 +862,7 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 if (missionToStart2 == -1)
                 {
-                    if ((this->phase == Def::Phase::Init || this->phase == Def::Phase::MainSetup || this->phase == Def::Phase::PlaySetup || this->phase == Def::Phase::Pause || this->phase == Def::Phase::Resume) && fadeOutPhase == Def::Phase::NonePhase)
+                    if ((this->phase == Def::Phase::Init || this->phase == Def::Phase::MainSetup || this->phase == Def::Phase::PlaySetup || this->phase == Def::Phase::Pause || this->phase == Def::Phase::Resume) && fadeOutPhase == Def::Phase::None)
                     {
                         fadeOutPhase = phase;
                         fadeOutMission = mission;
@@ -871,7 +871,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                     if (phase == Def::Phase::Play)
                     {
-                        fadeOutPhase = Def::Phase::NonePhase;
+                        fadeOutPhase = Def::Phase::None;
                         if (fadeOutMission != -1)
                         {
                             missionToStart1 = fadeOutMission;
@@ -887,7 +887,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 }
             }
             this->phase = phase;
-            fadeOutPhase = Def::Phase::NonePhase;
+            fadeOutPhase = Def::Phase::None;
             inputPad.setPhaseProperty(this->phase);
             playSetup = this->phase == Def::Phase::PlaySetup;
             isTrialMode = Microsoft::Xna::Framework::GamerServices::Guide::getIsTrialModeProperty();

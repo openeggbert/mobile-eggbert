@@ -37,7 +37,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     Def::ButtonGlyph InputPad::getButtonPressedProperty() const {
         Def::ButtonGlyph result = buttonPressed;
-        buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+        buttonPressed = Def::ButtonGlyph::None;
         return result;
     }
 
@@ -165,8 +165,8 @@ namespace WindowsPhoneSpeedyBlupi {
                     HandleAccelSensorCurrentValueChanged(sensor_reading_event_args);
                 };
 
-            lastButtonDown = Def::ButtonGlyph::NoneButtonGlyph;
-            buttonPressed = Def::ButtonGlyph::NoneButtonGlyph;
+            lastButtonDown = Def::ButtonGlyph::None;
+            buttonPressed = Def::ButtonGlyph::None;
         }
 
         void InputPad::StartMission(int mission)
@@ -194,7 +194,7 @@ namespace WindowsPhoneSpeedyBlupi {
             double verticalChange = 0.0;
             int keyPress = 0;
             padPressed = false;
-            Def::ButtonGlyph buttonGlyph = Def::ButtonGlyph::NoneButtonGlyph;
+            Def::ButtonGlyph buttonGlyph = Def::ButtonGlyph::None;
 
             Microsoft::Xna::Framework::Input::Touch::TouchCollection touches{};
             bool touchScreenIsSupported = true;
@@ -404,12 +404,12 @@ namespace WindowsPhoneSpeedyBlupi {
                         Def::ButtonGlyph::Cheat32}
                 )
                 &&
-                lastButtonDown == Def::ButtonGlyph::NoneButtonGlyph)
+                lastButtonDown == Def::ButtonGlyph::None)
             {
                 TinyPoint pos(320, 240);
                 sound->PlayImage(0, pos);
             }
-            if (buttonGlyph == Def::ButtonGlyph::NoneButtonGlyph && lastButtonDown != 0)
+            if (buttonGlyph == Def::ButtonGlyph::None && lastButtonDown != 0)
             {
                 buttonPressed = lastButtonDown;
             }
@@ -510,7 +510,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     return buttonGlyph;
                 }
             }
-            return Def::ButtonGlyph::NoneButtonGlyph;
+            return Def::ButtonGlyph::None;
         }
 
     void InputPad::Draw()
