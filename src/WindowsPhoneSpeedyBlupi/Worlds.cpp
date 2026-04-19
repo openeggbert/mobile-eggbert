@@ -1,35 +1,27 @@
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.Worlds
-// using System;
-// using System.Diagnostics;
-// using System.Globalization;
-// using System.IO;
-// using System.IO.IsolatedStorage;
-// using System.Text;
-// using System.Threading.Tasks;
-// using Microsoft.Xna.Framework;
-// using WindowsPhoneSpeedyBlupi;
-// #if KNI && Web
-// using Microsoft.JSInterop;
-// using Microsoft.AspNetCore.Components;
-// using static System.Runtime.InteropServices.JavaScript.JSType;
-// #endif
-
-
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
 #include <fstream>
-#include <iostream>
+
+#include "CNA/Logger.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 
     std::stringstream Worlds::output;
-    //static class
-    std::string Worlds::getGameDataFilenameProperty() { return "SpeedyBlupi"; }
-    std::string Worlds::getCurrentGameFilenameProperty() { return "CurrentGame"; }
+    using log = CNA::Logger;
 
-    std::vector<std::string> Worlds::ReadWorld(int gamer, int rank) {
-        string worldFilename = GetWorldFilename(gamer, rank);
+    const std::string& Worlds::getGameDataFilenameProperty()
+    {
+        static std::string GAME_DATA = "SpeedyBlupi";
+        return GAME_DATA;
+    }
+    const std::string& Worlds::getCurrentGameFilenameProperty()
+    {
+        static std::string CURRENT_GAME = "CurrentGame";
+        return CURRENT_GAME;
+    }
+
+    std::vector<std::string> Worlds::ReadWorld(intcs gamer, intcs rank) {
+        const string& worldFilename = GetWorldFilename(gamer, rank);
 
         string text;
         std::vector<std::string> lines;
@@ -37,6 +29,7 @@ namespace WindowsPhoneSpeedyBlupi {
         try {
             std::ifstream file(worldFilename);
             if (!file.is_open()) {
+                log::Fatal("Fatal error. Loading world failed: " + worldFilename);
                 throw std::runtime_error("Fatal error. Loading world failed: " + worldFilename);
             }
 
@@ -45,7 +38,11 @@ namespace WindowsPhoneSpeedyBlupi {
             text = buffer.str();
             file.close();
         } catch (const std::exception &e) {
-            std::cerr << e.what() << std::endl;
+            log::Error(e.what());
+            {
+                log::Fatal("Fatal error. Loading world failed: " + worldFilename);
+                throw std::runtime_error("Fatal error. Loading world failed: " + worldFilename);
+            }
             return {}; // Return empty vector in case of failure
         }
 
@@ -58,19 +55,19 @@ namespace WindowsPhoneSpeedyBlupi {
         return lines;
     }
 
-    std::string Worlds::GetWorldFilename(int gamer, int rank) {
+    std::string Worlds::GetWorldFilename(intcs gamer, intcs rank) {
         std::ostringstream oss;
         oss << "worlds/world" << std::setw(3) << std::setfill('0') << rank << ".txt";
         return oss.str();
     }
 
     bool Worlds::ReadGameData(CppDotNet::bytecs data[], size_t dataSize) {
-        std::cout << "ReadGameData" << std::endl;
+        log::Debug("ReadGameData");
 
         std::ifstream file(getGameDataFilenameProperty(), std::ios::binary);
         if (!file.is_open()) {
-            string gdf = getGameDataFilenameProperty();
-            std::cerr << "Fatal error. Loading game data failed: " << gdf << std::endl;
+            const string& gdf = getGameDataFilenameProperty();
+            log::Error("Fatal error. Loading game data failed: " + gdf);
             return false;
         }
 
@@ -84,21 +81,18 @@ namespace WindowsPhoneSpeedyBlupi {
             file.close();
             return true;
         } catch (const std::exception &e) {
-            std::cerr << e.what() << std::endl;
+            log::Error(e.what());
             return false;
         }
     }
 
     void Worlds::WriteGameData(CppDotNet::bytecs data[], size_t dataSize) {
-        std::cout << "WriteGameData" << std::endl;
-
-
-        std::cout << "WriteGameData" << std::endl;
+        log::Debug("WriteGameData");
 
         std::ofstream file(getGameDataFilenameProperty(), std::ios::binary | std::ios::trunc);
         if (!file.is_open()) {
-            string gdf = getGameDataFilenameProperty();
-            std::cerr << "Fatal error. Writing game data failed: " << gdf << std::endl;
+            const string& gdf = getGameDataFilenameProperty();
+            log::Error("Fatal error. Writing game data failed: " + gdf);
             return;
         }
 
@@ -107,7 +101,7 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
     void Worlds::DeleteCurrentGame() {
-        std::cout << "DeleteCurrentGame" << std::endl;
+        log::Debug("DeleteCurrentGame");
 
         const std::filesystem::path path{getCurrentGameFilenameProperty()};
         try {
@@ -115,17 +109,17 @@ namespace WindowsPhoneSpeedyBlupi {
                 std::filesystem::remove(path);
             }
         } catch (const std::exception &e) {
-            std::cerr << "Error deleting file: " << e.what() << std::endl;
+            log::Error (std::string("Error deleting file: ") + e.what());
         }
     }
 
     string Worlds::ReadCurrentGame() {
-        std::cout << "ReadCurrentGame" << std::endl;
+        log::Debug("ReadCurrentGame");
 
         std::ifstream file(getCurrentGameFilenameProperty(), std::ios::binary);
         if (!file.is_open()) {
             string cgf = getCurrentGameFilenameProperty();
-            std::cerr << "Fatal error. Loading current game failed: " << cgf << std::endl;
+            log::Error("Fatal error. Loading current game failed: " + cgf);
             return "";
         }
 
@@ -140,13 +134,13 @@ namespace WindowsPhoneSpeedyBlupi {
 
             return std::string(buffer.begin(), buffer.end());
         } catch (const std::exception &e) {
-            std::cerr << e.what() << std::endl;
+            log::Error(e.what());
             return "";
         }
     }
 
-    void Worlds::WriteCurrentGame(string &data) {
-        std::cout << "WriteCurrentGame" << std::endl;
+    void Worlds::WriteCurrentGame(const string &data) {
+        log::Debug("WriteCurrentGame");
 
         std::ofstream file(getCurrentGameFilenameProperty(), std::ios::out | std::ios::binary);
         if (file.is_open()) {
@@ -156,10 +150,10 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
 
-    void Worlds::GetIntArrayField(string lines[], int lineCount, const string &section, int rank,
-                                  const string &name, int array[], int arraySize) {
+    void Worlds::GetIntArrayField(string lines[], intcs lineCount, const string& section, intcs rank,
+                                  const string& name, intcs array[], intcs arraySize) {
         arraySize = 0;
-        for (int i = 0; i < lineCount; i++) {
+        for (intcs i = 0; i < lineCount; i++) {
             const string &text = lines[i];
             if (!text.starts_with(section + ":") || rank-- != 0) {
                 continue;
@@ -180,24 +174,24 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
 
-    bool Worlds::GetBoolField(const string lines[], int lineCount, const string &section, int rank,
+    bool Worlds::GetBoolField(const string lines[], intcs lineCount, const string &section, intcs rank,
                               const string &name) {
         return GetTypedField<bool>(lines, lineCount, section, rank, name);
     }
 
-    int Worlds::GetIntField(const string lines[], int lineCount, const string &section, int rank, const string &name) {
-        return GetTypedField<int>(lines, lineCount, section, rank, name);
+    int Worlds::GetIntField(const string lines[], intcs lineCount, const string &section, intcs rank, const string &name) {
+        return GetTypedField<intcs>(lines, lineCount, section, rank, name);
     }
 
-    double Worlds::GetDoubleField(const string lines[], int lineCount, const string &section, int rank,
+    double Worlds::GetDoubleField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                   const string &name) {
         return GetTypedField<double>(lines, lineCount, section, rank, name);
     }
 
 
-    TinyPoint Worlds::GetPointField(const string lines[], int lineCount, const string &section, int rank,
+    TinyPoint Worlds::GetPointField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                     const string &name) {
-        for (int i = 0; i < lineCount; i++) {
+        for (intcs i = 0; i < lineCount; i++) {
             const string &text = lines[i];
             if (!text.starts_with(section + ":") || rank-- != 0) {
                 continue;
@@ -215,8 +209,8 @@ namespace WindowsPhoneSpeedyBlupi {
         return TinyPoint{0, 0};
     }
 
-    int Worlds::GetDecorField(const string lines[], int lineCount, const string &section, int x, int y) {
-        for (int i = 0; i < lineCount; i++) {
+    intcs Worlds::GetDecorField(const string lines[], intcs lineCount, const string &section, intcs x, intcs y) {
+        for (intcs i = 0; i < lineCount; i++) {
             if (!lines[i].starts_with(section + ":")) continue;
 
             const string &text = lines[i + 1 + x];
@@ -234,10 +228,10 @@ namespace WindowsPhoneSpeedyBlupi {
         return -1;
     }
 
-    void Worlds::GetDoorsField(const string lines[], int lineCount, const string &section, int doors[],
-                               int &doorCount) {
+    void Worlds::GetDoorsField(const string lines[], intcs lineCount, const string &section, intcs doors[],
+                               intcs &doorCount) {
         doorCount = 0;
-        for (int i = 0; i < lineCount; i++) {
+        for (intcs i = 0; i < lineCount; i++) {
             const string &text = lines[i];
             if (!text.starts_with(section + ":")) continue;
 
@@ -251,7 +245,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             items[index++] = text.substr(prev);
 
-            for (int j = 0; j < index; j++) {
+            for (intcs j = 0; j < index; j++) {
                 doors[j] = (items[j].empty()) ? 1 : stoi(items[j]);
             }
             doorCount = index;
@@ -268,7 +262,7 @@ namespace WindowsPhoneSpeedyBlupi {
         output << ": ";
     }
 
-    void Worlds::WriteIntArrayField(const string &name, const int array[], const int &arraySize) {
+    void Worlds::WriteIntArrayField(const string &name, const intcs array[], const intcs &arraySize) {
         output << name;
         output << "=";
         for (int i = 0; i < arraySize; i++) {
@@ -283,11 +277,11 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
     void Worlds::WriteBoolField(const std::string &name, bool n) {
-        std::cout << name << "=" << std::boolalpha << n << " ";
+        output << name << "=" << std::boolalpha << n << " ";
     }
 
 
-    void Worlds::WriteIntField(const string &name, int n) {
+    void Worlds::WriteIntField(const string &name, intcs n) {
         output << name;
         output << "=";
         output << std::to_string(n);
@@ -295,7 +289,7 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
     void Worlds::WriteDoubleField(const std::string &name, double n) {
-        std::cout << name << "=" << std::setprecision(15) << std::fixed << n << " ";
+        output << name << "=" << std::setprecision(15) << std::fixed << n << " ";
     }
 
     void Worlds::WritePointField(const string &name, TinyPoint p) {
@@ -307,8 +301,8 @@ namespace WindowsPhoneSpeedyBlupi {
         output << " ";
     }
 
-    void Worlds::WriteDecorField(const int line[], const int &arraySize) {
-        for (int i = 0; i < arraySize; i++) {
+    void Worlds::WriteDecorField(const intcs line[], const intcs &arraySize) {
+        for (intcs i = 0; i < arraySize; i++) {
             if (line[i] != -1) {
                 output << int_to_string(line[i]);
             }
@@ -319,8 +313,8 @@ namespace WindowsPhoneSpeedyBlupi {
         output << "\n";
     }
 
-    void Worlds::WriteDoorsField(const int doors[], const int &arraySize) {
-        for (int i = 0; i < arraySize; i++) {
+    void Worlds::WriteDoorsField(const intcs doors[], const intcs &arraySize) {
+        for (intcs i = 0; i < arraySize; i++) {
             if (doors[i] != 1) {
                 output << int_to_string(doors[i]);
             }

@@ -21,6 +21,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
     public:
         Def() = delete;
+        ~Def() = delete;
 
         /**
          * @brief Represents the current game phase.

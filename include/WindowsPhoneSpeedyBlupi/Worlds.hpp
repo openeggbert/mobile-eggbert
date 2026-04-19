@@ -1,26 +1,21 @@
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.Def
+#pragma once
 
-//using Microsoft.Xna.Framework.Input;
-//using static WindowsPhoneSpeedyBlupi.Def;
-#ifndef WORLDS_H
-#define WORLDS_H
 #include <filesystem>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "CppDotNet/CppDotNetHelper.hpp"
-#include "CppDotNet/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 #define int_to_string(i) std::to_string(i)
-
 
 namespace WindowsPhoneSpeedyBlupi {
     using std::string;
 
-
     class Worlds {
+    public:
+        Worlds() = delete;
+        ~Worlds() = delete;
     private:
         static std::stringstream output;
 
@@ -30,7 +25,7 @@ namespace WindowsPhoneSpeedyBlupi {
          * This property is initialized using a lambda function that returns the default game data filename,
          * which is "SpeedyBlupi".
          */
-        DEF_PROP(std::string, GameDataFilename, getter1, setter0, member1, static1, constret0, ref0, constmet0)
+         [[nodiscard]] static const std::string & getGameDataFilenameProperty() ;
 
         /**
          * @brief Represents a static property that holds the filename for the current game.
@@ -38,49 +33,43 @@ namespace WindowsPhoneSpeedyBlupi {
          * This property is initialized using a lambda function that returns the default filename
          * for the current game, which is "CurrentGame".
          */
-        DEF_PROP(std::string, CurrentGameFilename, getter1, setter0, member1, static1, constret0, ref0, constmet0)
+         [[nodiscard]] static const std::string & getCurrentGameFilenameProperty() ;
 
     public:
-        static std::vector<std::string> ReadWorld(int gamer, int rank);
+        static std::vector<std::string> ReadWorld(intcs gamer, intcs rank);
 
     private:
-        static std::string GetWorldFilename(int gamer, int rank);
+        static std::string GetWorldFilename(intcs gamer, intcs rank);
 
     public:
         static bool ReadGameData(CppDotNet::bytecs data[], size_t dataSize);
 
-    public:
         static void WriteGameData(CppDotNet::bytecs data[], size_t dataSize);
 
-    public:
         static void DeleteCurrentGame();
 
-    public:
         static string ReadCurrentGame();
 
-    public:
-        static void WriteCurrentGame(string &data);
+        static void WriteCurrentGame(const string &data);
 
-    public:
-        static void GetIntArrayField(string lines[], int lineCount, const string &section, int rank,
-                                     const string &name, int array[], int arraySize);
+        static void GetIntArrayField(string lines[], intcs lineCount, const string& section, intcs rank,
+                                     const string& name, intcs array[], intcs arraySize);
 
-
-        static bool GetBoolField(const string lines[], int lineCount, const string &section, int rank,
+        static bool GetBoolField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                  const string &name);
 
-        static int GetIntField(const string lines[], int lineCount, const string &section, int rank,
+        static int GetIntField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                const string &name);
 
-        static double GetDoubleField(const string lines[], int lineCount, const string &section, int rank,
+        static double GetDoubleField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                      const string &name);
 
     private:
         template<typename T>
 
-        static T GetTypedField(const string lines[], int lineCount, const string &section, int rank,
+        static T GetTypedField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                const string &name) {
-            for (int i = 0; i < lineCount; i++) {
+            for (intcs i = 0; i < lineCount; i++) {
                 const string &text = lines[i];
                 if (!text.starts_with(section + ":") || rank-- != 0) {
                     continue;
@@ -105,46 +94,34 @@ namespace WindowsPhoneSpeedyBlupi {
         }
 
     public:
-        static TinyPoint GetPointField(const string lines[], int lineCount, const string &section, int rank,
+        static TinyPoint GetPointField(const string lines[], intcs lineCount, const string &section, intcs rank,
                                        const string &name);
 
-        static int GetDecorField(const string lines[], int lineCount, const string &section, int x, int y);
+        static int GetDecorField(const string lines[], intcs lineCount, const string &section, intcs x, intcs y);
 
-        static void GetDoorsField(const string lines[], int lineCount, const string &section, int doors[],
-                                  int &doorCount);
+        static void GetDoorsField(const string lines[], intcs lineCount, const string &section, intcs doors[],
+                                  intcs &doorCount);
 
-    public:
         static void WriteClear();
 
-    public:
         static void WriteSection(const string &section);
 
-    public:
-        static void WriteIntArrayField(const string &name, const int array[], const int &arraySize);
+        static void WriteIntArrayField(const string &name, const intcs array[], const intcs &arraySize);
 
-    public:
         static void WriteBoolField(const std::string &name, bool n);
 
-    public:
-        static void WriteIntField(const string &name, int n);
+        static void WriteIntField(const string &name, intcs n);
 
-    public:
         static void WriteDoubleField(const std::string &name, double n);
 
-    public:
         static void WritePointField(const string &name, TinyPoint p);
 
-    public:
-        static void WriteDecorField(const int line[], const int &arraySize);
+        static void WriteDecorField(const intcs line[], const intcs &arraySize);
 
-    public:
-        static void WriteDoorsField(const int doors[], const int &arraySize);
+        static void WriteDoorsField(const intcs doors[], const intcs &arraySize);
 
-    public:
         static void WriteEndSection();
 
-    public:
         static string GetWriteString();
     };
 }
-#endif // WORLDS_H
