@@ -510,7 +510,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
         for (intcs i = 0; i < lineCount; i++)
         {
-            const string& text = lines[i];
+            string text = lines[i];
             if (String::StartsWith(text, section + ":"))
             {
                 const intcs rowIndex = i + 1 + x;
