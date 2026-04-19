@@ -39,7 +39,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
     {
 
     public:
-        virtual ~Pixmap() = default;
+        virtual ~Pixmap();
 
         //WindowsPhoneSpeedyBlupi::TinyPoint Origin;
         //
@@ -66,7 +66,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
 
         double hotSpotY = 0.0f;
 
-        Microsoft::Xna::Framework::Graphics::SpriteBatch spriteBatch;
+        Microsoft::Xna::Framework::Graphics::SpriteBatch* spriteBatch;
 
         Texture2D bitmapText;
 

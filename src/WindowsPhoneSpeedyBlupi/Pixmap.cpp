@@ -18,6 +18,11 @@
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
+    Pixmap::~Pixmap()
+    {
+        delete spriteBatch;
+        spriteBatch = nullptr;
+    }
 
     TinyRect Pixmap::getDrawBoundsProperty() {
         TinyRect result;
@@ -52,7 +57,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     Pixmap::Pixmap(Game1I* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
         game1(game1),
-        graphics(graphics), spriteBatch(Microsoft::Xna::Framework::Graphics::SpriteBatch()), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
+        graphics(graphics), spriteBatch(nullptr), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
         bitmapObject(Texture2D()),
         bitmapElement(Texture2D()),
         bitmapExplo(Texture2D()), bitmapPad(Texture2D()),
@@ -181,7 +186,7 @@ namespace WindowsPhoneSpeedyBlupi {
          void Pixmap::LoadContent()
         {
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& graphicsDeviceProperty = game1-> getGraphicsDeviceProperty();
-            spriteBatch = Microsoft::Xna::Framework::Graphics::SpriteBatch(graphicsDeviceProperty);//todo
+            spriteBatch = new Microsoft::Xna::Framework::Graphics::SpriteBatch(game1->getGraphicsDeviceProperty());
             bitmapText = game1->getContentProperty().Load<Texture2D>("icons/text");
             bitmapButton = game1->getContentProperty().Load<Texture2D>("icons/button");
             bitmapJauge = game1->getContentProperty().Load<Texture2D>("icons/jauge");
@@ -239,9 +244,9 @@ namespace WindowsPhoneSpeedyBlupi {
             Texture2D bitmap = GetBitmap(3).value();
             Microsoft::Xna::Framework::Rectangle srcRectangle = GetSrcRectangle(bitmap, 10, 10, 10, 10, 0, 0);
             Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(0, 0, (int)screenWidth, (int)screenHeight);
-            spriteBatch.Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-            spriteBatch.Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::White);
-            spriteBatch.End();
+            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+            spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::White);
+            spriteBatch->End();
             TinyPoint tinyPoint;
             tinyPoint.X = (int)originX;
             tinyPoint.Y = (int)originY;
@@ -322,9 +327,9 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             Microsoft::Xna::Framework::Rectangle value = Microsoft::Xna::Framework::Rectangle(rect.LeftX, rect.TopY, rect.getWidthProperty(), rect.getHeightProperty());
             Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(dest.X, dest.Y, (int)((double)rect.getWidthProperty() * zoom), (int)((double)rect.getHeightProperty() * zoom));
-            spriteBatch.Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-            spriteBatch.Draw(bitmap.value(), destinationRectangle, value, Microsoft::Xna::Framework::White);
-            spriteBatch.End();
+            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+            spriteBatch->Draw(bitmap.value(), destinationRectangle, value, Microsoft::Xna::Framework::White);
+            spriteBatch->End();
             return true;
         }
 
@@ -457,9 +462,9 @@ namespace WindowsPhoneSpeedyBlupi {
                     rotationRad = (float)Misc::DegToRad(rotationDeg);
                     rectangle = Misc::RotateAdjust(rectangle, rotationRad);
                 }
-                spriteBatch.Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-                spriteBatch.Draw(bitmap, rectangle, srcRectangle, Microsoft::Xna::Framework::Color::FromNonPremultiplied(255, 255, 255, (int)(255.0 * opacity)), rotationRad, origin, effect, 0.0f);
-                spriteBatch.End();
+                spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                spriteBatch->Draw(bitmap, rectangle, srcRectangle, Microsoft::Xna::Framework::Color::FromNonPremultiplied(255, 255, 255, (int)(255.0 * opacity)), rotationRad, origin, effect, 0.0f);
+                spriteBatch->End();
             }
         }
 
