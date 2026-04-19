@@ -82,34 +82,34 @@ namespace WindowsPhoneSpeedyBlupi
     TinyRect Misc::Inflate(const TinyRect& rect, const int& value)
     {
         TinyRect result;
-        result.LeftX = rect.LeftX - value;
-        result.RightX = rect.RightX + value;
-        result.TopY = rect.TopY - value;
-        result.BottomY = rect.BottomY + value;
+        result.Left = rect.Left - value;
+        result.Right = rect.Right + value;
+        result.Top = rect.Top - value;
+        result.Bottom = rect.Bottom + value;
         return result;
     }
 
     bool Misc::IsInside(const TinyRect &rect, const TinyPoint &p) {
-        return p.X >= rect.LeftX && p.X <= rect.RightX && p.Y >= rect.TopY && p.Y <= rect.BottomY;
+        return p.X >= rect.Left && p.X <= rect.Right && p.Y >= rect.Top && p.Y <= rect.Bottom;
     }
 
     bool Misc::IntersectRect(TinyRect& dst, const TinyRect& src1, const TinyRect& src2)
     {
         dst = TinyRect();
-        dst.LeftX = std::max(src1.LeftX, src2.LeftX);
-        dst.RightX = std::min(src1.RightX, src2.RightX);
-        dst.TopY = std::max(src1.TopY, src2.TopY);
-        dst.BottomY = std::min(src1.BottomY, src2.BottomY);
+        dst.Left = std::max(src1.Left, src2.Left);
+        dst.Right = std::min(src1.Right, src2.Right);
+        dst.Top = std::max(src1.Top, src2.Top);
+        dst.Bottom = std::min(src1.Bottom, src2.Bottom);
         return !IsRectEmpty(dst);
     }
 
     bool Misc::UnionRect(TinyRect& dst, const TinyRect& src1, const TinyRect& src2)
     {
         dst = TinyRect();
-        dst.LeftX = std::min(src1.LeftX, src2.LeftX);
-        dst.RightX = std::max(src1.RightX, src2.RightX);
-        dst.TopY = std::min(src1.TopY, src2.TopY);
-        dst.BottomY = std::max(src1.BottomY, src2.BottomY);
+        dst.Left = std::min(src1.Left, src2.Left);
+        dst.Right = std::max(src1.Right, src2.Right);
+        dst.Top = std::min(src1.Top, src2.Top);
+        dst.Bottom = std::max(src1.Bottom, src2.Bottom);
         return !IsRectEmpty(dst);
     }
 

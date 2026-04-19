@@ -30,34 +30,34 @@ namespace WindowsPhoneSpeedyBlupi
         tinyPoint.Y = getTopLeftCorner().Y - pixmap->getOriginProperty().Y;
         TinyPoint dest = tinyPoint;
         TinyRect tinyRect;
-        tinyRect.LeftX = 0;
-        tinyRect.RightX = 124;
-        tinyRect.TopY = 0;
-        tinyRect.BottomY = 22;
+        tinyRect.Left = 0;
+        tinyRect.Right = 124;
+        tinyRect.Top = 0;
+        tinyRect.Bottom = 22;
         TinyRect rect = tinyRect;
         pixmap->DrawPart(5, dest, rect, 2.0);
         int num = (int)((double)(getPosRight() - getPosLeft()) * getValueProperty());
         int num2 = getTopLeftCorner().Y + 22;
         int num3 = 94;
         TinyRect tinyRect2;
-        tinyRect2.LeftX = getPosLeft() + num - num3 / 2;
-        tinyRect2.RightX = getPosLeft() + num + num3 / 2;
-        tinyRect2.TopY = num2 - num3 / 2;
-        tinyRect2.BottomY = num2 + num3 / 2;
+        tinyRect2.Left = getPosLeft() + num - num3 / 2;
+        tinyRect2.Right = getPosLeft() + num + num3 / 2;
+        tinyRect2.Top = num2 - num3 / 2;
+        tinyRect2.Bottom = num2 + num3 / 2;
         rect = tinyRect2;
         pixmap->DrawIcon(14, 1, rect, 1.0, false);
         TinyRect tinyRect3;
-        tinyRect3.LeftX = getTopLeftCorner().X - 65;
-        tinyRect3.RightX = getTopLeftCorner().X - 65 + 60;
-        tinyRect3.TopY = getTopLeftCorner().Y - 10;
-        tinyRect3.BottomY = getTopLeftCorner().Y - 10 + 60;
+        tinyRect3.Left = getTopLeftCorner().X - 65;
+        tinyRect3.Right = getTopLeftCorner().X - 65 + 60;
+        tinyRect3.Top = getTopLeftCorner().Y - 10;
+        tinyRect3.Bottom = getTopLeftCorner().Y - 10 + 60;
         rect = tinyRect3;
         pixmap->DrawIcon(10, 37, rect, 1.0, false);
         TinyRect tinyRect4;
-        tinyRect4.LeftX = getTopLeftCorner().X + 248 + 5;
-        tinyRect4.RightX = getTopLeftCorner().X + 248 + 5 + 60;
-        tinyRect4.TopY = getTopLeftCorner().Y - 10;
-        tinyRect4.BottomY = getTopLeftCorner().Y - 10 + 60;
+        tinyRect4.Left = getTopLeftCorner().X + 248 + 5;
+        tinyRect4.Right = getTopLeftCorner().X + 248 + 5 + 60;
+        tinyRect4.Top = getTopLeftCorner().Y - 10;
+        tinyRect4.Bottom = getTopLeftCorner().Y - 10 + 60;
         rect = tinyRect4;
         pixmap->DrawIcon(10, 38, rect, 1.0, false);
     }
@@ -65,10 +65,10 @@ namespace WindowsPhoneSpeedyBlupi
         bool Slider::Move(TinyPoint& pos)
         {
             TinyRect tinyRect;
-            tinyRect.LeftX = getTopLeftCorner().X - 50;
-            tinyRect.RightX = getTopLeftCorner().X + 248 + 50;
-            tinyRect.TopY = getTopLeftCorner().Y - 50;
-            tinyRect.BottomY = getTopLeftCorner().Y + 44 + 50;
+            tinyRect.Left = getTopLeftCorner().X - 50;
+            tinyRect.Right = getTopLeftCorner().X + 248 + 50;
+            tinyRect.Top = getTopLeftCorner().Y - 50;
+            tinyRect.Bottom = getTopLeftCorner().Y + 44 + 50;
             TinyRect rect = tinyRect;
             if (Misc::IsInside(rect, pos))
             {

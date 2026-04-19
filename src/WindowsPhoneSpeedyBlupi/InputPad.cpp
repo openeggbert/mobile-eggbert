@@ -571,10 +571,10 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 int cheatNumber = (int)(glyph - 35);
                 TinyRect result = TinyRect();
-                result.LeftX = 80 * cheatNumber;
-                result.RightX = 80 * (cheatNumber + 1);
-                result.TopY = 0;
-                result.BottomY = 80;
+                result.Left = 80 * cheatNumber;
+                result.Right = 80 * (cheatNumber + 1);
+                result.Top = 0;
+                result.Bottom = 80;
                 return result;
             }
             int leftXForButtonsInLeftColumn = (int)(20.0 + buttonSizeFactor2 * 0.0);
@@ -584,218 +584,218 @@ namespace WindowsPhoneSpeedyBlupi {
                 case Def::ButtonGlyph::InitGamerA:
                     {
                         TinyRect result19 = TinyRect();
-                        result19.LeftX = leftXForButtonsInLeftColumn;
-                        result19.RightX = rightXForButtonsInLeftColumn;
-                        result19.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.1);
-                        result19.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.6);
+                        result19.Left = leftXForButtonsInLeftColumn;
+                        result19.Right = rightXForButtonsInLeftColumn;
+                        result19.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.1);
+                        result19.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.6);
                         return result19;
                     }
                 case Def::ButtonGlyph::InitGamerB:
                     {
                         TinyRect result18 = TinyRect();
-                        result18.LeftX = leftXForButtonsInLeftColumn;
-                        result18.RightX = rightXForButtonsInLeftColumn;
-                        result18.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.6);
-                        result18.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.1);
+                        result18.Left = leftXForButtonsInLeftColumn;
+                        result18.Right = rightXForButtonsInLeftColumn;
+                        result18.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.6);
+                        result18.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.1);
                         return result18;
                     }
                 case Def::ButtonGlyph::InitGamerC:
                     {
                         TinyRect result15 = TinyRect();
-                        result15.LeftX = leftXForButtonsInLeftColumn;
-                        result15.RightX = rightXForButtonsInLeftColumn;
-                        result15.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.1);
-                        result15.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.6);
+                        result15.Left = leftXForButtonsInLeftColumn;
+                        result15.Right = rightXForButtonsInLeftColumn;
+                        result15.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.1);
+                        result15.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.6);
                         return result15;
                     }
                 case Def::ButtonGlyph::InitSetup:
                     {
                         TinyRect result14 = TinyRect();
-                        result14.LeftX = leftXForButtonsInLeftColumn;
-                        result14.RightX = rightXForButtonsInLeftColumn;
-                        result14.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.5);
-                        result14.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.0);
+                        result14.Left = leftXForButtonsInLeftColumn;
+                        result14.Right = rightXForButtonsInLeftColumn;
+                        result14.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.5);
+                        result14.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.0);
                         return result14;
                     }
                 case Def::ButtonGlyph::InitPlay:
                     {
                         TinyRect result11 = TinyRect();
-                        result11.LeftX = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 1.0);
-                        result11.RightX = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.0);
-                        result11.TopY = (int)(drawBoundsHeight - 40.0 - buttonSizeFactor2 * 1.0);
-                        result11.BottomY = (int)(drawBoundsHeight - 40.0 - buttonSizeFactor2 * 0.0);
+                        result11.Left = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 1.0);
+                        result11.Right = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.0);
+                        result11.Top = (int)(drawBoundsHeight - 40.0 - buttonSizeFactor2 * 1.0);
+                        result11.Bottom = (int)(drawBoundsHeight - 40.0 - buttonSizeFactor2 * 0.0);
                         return result11;
                     }
                 case Def::ButtonGlyph::InitBuy:
                 case Def::ButtonGlyph::InitRanking:
                     {
                         TinyRect result10 = TinyRect();
-                        result10.LeftX = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.75);
-                        result10.RightX = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.25);
-                        result10.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.1);
-                        result10.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.6);
+                        result10.Left = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.75);
+                        result10.Right = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.25);
+                        result10.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.1);
+                        result10.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.6);
                         return result10;
                     }
                 case Def::ButtonGlyph::PauseMenu:
                     {
                         TinyRect result37 = TinyRect();
-                        result37.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * -0.21);
-                        result37.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 0.79);
-                        result37.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result37.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result37.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * -0.21);
+                        result37.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 0.79);
+                        result37.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result37.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result37;
                     }
                 case Def::ButtonGlyph::PauseBack:
                     {
                         TinyRect result36 = TinyRect();
-                        result36.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 0.79);
-                        result36.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 1.79);
-                        result36.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result36.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result36.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 0.79);
+                        result36.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 1.79);
+                        result36.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result36.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result36;
                     }
                 case Def::ButtonGlyph::PauseSetup:
                     {
                         TinyRect result35 = TinyRect();
-                        result35.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 1.79);
-                        result35.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.79);
-                        result35.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result35.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result35.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 1.79);
+                        result35.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.79);
+                        result35.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result35.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result35;
                     }
                 case Def::ButtonGlyph::PauseRestart:
                     {
                         TinyRect result34 = TinyRect();
-                        result34.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.79);
-                        result34.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.79);
-                        result34.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result34.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result34.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.79);
+                        result34.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.79);
+                        result34.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result34.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result34;
                     }
                 case Def::ButtonGlyph::PauseContinue:
                     {
                         TinyRect result33 = TinyRect();
-                        result33.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.79);
-                        result33.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 4.79);
-                        result33.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result33.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result33.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.79);
+                        result33.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 4.79);
+                        result33.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result33.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result33;
                     }
                 case Def::ButtonGlyph::ResumeMenu:
                     {
                         TinyRect result32 = TinyRect();
-                        result32.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 1.29);
-                        result32.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.29);
-                        result32.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result32.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result32.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 1.29);
+                        result32.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.29);
+                        result32.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result32.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result32;
                     }
                 case Def::ButtonGlyph::ResumeContinue:
                     {
                         TinyRect result31 = TinyRect();
-                        result31.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.29);
-                        result31.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.29);
-                        result31.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
-                        result31.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
+                        result31.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.29);
+                        result31.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.29);
+                        result31.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.2);
+                        result31.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.2);
                         return result31;
                     }
                 case Def::ButtonGlyph::WinLostReturn:
                     {
                         TinyRect result30 = TinyRect();
-                        result30.LeftX = (int)((double)getPixmapOriginProperty().X + drawBoundsWidth - buttonSizeFactor1 * 2.2);
-                        result30.RightX = (int)((double)getPixmapOriginProperty().X + drawBoundsWidth - buttonSizeFactor1 * 1.2);
-                        result30.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor1 * 0.2);
-                        result30.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor1 * 1.2);
+                        result30.Left = (int)((double)getPixmapOriginProperty().X + drawBoundsWidth - buttonSizeFactor1 * 2.2);
+                        result30.Right = (int)((double)getPixmapOriginProperty().X + drawBoundsWidth - buttonSizeFactor1 * 1.2);
+                        result30.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor1 * 0.2);
+                        result30.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor1 * 1.2);
                         return result30;
                     }
                 case Def::ButtonGlyph::TrialBuy:
                     {
                         TinyRect result29 = TinyRect();
-                        result29.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.5);
-                        result29.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.5);
-                        result29.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.1);
-                        result29.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.1);
+                        result29.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 2.5);
+                        result29.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.5);
+                        result29.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.1);
+                        result29.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.1);
                         return result29;
                     }
                 case Def::ButtonGlyph::TrialCancel:
                     {
                         TinyRect result28 = TinyRect();
-                        result28.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.5);
-                        result28.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 4.5);
-                        result28.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.1);
-                        result28.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.1);
+                        result28.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.5);
+                        result28.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 4.5);
+                        result28.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.1);
+                        result28.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.1);
                         return result28;
                     }
                 case Def::ButtonGlyph::RankingContinue:
                     {
                         TinyRect result27 = TinyRect();
-                        result27.LeftX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.5);
-                        result27.RightX = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 4.5);
-                        result27.TopY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.1);
-                        result27.BottomY = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.1);
+                        result27.Left = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 3.5);
+                        result27.Right = (int)((double)getPixmapOriginProperty().X + buttonSizeFactor2 * 4.5);
+                        result27.Top = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 2.1);
+                        result27.Bottom = (int)((double)getPixmapOriginProperty().Y + buttonSizeFactor2 * 3.1);
                         return result27;
                     }
                 case Def::ButtonGlyph::SetupSounds:
                     {
                         TinyRect result26 = TinyRect();
-                        result26.LeftX = leftXForButtonsInLeftColumn;
-                        result26.RightX = rightXForButtonsInLeftColumn;
-                        result26.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.0);
-                        result26.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.5);
+                        result26.Left = leftXForButtonsInLeftColumn;
+                        result26.Right = rightXForButtonsInLeftColumn;
+                        result26.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.0);
+                        result26.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.5);
                         return result26;
                     }
                 case Def::ButtonGlyph::SetupJump:
                     {
                         TinyRect result25 = TinyRect();
-                        result25.LeftX = leftXForButtonsInLeftColumn;
-                        result25.RightX = rightXForButtonsInLeftColumn;
-                        result25.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.5);
-                        result25.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.0);
+                        result25.Left = leftXForButtonsInLeftColumn;
+                        result25.Right = rightXForButtonsInLeftColumn;
+                        result25.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.5);
+                        result25.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.0);
                         return result25;
                     }
                 case Def::ButtonGlyph::SetupZoom:
                     {
                         TinyRect result24 = TinyRect();
-                        result24.LeftX = leftXForButtonsInLeftColumn;
-                        result24.RightX = rightXForButtonsInLeftColumn;
-                        result24.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.0);
-                        result24.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.5);
+                        result24.Left = leftXForButtonsInLeftColumn;
+                        result24.Right = rightXForButtonsInLeftColumn;
+                        result24.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.0);
+                        result24.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.5);
                         return result24;
                     }
                 case Def::ButtonGlyph::SetupAccel:
                     {
                         TinyRect result23 = TinyRect();
-                        result23.LeftX = leftXForButtonsInLeftColumn;
-                        result23.RightX = rightXForButtonsInLeftColumn;
-                        result23.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.5);
-                        result23.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.0);
+                        result23.Left = leftXForButtonsInLeftColumn;
+                        result23.Right = rightXForButtonsInLeftColumn;
+                        result23.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.5);
+                        result23.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.0);
                         return result23;
                     }
                 case Def::ButtonGlyph::SetupReset:
                     {
                         TinyRect result22 = TinyRect();
-                        result22.LeftX = (int)(450.0 + buttonSizeFactor2 * 0.0);
-                        result22.RightX = (int)(450.0 + buttonSizeFactor2 * 0.5);
-                        result22.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.0);
-                        result22.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.5);
+                        result22.Left = (int)(450.0 + buttonSizeFactor2 * 0.0);
+                        result22.Right = (int)(450.0 + buttonSizeFactor2 * 0.5);
+                        result22.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 2.0);
+                        result22.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 1.5);
                         return result22;
                     }
                 case Def::ButtonGlyph::SetupReturn:
                     {
                         TinyRect result21 = TinyRect();
-                        result21.LeftX = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.8);
-                        result21.RightX = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.0);
-                        result21.TopY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.8);
-                        result21.BottomY = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.0);
+                        result21.Left = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.8);
+                        result21.Right = (int)(drawBoundsWidth - 20.0 - buttonSizeFactor2 * 0.0);
+                        result21.Top = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.8);
+                        result21.Bottom = (int)(drawBoundsHeight - 20.0 - buttonSizeFactor2 * 0.0);
                         return result21;
                     }
                 case Def::ButtonGlyph::PlayPause:
                     {
                         TinyRect result20 = TinyRect();
-                        result20.LeftX = (int)(drawBoundsWidth - buttonSizeFactor1 * 0.7);
-                        result20.RightX = (int)(drawBoundsWidth - buttonSizeFactor1 * 0.2);
-                        result20.TopY = (int)(buttonSizeFactor1 * 0.2);
-                        result20.BottomY = (int)(buttonSizeFactor1 * 0.7);
+                        result20.Left = (int)(drawBoundsWidth - buttonSizeFactor1 * 0.7);
+                        result20.Right = (int)(drawBoundsWidth - buttonSizeFactor1 * 0.2);
+                        result20.Top = (int)(buttonSizeFactor1 * 0.2);
+                        result20.Bottom = (int)(buttonSizeFactor1 * 0.7);
                         return result20;
                     }
                 case Def::ButtonGlyph::PlayAction:
@@ -803,17 +803,17 @@ namespace WindowsPhoneSpeedyBlupi {
                         if (gameData.getJumpRightProperty())
                         {
                             TinyRect result16 = TinyRect();
-                            result16.LeftX = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
-                            result16.RightX = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 0.2);
-                            result16.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 2.6);
-                            result16.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.6);
+                            result16.Left = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
+                            result16.Right = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 0.2);
+                            result16.Top = (int)(drawBoundsHeight - buttonSizeFactor1 * 2.6);
+                            result16.Bottom = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.6);
                             return result16;
                         }
                         TinyRect result17 = TinyRect();
-                        result17.LeftX = (int)(buttonSizeFactor1 * 0.2);
-                        result17.RightX = (int)(buttonSizeFactor1 * 1.2);
-                        result17.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 2.6);
-                        result17.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.6);
+                        result17.Left = (int)(buttonSizeFactor1 * 0.2);
+                        result17.Right = (int)(buttonSizeFactor1 * 1.2);
+                        result17.Top = (int)(drawBoundsHeight - buttonSizeFactor1 * 2.6);
+                        result17.Bottom = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.6);
                         return result17;
                     }
                 case Def::ButtonGlyph::PlayJump:
@@ -821,17 +821,17 @@ namespace WindowsPhoneSpeedyBlupi {
                         if (gameData.getJumpRightProperty())
                         {
                             TinyRect result12 = TinyRect();
-                            result12.LeftX = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
-                            result12.RightX = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 0.2);
-                            result12.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
-                            result12.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
+                            result12.Left = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
+                            result12.Right = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 0.2);
+                            result12.Top = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
+                            result12.Bottom = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
                             return result12;
                         }
                         TinyRect result13 = TinyRect();
-                        result13.LeftX = (int)(buttonSizeFactor1 * 0.2);
-                        result13.RightX = (int)(buttonSizeFactor1 * 1.2);
-                        result13.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
-                        result13.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
+                        result13.Left = (int)(buttonSizeFactor1 * 0.2);
+                        result13.Right = (int)(buttonSizeFactor1 * 1.2);
+                        result13.Top = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
+                        result13.Bottom = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
                         return result13;
                     }
                 case Def::ButtonGlyph::PlayDown:
@@ -839,71 +839,71 @@ namespace WindowsPhoneSpeedyBlupi {
                         if (gameData.getJumpRightProperty())
                         {
                             TinyRect result8 = TinyRect();
-                            result8.LeftX = (int)(buttonSizeFactor1 * 0.2);
-                            result8.RightX = (int)(buttonSizeFactor1 * 1.2);
-                            result8.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
-                            result8.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
+                            result8.Left = (int)(buttonSizeFactor1 * 0.2);
+                            result8.Right = (int)(buttonSizeFactor1 * 1.2);
+                            result8.Top = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
+                            result8.Bottom = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
                             return result8;
                         }
                         TinyRect result9 = TinyRect();
-                        result9.LeftX = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
-                        result9.RightX = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 0.2);
-                        result9.TopY = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
-                        result9.BottomY = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
+                        result9.Left = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
+                        result9.Right = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 0.2);
+                        result9.Top = (int)(drawBoundsHeight - buttonSizeFactor1 * 1.2);
+                        result9.Bottom = (int)(drawBoundsHeight - buttonSizeFactor1 * 0.2);
                         return result9;
                     }
                 case Def::ButtonGlyph::Cheat11:
                     {
                         TinyRect result7 = TinyRect();
-                        result7.LeftX = (int)(cheatButtonSizeFactor * 0.0);
-                        result7.RightX = (int)(cheatButtonSizeFactor * 1.0);
-                        result7.TopY = (int)(cheatButtonSizeFactor * 0.0);
-                        result7.BottomY = (int)(cheatButtonSizeFactor * 1.0);
+                        result7.Left = (int)(cheatButtonSizeFactor * 0.0);
+                        result7.Right = (int)(cheatButtonSizeFactor * 1.0);
+                        result7.Top = (int)(cheatButtonSizeFactor * 0.0);
+                        result7.Bottom = (int)(cheatButtonSizeFactor * 1.0);
                         return result7;
                     }
                 case Def::ButtonGlyph::Cheat12:
                     {
                         TinyRect result6 = TinyRect();
-                        result6.LeftX = (int)(cheatButtonSizeFactor * 0.0);
-                        result6.RightX = (int)(cheatButtonSizeFactor * 1.0);
-                        result6.TopY = (int)(cheatButtonSizeFactor * 1.0);
-                        result6.BottomY = (int)(cheatButtonSizeFactor * 2.0);
+                        result6.Left = (int)(cheatButtonSizeFactor * 0.0);
+                        result6.Right = (int)(cheatButtonSizeFactor * 1.0);
+                        result6.Top = (int)(cheatButtonSizeFactor * 1.0);
+                        result6.Bottom = (int)(cheatButtonSizeFactor * 2.0);
                         return result6;
                     }
                 case Def::ButtonGlyph::Cheat21:
                     {
                         TinyRect result5 = TinyRect();
-                        result5.LeftX = (int)(cheatButtonSizeFactor * 1.0);
-                        result5.RightX = (int)(cheatButtonSizeFactor * 2.0);
-                        result5.TopY = (int)(cheatButtonSizeFactor * 0.0);
-                        result5.BottomY = (int)(cheatButtonSizeFactor * 1.0);
+                        result5.Left = (int)(cheatButtonSizeFactor * 1.0);
+                        result5.Right = (int)(cheatButtonSizeFactor * 2.0);
+                        result5.Top = (int)(cheatButtonSizeFactor * 0.0);
+                        result5.Bottom = (int)(cheatButtonSizeFactor * 1.0);
                         return result5;
                     }
                 case Def::ButtonGlyph::Cheat22:
                     {
                         TinyRect result4 = TinyRect();
-                        result4.LeftX = (int)(cheatButtonSizeFactor * 1.0);
-                        result4.RightX = (int)(cheatButtonSizeFactor * 2.0);
-                        result4.TopY = (int)(cheatButtonSizeFactor * 1.0);
-                        result4.BottomY = (int)(cheatButtonSizeFactor * 2.0);
+                        result4.Left = (int)(cheatButtonSizeFactor * 1.0);
+                        result4.Right = (int)(cheatButtonSizeFactor * 2.0);
+                        result4.Top = (int)(cheatButtonSizeFactor * 1.0);
+                        result4.Bottom = (int)(cheatButtonSizeFactor * 2.0);
                         return result4;
                     }
                 case Def::ButtonGlyph::Cheat31:
                     {
                         TinyRect result3 = TinyRect();
-                        result3.LeftX = (int)(cheatButtonSizeFactor * 2.0);
-                        result3.RightX = (int)(cheatButtonSizeFactor * 3.0);
-                        result3.TopY = (int)(cheatButtonSizeFactor * 0.0);
-                        result3.BottomY = (int)(cheatButtonSizeFactor * 1.0);
+                        result3.Left = (int)(cheatButtonSizeFactor * 2.0);
+                        result3.Right = (int)(cheatButtonSizeFactor * 3.0);
+                        result3.Top = (int)(cheatButtonSizeFactor * 0.0);
+                        result3.Bottom = (int)(cheatButtonSizeFactor * 1.0);
                         return result3;
                     }
                 case Def::ButtonGlyph::Cheat32:
                     {
                         TinyRect result2 = TinyRect();
-                        result2.LeftX = (int)(cheatButtonSizeFactor * 2.0);
-                        result2.RightX = (int)(cheatButtonSizeFactor * 3.0);
-                        result2.TopY = (int)(cheatButtonSizeFactor * 1.0);
-                        result2.BottomY = (int)(cheatButtonSizeFactor * 2.0);
+                        result2.Left = (int)(cheatButtonSizeFactor * 2.0);
+                        result2.Right = (int)(cheatButtonSizeFactor * 3.0);
+                        result2.Top = (int)(cheatButtonSizeFactor * 1.0);
+                        result2.Bottom = (int)(cheatButtonSizeFactor * 2.0);
                         return result2;
                     }
                 default:

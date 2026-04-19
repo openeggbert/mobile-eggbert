@@ -1,6 +1,14 @@
 #include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"
-namespace WindowsPhoneSpeedyBlupi {
 
-    int TinyRect::getWidthProperty() const { return RightX - LeftX;  }
-    int TinyRect::getHeightProperty() const { return BottomY - TopY; }
+namespace WindowsPhoneSpeedyBlupi
+{
+    intcs TinyRect::getWidthProperty() const
+    {
+        return Right - Left;
+    }
+
+    intcs TinyRect::getHeightProperty() const
+    {
+        return Bottom - Top;
+    }
 }

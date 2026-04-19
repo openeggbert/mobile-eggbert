@@ -41,10 +41,10 @@ namespace WindowsPhoneSpeedyBlupi {
                 num3 = 480.0 * (screenWidth / screenHeight);
                 num4 = 480.0;
             }
-            result.LeftX = 0;
-            result.RightX = (int) num3;
-            result.TopY = 0;
-            result.BottomY = (int) num4;
+            result.Left = 0;
+            result.Right = (int) num3;
+            result.Top = 0;
+            result.Bottom = (int) num4;
         }
         return result;
     }
@@ -167,8 +167,8 @@ namespace WindowsPhoneSpeedyBlupi {
                     {
                         DrawIcon(14, 0, rect, pressed ? 0.6 : 1.0, false);
                         TinyPoint tinyPoint;
-                        tinyPoint.X = rect.LeftX + rect.getWidthProperty() / 2 - (int)originX;
-                        tinyPoint.Y = rect.TopY + 28;
+                        tinyPoint.X = rect.Left + rect.getWidthProperty() / 2 - (int)originX;
+                        tinyPoint.Y = rect.Top + 28;
                         TinyPoint pos = tinyPoint;
                         Text::DrawTextCenter(this, pos, Decor::GetCheatTinyText(glyph), 1.0);
                         break;
@@ -252,10 +252,10 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.Y = (int)originY;
             TinyPoint dest = tinyPoint;
             TinyRect tinyRect;
-            tinyRect.LeftX = 0;
-            tinyRect.TopY = 0;
-            tinyRect.RightX = 640;
-            tinyRect.BottomY = 480;
+            tinyRect.Left = 0;
+            tinyRect.Top = 0;
+            tinyRect.Right = 640;
+            tinyRect.Bottom = 480;
             TinyRect rect = tinyRect;
             DrawPart(3, dest, rect);
         }
@@ -265,10 +265,10 @@ namespace WindowsPhoneSpeedyBlupi {
             pos.X = (int)((double)pos.X + originX);
             pos.Y = (int)((double)pos.Y + originY);
             TinyRect tinyRect;
-            tinyRect.LeftX = pos.X;
-            tinyRect.TopY = pos.Y;
-            tinyRect.RightX = pos.X + (int)(32.0 * size);
-            tinyRect.BottomY = pos.Y + (int)(32.0 * size);
+            tinyRect.Left = pos.X;
+            tinyRect.Top = pos.Y;
+            tinyRect.Right = pos.X + (int)(32.0 * size);
+            tinyRect.Bottom = pos.Y + (int)(32.0 * size);
             TinyRect rect = tinyRect;
             DrawIcon(6, rank, rect, 1.0, false);
         }
@@ -278,10 +278,10 @@ namespace WindowsPhoneSpeedyBlupi {
             pos.X = (int)((double)pos.X + originX);
             pos.Y = (int)((double)pos.Y + originY);
             TinyRect tinyRect;
-            tinyRect.LeftX = pos.X;
-            tinyRect.TopY = pos.Y;
-            tinyRect.RightX = pos.X;
-            tinyRect.BottomY = pos.Y;
+            tinyRect.Left = pos.X;
+            tinyRect.Top = pos.Y;
+            tinyRect.Right = pos.X;
+            tinyRect.Bottom = pos.Y;
             TinyRect rect = tinyRect;
             DrawIcon(channel, rank, rect, 1.0, false);
         }
@@ -289,10 +289,10 @@ namespace WindowsPhoneSpeedyBlupi {
          void Pixmap::QuickIcon(int channel, int rank, TinyPoint& pos)
         {
             TinyRect tinyRect;
-            tinyRect.LeftX = pos.X;
-            tinyRect.TopY = pos.Y;
-            tinyRect.RightX = pos.X;
-            tinyRect.BottomY = pos.Y;
+            tinyRect.Left = pos.X;
+            tinyRect.Top = pos.Y;
+            tinyRect.Right = pos.X;
+            tinyRect.Bottom = pos.Y;
             TinyRect rect = tinyRect;
             DrawIcon(channel, rank, rect, 1.0, true);
         }
@@ -300,10 +300,10 @@ namespace WindowsPhoneSpeedyBlupi {
          void Pixmap::QuickIcon(int channel, int rank, TinyPoint& pos, double opacity, double rotation)
         {
             TinyRect tinyRect;
-            tinyRect.LeftX = pos.X;
-            tinyRect.TopY = pos.Y;
-            tinyRect.RightX = pos.X;
-            tinyRect.BottomY = pos.Y;
+            tinyRect.Left = pos.X;
+            tinyRect.Top = pos.Y;
+            tinyRect.Right = pos.X;
+            tinyRect.Bottom = pos.Y;
             TinyRect rect = tinyRect;
             DrawIcon(channel, rank, rect, opacity, rotation, true);
         }
@@ -325,7 +325,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 dest.X = (int)((double)dest.X + originX);
                 dest.Y = (int)((double)dest.Y + originY);
             }
-            Microsoft::Xna::Framework::Rectangle value = Microsoft::Xna::Framework::Rectangle(rect.LeftX, rect.TopY, rect.getWidthProperty(), rect.getHeightProperty());
+            Microsoft::Xna::Framework::Rectangle value = Microsoft::Xna::Framework::Rectangle(rect.Left, rect.Top, rect.getWidthProperty(), rect.getHeightProperty());
             Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(dest.X, dest.Y, (int)((double)rect.getWidthProperty() * zoom), (int)((double)rect.getHeightProperty() * zoom));
             spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
             spriteBatch->Draw(bitmap.value(), destinationRectangle, value, Microsoft::Xna::Framework::White);
@@ -352,7 +352,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 {
                     if(iconNumber == icon)
                     {
-                        if(iconNumber == 1 && rect.LeftX > 100) { continue; }
+                        if(iconNumber == 1 && rect.Left > 100) { continue; }
                         //Touch display is not connected and the icon is a gameplay icon. Nothing to do.
                         return;
                     }
@@ -483,8 +483,8 @@ namespace WindowsPhoneSpeedyBlupi {
         {
             int finalWidth = ((rect.getWidthProperty() == 0) ? iconWidth : rect.getWidthProperty());
             int finalHeight = ((rect.getHeightProperty() == 0) ? iconHeight : rect.getHeightProperty());
-            int scaledLeftX = (int)((double)rect.LeftX * zoom);
-            int scaledTopY = (int)((double)rect.TopY * zoom);
+            int scaledLeftX = (int)((double)rect.Left * zoom);
+            int scaledTopY = (int)((double)rect.Top * zoom);
             int scaledRightX = (int)((double)scaledLeftX + (double)finalWidth * zoom);
             int scaledBottomY = (int)((double)scaledTopY + (double)finalHeight * zoom);
             if (useHotSpot && hotSpotZoom > 1.0)
