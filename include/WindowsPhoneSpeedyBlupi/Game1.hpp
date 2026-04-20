@@ -11,7 +11,7 @@
 #include "Def.hpp"
 #include "IGame1.hpp"
 #include "Jauge.hpp"
-#include "PixmapI.hpp"
+#include "IPixmap.hpp"
 #include "ISound.hpp"
 #include "InputPad.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"

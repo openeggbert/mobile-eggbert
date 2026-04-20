@@ -268,11 +268,14 @@ namespace WindowsPhoneSpeedyBlupi
     void Text::DrawChar(IPixmap& pixmap, TinyPoint& pos, const CppDotNet::charcs car, const double size)
     {
         TinyPoint pos2{};
-        int num = (short)car * 6;
-        int rank = table_char[num];
+        const intcs offset = GetOffset(car);
+        const intcs num = offset * 6;
+
+        intcs rank = table_char[num];
         pos2.X = pos.X + table_char[num + 1];
         pos2.Y = pos.Y + table_char[num + 2];
         DrawCharSingle(pixmap, pos2, rank, size);
+
         rank = table_char[num + 3];
         if (rank != -1)
         {
@@ -280,12 +283,14 @@ namespace WindowsPhoneSpeedyBlupi
             pos2.Y = pos.Y + table_char[num + 5];
             DrawCharSingle(pixmap, pos2, rank, size);
         }
+
         pos.X += GetCharWidth(car, size);
     }
 
     intcs Text::GetCharWidth(const CppDotNet::charcs c, const double size)
     {
-        return (intcs)((double)(table_width[table_char[(CppDotNet::shortcs)c * 6]] + 1) * size);
+        const intcs offset = GetOffset(c);
+        return static_cast<intcs>((static_cast<double>(table_width[table_char[offset * 6]] + 1)) * size);
     }
 
     void Text::DrawCharSingle(IPixmap& pixmap, TinyPoint pos, intcs rank, double size)

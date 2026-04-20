@@ -929,7 +929,7 @@ void Decor::InitDecor()
                 string text = Helper::formatString("= {0}", STRING_VECTOR(std::to_string(m_blupiPerso)));
                 pos.X = 32;
                 pos.Y = 452;
-                Text::DrawText(m_pixmap, pos, text, 0.7);
+                Text::DrawText(*m_pixmap, pos, text, 0.7);
             }
             if (m_blupiDynamite > 0)
             {
@@ -967,7 +967,7 @@ void Decor::InitDecor()
                 string text = Helper::formatString("{0}/{1}", std::vector{TO_STRING(m_nbTresor), TO_STRING(m_totalTresor)});
                 pos.X = 460;
                 pos.Y = 450;
-                Text::DrawTextCenter(m_pixmap, pos, text, 1.0);
+                Text::DrawTextCenter(*m_pixmap, pos, text, 1.0);
             }
             for (int i = 0; i < 2; i++)
             {
@@ -1024,7 +1024,7 @@ void Decor::InitDecor()
                         double num5 = std::min(640.0 / num4, 1.0);
                         pos.X = 320;
                         pos.Y = 5 + (int)((1.0 - num5) * 35.0 * 0.6);
-                        Text::DrawTextCenter(m_pixmap, pos, text, num5);
+                        Text::DrawTextCenter(*m_pixmap, pos, text, num5);
                     }
                     break;
                 }

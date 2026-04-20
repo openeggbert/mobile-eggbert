@@ -170,7 +170,7 @@ namespace WindowsPhoneSpeedyBlupi {
                         tinyPoint.X = rect.Left + rect.getWidthProperty() / 2 - (int)originX;
                         tinyPoint.Y = rect.Top + 28;
                         TinyPoint pos = tinyPoint;
-                        Text::DrawTextCenter(this, pos, Decor::GetCheatTinyText(glyph), 1.0);
+                        Text::DrawTextCenter(*this, pos, Decor::GetCheatTinyText(glyph), 1.0);
                         break;
                     }
                 case Def::ButtonGlyph::Cheat11:

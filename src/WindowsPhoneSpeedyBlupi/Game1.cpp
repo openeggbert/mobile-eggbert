@@ -46,7 +46,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     waitJauge(),
                     inputPad(this, &decor, pixmap.get(), sound.get(), gameData) {
         Tables::Init();
-        
+
         Exiting += [this](
             System::Object* /*sender*/,
             const Microsoft::Xna::Framework::ExitingEventArgs& args)
@@ -729,17 +729,17 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyPoint.X = 360;
                 tinyPoint.Y = 50;
                 TinyPoint pos = tinyPoint;
-                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL1), 0.9);
+                Text::DrawText(*pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL1), 0.9);
                 pos.Y += 40;
-                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL2), 0.7);
+                Text::DrawText(*pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL2), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL3), 0.7);
+                Text::DrawText(*pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL3), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL4), 0.7);
+                Text::DrawText(*pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL4), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL5), 0.7);
+                Text::DrawText(*pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL5), 0.7);
                 pos.Y += 25;
-                Text::DrawText(pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL6), 0.7);
+                Text::DrawText(*pixmap.get(), pos, MyResource::LoadString(MyResource::TX_TRIAL6), 0.7);
                 DrawTextUnderButton(Def::ButtonGlyph::TrialBuy, MyResource::TX_BUTTON_BUY);
                 DrawTextUnderButton(Def::ButtonGlyph::TrialCancel, MyResource::TX_BUTTON_BACK);
             }
@@ -761,25 +761,25 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.Y = buttonRect.Top + 3 - pixmap->getOriginProperty().Y;
             TinyPoint pos = tinyPoint;
             string text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_TITLE), STRING_VECTOR(std::to_string(static_cast<char>(65 + gamer))));
-            Text::DrawText(pixmap.get(), pos, text, 0.7);
+            Text::DrawText(*pixmap.get(), pos, text, 0.7);
             TinyPoint tinyPoint2;
             tinyPoint2.X = buttonRect.Right + 5 - pixmap->getOriginProperty().X;
             tinyPoint2.Y = buttonRect.Top + 25 - pixmap->getOriginProperty().Y;
             pos = tinyPoint2;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_MDOORS), STRING_VECTOR(std::to_string(mainDoors)));
-            Text::DrawText(pixmap.get(), pos, text, 0.45);
+            Text::DrawText(*pixmap.get(), pos, text, 0.45);
             TinyPoint tinyPoint3;
             tinyPoint3.X = buttonRect.Right + 5 - pixmap->getOriginProperty().X;
             tinyPoint3.Y = buttonRect.Top + 39 - pixmap->getOriginProperty().Y;
             pos = tinyPoint3;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_SDOORS), STRING_VECTOR(std::to_string(secondaryDoors)));
-            Text::DrawText(pixmap.get(), pos, text, 0.45);
+            Text::DrawText(*pixmap.get(), pos, text, 0.45);
             TinyPoint tinyPoint4;
             tinyPoint4.X = buttonRect.Right + 5 - pixmap->getOriginProperty().X;
             tinyPoint4.Y = buttonRect.Top + 53 - pixmap->getOriginProperty().Y;
             pos = tinyPoint4;
             text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_LIFES), STRING_VECTOR(std::to_string(nbVies)));
-            Text::DrawText(pixmap.get(), pos, text, 0.45);
+            Text::DrawText(*pixmap.get(), pos, text, 0.45);
         }
 
         void Game1::DrawTextRightButton(Def::ButtonGlyph glyph, int res)
@@ -797,9 +797,9 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyPoint.X = buttonRect.Right + 10 - pixmap->getOriginProperty().X;
                 tinyPoint.Y = (buttonRect.Top + buttonRect.Bottom) / 2 - 20 - pixmap->getOriginProperty().Y;
                 TinyPoint pos = tinyPoint;
-                Text::DrawText(pixmap.get(), pos, array[0], 0.7);
+                Text::DrawText(*pixmap.get(), pos, array[0], 0.7);
                 pos.Y += 24;
-                Text::DrawText(pixmap.get(), pos, array[1], 0.7);
+                Text::DrawText(*pixmap.get(), pos, array[1], 0.7);
             }
             else
             {
@@ -807,7 +807,7 @@ namespace WindowsPhoneSpeedyBlupi {
                 tinyPoint2.X = buttonRect.Right + 10 - pixmap->getOriginProperty().X;
                 tinyPoint2.Y = (buttonRect.Top + buttonRect.Bottom) / 2 - 8 - pixmap->getOriginProperty().Y;
                 TinyPoint pos2 = tinyPoint2;
-                Text::DrawText(pixmap.get(), pos2, text, 0.7);
+                Text::DrawText(*pixmap.get(), pos2, text, 0.7);
             }
         }
 
@@ -819,7 +819,7 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.Y = buttonRect.Bottom + 2 - pixmap->getOriginProperty().Y;
             TinyPoint pos = tinyPoint;
             string text = MyResource::LoadString(res);
-            Text::DrawTextCenter(pixmap.get(), pos, text, 0.7);
+            Text::DrawTextCenter(*pixmap.get(), pos, text, 0.7);
         }
 
         void Game1::DrawWaitProgress()
@@ -845,7 +845,7 @@ namespace WindowsPhoneSpeedyBlupi {
             tinyPoint.X = 10;
             tinyPoint.Y = 20;
             TinyPoint pos = tinyPoint;
-            Text::DrawText(pixmap.get(), pos, TO_STRING(inputPad.getTotalTouchProperty()), 1.0);
+            Text::DrawText(*pixmap.get(), pos, TO_STRING(inputPad.getTotalTouchProperty()), 1.0);
         }
 
         void Game1::SetGamer(int gamer)
