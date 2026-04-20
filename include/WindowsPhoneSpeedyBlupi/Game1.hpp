@@ -134,7 +134,7 @@ private: void DrawButtonGamerText(Def::ButtonGlyph glyph, int gamer);
 
 private: void DrawTextRightButton(Def::ButtonGlyph glyph, int res);
 
-private: void DrawTextRightButton(Def::ButtonGlyph glyph, string text);
+private: void DrawTextRightButton(Def::ButtonGlyph glyph, std::string text);
 
 private: void DrawTextUnderButton(Def::ButtonGlyph glyph, int res);
 

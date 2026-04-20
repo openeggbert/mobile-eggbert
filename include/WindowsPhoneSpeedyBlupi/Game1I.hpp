@@ -78,7 +78,7 @@ namespace WindowsPhoneSpeedyBlupi {
         virtual void DrawTextRightButton(Def::ButtonGlyph glyph, int res) = 0;
 
     private:
-        virtual void DrawTextRightButton(Def::ButtonGlyph glyph, string text) = 0;
+        virtual void DrawTextRightButton(Def::ButtonGlyph glyph, std::string text) = 0;
 
     private:
         virtual void DrawTextUnderButton(Def::ButtonGlyph glyph, int res) = 0;

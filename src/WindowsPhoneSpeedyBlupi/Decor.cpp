@@ -10,6 +10,7 @@
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
+#include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
     TinyRect Decor::getDrawBounds() const { return m_drawBounds; }

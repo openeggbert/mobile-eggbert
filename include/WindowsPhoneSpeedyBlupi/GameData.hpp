@@ -1,45 +1,63 @@
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.Def
+#pragma once
 
-//using Microsoft.Xna.Framework.Input;
-//using static WindowsPhoneSpeedyBlupi.Def;
-#ifndef GAMEDATA_H
-#define GAMEDATA_H
-#include "Worlds.hpp"
 #include "CppDotNet/CppDotNetHelper.hpp"
-
 
 namespace WindowsPhoneSpeedyBlupi
 {
-
     using ushort = unsigned short;
     using CppDotNet::bytecs;
+    using CppDotNet::intcs;
+
     class GameData
     {
-    private:
-        static constexpr bytecs HeaderLength = 10;
+        static constexpr intcs SaveHeaderLength = 10;
 
-        static constexpr bytecs DoorsLength = 200;
+        static constexpr intcs GamerHeaderLength = 10;
 
-        static constexpr bytecs GamerLength = 10 + DoorsLength;
+        static constexpr intcs DoorsLength = 200;
 
-        static constexpr bytecs MaxGamer = 3;
+        static constexpr intcs GamerLength = GamerHeaderLength + DoorsLength;
 
-        static constexpr ushort TotalLength = HeaderLength + GamerLength * MaxGamer;
+        static constexpr intcs MaxGamer = 3;
 
-        bytecs data[TotalLength];
+        static constexpr intcs TotalLength = SaveHeaderLength + GamerLength * MaxGamer;
+
+        bytecs data[TotalLength]{};
 
     public:
-    public: [[nodiscard]] bytecs getSelectedGamerProperty() const; public: void setSelectedGamerProperty(const bytecs& v);
-    public: [[nodiscard]] bool getSoundsProperty() const; public: void setSoundsProperty(const bool& v);
-    public: [[nodiscard]] bool getJumpRightProperty() const; public: void setJumpRightProperty(const bool& v);
-    public: [[nodiscard]] bool getAutoZoomProperty() const; public: void setAutoZoomProperty(const bool& v);
-    public: [[nodiscard]] bool getAccelActiveProperty() const; public: void setAccelActiveProperty(const bool& v);
-    public: [[nodiscard]] double getAccelSensitivityProperty() const; public: void setAccelSensitivityProperty(double v);
-    public: [[nodiscard]] int getNbViesProperty() const; public: void setNbViesProperty(const int& v);
-    public: [[nodiscard]] int getLastWorldProperty() const; public: void setLastWorldProperty(const int& v);
-    public: [[nodiscard]] int getGamerOffsetProperty() const; public: void setGamerOffset(const int& v);
+        [[nodiscard]] intcs getSelectedGamerProperty() const;
 
+        void setSelectedGamerProperty(const intcs v);
+
+        [[nodiscard]] bool getSoundsProperty() const;
+
+        void setSoundsProperty(const bool v);
+
+        [[nodiscard]] bool getJumpRightProperty() const;
+
+        void setJumpRightProperty(const bool v);
+        [[nodiscard]] bool getAutoZoomProperty() const;
+
+
+        void setAutoZoomProperty(const bool v);
+        [[nodiscard]] bool getAccelActiveProperty() const;
+
+
+        void setAccelActiveProperty(const bool v);
+        [[nodiscard]] double getAccelSensitivityProperty() const;
+
+
+        void setAccelSensitivityProperty(double v);
+
+        [[nodiscard]] intcs getNbViesProperty() const;
+
+        void setNbViesProperty(const intcs v);
+
+        [[nodiscard]] intcs getLastWorldProperty() const;
+
+
+        void setLastWorldProperty(const intcs v);
+        [[nodiscard]] intcs getGamerOffsetProperty() const;
 
         GameData();
 
@@ -49,21 +67,17 @@ namespace WindowsPhoneSpeedyBlupi
 
         void Reset();
 
-        void GetDoors(int doors[]);
+        void GetDoors(intcs doors[]);
 
-        void SetDoors(const int doors[]);
+        void SetDoors(const intcs doors[]);
 
-        void GetGamerInfo(int gamer, int& nbVies, int& mainDoors, int& secondaryDoors);
+        void GetGamerInfo(intcs gamer, intcs& nbVies, intcs& mainDoors, intcs& secondaryDoors);
 
     private:
         void Initialize();
 
-        void Initialize(int gamer);
+        void Initialize(intcs gamer);
 
-        static int GetGamerOffset(int gamer);
+        static intcs GetGamerOffset(intcs gamer);
     };
-
-
 }
-
-#endif // GAMEDATA_H

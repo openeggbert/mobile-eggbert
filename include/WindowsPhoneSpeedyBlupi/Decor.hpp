@@ -435,7 +435,7 @@ public:
 
         public: void MemorizeDoors(GameData gameData);
 
-        public: static string GetCheatTinyText(Def::ButtonGlyph glyph);
+        public: static std::string GetCheatTinyText(Def::ButtonGlyph glyph);
 
         public: void CheatAction(Tables::CheatCodes cheat);
 
