@@ -45,6 +45,8 @@ namespace WindowsPhoneSpeedyBlupi {
                     decor(),
                     waitJauge(),
                     inputPad(this, &decor, pixmap.get(), sound.get(), gameData) {
+        Tables::Init();
+        
         Exiting += [this](
             System::Object* /*sender*/,
             const Microsoft::Xna::Framework::ExitingEventArgs& args)
