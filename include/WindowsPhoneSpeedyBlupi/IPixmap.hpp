@@ -13,9 +13,9 @@
 namespace WindowsPhoneSpeedyBlupi {
     using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-    class PixmapI {
+    class IPixmap {
     protected:
-        virtual ~PixmapI() = default;
+        virtual ~IPixmap() = default;
 
     public:
         [[nodiscard]] virtual TinyRect getDrawBoundsProperty() = 0;

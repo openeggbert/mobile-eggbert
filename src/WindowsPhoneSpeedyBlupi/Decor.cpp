@@ -130,7 +130,7 @@ namespace WindowsPhoneSpeedyBlupi {
         m_hotSpotCurrentY = 240.0;
     }
 
-    void Decor::Create(SoundI* sound, PixmapI* pixmap, GameData& gameData)
+    void Decor::Create(ISound* sound, IPixmap* pixmap, GameData& gameData)
     {
         m_sound = sound;
         m_pixmap = pixmap;

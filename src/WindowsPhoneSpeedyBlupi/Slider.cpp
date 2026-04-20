@@ -24,7 +24,7 @@ namespace WindowsPhoneSpeedyBlupi
         this->setValueProperty(value);//to be checked
     }
 
-    void Slider::Draw(PixmapI* pixmap) {
+    void Slider::Draw(IPixmap* pixmap) {
         TinyPoint tinyPoint;
         tinyPoint.X = getTopLeftCorner().X - pixmap->getOriginProperty().X;
         tinyPoint.Y = getTopLeftCorner().Y - pixmap->getOriginProperty().Y;

@@ -8,27 +8,27 @@
 #include "Microsoft/Devices/Sensors/Accelerometer.hpp"
 #include "Microsoft/Devices/Sensors/AccelerometerReading.hpp"
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
-#include "WindowsPhoneSpeedyBlupi/PixmapI.hpp"
+#include "WindowsPhoneSpeedyBlupi/IPixmap.hpp"
 #include "WindowsPhoneSpeedyBlupi/Slider.hpp"
-#include "WindowsPhoneSpeedyBlupi/SoundI.hpp"
+#include "WindowsPhoneSpeedyBlupi/ISound.hpp"
 
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 
 namespace WindowsPhoneSpeedyBlupi {
-    class Game1I;
+    class IGame1;
 
     class InputPad
     {
     private:
         static const int padRadius = 140;
 
-         mutable Game1I* game1;
+         mutable IGame1* game1;
 
          mutable Decor* decor;
 
-         mutable PixmapI* pixmap;
+         mutable IPixmap* pixmap;
 
-         mutable SoundI* sound;
+         mutable ISound* sound;
 
          mutable GameData gameData;
 
@@ -75,7 +75,7 @@ namespace WindowsPhoneSpeedyBlupi {
         public: [[nodiscard]] TinyPoint getPadCenterProperty() const;
 
     public:
-        InputPad(Game1I* game1, Decor* decor, PixmapI* pixmap, SoundI* sound, GameData& gameData);
+        InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData& gameData);
 
         void StartMission(int mission);
 

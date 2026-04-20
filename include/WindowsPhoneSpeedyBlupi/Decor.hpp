@@ -6,8 +6,8 @@
 #define DECOR_H
 #include <cmath>
 
-#include "PixmapI.hpp"
-#include "SoundI.hpp"
+#include "IPixmap.hpp"
+#include "ISound.hpp"
 #include "Tables.hpp"
 #include "System/Random.hpp"
 #include "Jauge.hpp"
@@ -99,9 +99,9 @@ class Decor {
 
         private: static constexpr int OVERHEIGHT = 80;
 
-        private: SoundI* m_sound;
+        private: ISound* m_sound;
 
-        private: PixmapI* m_pixmap;
+        private: IPixmap* m_pixmap;
 
         private: GameData m_gameData;
 
@@ -361,7 +361,7 @@ public:
 
         public: Decor();
 
-        public: void Create(SoundI* sound, PixmapI* pixmap, GameData& gameData);
+        public: void Create(ISound* sound, IPixmap* pixmap, GameData& gameData);
 
         public: bool LoadImages();
 

@@ -9,10 +9,10 @@
 
 #include "Decor.hpp"
 #include "Def.hpp"
-#include "Game1I.hpp"
+#include "IGame1.hpp"
 #include "Jauge.hpp"
 #include "PixmapI.hpp"
-#include "SoundI.hpp"
+#include "ISound.hpp"
 #include "InputPad.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "Microsoft/Xna/Framework/GameTime.hpp"
@@ -23,7 +23,7 @@
 #define readonly mutable
 
 namespace WindowsPhoneSpeedyBlupi {
-class Game1 : public Microsoft::Xna::Framework::Game, public Game1I {
+class Game1 : public Microsoft::Xna::Framework::Game, public IGame1 {
 public:
 private: static constexpr int waitTableLength = 24;
 private: static constexpr double waitTable[waitTableLength] =
@@ -51,9 +51,9 @@ private: static constexpr Def::ButtonGlyph cheatGeste[cheatGesteLength] =
 
 private: readonly Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
-private: readonly std::shared_ptr<PixmapI> pixmap;
+private: readonly std::shared_ptr<IPixmap> pixmap;
 
-private: readonly std::shared_ptr<SoundI> sound;
+private: readonly std::shared_ptr<ISound> sound;
 
 private: readonly Decor decor;
 

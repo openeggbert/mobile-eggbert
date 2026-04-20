@@ -7,9 +7,9 @@
 #include <list>
 
 #include "Def.hpp"
-#include "Game1I.hpp"
+#include "IGame1.hpp"
 #include "GameData.hpp"
-#include "SoundI.hpp"
+#include "ISound.hpp"
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.hpp"
 #include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp"
 #include "Microsoft/Xna/Framework/Audio/SoundState.hpp"
@@ -31,7 +31,7 @@ namespace WindowsPhoneSpeedyBlupi {
  * This class provides functionality to either load, play, pause, stop, and manage audio files.
  * It also allows configuration and control over sound properties such as volume and looping.
  */
-class Sound : public SoundI
+class Sound : public ISound
     {
     private: class Play
         {
@@ -90,7 +90,7 @@ class Sound : public SoundI
 
         static constexpr int MAXVOLUME = 20;
 
-    private: Game1I* game1;
+    private: IGame1* game1;
 
     private: const GameData gameData;
 
@@ -100,7 +100,7 @@ class Sound : public SoundI
 
     private: double volume;
 
-    public: Sound(Game1I* game1, GameData& gameData);
+    public: Sound(IGame1* game1, GameData& gameData);
         Sound(const Sound&);
         Sound& operator=(const Sound&);
 

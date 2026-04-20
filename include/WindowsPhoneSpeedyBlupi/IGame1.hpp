@@ -17,9 +17,9 @@
 #define readonly mutable
 
 namespace WindowsPhoneSpeedyBlupi {
-    class Game1I {
+    class IGame1 {
     protected:
-        ~Game1I() = default;
+        ~IGame1() = default;
     public:
         [[nodiscard]]virtual bool getIsRankingModeProperty() const = 0;
 

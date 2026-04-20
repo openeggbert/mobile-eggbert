@@ -55,7 +55,7 @@ namespace WindowsPhoneSpeedyBlupi {
         return result;
     }
 
-    Pixmap::Pixmap(Game1I* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
+    Pixmap::Pixmap(IGame1* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
         game1(game1),
         graphics(graphics), spriteBatch(nullptr), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
         bitmapObject(Texture2D()),

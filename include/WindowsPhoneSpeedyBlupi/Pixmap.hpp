@@ -7,8 +7,8 @@
 #include <optional>
 
 #include "Def.hpp"
-#include "Game1I.hpp"
-#include "PixmapI.hpp"
+#include "IGame1.hpp"
+#include "IPixmap.hpp"
 
 #include "Microsoft/Xna/Framework/Vector2.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
@@ -35,7 +35,7 @@ namespace WindowsPhoneSpeedyBlupi
 {
 using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-    class Pixmap : public PixmapI
+    class Pixmap : public IPixmap
     {
 
     public:
@@ -50,7 +50,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         // void DrawChar(int rank, WindowsPhoneSpeedyBlupi::TinyPoint pos, double size);
         //////
     private:
-        Game1I* game1;
+        IGame1* game1;
 
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
@@ -102,7 +102,7 @@ using Microsoft::Xna::Framework::Graphics::Texture2D;
         public: [[nodiscard]] TinyRect getDrawBoundsProperty() override;
         public: [[nodiscard]] TinyPoint getOriginProperty() const;
 
-        Pixmap(Game1I* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
+        Pixmap(IGame1* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager &graphics);
 
         Pixmap(const Pixmap&);
         Pixmap& operator=(const Pixmap&);

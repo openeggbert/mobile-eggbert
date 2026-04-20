@@ -1,117 +1,295 @@
-//
-// Created by robertvokac on 5/24/25.
-//
-
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
-#include <cstdint>
+#include "System/String.hpp"
 
-namespace WindowsPhoneSpeedyBlupi {
+namespace WindowsPhoneSpeedyBlupi
+{
+    using System::String;
+    const CppDotNet::shortcs Text::table_char[1536] =
+    {
+        0, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 2, 0, 0, -1, 0, 0, 3, 0,
+        0, -1, 0, 0, 4, 0, 0, -1, 0, 0,
+        5, 0, 0, -1, 0, 0, 6, 0, 0, -1,
+        0, 0, 7, 0, 0, -1, 0, 0, 8, 0,
+        0, -1, 0, 0, 9, 0, 0, -1, 0, 0,
+        10, 0, 0, -1, 0, 0, 11, 0, 0, -1,
+        0, 0, 12, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 14, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 32, 0, 0, -1, 0, 0, 33, 0,
+        0, -1, 0, 0, 34, 0, 0, -1, 0, 0,
+        35, 0, 0, -1, 0, 0, 36, 0, 0, -1,
+        0, 0, 37, 0, 0, -1, 0, 0, 38, 0,
+        0, -1, 0, 0, 39, 0, 0, -1, 0, 0,
+        40, 0, 0, -1, 0, 0, 41, 0, 0, -1,
+        0, 0, 42, 0, 0, -1, 0, 0, 43, 0,
+        0, -1, 0, 0, 44, 0, 0, -1, 0, 0,
+        45, 0, 0, -1, 0, 0, 46, 0, 0, -1,
+        0, 0, 47, 0, 0, -1, 0, 0, 48, 0,
+        0, -1, 0, 0, 49, 0, 0, -1, 0, 0,
+        50, 0, 0, -1, 0, 0, 51, 0, 0, -1,
+        0, 0, 52, 0, 0, -1, 0, 0, 53, 0,
+        0, -1, 0, 0, 54, 0, 0, -1, 0, 0,
+        55, 0, 0, -1, 0, 0, 56, 0, 0, -1,
+        0, 0, 57, 0, 0, -1, 0, 0, 58, 0,
+        0, -1, 0, 0, 59, 0, 0, -1, 0, 0,
+        60, 0, 0, -1, 0, 0, 61, 0, 0, -1,
+        0, 0, 62, 0, 0, -1, 0, 0, 63, 0,
+        0, -1, 0, 0, 64, 0, 0, -1, 0, 0,
+        65, 0, 0, -1, 0, 0, 66, 0, 0, -1,
+        0, 0, 67, 0, 0, -1, 0, 0, 68, 0,
+        0, -1, 0, 0, 69, 0, 0, -1, 0, 0,
+        70, 0, 0, -1, 0, 0, 71, 0, 0, -1,
+        0, 0, 72, 0, 0, -1, 0, 0, 73, 0,
+        0, -1, 0, 0, 74, 0, 0, -1, 0, 0,
+        75, 0, 0, -1, 0, 0, 76, 0, 0, -1,
+        0, 0, 77, 0, 0, -1, 0, 0, 78, 0,
+        0, -1, 0, 0, 79, 0, 0, -1, 0, 0,
+        80, 0, 0, -1, 0, 0, 81, 0, 0, -1,
+        0, 0, 82, 0, 0, -1, 0, 0, 83, 0,
+        0, -1, 0, 0, 84, 0, 0, -1, 0, 0,
+        85, 0, 0, -1, 0, 0, 86, 0, 0, -1,
+        0, 0, 87, 0, 0, -1, 0, 0, 88, 0,
+        0, -1, 0, 0, 89, 0, 0, -1, 0, 0,
+        90, 0, 0, -1, 0, 0, 91, 0, 0, -1,
+        0, 0, 92, 0, 0, -1, 0, 0, 93, 0,
+        0, -1, 0, 0, 94, 0, 0, -1, 0, 0,
+        95, 0, 0, -1, 0, 0, 96, 0, 0, -1,
+        0, 0, 97, 0, 0, -1, 0, 0, 98, 0,
+        0, -1, 0, 0, 99, 0, 0, -1, 0, 0,
+        100, 0, 0, -1, 0, 0, 101, 0, 0, -1,
+        0, 0, 102, 0, 0, -1, 0, 0, 103, 0,
+        0, -1, 0, 0, 104, 0, 0, -1, 0, 0,
+        105, 0, 0, -1, 0, 0, 106, 0, 0, -1,
+        0, 0, 107, 0, 0, -1, 0, 0, 108, 0,
+        0, -1, 0, 0, 109, 0, 0, -1, 0, 0,
+        110, 0, 0, -1, 0, 0, 111, 0, 0, -1,
+        0, 0, 112, 0, 0, -1, 0, 0, 113, 0,
+        0, -1, 0, 0, 114, 0, 0, -1, 0, 0,
+        115, 0, 0, -1, 0, 0, 116, 0, 0, -1,
+        0, 0, 117, 0, 0, -1, 0, 0, 118, 0,
+        0, -1, 0, 0, 119, 0, 0, -1, 0, 0,
+        120, 0, 0, -1, 0, 0, 121, 0, 0, -1,
+        0, 0, 122, 0, 0, -1, 0, 0, 123, 0,
+        0, -1, 0, 0, 124, 0, 0, -1, 0, 0,
+        125, 0, 0, -1, 0, 0, 126, 0, 0, -1,
+        0, 0, 127, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 5, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 4, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 16, 0, 0, -1, 0, 0,
+        97, 0, 0, 2, 2, 0, 17, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 27, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 29, 0, 0, -1,
+        0, 0, 19, 0, 0, -1, 0, 0, 18, 0,
+        0, -1, 0, 0, 21, 0, 0, -1, 0, 0,
+        20, 0, 0, -1, 0, 0, 1, 0, 0, -1,
+        0, 0, 105, 0, 0, 2, -1, 0, 23, 0,
+        0, -1, 0, 0, 22, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 110, 0, 0, 126,
+        -1, 0, 1, 0, 0, -1, 0, 0, 111, 0,
+        0, 2, 1, 0, 24, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0, 28, 0, 0, -1,
+        0, 0, 1, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 25, 0, 0, -1, 0, 0,
+        117, 0, 0, 2, 2, 0, 26, 0, 0, -1,
+        0, 0, 15, 0, 0, -1, 0, 0, 1, 0,
+        0, -1, 0, 0, 1, 0, 0, -1, 0, 0,
+        1, 0, 0, -1, 0, 0
+    };
 
-        void Text::DrawTextLeft(PixmapI* pixmap, TinyPoint& pos, string& text, double& size)
+    const CppDotNet::ubytecs Text::table_accents[15] =
+    {
+        252, 224, 226, 233, 232, 235, 234, 239, 238, 244,
+        249, 251, 228, 246, 231
+    };
+
+    const CppDotNet::ubytecs Text::table_width[128] =
+    {
+        32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+        32, 32, 32, 32, 14, 13, 15, 15, 15, 15,
+        15, 15, 11, 12, 14, 13, 13, 15, 15, 14,
+        0, 0, 9, 5, 10, 25, 17, 22, 18, 5,
+        9, 9, 14, 13, 6, 10, 6, 14, 18, 10,
+        14, 14, 17, 16, 16, 17, 15, 16, 5, 6,
+        9, 12, 10, 14, 25, 18, 16, 17, 18, 16,
+        16, 19, 20, 15, 15, 15, 14, 24, 22, 22,
+        15, 24, 16, 18, 15, 19, 18, 29, 20, 18,
+        19, 8, 13, 8, 12, 20, 7, 15, 15, 13,
+        15, 15, 13, 14, 14, 6, 8, 14, 6, 21,
+        16, 14, 14, 13, 12, 14, 11, 13, 13, 19,
+        16, 15, 14, 10, 5, 11, 16, 0
+    };
+
+    void Text::DrawTextLeft(IPixmap& pixmap, TinyPoint pos, const string& text, const double size)
+    {
+        if (!String::IsNullOrEmpty(text))
         {
-            if (!text.empty())
+            DrawText(pixmap, pos, text, size);
+        }
+    }
+
+    void Text::DrawText(IPixmap& pixmap, TinyPoint pos, const string& text, double size)
+    {
+        if (!String::IsNullOrEmpty(text))
+        {
+            for (char car : text)
             {
-                DrawText(pixmap, pos, text, size);
+                DrawChar(pixmap, pos, car, size);
             }
         }
+    }
 
-        void Text::DrawText(PixmapI* pixmap, TinyPoint pos, string text, double size)
+    void Text::DrawTextPente(IPixmap& pixmap, TinyPoint pos, const string& text, intcs pente, double size)
+    {
+        if (!String::IsNullOrEmpty(text))
         {
-            if (!text.empty())
-            {
-                for (char car : text)
-                {
-                    DrawChar(pixmap, pos, car, size);
-                }
-            }
-        }
-
-        void Text::DrawTextPente(PixmapI* pixmap, TinyPoint pos, string text, int pente, double size)
-        {
-            if (!text.empty())
-            {
-                int y = pos.Y;
-                int num = 0;
-                for (char c : text)
-                {
-                    int charWidth = GetCharWidth(c, size);
-                    DrawChar(pixmap, pos, c, size);
-                    num += charWidth;
-                    pos.Y = y + num / pente;
-                }
-            }
-        }
-
-        void Text::DrawTextCenter(PixmapI* pixmap, TinyPoint& pos, string text, double size)
-        {
-            if (!text.empty())
-            {
-                TinyPoint pos2;
-                pos2.X = pos.X - GetTextWidth(text, size) / 2;
-                pos2.Y = pos.Y;
-                DrawText(pixmap, pos2, text, size);
-            }
-        }
-
-        int Text::GetTextWidth(const string &text, double size)
-        {
-            if (text.empty())
-            {
-                return 0;
-            }
-            int num = 0;
+            int y = pos.Y;
+            int accumulatedWidth = 0;
             for (char c : text)
             {
-                num += GetCharWidth(c, size);
+                int charWidth = GetCharWidth(c, size);
+                DrawChar(pixmap, pos, c, size);
+                accumulatedWidth += charWidth;
+                pos.Y = y + accumulatedWidth / pente;
             }
-            return num;
+        }
+    }
+
+    void Text::DrawTextCenter(IPixmap& pixmap, TinyPoint pos, const string& text, double size)
+    {
+        if (!String::IsNullOrEmpty(text))
+        {
+            TinyPoint pos2{};
+            pos2.X = pos.X - GetTextWidth(text, size) / 2;
+            pos2.Y = pos.Y;
+            DrawText(pixmap, pos2, text, size);
+        }
+    }
+
+    int Text::GetTextWidth(const string& text, double size)
+    {
+        if (String::IsNullOrEmpty(text))
+        {
+            return 0;
+        }
+        int result = 0;
+        for (char c : text)
+        {
+            result += GetCharWidth(c, size);
+        }
+        return result;
+    }
+
+    // PORTED
+    intcs Text::GetOffset(CppDotNet::charcs c)
+    {
+        for (int i = 0; i < 15; i++)
+        {
+            if (static_cast<CppDotNet::shortcs>(c) == table_accents[i])
+            {
+                return 15 + i;
+            }
         }
 
-        // PORTED
-        int Text::GetOffset(char16_t c)
+        if (c > u'\u0080')
         {
-            for (int i = 0; i < 15; i++)
-            {
-                if (static_cast<std::uint16_t>(c) == table_accents[i])
-                {
-                    return 15 + i;
-                }
-            }
-
-            if (c > u'\u0080')
-            {
-                return 1;
-            }
-
-            return static_cast<int>(c);
+            return 1;
         }
 
-        void Text::DrawChar(PixmapI* pixmap, TinyPoint& pos, const char& car, const double& size)
+        return static_cast<intcs>(c);
+    }
+
+    void Text::DrawChar(IPixmap& pixmap, TinyPoint& pos, const CppDotNet::charcs car, const double size)
+    {
+        TinyPoint pos2{};
+        int num = (short)car * 6;
+        int rank = table_char[num];
+        pos2.X = pos.X + table_char[num + 1];
+        pos2.Y = pos.Y + table_char[num + 2];
+        DrawCharSingle(pixmap, pos2, rank, size);
+        rank = table_char[num + 3];
+        if (rank != -1)
         {
-            TinyPoint pos2;
-            int num = (short)car * 6;
-            int rank = table_char[num];
-            pos2.X = pos.X + table_char[num + 1];
-            pos2.Y = pos.Y + table_char[num + 2];
+            pos2.X = pos.X + table_char[num + 4];
+            pos2.Y = pos.Y + table_char[num + 5];
             DrawCharSingle(pixmap, pos2, rank, size);
-            rank = table_char[num + 3];
-            if (rank != -1)
-            {
-                pos2.X = pos.X + table_char[num + 4];
-                pos2.Y = pos.Y + table_char[num + 5];
-                DrawCharSingle(pixmap, pos2, rank, size);
-            }
-            pos.X += GetCharWidth(car, size);
         }
+        pos.X += GetCharWidth(car, size);
+    }
 
-        int Text::GetCharWidth(const char c, const double size)
-        {
-            return (int)((double)(table_width[table_char[(short)c * 6]] + 1) * size);
-        }
+    intcs Text::GetCharWidth(const CppDotNet::charcs c, const double size)
+    {
+        return (intcs)((double)(table_width[table_char[(CppDotNet::shortcs)c * 6]] + 1) * size);
+    }
 
-        void Text::DrawCharSingle(PixmapI* pixmap, TinyPoint pos, int rank, double size)
-        {
-            pixmap->DrawChar(rank, pos, size);
-        }
+    void Text::DrawCharSingle(IPixmap& pixmap, TinyPoint pos, intcs rank, double size)
+    {
+        pixmap.DrawChar(rank, pos, size);
+    }
 }

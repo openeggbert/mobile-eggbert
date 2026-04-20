@@ -50,7 +50,7 @@ namespace WindowsPhoneSpeedyBlupi {
         sei.Stop();
     }
 
-    Sound::Sound(Game1I* game1, GameData& gameData):
+    Sound::Sound(IGame1* game1, GameData& gameData):
     game1(game1),
     gameData(gameData)
     {

@@ -5,16 +5,16 @@
 #ifndef JAUGE_H
 #define JAUGE_H
 #include <optional>
-#include "PixmapI.hpp"
-#include "SoundI.hpp"
+#include "IPixmap.hpp"
+#include "ISound.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
 
     class Jauge {
     private:
-        PixmapI* m_pixmap;
+        IPixmap* m_pixmap;
         //Todo: Check (m_sound is not used).
-        SoundI* m_sound;
+        ISound* m_sound;
 
         bool m_bHide;
 
@@ -37,7 +37,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         Jauge();
 
-        bool Create(PixmapI* pixmap, SoundI* sound, TinyPoint pos, int mode, bool bMinimizeRedraw);
+        bool Create(IPixmap* pixmap, ISound* sound, TinyPoint pos, int mode, bool bMinimizeRedraw);
 
         void Draw();
 

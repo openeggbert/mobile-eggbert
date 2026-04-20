@@ -9,9 +9,9 @@
 
 namespace WindowsPhoneSpeedyBlupi {
 
-    class SoundI {
+    class ISound {
     protected:
-        ~SoundI() = default;
+        ~ISound() = default;
     public:
         virtual void LoadContent() = 0;
 

@@ -1682,5 +1682,4 @@ namespace WindowsPhoneSpeedyBlupi
         Tables::table_training4[23] = MyResource::TX_TRAINING404;
         Tables::table_training4[29] = MyResource::TX_TRAINING405;
     }
-
 }

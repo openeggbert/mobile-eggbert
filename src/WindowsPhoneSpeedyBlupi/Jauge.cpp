@@ -27,7 +27,7 @@ namespace WindowsPhoneSpeedyBlupi
     }
 
 
-        bool Jauge::Create(PixmapI* pixmap, SoundI* sound, TinyPoint pos, int mode, bool bMinimizeRedraw)
+        bool Jauge::Create(IPixmap* pixmap, ISound* sound, TinyPoint pos, int mode, bool bMinimizeRedraw)
         {
             m_pixmap = pixmap;
             m_sound = sound;

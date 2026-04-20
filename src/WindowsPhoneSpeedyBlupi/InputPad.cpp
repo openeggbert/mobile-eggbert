@@ -14,7 +14,7 @@
 #include "Microsoft/Xna/Framework/Input/Touch/TouchLocation.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "System/UnauthorizedAccessException.hpp"
-#include "WindowsPhoneSpeedyBlupi/Game1I.hpp"
+#include "WindowsPhoneSpeedyBlupi/IGame1.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 
 // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
@@ -142,7 +142,7 @@ namespace WindowsPhoneSpeedyBlupi {
     }
     /** Properties : End */
 
-    InputPad::InputPad(Game1I* game1, Decor* decor, PixmapI* pixmap, SoundI* sound, GameData& gameData):
+    InputPad::InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData& gameData):
         game1(game1),
         decor(decor),
         pixmap(pixmap),
