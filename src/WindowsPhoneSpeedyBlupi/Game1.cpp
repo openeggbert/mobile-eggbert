@@ -423,7 +423,6 @@ namespace WindowsPhoneSpeedyBlupi {
 
     void Game1::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
-        getGraphicsDeviceProperty().Clear(1.0f, 0.0f, 0.0f, 1.0f);
         if (continueMission == 1)
         {
             continueMission = 2;

@@ -1,36 +1,35 @@
-//
-// Created by robertvokac on 5/24/25.
-//
+#pragma once
 
-#ifndef SLIDER_H
-#define SLIDER_H
 #include "WindowsPhoneSpeedyBlupi/IPixmap.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
-namespace WindowsPhoneSpeedyBlupi {
-
+namespace WindowsPhoneSpeedyBlupi
+{
     class Slider
     {
-    private: WindowsPhoneSpeedyBlupi::TinyPoint topLeftCorner;
-    private: double value;
+    public:
+        Slider(TinyPoint topLeftCorner, double value);
 
-    public: [[nodiscard]] WindowsPhoneSpeedyBlupi::TinyPoint getTopLeftCorner() const;
-    DDATA(double, Value)
-    public: [[nodiscard]] int getPosLeft() const;
-    public: [[nodiscard]] int getPosRight() const;
+        TinyPoint topLeftCorner;
+        double value;
 
-    public: Slider(WindowsPhoneSpeedyBlupi::TinyPoint topLeftCorner, double value) ;
+        [[nodiscard]] TinyPoint getTopLeftCornerProperty() const;
+        void setTopLeftCornerProperty(TinyPoint point);
+        DDATA(double, Value)
 
-/*
-        NeoSdk::Property<byte> SelectedGamer;
-        SelectedGamer( [this]() { return data[2]; } , [this](byte value) {data[2] = value; }),
-*/
+    private:
+        [[nodiscard]] intcs getPosLeftProperty() const;
+        [[nodiscard]] intcs getPosRightProperty() const;
 
 
-    public: void Draw(IPixmap* pixmap);
+        /*
+                NeoSdk::Property<byte> SelectedGamer;
+                SelectedGamer( [this]() { return data[2]; } , [this](byte value) {data[2] = value; }),
+        */
 
-    public: bool Move(TinyPoint &pos);
+    public:
+        void Draw(IPixmap& pixmap);
+
+        bool Move(TinyPoint pos);
     };
 }
-
-#endif //SLIDER_H

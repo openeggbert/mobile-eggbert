@@ -549,7 +549,7 @@ namespace WindowsPhoneSpeedyBlupi {
             }
             if ((getPhaseProperty() == Def::Phase::MainSetup || getPhaseProperty() == Def::Phase::PlaySetup) && gameData.getAccelActiveProperty())
             {
-                accelSlider.Draw(pixmap);
+                accelSlider.Draw(*pixmap);
             }
         }
 

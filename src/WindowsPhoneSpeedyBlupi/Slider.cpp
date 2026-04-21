@@ -1,33 +1,36 @@
-//
-// Created by robertvokac on 5/24/25.
-//
-
 #include "WindowsPhoneSpeedyBlupi/Slider.hpp"
+
+#include "System/Math.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
-
-
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.Slider
-
 
 namespace WindowsPhoneSpeedyBlupi
 {
-
-    TinyPoint Slider::getTopLeftCorner() const { return topLeftCorner ; }
-    IDATA(double, Value, Slider)
-    int Slider::getPosLeft() const { return getTopLeftCorner().X + 22; }
-    int Slider::getPosRight() const { return getTopLeftCorner().X + 248 - 22;; }
-
-    Slider::Slider(WindowsPhoneSpeedyBlupi::TinyPoint topLeftCorner, double value)
+    Slider::Slider(TinyPoint topLeftCorner, double value)
     {
-        this->topLeftCorner = topLeftCorner;
-        this->setValueProperty(value);//to be checked
+        this->setTopLeftCornerProperty(topLeftCorner);
+        // Decompiled C# shows "value = Value", which is likely reversed by decompilation.
+        // Intentionally initializing Value from constructor parameter.
+        // value = Value;
+        this->setValueProperty(value);
     }
 
-    void Slider::Draw(IPixmap* pixmap) {
-        TinyPoint tinyPoint;
-        tinyPoint.X = getTopLeftCorner().X - pixmap->getOriginProperty().X;
-        tinyPoint.Y = getTopLeftCorner().Y - pixmap->getOriginProperty().Y;
+    TinyPoint Slider::getTopLeftCornerProperty() const { return topLeftCorner ; }
+
+    void Slider::setTopLeftCornerProperty(TinyPoint point)
+    {
+        this->topLeftCorner = point;
+    }
+
+    IDATA(double, Value, Slider)
+    intcs Slider::getPosLeftProperty() const { return getTopLeftCornerProperty().X + 22; }
+    intcs Slider::getPosRightProperty() const { return getTopLeftCornerProperty().X + 248 - 22;; }
+
+
+
+    void Slider::Draw(IPixmap& pixmap) {
+        TinyPoint tinyPoint{};
+        tinyPoint.X = getTopLeftCornerProperty().X - pixmap.getOriginProperty().X;
+        tinyPoint.Y = getTopLeftCornerProperty().Y - pixmap.getOriginProperty().Y;
         TinyPoint dest = tinyPoint;
         TinyRect tinyRect;
         tinyRect.Left = 0;
@@ -35,46 +38,46 @@ namespace WindowsPhoneSpeedyBlupi
         tinyRect.Top = 0;
         tinyRect.Bottom = 22;
         TinyRect rect = tinyRect;
-        pixmap->DrawPart(5, dest, rect, 2.0);
-        int num = (int)((double)(getPosRight() - getPosLeft()) * getValueProperty());
-        int num2 = getTopLeftCorner().Y + 22;
-        int num3 = 94;
-        TinyRect tinyRect2;
-        tinyRect2.Left = getPosLeft() + num - num3 / 2;
-        tinyRect2.Right = getPosLeft() + num + num3 / 2;
+        pixmap.DrawPart(5, dest, rect, 2.0);
+        intcs num = (intcs)((double)(getPosRightProperty() - getPosLeftProperty()) * getValueProperty());
+        intcs num2 = getTopLeftCornerProperty().Y + 22;
+        intcs num3 = 94;
+        TinyRect tinyRect2{};
+        tinyRect2.Left = getPosLeftProperty() + num - num3 / 2;
+        tinyRect2.Right = getPosLeftProperty() + num + num3 / 2;
         tinyRect2.Top = num2 - num3 / 2;
         tinyRect2.Bottom = num2 + num3 / 2;
         rect = tinyRect2;
-        pixmap->DrawIcon(14, 1, rect, 1.0, false);
-        TinyRect tinyRect3;
-        tinyRect3.Left = getTopLeftCorner().X - 65;
-        tinyRect3.Right = getTopLeftCorner().X - 65 + 60;
-        tinyRect3.Top = getTopLeftCorner().Y - 10;
-        tinyRect3.Bottom = getTopLeftCorner().Y - 10 + 60;
+        pixmap.DrawIcon(14, 1, rect, 1.0, false);
+        TinyRect tinyRect3{};
+        tinyRect3.Left = getTopLeftCornerProperty().X - 65;
+        tinyRect3.Right = getTopLeftCornerProperty().X - 65 + 60;
+        tinyRect3.Top = getTopLeftCornerProperty().Y - 10;
+        tinyRect3.Bottom = getTopLeftCornerProperty().Y - 10 + 60;
         rect = tinyRect3;
-        pixmap->DrawIcon(10, 37, rect, 1.0, false);
-        TinyRect tinyRect4;
-        tinyRect4.Left = getTopLeftCorner().X + 248 + 5;
-        tinyRect4.Right = getTopLeftCorner().X + 248 + 5 + 60;
-        tinyRect4.Top = getTopLeftCorner().Y - 10;
-        tinyRect4.Bottom = getTopLeftCorner().Y - 10 + 60;
+        pixmap.DrawIcon(10, 37, rect, 1.0, false);
+        TinyRect tinyRect4{};
+        tinyRect4.Left = getTopLeftCornerProperty().X + 248 + 5;
+        tinyRect4.Right = getTopLeftCornerProperty().X + 248 + 5 + 60;
+        tinyRect4.Top = getTopLeftCornerProperty().Y - 10;
+        tinyRect4.Bottom = getTopLeftCornerProperty().Y - 10 + 60;
         rect = tinyRect4;
-        pixmap->DrawIcon(10, 38, rect, 1.0, false);
+        pixmap.DrawIcon(10, 38, rect, 1.0, false);
     }
 
-        bool Slider::Move(TinyPoint& pos)
+        bool Slider::Move(TinyPoint pos)
         {
-            TinyRect tinyRect;
-            tinyRect.Left = getTopLeftCorner().X - 50;
-            tinyRect.Right = getTopLeftCorner().X + 248 + 50;
-            tinyRect.Top = getTopLeftCorner().Y - 50;
-            tinyRect.Bottom = getTopLeftCorner().Y + 44 + 50;
+            TinyRect tinyRect{};
+            tinyRect.Left = getTopLeftCornerProperty().X - 50;
+            tinyRect.Right = getTopLeftCornerProperty().X + 248 + 50;
+            tinyRect.Top = getTopLeftCornerProperty().Y - 50;
+            tinyRect.Bottom = getTopLeftCornerProperty().Y + 44 + 50;
             TinyRect rect = tinyRect;
             if (Misc::IsInside(rect, pos))
             {
-                double val = ((double)pos.X - (double)getPosLeft()) / (double)(getPosRight() - getPosLeft());
-                val = std::max(val, 0.0);
-                val = std::min(val, 1.0);
+                double val = ((double)pos.X - (double)getPosLeftProperty()) / (double)(getPosRightProperty() - getPosLeftProperty());
+                val = System::Math::Max(val, 0.0);
+                val = System::Math::Min(val, 1.0);
                 if (getValueProperty() != val)
                 {
                     setValueProperty(val);

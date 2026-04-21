@@ -1,13 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(WindowsPhoneSpeedyBlupi)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(../../cna CNA)
 include_directories(../cna/include CNA)
-
-#add_subdirectory(../../neo-sdk NEO_SDK)
-#include_directories(../neo-sdk/include NEO_SDK)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
