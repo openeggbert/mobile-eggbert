@@ -22,6 +22,7 @@ namespace WindowsPhoneSpeedyBlupi
     class Game1 : public Microsoft::Xna::Framework::Game, public IGame1
     {
         static constexpr int waitTableLength = 24;
+        //pairs: threshold, level
         static constexpr double waitTable[waitTableLength] =
         {
             0.1, 7.0, 0.2, 20.0, 0.25, 22.0, 0.45, 50.0, 0.6, 53.0,

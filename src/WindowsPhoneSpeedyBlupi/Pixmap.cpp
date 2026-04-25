@@ -314,6 +314,11 @@ namespace WindowsPhoneSpeedyBlupi
         DrawIcon(channel, rank, tinyRect, opacity, rotation, true);
     }
 
+    bool Pixmap::DrawPart(intcs channel, TinyPoint dest, TinyRect rect)
+    {
+        return DrawPart(channel, dest, rect, 1.0);
+    }
+
     bool Pixmap::DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom)
     {
         if (!spriteBatch)
@@ -328,8 +333,17 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (channel == 5)
         {
+            CNA::Logger::Debug(
+               "Pixmap::DrawPart ch5 BEFORE origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
+               "), srcRect=(" + std::to_string(rect.Left) + "," + std::to_string(rect.Top) + "," +
+               std::to_string(rect.Right) + "," + std::to_string(rect.Bottom) + "), zoom=" + std::to_string(zoom));
+
             dest.X = static_cast<intcs>(static_cast<double>(dest.X) + originX);
             dest.Y = static_cast<intcs>(static_cast<double>(dest.Y) + originY);
+            CNA::Logger::Debug(
+               "Pixmap::DrawPart ch5 AFTER origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
+               "), origin=(" + std::to_string(originX) + "," + std::to_string(originY) + ")");
+
         }
         using Microsoft::Xna::Framework::Rectangle;
         Rectangle value = Rectangle(

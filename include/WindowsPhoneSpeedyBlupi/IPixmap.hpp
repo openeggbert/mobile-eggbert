@@ -62,7 +62,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         virtual void QuickIcon(intcs channel, intcs rank, TinyPoint pos, double opacity, double rotation) = 0;
 
-        virtual bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom = 1.0) = 0;
+        virtual bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect) = 0;
+
+        virtual bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom) = 0;
 
         virtual void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot) = 0;
 

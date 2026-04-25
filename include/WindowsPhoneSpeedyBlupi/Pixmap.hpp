@@ -192,7 +192,9 @@ namespace WindowsPhoneSpeedyBlupi
 
         void QuickIcon(intcs channel, intcs rank, TinyPoint pos, double opacity, double rotation) override;
 
-        bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom = 1.0) override;
+        bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect) override;
+
+        bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom) override;
 
         void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot) override;
 

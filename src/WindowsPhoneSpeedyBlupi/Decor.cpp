@@ -145,12 +145,12 @@ namespace WindowsPhoneSpeedyBlupi
         pos.X = 90;
         pos.Y = 450;
         m_jauges[0] = Jauge();
-        m_jauges[0].Create(m_pixmap, m_sound, pos, 1, false);
+        m_jauges[0].Create(m_pixmap, m_sound, pos, JaugeMode::Red, false);
         m_jauges[0].SetHide(true);
         pos.X = 90;
         pos.Y = 428;
         m_jauges[1] = Jauge();
-        m_jauges[1].Create(m_pixmap, m_sound, pos, 3, false);
+        m_jauges[1].Create(m_pixmap, m_sound, pos, JaugeMode::Yellow, false);
         m_jauges[1].SetHide(true);
     }
 
@@ -4018,7 +4018,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 if (m_blupiLevel == 25)
                 {
-                    m_jauges[0].SetMode(1);
+                    m_jauges[0].SetMode(JaugeMode::Red);
                 }
                 m_jauges[0].SetLevel(m_blupiLevel);
                 if (m_blupiLevel == 0)
@@ -4720,7 +4720,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiNage = true;
                 m_blupiLevel = 100;
                 m_jauges[0].SetLevel(m_blupiLevel);
-                m_jauges[0].SetMode(2);
+                m_jauges[0].SetMode(JaugeMode::Blue);
                 m_jauges[0].SetHide(false);
             }
             if (m_blupiNage && IsSurfWater(m_blupiPos))
@@ -10080,7 +10080,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             Worlds::WriteSection("Jauge");
             Worlds::WriteBoolField("hide", m_jauges[n].GetHide());
-            Worlds::WriteIntField("mode", m_jauges[n].GetMode());
+            Worlds::WriteIntField("mode", jauge_mode_to_int(m_jauges[n].GetMode()));
             Worlds::WriteIntField("level", m_jauges[n].GetLevel());
             Worlds::WriteEndSection();
         }

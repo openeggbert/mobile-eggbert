@@ -2,11 +2,13 @@
 
 #include "WindowsPhoneSpeedyBlupi/Jauge.hpp"
 
+#include "CNA/Logger.hpp"
+
 namespace WindowsPhoneSpeedyBlupi
 {
     double Jauge::getZoomProperty() const { return m_zoom; }
     void Jauge::setZoomProperty(double v) { m_zoom = v; }
-    Jauge::Jauge() : m_pixmap(nullptr), m_sound(nullptr), m_mode(0),
+    Jauge::Jauge() : m_pixmap(nullptr), m_sound(nullptr), m_mode(JaugeMode::Empty),
                      m_bHide(true),
                      m_bMinimizeRedraw(false),
                      m_bRedraw(false),
@@ -15,8 +17,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
     }
 
-
-        bool Jauge::Create(IPixmap* pixmap, ISound* sound, TinyPoint pos, int mode, bool bMinimizeRedraw)
+        bool Jauge::Create(IPixmap* pixmap, ISound* sound, TinyPoint pos, JaugeMode mode, bool bMinimizeRedraw)
         {
             m_pixmap = pixmap;
             m_sound = sound;
@@ -45,18 +46,30 @@ namespace WindowsPhoneSpeedyBlupi
             m_bRedraw = false;
             if (!m_bHide)
             {
-                int num = m_level * 114 / 100;
+                int filledWidth = m_level * 114 / 100;
+                CNA::Logger::Debug(
+                    "Jauge::Draw: level=" + std::to_string(m_level) +
+                    ", mode=" + std::to_string(jauge_mode_to_int(m_mode)) +
+                    ", filledWidth=" + std::to_string(filledWidth) +
+                    ", zoom=" + std::to_string(m_zoom) +
+                    ", pos=(" + std::to_string(m_pos.X) + "," + std::to_string(m_pos.Y) + ")");
+
                 rect.Left = 0;
                 rect.Right = 124;
                 rect.Top = 0;
                 rect.Bottom = 22;
                 m_pixmap->DrawPart(5, m_pos, rect, m_zoom);
-                if (num > 0)
+                if (filledWidth > 0)
                 {
                     rect.Left = 0;
-                    rect.Right = 6 + num;
-                    rect.Top = 22 * m_mode;
-                    rect.Bottom = 22 * (m_mode + 1);
+                    rect.Right = 6 + filledWidth;
+                    rect.Top = 22 * jauge_mode_to_int(m_mode);
+                    rect.Bottom = 22 * (jauge_mode_to_int(m_mode) + 1);
+                    CNA::Logger::Debug(
+                        "Jauge::Draw fill rect: L=" + std::to_string(rect.Left) +
+                        " T=" + std::to_string(rect.Top) +
+                        " R=" + std::to_string(rect.Right) +
+                        " B=" + std::to_string(rect.Bottom));
                     m_pixmap->DrawPart(5, m_pos, rect, m_zoom);
                 }
             }
@@ -89,12 +102,12 @@ namespace WindowsPhoneSpeedyBlupi
             m_level = level;
         }
 
-        int Jauge::GetMode()
+        JaugeMode Jauge::GetMode()
         {
             return m_mode;
         }
 
-        void Jauge::SetMode(int mode)
+        void Jauge::SetMode(JaugeMode mode)
         {
             if (m_mode != mode)
             {
@@ -125,6 +138,5 @@ namespace WindowsPhoneSpeedyBlupi
         {
             m_bRedraw = true;
         }
-
 
 }

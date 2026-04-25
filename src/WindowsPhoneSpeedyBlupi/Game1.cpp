@@ -1,14 +1,3 @@
-// // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// // WindowsPhoneSpeedyBlupi.Game1
-// using System;
-// using Microsoft.Xna.Framework;
-// using Microsoft.Xna.Framework.GamerServices;
-// using Microsoft.Xna.Framework.Input;
-// using Microsoft.Xna.Framework.Input.Touch;
-// using Microsoft.Xna.Framework.Media;
-// using WindowsPhoneSpeedyBlupi;
-// using static System.Net.Mime.MediaTypeNames;
-
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
 #include "Microsoft/Xna/Framework/GamerServices/Guide.hpp"
@@ -82,7 +71,7 @@ namespace WindowsPhoneSpeedyBlupi {
             426
         };
 
-        waitJauge.Create(pixmap.get(), sound.get(), pos, 3, false);
+        waitJauge.Create(pixmap.get(), sound.get(), pos, JaugeMode::Yellow, false);
         waitJauge.SetHide(false);
         waitJauge.setZoomProperty(2.0);
         phase = Def::Phase::None;
@@ -832,7 +821,14 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 if (waitProgress <= waitTable[i * 2])
                 {
-                    waitJauge.SetLevel((int)waitTable[i * 2 + 1]);
+                    const int level = (int)waitTable[i * 2 + 1];
+
+                    CNA::Logger::Debug(
+    "DrawWaitProgress: waitProgress=" + std::to_string(waitProgress) +
+    ", i=" + std::to_string(i) +
+    ", threshold=" + std::to_string(waitTable[i * 2]) +
+    ", level=" + std::to_string(level));
+                    waitJauge.SetLevel(level);
                     break;
                 }
             }
