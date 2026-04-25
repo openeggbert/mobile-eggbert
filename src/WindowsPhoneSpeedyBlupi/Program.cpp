@@ -6,6 +6,7 @@
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
 int main(int argc, char *args[]) {
+    CNA::Logger::SetMinimumLevel(CNA::LogLevel::TRACE);
     WindowsPhoneSpeedyBlupi::Game1 game;
     game.Run();
 }

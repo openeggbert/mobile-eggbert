@@ -99,6 +99,7 @@ namespace WindowsPhoneSpeedyBlupi {
         Microsoft::Xna::Framework::Game::Initialize();
     }
     void Game1::LoadContent() {
+        CNA::Logger::Trace("Game1::LoadContent");
         pixmap->BackgroundCache("wait");
     }
     void Game1::UnloadContent () {
@@ -131,6 +132,7 @@ namespace WindowsPhoneSpeedyBlupi {
     }
 
     void Game1::Update(Microsoft::Xna::Framework::GameTime &gameTime) {
+        CNA::Logger::Trace("Game1::Update");
         using Microsoft::Xna::Framework::Input::GamePad;
         using Microsoft::Xna::Framework::PlayerIndex;
         using Microsoft::Xna::Framework::Input::ButtonState;
@@ -421,6 +423,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
     void Game1::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
+        CNA::Logger::Trace("Game1::Draw");
         if (continueMission == 1)
         {
             continueMission = 2;

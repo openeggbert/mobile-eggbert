@@ -1,9 +1,4 @@
-//
-// Created by robertvokac on 3/27/25.
-//
-
-#ifndef GAME1_H
-#define GAME1_H
+#pragma once
 
 #include <any>
 
@@ -22,135 +17,139 @@
 
 #define readonly mutable
 
-namespace WindowsPhoneSpeedyBlupi {
-class Game1 : public Microsoft::Xna::Framework::Game, public IGame1 {
-public:
-private: static constexpr int waitTableLength = 24;
-private: static constexpr double waitTable[waitTableLength] =
+namespace WindowsPhoneSpeedyBlupi
 {
-        0.1, 7.0, 0.2, 20.0, 0.25, 22.0, 0.45, 50.0, 0.6, 53.0,
-        0.65, 58.0, 0.68, 60.0, 0.8, 70.0, 0.84, 75.0, 0.9, 84.0,
-        0.94, 91.0, 1.0, 100.0
+    class Game1 : public Microsoft::Xna::Framework::Game, public IGame1
+    {
+        static constexpr int waitTableLength = 24;
+        static constexpr double waitTable[waitTableLength] =
+        {
+            0.1, 7.0, 0.2, 20.0, 0.25, 22.0, 0.45, 50.0, 0.6, 53.0,
+            0.65, 58.0, 0.68, 60.0, 0.8, 70.0, 0.84, 75.0, 0.9, 84.0,
+            0.94, 91.0, 1.0, 100.0
         };
 
-private: static constexpr int cheatGesteLength = 10;
+        static constexpr int cheatGesteLength = 10;
 
-private: static constexpr Def::ButtonGlyph cheatGeste[cheatGesteLength] =
-{
-        Def::ButtonGlyph::Cheat12,
-        Def::ButtonGlyph::Cheat22,
-        Def::ButtonGlyph::Cheat32,
-        Def::ButtonGlyph::Cheat12,
-        Def::ButtonGlyph::Cheat11,
-        Def::ButtonGlyph::Cheat21,
-        Def::ButtonGlyph::Cheat22,
-        Def::ButtonGlyph::Cheat21,
-        Def::ButtonGlyph::Cheat31,
-        Def::ButtonGlyph::Cheat32
+        static constexpr Def::ButtonGlyph cheatGeste[cheatGesteLength] =
+        {
+            Def::ButtonGlyph::Cheat12,
+            Def::ButtonGlyph::Cheat22,
+            Def::ButtonGlyph::Cheat32,
+            Def::ButtonGlyph::Cheat12,
+            Def::ButtonGlyph::Cheat11,
+            Def::ButtonGlyph::Cheat21,
+            Def::ButtonGlyph::Cheat22,
+            Def::ButtonGlyph::Cheat21,
+            Def::ButtonGlyph::Cheat31,
+            Def::ButtonGlyph::Cheat32
         };
 
-private: readonly Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
+        readonly Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics;
 
-private: readonly std::shared_ptr<IPixmap> pixmap;
+        readonly std::shared_ptr<IPixmap> pixmap;
 
-private: readonly std::shared_ptr<ISound> sound;
+        readonly std::shared_ptr<ISound> sound;
 
-private: readonly Decor decor;
+        readonly Decor decor;
 
-private: readonly InputPad inputPad;
+        readonly InputPad inputPad;
 
-private: readonly GameData gameData;
+        readonly GameData gameData;
 
-private: Def::Phase phase;
+        Def::Phase phase;
 
-private:
         System::TimeSpan startTime;
 
-private: int missionToStart1;
+        int missionToStart1;
 
-private: int missionToStart2;
+        int missionToStart2;
 
-private: int mission = 0;
+        int mission = 0;
 
-private: int cheatGesteIndex =0;
+        int cheatGesteIndex = 0;
 
-private: int continueMission = 0;
+        int continueMission = 0;
 
-private: Jauge waitJauge;
+        Jauge waitJauge;
 
-private: double waitProgress = 0.0;
+        double waitProgress = 0.0;
 
-private: bool isTrialMode = false;;
+        bool isTrialMode = false;;
 
-private: bool simulateTrialMode{false};
+        bool simulateTrialMode{false};
 
-private: bool playSetup = false;
+        bool playSetup = false;
 
-private: int phaseTime{0};
+        int phaseTime{0};
 
-private: Def::Phase fadeOutPhase;
+        Def::Phase fadeOutPhase;
 
-private: int fadeOutMission{0};
+        int fadeOutMission{0};
 
-public:
-public: [[nodiscard]] bool getIsRankingModeProperty() const;
+    public:
+        [[nodiscard]] bool getIsRankingModeProperty() const;
 
-public: [[nodiscard]] bool getIsTrialModeProperty() const;
+        [[nodiscard]] bool getIsTrialModeProperty() const;
 
         Game1();
         virtual ~Game1();
 
-protected: void Initialize() override;
+    protected:
+        void Initialize() override;
 
-protected: void LoadContent () override;
+        void LoadContent() override;
 
-protected: void UnloadContent () override;
+        void UnloadContent() override;
 
-protected: void OnDeactivated(std::any sender, System::EventArgs args) override;
+        void OnDeactivated(std::any sender, System::EventArgs args) override;
 
-protected: void OnActivated(std::any sender, System::EventArgs args) override;
+        void OnActivated(std::any sender, System::EventArgs args) override;
 
-protected: void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
+        void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
 
-protected:void Update(Microsoft::Xna::Framework::GameTime &gameTime) override;
+        void Update(Microsoft::Xna::Framework::GameTime& gameTime) override;
 
-private: void MissionBack();
+    private:
+        void MissionBack();
 
-private: void StartMission(int mission);
+        void StartMission(int mission);
 
-private: void ContinueMission();
+        void ContinueMission();
 
-private: void CheatAction(Def::ButtonGlyph glyph);
+        void CheatAction(Def::ButtonGlyph glyph);
 
-protected: void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
+    protected:
+        void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
-private: void DrawBackgroundFade();
+    private:
+        void DrawBackgroundFade();
 
-private: void DrawButtonsBackground();
+        void DrawButtonsBackground();
 
-private: void DrawButtonsText();
+        void DrawButtonsText();
 
-private: void DrawButtonGamerText(Def::ButtonGlyph glyph, int gamer);
+        void DrawButtonGamerText(Def::ButtonGlyph glyph, int gamer);
 
-private: void DrawTextRightButton(Def::ButtonGlyph glyph, int res);
+        void DrawTextRightButton(Def::ButtonGlyph glyph, int res);
 
-private: void DrawTextRightButton(Def::ButtonGlyph glyph, std::string text);
+        void DrawTextRightButton(Def::ButtonGlyph glyph, std::string text);
 
-private: void DrawTextUnderButton(Def::ButtonGlyph glyph, int res);
+        void DrawTextUnderButton(Def::ButtonGlyph glyph, int res);
 
-private: void DrawWaitProgress();
+        void DrawWaitProgress();
 
-private: void DrawDebug();
+        void DrawDebug();
 
-private: void SetGamer(int gamer);
+        void SetGamer(int gamer);
 
-private: void SetPhase(Def::Phase phase);
+        void SetPhase(Def::Phase phase);
 
-private: void SetPhase(Def::Phase phase, int mission);
+        void SetPhase(Def::Phase phase, int mission);
 
-private: void MemorizeGamerProgress();
+        void MemorizeGamerProgress();
 
-public:
+    public:
         void ToggleFullScreen();
         bool IsFullScreen();
 
@@ -160,11 +159,5 @@ public:
 
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice& getGraphicsDeviceProperty();
         GetTypeNameHPP()
-
+    };
 };
-
-};
-
-
-
-#endif //GAME1_H
