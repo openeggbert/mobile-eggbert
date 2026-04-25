@@ -17,16 +17,11 @@
 #include "WindowsPhoneSpeedyBlupi/IGame1.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.InputPad
-// using System;
-// using System.Collections.Generic;
-// using System.Diagnostics;
-// using System.Linq;
-// using Microsoft.Devices.Sensors;
-// using Microsoft.Xna.Framework.Input;
-// using Microsoft.Xna.Framework.Input.Touch;
-// using static WindowsPhoneSpeedyBlupi.EnvClasses;
+// #define INPUT_ENABLED
+
+#ifndef INPUT_ENABLED
+#define INPUT_DISABLED
+#endif
 
 namespace WindowsPhoneSpeedyBlupi {
     /** Properties : Start */
@@ -36,6 +31,9 @@ namespace WindowsPhoneSpeedyBlupi {
     int InputPad::getTotalTouchProperty() const { return touchOrClickCount; }
 
     Def::ButtonGlyph InputPad::getButtonPressedProperty() const {
+#ifdef INPUT_DISABLED
+        return Def::ButtonGlyph::None;
+#endif
         Def::ButtonGlyph result = buttonPressed;
         buttonPressed = Def::ButtonGlyph::None;
         return result;
@@ -44,6 +42,9 @@ namespace WindowsPhoneSpeedyBlupi {
     IDATA(bool, ShowCheatMenu, InputPad)
     std::vector<Def::ButtonGlyph> InputPad::getButtonGlyphsProperty() const {
             std::vector<Def::ButtonGlyph> glyphs;
+#ifdef INPUT_DISABLED
+        return glyphs;
+#endif
             switch (getPhaseProperty())
                 {
                     case Def::Phase::Init:
@@ -136,6 +137,9 @@ namespace WindowsPhoneSpeedyBlupi {
             }
     TinyPoint InputPad::getPadCenterProperty() const
     {
+#ifdef INPUT_DISABLED
+        return {};
+#endif
         TinyRect drawBounds = pixmap->getDrawBoundsProperty();
         int x = gameData.getJumpRightProperty() ? 100 : drawBounds.getWidthProperty() - 100;
         return TinyPoint(x, drawBounds.getHeightProperty() - 100);
@@ -177,6 +181,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void InputPad::Update()
         {
+#ifdef INPUT_DISABLED
+        return;
+#endif
             pressedGlyphs.clear();
             if (accelActive != gameData.getAccelActiveProperty())
             {
@@ -493,6 +500,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
     Def::ButtonGlyph InputPad::ButtonDetect(TinyPoint touchOrClick)
         {
+#ifdef INPUT_DISABLED
+        return Def::ButtonGlyph::None;
+#endif
             std::vector<Def::ButtonGlyph> buttonGlyphsVector = getButtonGlyphsProperty();
             for (auto i = getButtonGlyphsProperty().rbegin(); i != getButtonGlyphsProperty().rend(); i++)
             {
@@ -514,6 +524,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
     void InputPad::Draw()
         {
+#ifdef INPUT_DISABLED
+        return;
+#endif
             if (!accelStarted && getPhaseProperty() == Def::Phase::Play)
             {
                 pixmap->DrawIcon(14, 0, GetPadBounds(getPadCenterProperty(), padRadius / 2), 1.0, false);
@@ -560,6 +573,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
     TinyRect InputPad::GetButtonRect(Def::ButtonGlyph glyph)
         {
+#ifdef INPUT_DISABLED
+        return {};
+#endif
             TinyRect drawBounds = pixmap->getDrawBoundsProperty();
             double drawBoundsWidth = drawBounds.getWidthProperty();
             double drawBoundsHeight = drawBounds.getHeightProperty();
@@ -912,6 +928,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void InputPad::StartAccel()
         {
+#ifdef INPUT_DISABLED
+        return;
+#endif
             try
             {
                 accelSensor.Start();
@@ -929,6 +948,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void InputPad::StopAccel()
         {
+#ifdef INPUT_DISABLED
+        return;
+#endif
             if (accelStarted)
             {
                 try
@@ -945,6 +967,9 @@ namespace WindowsPhoneSpeedyBlupi {
 
         void InputPad::HandleAccelSensorCurrentValueChanged(Microsoft::Devices::Sensors::SensorReadingEventArgs<Microsoft::Devices::Sensors::AccelerometerReading> e)
         {
+#ifdef INPUT_DISABLED
+        return;
+#endif
             //IL_0001: Unknown result type (might be due to invalid IL or missing references)
             //IL_0006: Unknown result type (might be due to invalid IL or missing references)
 

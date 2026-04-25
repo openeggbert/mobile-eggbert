@@ -1,9 +1,4 @@
-//
-// Created by robertvokac on 5/25/25.
-//
-
-#ifndef INPUTPAD_H
-#define INPUTPAD_H
+#pragma once
 
 #include "Microsoft/Devices/Sensors/Accelerometer.hpp"
 #include "Microsoft/Devices/Sensors/AccelerometerReading.hpp"
@@ -14,91 +9,92 @@
 
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 
-namespace WindowsPhoneSpeedyBlupi {
+namespace WindowsPhoneSpeedyBlupi
+{
     class IGame1;
 
     class InputPad
     {
-    private:
         static const int padRadius = 140;
 
-         mutable IGame1* game1;
+        mutable IGame1* game1;
 
-         mutable Decor* decor;
+        mutable Decor* decor;
 
-         mutable IPixmap* pixmap;
+        mutable IPixmap* pixmap;
 
-         mutable ISound* sound;
+        mutable ISound* sound;
 
-         mutable GameData gameData;
+        mutable GameData gameData;
 
-         mutable std::vector<Def::ButtonGlyph> pressedGlyphs;
+        mutable std::vector<Def::ButtonGlyph> pressedGlyphs;
 
-         mutable Microsoft::Devices::Sensors::Accelerometer accelSensor;
+        mutable Microsoft::Devices::Sensors::Accelerometer accelSensor;
 
-         mutable Slider accelSlider;
+        mutable Slider accelSlider;
 
-         bool padPressed = false;
+        bool padPressed = false;
 
-         bool showCheatMenu = false;
+        bool showCheatMenu = false;
 
-         TinyPoint padTouchPos;
+        TinyPoint padTouchPos;
 
-         Def::ButtonGlyph lastButtonDown;
+        Def::ButtonGlyph lastButtonDown;
 
         mutable Def::ButtonGlyph buttonPressed;
 
-         int touchOrClickCount = 0;
+        int touchOrClickCount = 0;
 
-         bool accelStarted = false;;
+        bool accelStarted = false;;
 
-         bool accelActive = false;
+        bool accelActive = false;
 
-         double accelSpeedX = 0.0f;
+        double accelSpeedX = 0.0f;
 
-         bool accelLastState = false;
+        bool accelLastState = false;
 
-         bool accelWaitZero = false;
+        bool accelWaitZero = false;
 
-         int mission = 0;
+        int mission = 0;
 
     public:
-
         DDATA(Def::Phase, Phase)
         DDATA(int, SelectedGamer)
         DDATA(TinyPoint, PixmapOrigin)
-        public: [[nodiscard]] int getTotalTouchProperty() const;
-        public: [[nodiscard]] Def::ButtonGlyph getButtonPressedProperty() const;
-        DDATA(bool , ShowCheatMenu)
-        public: [[nodiscard]] std::vector<Def::ButtonGlyph> getButtonGlyphsProperty() const;
-        // Returns the point of the center of the pad on the screen.
-        public: [[nodiscard]] TinyPoint getPadCenterProperty() const;
 
-    public:
+        [[nodiscard]] int getTotalTouchProperty() const;
+
+        [[nodiscard]] Def::ButtonGlyph getButtonPressedProperty() const;
+        DDATA(bool, ShowCheatMenu)
+
+        [[nodiscard]] std::vector<Def::ButtonGlyph> getButtonGlyphsProperty() const;
+        // Returns the point of the center of the pad on the screen.
+        [[nodiscard]] TinyPoint getPadCenterProperty() const;
+
         InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData& gameData);
 
         void StartMission(int mission);
 
         void Update();
 
+    private:
+        Def::ButtonGlyph ButtonDetect(TinyPoint touchOrClick);
 
-    private: Def::ButtonGlyph ButtonDetect(TinyPoint touchOrClick);
+    public:
+        void Draw();
 
-    public: void Draw();
+    private:
+        TinyRect GetPadBounds(TinyPoint center, int radius);
 
-    private: TinyRect GetPadBounds(TinyPoint center, int radius);
+    public:
+        TinyRect GetButtonRect(Def::ButtonGlyph glyph);
 
-    public: TinyRect GetButtonRect(Def::ButtonGlyph glyph);
+    private:
+        void StartAccel();
 
-        private: void StartAccel();
+        void StopAccel();
 
-        private: void StopAccel();
-
-
-        private: void HandleAccelSensorCurrentValueChanged(Microsoft::Devices::Sensors::SensorReadingEventArgs<Microsoft::Devices::Sensors::AccelerometerReading> e);
+        void HandleAccelSensorCurrentValueChanged(
+            Microsoft::Devices::Sensors::SensorReadingEventArgs<Microsoft::Devices::Sensors::AccelerometerReading> e);
     };
-
 }
-
-
-#endif //INPUTPAD_H
