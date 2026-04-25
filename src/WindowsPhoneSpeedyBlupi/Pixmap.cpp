@@ -14,6 +14,7 @@
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "System/Math.hpp"
+#include "WindowsPhoneSpeedyBlupi/Config.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/Tables.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
@@ -382,7 +383,7 @@ namespace WindowsPhoneSpeedyBlupi
             return;
         }
         using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
-        if (channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
+        if (Config::TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE && channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
         {
             static intcs padGameplayIconNumbers[] = {0, 1, 2, 3, 30, 12, 23};
             for (intcs iconNumber : padGameplayIconNumbers)

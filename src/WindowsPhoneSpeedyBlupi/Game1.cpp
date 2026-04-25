@@ -33,7 +33,7 @@ namespace WindowsPhoneSpeedyBlupi
                      sound(std::make_shared<Sound>(this, gameData)),
                      decor(),
                      waitJauge(),
-                     inputPad(this, &decor, pixmap.get(), sound.get(), gameData)
+                     inputPad(this, &decor, pixmap.get(), sound.get(), &gameData)
     {
         Tables::Init();
         getWindowProperty().setTitleProperty("Speedy Blupi");
@@ -131,7 +131,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Game1::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
-        CNA::Logger::Trace("Game1::Update");
+        // CNA::Logger::Trace("Game1::Update");
         using Microsoft::Xna::Framework::Input::GamePad;
         using Microsoft::Xna::Framework::PlayerIndex;
         using Microsoft::Xna::Framework::Input::ButtonState;
@@ -419,10 +419,9 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
-
     void Game1::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
-        CNA::Logger::Trace("Game1::Draw");
+        // CNA::Logger::Trace("Game1::Draw");
         if (continueMission == 1)
         {
             continueMission = 2;
@@ -859,7 +858,7 @@ namespace WindowsPhoneSpeedyBlupi
         tinyPoint.X = 10;
         tinyPoint.Y = 20;
         TinyPoint pos = tinyPoint;
-        Text::DrawText(*pixmap.get(), pos, TO_STRING(inputPad.getTotalTouchProperty()), 1.0);
+        Text::DrawText(*pixmap.get(), pos, TO_STRING(inputPad.getTotalTouchOrClickProperty()), 1.0);
     }
 
     void Game1::SetGamer(int gamer)

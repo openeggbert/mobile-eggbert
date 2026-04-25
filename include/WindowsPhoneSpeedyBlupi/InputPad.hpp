@@ -15,7 +15,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     class InputPad
     {
-        static const int padRadius = 140;
+        static constexpr int padRadius = 140;
 
         mutable IGame1* game1;
 
@@ -25,7 +25,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         mutable ISound* sound;
 
-        mutable GameData gameData;
+        mutable GameData* gameData;
 
         mutable std::vector<Def::ButtonGlyph> pressedGlyphs;
 
@@ -62,7 +62,7 @@ namespace WindowsPhoneSpeedyBlupi
         DDATA(int, SelectedGamer)
         DDATA(TinyPoint, PixmapOrigin)
 
-        [[nodiscard]] int getTotalTouchProperty() const;
+        [[nodiscard]] int getTotalTouchOrClickProperty() const;
 
         [[nodiscard]] Def::ButtonGlyph getButtonPressedProperty() const;
         DDATA(bool, ShowCheatMenu)
@@ -71,7 +71,7 @@ namespace WindowsPhoneSpeedyBlupi
         // Returns the point of the center of the pad on the screen.
         [[nodiscard]] TinyPoint getPadCenterProperty() const;
 
-        InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData& gameData);
+        InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData* gameData);
 
         void StartMission(int mission);
 

@@ -1,7 +1,3 @@
-//
-// Created by robertvokac on 5/25/25.
-//
-
 #include "WindowsPhoneSpeedyBlupi/InputPad.hpp"
 
 #include "CNA/Platform.hpp"
@@ -14,21 +10,23 @@
 #include "Microsoft/Xna/Framework/Input/Touch/TouchLocation.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "System/UnauthorizedAccessException.hpp"
+#include "WindowsPhoneSpeedyBlupi/Config.hpp"
 #include "WindowsPhoneSpeedyBlupi/IGame1.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 
-// #define INPUT_ENABLED
+#define INPUT_DEBUG(msg) CNA::Logger::DebugIf(msg, Config::INPUT_DETAILED_DEBUGGING_ENABLED);
+#define INPUT_ENABLED
 
 #ifndef INPUT_ENABLED
 #define INPUT_DISABLED
 #endif
 
 namespace WindowsPhoneSpeedyBlupi {
-    /** Properties : Start */
+
     IDATA(Def::Phase, Phase, InputPad)
     IDATA(int, SelectedGamer, InputPad)
     IDATA(TinyPoint, PixmapOrigin, InputPad)
-    int InputPad::getTotalTouchProperty() const { return touchOrClickCount; }
+    int InputPad::getTotalTouchOrClickProperty() const { return touchOrClickCount; }
 
     Def::ButtonGlyph InputPad::getButtonPressedProperty() const {
 #ifdef INPUT_DISABLED
@@ -41,7 +39,8 @@ namespace WindowsPhoneSpeedyBlupi {
 
     IDATA(bool, ShowCheatMenu, InputPad)
     std::vector<Def::ButtonGlyph> InputPad::getButtonGlyphsProperty() const {
-            std::vector<Def::ButtonGlyph> glyphs;
+        std::vector<Def::ButtonGlyph> glyphs;
+        glyphs.reserve(16);
 #ifdef INPUT_DISABLED
         return glyphs;
 #endif
@@ -141,23 +140,19 @@ namespace WindowsPhoneSpeedyBlupi {
         return {};
 #endif
         TinyRect drawBounds = pixmap->getDrawBoundsProperty();
-        int x = gameData.getJumpRightProperty() ? 100 : drawBounds.getWidthProperty() - 100;
-        return TinyPoint(x, drawBounds.getHeightProperty() - 100);
+        int x = gameData->getJumpRightProperty() ? 100 : drawBounds.getWidthProperty() - 100;
+        return {x, drawBounds.getHeightProperty() - 100};
     }
-    /** Properties : End */
 
-    InputPad::InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData& gameData):
+    InputPad::InputPad(IGame1* game1, Decor* decor, IPixmap* pixmap, ISound* sound, GameData* gameData):
         game1(game1),
         decor(decor),
         pixmap(pixmap),
         sound(sound),
         gameData(gameData),
         accelSensor(Microsoft::Devices::Sensors::Accelerometer()),
-        accelSlider(Slider(TinyPoint(320, 400), this->gameData.getAccelSensitivityProperty()))
+        accelSlider(Slider(TinyPoint(320, 400), this->gameData->getAccelSensitivityProperty()))
         {
-            //IL_0037: Unknown result type (might be due to invalid IL or missing references)
-            //IL_0041: Expected O, but got Unknown
-
             using Microsoft::Devices::Sensors::AccelerometerReading;
             using Microsoft::Devices::Sensors::SensorBase;
             accelSensor.CurrentValueChanged +=
@@ -185,9 +180,9 @@ namespace WindowsPhoneSpeedyBlupi {
         return;
 #endif
             pressedGlyphs.clear();
-            if (accelActive != gameData.getAccelActiveProperty())
+            if (accelActive != gameData->getAccelActiveProperty())
             {
-                accelActive = gameData.getAccelActiveProperty();
+                accelActive = gameData->getAccelActiveProperty();
                 if (accelActive)
                 {
                     StartAccel();
@@ -220,7 +215,7 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 if (item.getStateProperty() == TouchLocationState::Pressed || item.getStateProperty() == TouchLocationState::Moved)
                 {
-                    TinyPoint touchPress = TinyPoint((int)item.getPositionProperty().X, (int)item.getPositionProperty().Y);
+                    TinyPoint touchPress{static_cast<int>(item.getPositionProperty().X), static_cast<int>(item.getPositionProperty().Y)};
                     touchesOrClicks.push_back(touchPress);
                 }
             }
@@ -256,12 +251,12 @@ namespace WindowsPhoneSpeedyBlupi {
                     float widthRatio = 640 / screenWidth;
 
                     {
-                    CNA::Logger::Debug("-----");
-                    CNA::Logger::Debug("originalX=" + std::to_string(originalX));
-                    CNA::Logger::Debug("originalY=" + std::to_string(originalY));
-                    CNA::Logger::Debug("heightRatio=" + std::to_string(heightRatio));
-                    CNA::Logger::Debug("widthRatio=" + std::to_string(widthRatio));
-                    CNA::Logger::Debug("widthHeightRatio=" + std::to_string(widthHeightRatio));
+                        INPUT_DEBUG("-----");
+                    INPUT_DEBUG("originalX=" + std::to_string(originalX));
+                    INPUT_DEBUG("originalY=" + std::to_string(originalY));
+                    INPUT_DEBUG("heightRatio=" + std::to_string(heightRatio));
+                    INPUT_DEBUG("widthRatio=" + std::to_string(widthRatio));
+                    INPUT_DEBUG("widthHeightRatio=" + std::to_string(widthHeightRatio));
                     }
                     if (screenHeight> 480) {
                     touchOrClick.X = (int)(originalX * heightRatio);
@@ -269,14 +264,14 @@ namespace WindowsPhoneSpeedyBlupi {
                     touchesOrClicks[i] = touchOrClick;
                     }
 
-                    CNA::Logger::Debug("new X" + touchOrClick.X);
-                    CNA::Logger::Debug("new Y" + touchOrClick.Y);
+                    using namespace std::string_literals;
+                    INPUT_DEBUG("new X"s + std::to_string(touchOrClick.X));
+                    INPUT_DEBUG("new Y"s + std::to_string(touchOrClick.Y));
                 }
             }
             using Microsoft::Xna::Framework::Input::KeyboardState;
             using namespace Microsoft::Xna::Framework::Input;
             KeyboardState newKeyboardState = Keyboard::GetState();
-
 
             Keys keysToBeChecked[] = { Keys::LeftControl, Keys::Up, Keys::Right, Keys::Down, Keys::Left, Keys::Space, Keys::Escape,};
             for(Keys keys : keysToBeChecked) {
@@ -285,7 +280,7 @@ namespace WindowsPhoneSpeedyBlupi {
             if (newKeyboardState.IsKeyDown(Keys::F11))
             {
                 game1->ToggleFullScreen ();
-                CNA::Logger::Debug("F11 was pressed.");
+                INPUT_DEBUG("F11 was pressed.");
             }
 
             bool keyPressedUp = false;
@@ -316,9 +311,9 @@ namespace WindowsPhoneSpeedyBlupi {
                     {
                         padPressed = true;
                     }
-                    CNA::Logger::Debug("padPressed=" + padPressed);
+                    INPUT_DEBUG(std::string("padPressed=") + (padPressed ? "true" : "false"));
                     Def::ButtonGlyph pressedGlyph = ButtonDetect(touchOrClick);
-                    CNA::Logger::Debug("buttonGlyph2 =" + static_cast<intcs>(pressedGlyph));
+                    INPUT_DEBUG(std::string("pressedGlyph =") + std::to_string(static_cast<intcs>(pressedGlyph)));
                     if (pressedGlyph != Def::ButtonGlyph::None)
                     {
                         pressedGlyphs.push_back(pressedGlyph);
@@ -335,12 +330,12 @@ namespace WindowsPhoneSpeedyBlupi {
 
                     if ((getPhaseProperty() == Def::Phase::MainSetup || getPhaseProperty() == Def::Phase::PlaySetup) && accelSlider.Move(touchOrClick))
                     {
-                        gameData.setAccelSensitivityProperty(accelSlider.getValueProperty());
+                        gameData->setAccelSensitivityProperty(accelSlider.getValueProperty());
                     }
                     switch (pressedGlyph)
                     {
                         case Def::ButtonGlyph::PlayJump:
-                            CNA::Logger::Debug("Jumping detected");
+                            INPUT_DEBUG("Jumping detected");
                             accelWaitZero = false;
                             keyPress |= 1;
                             break;
@@ -422,14 +417,17 @@ namespace WindowsPhoneSpeedyBlupi {
             lastButtonDown = buttonGlyph;
             if (padPressed)
             {
-                CNA::Logger::Debug("getPadCenter().X=" + getPadCenterProperty().X);
-                CNA::Logger::Debug("getPadCenter().Y=" + getPadCenterProperty().Y);
-                CNA::Logger::Debug("padTouchPos.X=" + padTouchPos.X);
-                CNA::Logger::Debug("padTouchPos.Y=" + padTouchPos.Y);
-                CNA::Logger::Debug("keyPressedUp=" + keyPressedUp);
-                CNA::Logger::Debug("keyPressedDown=" + keyPressedDown);
-                CNA::Logger::Debug("keyPressedLeft=" + keyPressedLeft);
-                CNA::Logger::Debug("keyPressedRight=" + keyPressedRight);
+                using namespace std::string_literals;
+                using std::to_string;
+
+                INPUT_DEBUG("getPadCenter().X="s + to_string(getPadCenterProperty().X));
+                INPUT_DEBUG("getPadCenter().Y="s + to_string(getPadCenterProperty().Y));
+                INPUT_DEBUG("padTouchPos.X="s + to_string(padTouchPos.X));
+                INPUT_DEBUG("padTouchPos.Y="s + to_string(padTouchPos.Y));
+                INPUT_DEBUG("keyPressedUp="s + to_string(keyPressedUp));
+                INPUT_DEBUG("keyPressedDown="s + to_string(keyPressedDown));
+                INPUT_DEBUG("keyPressedLeft="s + to_string(keyPressedLeft));
+                INPUT_DEBUG("keyPressedRight="s + to_string(keyPressedRight));
                 {
                     if (keyPressedUp)
                     {
@@ -463,24 +461,24 @@ namespace WindowsPhoneSpeedyBlupi {
                 if (horizontalPosition > 20.0)
                 {
                     horizontalChange += 1.0;
-                    CNA::Logger::Debug(" horizontalChange += 1.0;");
+                    INPUT_DEBUG(" horizontalChange += 1.0;");
                 }
                 if (horizontalPosition < -20.0)
                 {
                     horizontalChange -= 1.0;
-                    CNA::Logger::Debug(" horizontalChange -= 1.0;");
+                    INPUT_DEBUG(" horizontalChange -= 1.0;");
 
                 }
                 if (verticalPosition > 20.0)
                 {
                     verticalChange += 1.0;
-                    CNA::Logger::Debug(" verticalPosition += 1.0;");
+                    INPUT_DEBUG(" verticalPosition += 1.0;");
 
                 }
                 if (verticalPosition < -20.0)
                 {
                     verticalChange -= 1.0;
-                    CNA::Logger::Debug(" verticalPosition -= 1.0;");
+                    INPUT_DEBUG(" verticalPosition -= 1.0;");
                 }
 
             }
@@ -503,8 +501,8 @@ namespace WindowsPhoneSpeedyBlupi {
 #ifdef INPUT_DISABLED
         return Def::ButtonGlyph::None;
 #endif
-            std::vector<Def::ButtonGlyph> buttonGlyphsVector = getButtonGlyphsProperty();
-            for (auto i = getButtonGlyphsProperty().rbegin(); i != getButtonGlyphsProperty().rend(); i++)
+            const auto buttonGlyphs = getButtonGlyphsProperty();
+            for (auto i = buttonGlyphs.rbegin(); i != buttonGlyphs.rend(); ++i)
             {
                 Def::ButtonGlyph buttonGlyph = *i;
                 TinyRect buttonRect = GetButtonRect(buttonGlyph);
@@ -540,27 +538,27 @@ namespace WindowsPhoneSpeedyBlupi {
                 if (buttonGlyph >= Def::ButtonGlyph::InitGamerA && buttonGlyph <= Def::ButtonGlyph::InitGamerC)
                 {
                     int selectedGamer = (int)(static_cast<intcs>(buttonGlyph) - 1);
-                    selected = selectedGamer == gameData.getSelectedGamerProperty();
+                    selected = selectedGamer == gameData->getSelectedGamerProperty();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupSounds)
                 {
-                    selected = gameData.getSoundsProperty();
+                    selected = gameData->getSoundsProperty();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupJump)
                 {
-                    selected = gameData.getJumpRightProperty();
+                    selected = gameData->getJumpRightProperty();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupZoom)
                 {
-                    selected = gameData.getAutoZoomProperty();
+                    selected = gameData->getAutoZoomProperty();
                 }
                 if (buttonGlyph == Def::ButtonGlyph::SetupAccel)
                 {
-                    selected = gameData.getAccelActiveProperty();
+                    selected = gameData->getAccelActiveProperty();
                 }
                 pixmap->DrawInputButton(GetButtonRect(buttonGlyph), buttonGlyph, pressed, selected);
             }
-            if ((getPhaseProperty() == Def::Phase::MainSetup || getPhaseProperty() == Def::Phase::PlaySetup) && gameData.getAccelActiveProperty())
+            if ((getPhaseProperty() == Def::Phase::MainSetup || getPhaseProperty() == Def::Phase::PlaySetup) && gameData->getAccelActiveProperty())
             {
                 accelSlider.Draw(*pixmap);
             }
@@ -815,7 +813,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 case Def::ButtonGlyph::PlayAction:
                     {
-                        if (gameData.getJumpRightProperty())
+                        if (gameData->getJumpRightProperty())
                         {
                             TinyRect result16 = TinyRect();
                             result16.Left = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
@@ -833,7 +831,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 case Def::ButtonGlyph::PlayJump:
                     {
-                        if (gameData.getJumpRightProperty())
+                        if (gameData->getJumpRightProperty())
                         {
                             TinyRect result12 = TinyRect();
                             result12.Left = (int)((double)drawBounds.getWidthProperty() - buttonSizeFactor1 * 1.2);
@@ -851,7 +849,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     }
                 case Def::ButtonGlyph::PlayDown:
                     {
-                        if (gameData.getJumpRightProperty())
+                        if (gameData->getJumpRightProperty())
                         {
                             TinyRect result8 = TinyRect();
                             result8.Left = (int)(buttonSizeFactor1 * 0.2);
@@ -975,7 +973,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
             Microsoft::Devices::Sensors::AccelerometerReading sensorReading = e.getSensorReadingProperty();
             float y = ((Microsoft::Devices::Sensors::AccelerometerReading)(sensorReading)).getAccelerationProperty().Y;
-            float sensitivityThreshold = (1.0f - (float)gameData.getAccelSensitivityProperty()) * 0.06f + 0.04f;
+            float sensitivityThreshold = (1.0f - (float)gameData->getAccelSensitivityProperty()) * 0.06f + 0.04f;
             float adjustedThreshold = (accelLastState ? (sensitivityThreshold * 0.6f) : sensitivityThreshold);
             if (y > adjustedThreshold)
             {
