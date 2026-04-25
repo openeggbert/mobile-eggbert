@@ -1,10 +1,5 @@
-//
-// Created by robertvokac on 5/24/25.
-//
+#pragma once
 
-#ifndef JAUGE_H
-#define JAUGE_H
-#include <optional>
 #include "IPixmap.hpp"
 #include "ISound.hpp"
 
@@ -33,7 +28,9 @@ namespace WindowsPhoneSpeedyBlupi {
         double m_zoom;
 
     public:
-        public: [[nodiscard]] double getZoomProperty() const; public: void setZoomProperty(const double& v);
+        [[nodiscard]] double getZoomProperty() const;
+
+        void setZoomProperty(double v);
 
         Jauge();
 
@@ -63,4 +60,3 @@ namespace WindowsPhoneSpeedyBlupi {
     };
 }
 
-#endif //JAUGE_H

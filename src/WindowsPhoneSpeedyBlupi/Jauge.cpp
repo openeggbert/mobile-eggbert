@@ -1,29 +1,18 @@
-//
-// Created by robertvokac on 5/24/25.
-//
-
-
-#include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
-#include "WindowsPhoneSpeedyBlupi/Sound.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
 #include "WindowsPhoneSpeedyBlupi/Jauge.hpp"
 
-// WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439
-// WindowsPhoneSpeedyBlupi.Jauge
-// using Microsoft.Xna.Framework.Media;
-// using WindowsPhoneSpeedyBlupi;
-
 namespace WindowsPhoneSpeedyBlupi
 {
     double Jauge::getZoomProperty() const { return m_zoom; }
-    void Jauge::setZoomProperty(const double &v) { m_zoom = v; }
-    Jauge::Jauge(): m_mode(0),
-                    m_bHide(true),
-                    m_bMinimizeRedraw(false),
-                    m_bRedraw(false),
-                    m_zoom(1.0),
-                    m_level(0) {
+    void Jauge::setZoomProperty(double v) { m_zoom = v; }
+    Jauge::Jauge() : m_pixmap(nullptr), m_sound(nullptr), m_mode(0),
+                     m_bHide(true),
+                     m_bMinimizeRedraw(false),
+                     m_bRedraw(false),
+                     m_zoom(1.0),
+                     m_level(0)
+    {
     }
 
 
@@ -44,7 +33,11 @@ namespace WindowsPhoneSpeedyBlupi
 
         void Jauge::Draw()
         {
-            TinyRect rect;
+        if (m_pixmap == nullptr)
+        {
+            return;
+        }
+            TinyRect rect{};
             if (m_bMinimizeRedraw && !m_bRedraw)
             {
                 return;
