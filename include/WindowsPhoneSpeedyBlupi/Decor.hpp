@@ -374,9 +374,9 @@ namespace WindowsPhoneSpeedyBlupi
     public:
         void SetNbVies(int nbVies);
     public:
-        void InitializeDoors(GameData gameData);
+        void InitializeDoors(GameData& gameData);
     public:
-        void MemorizeDoors(GameData gameData);
+        void MemorizeDoors(GameData& gameData);
     public:
         static std::string GetCheatTinyText(Def::ButtonGlyph glyph);
     public:

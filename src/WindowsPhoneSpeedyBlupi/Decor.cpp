@@ -1,7 +1,9 @@
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
 
 #include <iomanip>
+#include <string>
 
+#include "CNA/Logger.hpp"
 #include "System/String.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
@@ -10,6 +12,7 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    using log = CNA::Logger;
     TinyRect Decor::getDrawBoundsProperty() const { return m_drawBounds; }
     void Decor::setDrawBoundsProperty(const TinyRect v) { m_drawBounds = v; }
     IDATA(Def::ButtonGlyph, ButtonPressed, Decor)
@@ -1366,14 +1369,40 @@ namespace WindowsPhoneSpeedyBlupi
         m_nbVies = nbVies;
     }
 
-    void Decor::InitializeDoors(GameData gameData)
+    void Decor::InitializeDoors(GameData& gameData)
     {
         gameData.GetDoors(m_doors);
+        const int doorIndex = m_mission + 1;
+        if (doorIndex >= 0 && doorIndex < 200)
+        {
+            log::Debug("Decor::InitializeDoors mission=" + std::to_string(m_mission)
+                + " doorIndex=" + std::to_string(doorIndex)
+                + " state=" + std::to_string(m_doors[doorIndex]));
+        }
+        else
+        {
+            log::Debug("Decor::InitializeDoors mission=" + std::to_string(m_mission)
+                + " doorIndex=" + std::to_string(doorIndex)
+                + " out_of_range");
+        }
     }
 
-    void Decor::MemorizeDoors(GameData gameData)
+    void Decor::MemorizeDoors(GameData& gameData)
     {
         gameData.SetDoors(m_doors);
+        const int doorIndex = m_mission + 1;
+        if (doorIndex >= 0 && doorIndex < 200)
+        {
+            log::Debug("Decor::MemorizeDoors mission=" + std::to_string(m_mission)
+                + " doorIndex=" + std::to_string(doorIndex)
+                + " state=" + std::to_string(m_doors[doorIndex]));
+        }
+        else
+        {
+            log::Debug("Decor::MemorizeDoors mission=" + std::to_string(m_mission)
+                + " doorIndex=" + std::to_string(doorIndex)
+                + " out_of_range");
+        }
     }
 
     string Decor::GetCheatTinyText(Def::ButtonGlyph glyph)
@@ -10498,17 +10527,28 @@ namespace WindowsPhoneSpeedyBlupi
             }
             for (int i = 0; i < 10; i++)
             {
-                if (SearchDoor(i, cel, blupi) && (m_doors[m_mission + i] == 1 || m_bCheatDoors))
+                if (SearchDoor(i, cel, blupi))
                 {
-                    OpenDoor(cel);
-                    m_blupiStartPos = blupi;
-                    if (blupi.X < cel.X * 64)
+                    const int doorIndex = m_mission + i;
+                    const bool shouldOpen = m_doors[doorIndex] == 1 || m_bCheatDoors;
+                    log::Debug("Decor::AdaptDoors mission=" + std::to_string(m_mission)
+                        + " doorIndex=" + std::to_string(doorIndex)
+                        + " state=" + std::to_string(m_doors[doorIndex])
+                        + " cheat=" + std::to_string(m_bCheatDoors ? 1 : 0)
+                        + " open=" + std::to_string(shouldOpen ? 1 : 0));
+
+                    if (shouldOpen)
                     {
-                        m_blupiStartDir = 2;
-                    }
-                    else
-                    {
-                        m_blupiStartDir = 1;
+                        OpenDoor(cel);
+                        m_blupiStartPos = blupi;
+                        if (blupi.X < cel.X * 64)
+                        {
+                            m_blupiStartDir = 2;
+                        }
+                        else
+                        {
+                            m_blupiStartDir = 1;
+                        }
                     }
                 }
             }
@@ -10559,6 +10599,8 @@ namespace WindowsPhoneSpeedyBlupi
     void Decor::OpenDoorsWin()
     {
         m_doors[m_mission + 1] = 1;
+        log::Debug("Decor::OpenDoorsWin mission=" + std::to_string(m_mission)
+            + " unlockedDoor=" + std::to_string(m_mission + 1));
     }
 
     void Decor::OpenGoldsWin()

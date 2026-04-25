@@ -4,8 +4,8 @@ namespace WindowsPhoneSpeedyBlupi
 {
     class Config {
     public:
-        static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = false;
-        static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = true;
+        static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = true;
+        static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = false;
 
     };
 }

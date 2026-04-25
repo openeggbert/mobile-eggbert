@@ -1,5 +1,8 @@
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
+#include <string>
+
+#include "CNA/Logger.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/Guide.hpp"
 #include "Microsoft/Xna/Framework/Input/GamePad.hpp"
 #include "Microsoft/Xna/Framework/Input/Mouse.hpp"
@@ -317,6 +320,11 @@ namespace WindowsPhoneSpeedyBlupi
             decor.setButtonPressedProperty(buttonPressed);
             decor.MoveStep();
             int num2 = decor.IsTerminated();
+            if (num2 != 0)
+            {
+                CNA::Logger::Debug("Game1::Update levelTerminated term=" + std::to_string(num2)
+                    + " mission=" + std::to_string(mission));
+            }
             if (num2 == -1)
             {
                 MemorizeGamerProgress();
@@ -950,9 +958,12 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Game1::MemorizeGamerProgress()
     {
+        CNA::Logger::Debug("Game1::MemorizeGamerProgress begin mission=" + std::to_string(mission)
+            + " nbVies=" + std::to_string(decor.GetNbVies()));
         gameData.setNbViesProperty(decor.GetNbVies());
         decor.MemorizeDoors(gameData);
         gameData.Write();
+        CNA::Logger::Debug("Game1::MemorizeGamerProgress end mission=" + std::to_string(mission));
     }
 
     void Game1::ToggleFullScreen()

@@ -1,10 +1,14 @@
 #include "WindowsPhoneSpeedyBlupi/GameData.hpp"
 
+#include <string>
+
+#include "CNA/Logger.hpp"
 #include "System/Math.hpp"
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    using log = CNA::Logger;
     intcs GameData::getSelectedGamerProperty() const { return data[2]; }
     void GameData::setSelectedGamerProperty(const intcs v) { data[2] = (bytecs)v; }
 
@@ -40,12 +44,17 @@ namespace WindowsPhoneSpeedyBlupi
 
     void GameData::Read()
     {
-        Worlds::ReadGameData(data, TotalLength);
+        const bool loaded = Worlds::ReadGameData(data, TotalLength);
+        log::Debug("GameData::Read loaded=" + std::to_string(loaded ? 1 : 0)
+            + " selectedGamer=" + std::to_string(getSelectedGamerProperty())
+            + " lastWorld=" + std::to_string(getLastWorldProperty()));
     }
 
     void GameData::Write()
     {
         Worlds::WriteGameData(data, TotalLength);
+        log::Debug("GameData::Write saved=1 selectedGamer=" + std::to_string(getSelectedGamerProperty())
+            + " lastWorld=" + std::to_string(getLastWorldProperty()));
     }
 
     void GameData::Reset()
