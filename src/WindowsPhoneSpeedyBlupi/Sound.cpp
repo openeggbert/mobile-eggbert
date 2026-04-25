@@ -2,14 +2,16 @@
 
 #include <algorithm>
 
-// #define SOUND_ENABLED
+#define SOUND_ENABLED
 
 #ifndef SOUND_ENABLED
 #define SOUND_DISABLED
 #endif
 
-namespace WindowsPhoneSpeedyBlupi {
+namespace WindowsPhoneSpeedyBlupi
+{
     int Sound::Play::getChannelProperty() const { return channel; }
+
     bool Sound::Play::getIsFreeProperty() const
     {
 #ifdef SOUND_DISABLED
@@ -36,7 +38,8 @@ namespace WindowsPhoneSpeedyBlupi {
      *              increase the pitch, while values less than 0 lower it (minimum is clamped to 0.0).
      * @param isLooped A boolean indicating whether the sound effect should loop continuously.
      */
-    Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance, double pitch, bool isLooped):
+    Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance,
+                      double pitch, bool isLooped) :
         channel(channel),
         sei(se.CreateInstance())
     {
@@ -53,10 +56,11 @@ namespace WindowsPhoneSpeedyBlupi {
 
         sei.setVolumeProperty((float)volume);
         sei.setPanProperty((float)balance);
-        sei.setPitchProperty((float)(pitch < 0.0 ? 0.0: pitch));
+        sei.setPitchProperty((float)(pitch < 0.0 ? 0.0 : pitch));
         sei.setIsLoopedProperty(isLooped);
         sei.Play();
     }
+
     void Sound::Play::Stop()
     {
 #ifdef SOUND_DISABLED
@@ -65,9 +69,9 @@ namespace WindowsPhoneSpeedyBlupi {
         sei.Stop();
     }
 
-    Sound::Sound(IGame1* game1, GameData& gameData):
-    game1(game1),
-    gameData(gameData)
+    Sound::Sound(IGame1* game1, GameData& gameData) :
+        game1(game1),
+        gameData(gameData)
     {
         // soundEffects = new List<SoundEffect>();
         // plays = new List<Play>();
@@ -75,7 +79,6 @@ namespace WindowsPhoneSpeedyBlupi {
 #ifndef SOUND_DISABLED
         Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolumeProperty(1.0f);
 #endif
-
     }
 
     void Sound::LoadContent()
@@ -109,159 +112,174 @@ namespace WindowsPhoneSpeedyBlupi {
             );
         }
     }
-        bool Sound::Create() {
-            return true;
-        }
 
-         void Sound::SetState(bool bState)
-        {
-        }
+    bool Sound::Create()
+    {
+        return true;
+    }
 
-         void Sound::SetCDAudio(bool bAudio)
-        {
-        }
+    void Sound::SetState(bool bState)
+    {
+    }
 
-         bool Sound::GetEnable()
-        {
-            return true;
-        }
+    void Sound::SetCDAudio(bool bAudio)
+    {
+    }
 
-         void Sound::SetAudioVolume(int volume)
-        {
+    bool Sound::GetEnable()
+    {
+        return true;
+    }
+
+    void Sound::SetAudioVolume(int volume)
+    {
 #ifdef SOUND_DISABLED
         return;
 #endif
-            this->volume = (double)volume / (double)MAXVOLUME;
-        }
+        this->volume = (double)volume / (double)MAXVOLUME;
+    }
 
-         int Sound::GetAudioVolume()
-        {
+    int Sound::GetAudioVolume()
+    {
 #ifdef SOUND_DISABLED
         return 1;
 #endif
-            return (int)(volume * (double)MAXVOLUME);
-        }
+        return (int)(volume * (double)MAXVOLUME);
+    }
 
-         void Sound::SetMidiVolume(int volume)
-        {
-        }
+    void Sound::SetMidiVolume(int volume)
+    {
+    }
 
-         int Sound::GetMidiVolume()
-        {
-            return 0;
-        }
+    int Sound::GetMidiVolume()
+    {
+        return 0;
+    }
 
-         void Sound::StopAll() {
+    void Sound::StopAll()
+    {
 #ifdef SOUND_DISABLED
         return;
 #endif
-             for (auto &play: plays) {
-                 play.Stop();
-             }
-             plays.clear();
-         }
-
-         bool Sound::PlayImage(int channel, TinyPoint pos, int rank, bool bLoop)
+        for (auto& play : plays)
         {
+            play.Stop();
+        }
+        plays.clear();
+    }
+
+    bool Sound::PlayImage(int channel, TinyPoint pos, int rank, bool bLoop)
+    {
 #ifdef SOUND_DISABLED
         return true;
 #endif
-            if (!gameData.getSoundsProperty())
+        if (!gameData.getSoundsProperty())
+        {
+            return true;
+        }
+        if (channel >= 0 && channel < soundEffects.size())
+        {
+            if (channel != 10 && std::any_of(plays.begin(), plays.end(),
+                                             [channel](const Play& p)
+                                             {
+                                                 return p.getChannelProperty() == channel && !p.getIsFreeProperty();
+                                             }))
             {
                 return true;
             }
-            if (channel >= 0 && channel < soundEffects.size())
-            {
 
-                if (channel != 10 && std::any_of(plays.begin(), plays.end(),
-    [channel](const Play& p) { return p.getChannelProperty() == channel && !p.getIsFreeProperty(); })) {
-                    return true;
+            if (plays.size() >= 10)
+            {
+                for (auto it = plays.begin(); it != plays.end();)
+                {
+                    if (it->getIsFreeProperty())
+                    {
+                        it = plays.erase(it);
+                    }
+                    else
+                    {
+                        it++;
+                    }
+
+                    if (plays.size() < 10) break;
+                }
+            }
+
+
+            plays.emplace_back(soundEffects[channel], channel, (float)GetVolume(pos), (float)GetBalance(pos), 0.0,
+                               bLoop);
+        }
+        return true;
     }
 
-                if (plays.size() >= 10) {
-                    for (auto it = plays.begin(); it != plays.end();) {
-                        if (it->getIsFreeProperty()) {
-                            it = plays.erase(it);
-                        } else {
-                            it++;
-                        }
+    bool Sound::PosImage(int channel, TinyPoint pos)
+    {
+        return true;
+    }
 
-                        if (plays.size() < 10) break;
-                    }
-                }
-
-
-                plays.emplace_back(soundEffects[channel], channel, (float)GetVolume(pos), (float)GetBalance(pos), 0.0, bLoop);
-
-            }
-            return true;
-        }
-
-         bool Sound::PosImage(int channel, TinyPoint pos)
-        {
-            return true;
-        }
-
-         bool Sound::Stop(int channel)
-        {
+    bool Sound::Stop(int channel)
+    {
 #ifdef SOUND_DISABLED
         return true;
 #endif
-            size_t num = 0;
+        size_t num = 0;
 
-            auto it = plays.begin();
-            while (it != plays.end()) {
-                if (it->getChannelProperty() == channel) {
-                    it->Stop();
-                    it = plays.erase(it); // erase() returns the next valid iterator
-                } else {
-                    ++it;
-                }
+        auto it = plays.begin();
+        while (it != plays.end())
+        {
+            if (it->getChannelProperty() == channel)
+            {
+                it->Stop();
+                it = plays.erase(it); // erase() returns the next valid iterator
             }
-
-            return true;
+            else
+            {
+                ++it;
+            }
         }
 
-        double Sound::GetVolume(TinyPoint pos)
-        {
+        return true;
+    }
+
+    double Sound::GetVolume(TinyPoint pos)
+    {
 #ifdef SOUND_DISABLED
         return 1.0;
 #endif
-            double val = 1.0;
-            if (pos.X < 0)
-            {
-                val = 1.0 + (double)(pos.X / 640) * 2.0;
-            }
-            if (pos.X > 640)
-            {
-                pos.X -= 640;
-                val = 1.0 - (double)(pos.X / 640) * 2.0;
-            }
-            val = std::max(val, 0.0);
-            val = std::min(val, 1.0);
-            double val2 = 1.0;
-            if (pos.Y < 0)
-            {
-                val2 = 1.0 + (double)(pos.Y / 480) * 3.0;
-            }
-            if (pos.Y > 480)
-            {
-                pos.Y -= 480;
-                val2 = 1.0 - (double)(pos.Y / 480) * 3.0;
-            }
-            val2 = std::max(val2, 0.0);
-            val2 = std::min(val2, 1.0);
-            return std::min(val, val2) * volume;
-        }
-
-         double Sound::GetBalance(TinyPoint pos)
+        double val = 1.0;
+        if (pos.X < 0)
         {
+            val = 1.0 + (double)(pos.X / 640) * 2.0;
+        }
+        if (pos.X > 640)
+        {
+            pos.X -= 640;
+            val = 1.0 - (double)(pos.X / 640) * 2.0;
+        }
+        val = std::max(val, 0.0);
+        val = std::min(val, 1.0);
+        double val2 = 1.0;
+        if (pos.Y < 0)
+        {
+            val2 = 1.0 + (double)(pos.Y / 480) * 3.0;
+        }
+        if (pos.Y > 480)
+        {
+            pos.Y -= 480;
+            val2 = 1.0 - (double)(pos.Y / 480) * 3.0;
+        }
+        val2 = std::max(val2, 0.0);
+        val2 = std::min(val2, 1.0);
+        return std::min(val, val2) * volume;
+    }
+
+    double Sound::GetBalance(TinyPoint pos)
+    {
 #ifdef SOUND_DISABLED
         return 1.0;
 #endif
-            double val = (double)pos.X * 2.0 / 640.0 - 1.0;
-            val = std::max(val, -1.0);
-            return std::min(val, 1.0);
-        }
-
+        double val = (double)pos.X * 2.0 / 640.0 - 1.0;
+        val = std::max(val, -1.0);
+        return std::min(val, 1.0);
+    }
 }

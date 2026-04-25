@@ -5,10 +5,12 @@
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"
 
-namespace WindowsPhoneSpeedyBlupi {
+namespace WindowsPhoneSpeedyBlupi
+{
     using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-    class IPixmap {
+    class IPixmap
+    {
     protected:
         virtual ~IPixmap() = default;
 
@@ -68,6 +70,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         virtual void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot) = 0;
 
-        virtual void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot) = 0;
+        virtual void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
+                              bool useHotSpot) = 0;
     };
 }

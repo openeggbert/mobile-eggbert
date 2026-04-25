@@ -109,7 +109,8 @@ namespace WindowsPhoneSpeedyBlupi
          *
          * @note Additional
          */
-        static bool isNotOneOf(const ButtonGlyph& buttonGlyphToBeChecked, std::initializer_list<ButtonGlyph> buttonGlyphs)
+        static bool isNotOneOf(const ButtonGlyph& buttonGlyphToBeChecked,
+                               std::initializer_list<ButtonGlyph> buttonGlyphs)
         {
             return std::ranges::none_of(buttonGlyphs,
                                         [&buttonGlyphToBeChecked](const ButtonGlyph candidate)

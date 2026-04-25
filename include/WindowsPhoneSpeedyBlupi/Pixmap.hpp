@@ -202,7 +202,8 @@ namespace WindowsPhoneSpeedyBlupi
                       bool useHotSpot) override;
 
     private:
-        Microsoft::Xna::Framework::Rectangle GetSrcRectangle(const Texture2D& bitmap, intcs bitmapGridX, intcs bitmapGridY,
+        Microsoft::Xna::Framework::Rectangle GetSrcRectangle(const Texture2D& bitmap, intcs bitmapGridX,
+                                                             intcs bitmapGridY,
                                                              intcs iconWidth, intcs iconHeight, intcs gap, intcs icon);
 
         Microsoft::Xna::Framework::Rectangle GetDstRectangle(TinyRect rect, intcs iconWidth, intcs iconHeight,

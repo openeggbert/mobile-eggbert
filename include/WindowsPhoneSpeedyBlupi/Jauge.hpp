@@ -7,19 +7,22 @@ namespace WindowsPhoneSpeedyBlupi
 {
     enum class JaugeMode : intcs
     {
-        Empty  = 0,
-        Red    = 1, // danger
-        Blue   = 2, // water
+        Empty = 0,
+        Red = 1, // danger
+        Blue = 2, // water
         Yellow = 3 // charge
     };
+
     inline intcs jauge_mode_to_int(JaugeMode mode)
     {
         return static_cast<intcs>(mode);
     }
+
     inline JaugeMode jauge_mode_from_int(intcs mode)
     {
         return static_cast<JaugeMode>(mode);
     }
+
     /**
  * @brief Draws and manages a small HUD gauge/progress bar.
  *
@@ -161,6 +164,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             SetMode(jauge_mode_from_int(mode));
         }
+
         /**
          * @brief Returns whether the gauge is hidden.
          *

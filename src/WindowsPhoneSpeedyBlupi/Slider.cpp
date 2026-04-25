@@ -14,7 +14,7 @@ namespace WindowsPhoneSpeedyBlupi
         this->setValueProperty(value);
     }
 
-    TinyPoint Slider::getTopLeftCornerProperty() const { return topLeftCorner ; }
+    TinyPoint Slider::getTopLeftCornerProperty() const { return topLeftCorner; }
 
     void Slider::setTopLeftCornerProperty(TinyPoint point)
     {
@@ -23,11 +23,15 @@ namespace WindowsPhoneSpeedyBlupi
 
     IDATA(double, Value, Slider)
     intcs Slider::getPosLeftProperty() const { return getTopLeftCornerProperty().X + 22; }
-    intcs Slider::getPosRightProperty() const { return getTopLeftCornerProperty().X + 248 - 22;; }
+
+    intcs Slider::getPosRightProperty() const
+    {
+        return getTopLeftCornerProperty().X + 248 - 22;;
+    }
 
 
-
-    void Slider::Draw(IPixmap& pixmap) {
+    void Slider::Draw(IPixmap& pixmap)
+    {
         TinyPoint tinyPoint{};
         tinyPoint.X = getTopLeftCornerProperty().X - pixmap.getOriginProperty().X;
         tinyPoint.Y = getTopLeftCornerProperty().Y - pixmap.getOriginProperty().Y;
@@ -65,27 +69,26 @@ namespace WindowsPhoneSpeedyBlupi
         pixmap.DrawIcon(10, 38, rect, 1.0, false);
     }
 
-        bool Slider::Move(TinyPoint pos)
+    bool Slider::Move(TinyPoint pos)
+    {
+        TinyRect tinyRect{};
+        tinyRect.Left = getTopLeftCornerProperty().X - 50;
+        tinyRect.Right = getTopLeftCornerProperty().X + 248 + 50;
+        tinyRect.Top = getTopLeftCornerProperty().Y - 50;
+        tinyRect.Bottom = getTopLeftCornerProperty().Y + 44 + 50;
+        TinyRect rect = tinyRect;
+        if (Misc::IsInside(rect, pos))
         {
-            TinyRect tinyRect{};
-            tinyRect.Left = getTopLeftCornerProperty().X - 50;
-            tinyRect.Right = getTopLeftCornerProperty().X + 248 + 50;
-            tinyRect.Top = getTopLeftCornerProperty().Y - 50;
-            tinyRect.Bottom = getTopLeftCornerProperty().Y + 44 + 50;
-            TinyRect rect = tinyRect;
-            if (Misc::IsInside(rect, pos))
+            double val = ((double)pos.X - (double)getPosLeftProperty()) / (double)(getPosRightProperty() -
+                getPosLeftProperty());
+            val = System::Math::Max(val, 0.0);
+            val = System::Math::Min(val, 1.0);
+            if (getValueProperty() != val)
             {
-                double val = ((double)pos.X - (double)getPosLeftProperty()) / (double)(getPosRightProperty() - getPosLeftProperty());
-                val = System::Math::Max(val, 0.0);
-                val = System::Math::Min(val, 1.0);
-                if (getValueProperty() != val)
-                {
-                    setValueProperty(val);
-                    return true;
-                }
+                setValueProperty(val);
+                return true;
             }
-            return false;
         }
-
-
+        return false;
+    }
 }

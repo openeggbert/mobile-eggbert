@@ -20,7 +20,6 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-
     TinyRect Pixmap::getDrawBoundsProperty()
     {
         TinyRect result{};
@@ -75,7 +74,8 @@ namespace WindowsPhoneSpeedyBlupi
 
     TinyPoint Pixmap::HotSpotToHud(TinyPoint pos)
     {
-        if (hotSpotZoom == 0.0) {
+        if (hotSpotZoom == 0.0)
+        {
             return pos;
         }
         return {
@@ -334,16 +334,15 @@ namespace WindowsPhoneSpeedyBlupi
         if (channel == 5)
         {
             CNA::Logger::Debug(
-               "Pixmap::DrawPart ch5 BEFORE origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
-               "), srcRect=(" + std::to_string(rect.Left) + "," + std::to_string(rect.Top) + "," +
-               std::to_string(rect.Right) + "," + std::to_string(rect.Bottom) + "), zoom=" + std::to_string(zoom));
+                "Pixmap::DrawPart ch5 BEFORE origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
+                "), srcRect=(" + std::to_string(rect.Left) + "," + std::to_string(rect.Top) + "," +
+                std::to_string(rect.Right) + "," + std::to_string(rect.Bottom) + "), zoom=" + std::to_string(zoom));
 
             dest.X = static_cast<intcs>(static_cast<double>(dest.X) + originX);
             dest.Y = static_cast<intcs>(static_cast<double>(dest.Y) + originY);
             CNA::Logger::Debug(
-               "Pixmap::DrawPart ch5 AFTER origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
-               "), origin=(" + std::to_string(originX) + "," + std::to_string(originY) + ")");
-
+                "Pixmap::DrawPart ch5 AFTER origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
+                "), origin=(" + std::to_string(originX) + "," + std::to_string(originY) + ")");
         }
         using Microsoft::Xna::Framework::Rectangle;
         Rectangle value = Rectangle(
@@ -353,7 +352,7 @@ namespace WindowsPhoneSpeedyBlupi
             dest.Y,
             static_cast<intcs>(static_cast<double>(rect.getWidthProperty()) * zoom),
             static_cast<intcs>(static_cast<double>(rect.getHeightProperty()) * zoom)
-            );
+        );
         spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         spriteBatch->Draw(*bitmap, destinationRectangle, value, Microsoft::Xna::Framework::White);
@@ -505,13 +504,16 @@ namespace WindowsPhoneSpeedyBlupi
                                Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
             spriteBatch->Draw(*bitmap, rectangle, srcRectangle,
                               Microsoft::Xna::Framework::Color::FromNonPremultiplied(
-                                  255, 255, 255, static_cast<intcs>(255.0 * opacity)), rotationRad, origin, effect, 0.0f);
+                                  255, 255, 255, static_cast<intcs>(255.0 * opacity)), rotationRad, origin, effect,
+                              0.0f);
             spriteBatch->End();
         }
     }
 
-    Microsoft::Xna::Framework::Rectangle Pixmap::GetSrcRectangle(const Texture2D& bitmap, intcs bitmapGridX, intcs bitmapGridY,
-                                                                 intcs iconWidth, intcs iconHeight, intcs gap, intcs icon)
+    Microsoft::Xna::Framework::Rectangle Pixmap::GetSrcRectangle(const Texture2D& bitmap, intcs bitmapGridX,
+                                                                 intcs bitmapGridY,
+                                                                 intcs iconWidth, intcs iconHeight, intcs gap,
+                                                                 intcs icon)
     {
         intcs width = bitmap.getBoundsProperty().Width;
         // warning: variable height is not used
