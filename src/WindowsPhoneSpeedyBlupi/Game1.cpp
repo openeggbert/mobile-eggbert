@@ -11,8 +11,6 @@
 
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
-#include <cmath>
-
 #include "Microsoft/Xna/Framework/GamerServices/Guide.hpp"
 #include "Microsoft/Xna/Framework/Input/GamePad.hpp"
 #include "Microsoft/Xna/Framework/Input/Mouse.hpp"
@@ -77,7 +75,7 @@ namespace WindowsPhoneSpeedyBlupi {
         missionToStart2 = -1;
 
 
-        decor.Create(sound.get(), pixmap.get(), gameData);
+        decor.Create(sound.get(), pixmap.get(), &gameData);
         TinyPoint pos
         {
             196,
@@ -922,7 +920,7 @@ namespace WindowsPhoneSpeedyBlupi {
                     pixmap->BackgroundCache("pause");
                     break;
                 case Def::Phase::Play:
-                    decor.setDrawBounds(pixmap->getDrawBoundsProperty());
+                    decor.setDrawBoundsProperty(pixmap->getDrawBoundsProperty());
                     break;
             }
             if (this->phase == Def::Phase::Play && mission > 0)

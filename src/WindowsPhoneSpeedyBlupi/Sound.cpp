@@ -1,14 +1,22 @@
-//
-// Created by robertvokac on 5/24/25.
-//
-
 #include "WindowsPhoneSpeedyBlupi/Sound.hpp"
 
 #include <algorithm>
 
+// #define SOUND_ENABLED
+
+#ifndef SOUND_ENABLED
+#define SOUND_DISABLED
+#endif
+
 namespace WindowsPhoneSpeedyBlupi {
     int Sound::Play::getChannelProperty() const { return channel; }
-    bool Sound::Play::getIsFreeProperty() const { return sei.getStateProperty() == Microsoft::Xna::Framework::Audio::SoundState::Stopped; }
+    bool Sound::Play::getIsFreeProperty() const
+    {
+#ifdef SOUND_DISABLED
+        return false;
+#endif
+        return sei.getStateProperty() == Microsoft::Xna::Framework::Audio::SoundState::Stopped;
+    }
 
     /**
      * @brief Constructs a Play object to manage and play a sound effect instance with specified parameters.
@@ -32,6 +40,10 @@ namespace WindowsPhoneSpeedyBlupi {
         channel(channel),
         sei(se.CreateInstance())
     {
+#ifdef SOUND_DISABLED
+        int b;
+        return;
+#endif
         int tableVolumePitchLengthIndex = channel * 2;
         if (tableVolumePitchLengthIndex >= 0 && tableVolumePitchLengthIndex < tableVolumePitchLength)
         {
@@ -47,6 +59,9 @@ namespace WindowsPhoneSpeedyBlupi {
     }
     void Sound::Play::Stop()
     {
+#ifdef SOUND_DISABLED
+        return;
+#endif
         sei.Stop();
     }
 
@@ -57,11 +72,17 @@ namespace WindowsPhoneSpeedyBlupi {
         // soundEffects = new List<SoundEffect>();
         // plays = new List<Play>();
         volume = 1.0;
+#ifndef SOUND_DISABLED
         Microsoft::Xna::Framework::Audio::SoundEffect::setMasterVolumeProperty(1.0f);
+#endif
+
     }
 
     void Sound::LoadContent()
     {
+#ifdef SOUND_DISABLED
+        return;
+#endif
         if (!Def::getHasSoundProperty())
         {
             return;
@@ -107,11 +128,17 @@ namespace WindowsPhoneSpeedyBlupi {
 
          void Sound::SetAudioVolume(int volume)
         {
+#ifdef SOUND_DISABLED
+        return;
+#endif
             this->volume = (double)volume / (double)MAXVOLUME;
         }
 
          int Sound::GetAudioVolume()
         {
+#ifdef SOUND_DISABLED
+        return 1;
+#endif
             return (int)(volume * (double)MAXVOLUME);
         }
 
@@ -125,14 +152,20 @@ namespace WindowsPhoneSpeedyBlupi {
         }
 
          void Sound::StopAll() {
+#ifdef SOUND_DISABLED
+        return;
+#endif
              for (auto &play: plays) {
                  play.Stop();
              }
              plays.clear();
          }
 
-         bool Sound::PlayImage(int channel, TinyPoint& pos, int rank, bool bLoop)
+         bool Sound::PlayImage(int channel, TinyPoint pos, int rank, bool bLoop)
         {
+#ifdef SOUND_DISABLED
+        return true;
+#endif
             if (!gameData.getSoundsProperty())
             {
                 return true;
@@ -164,17 +197,16 @@ namespace WindowsPhoneSpeedyBlupi {
             return true;
         }
 
-         bool Sound::PlayImage(int channel, TinyPoint &pos) {
-             return PlayImage(channel, pos, -1, false);
-         }
-
-         bool Sound::PosImage(int channel, TinyPoint& pos)
+         bool Sound::PosImage(int channel, TinyPoint pos)
         {
             return true;
         }
 
          bool Sound::Stop(int channel)
         {
+#ifdef SOUND_DISABLED
+        return true;
+#endif
             size_t num = 0;
 
             auto it = plays.begin();
@@ -190,8 +222,11 @@ namespace WindowsPhoneSpeedyBlupi {
             return true;
         }
 
-        double Sound::GetVolume(TinyPoint& pos)
+        double Sound::GetVolume(TinyPoint pos)
         {
+#ifdef SOUND_DISABLED
+        return 1.0;
+#endif
             double val = 1.0;
             if (pos.X < 0)
             {
@@ -219,8 +254,11 @@ namespace WindowsPhoneSpeedyBlupi {
             return std::min(val, val2) * volume;
         }
 
-         double Sound::GetBalance(TinyPoint& pos)
+         double Sound::GetBalance(TinyPoint pos)
         {
+#ifdef SOUND_DISABLED
+        return 1.0;
+#endif
             double val = (double)pos.X * 2.0 / 640.0 - 1.0;
             val = std::max(val, -1.0);
             return std::min(val, 1.0);

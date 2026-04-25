@@ -1,18 +1,10 @@
-//
-// Created by robertvokac on 5/24/25.
-//
-
-#ifndef SOUNDI_H
-#define SOUNDI_H
-#include "GameData.hpp"
-
+#pragma once
 
 namespace WindowsPhoneSpeedyBlupi {
 
     class ISound {
-    protected:
-        ~ISound() = default;
     public:
+        virtual ~ISound() = default;
         virtual void LoadContent() = 0;
 
         virtual bool Create() = 0;
@@ -33,14 +25,10 @@ namespace WindowsPhoneSpeedyBlupi {
 
         virtual void StopAll() = 0;
 
-        virtual bool PlayImage(int channel, TinyPoint &pos, int rank, bool bLoop) = 0;
+        virtual bool PlayImage(int channel, TinyPoint pos, int rank = -1, bool bLoop = false) = 0;
 
-        virtual bool PlayImage(int channel, TinyPoint &pos) = 0;
-
-        virtual bool PosImage(int channel, TinyPoint &pos) = 0;
+        virtual bool PosImage(int channel, TinyPoint pos) = 0;
 
         virtual bool Stop(int channel) = 0;
     };
 }
-
-#endif //SOUNDI_H
