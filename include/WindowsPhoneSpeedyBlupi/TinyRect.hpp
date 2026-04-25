@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 
+#include "TinyPoint.hpp"
 #include "CppDotNet/CppDotNetHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
@@ -63,19 +64,36 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
         /**
-         * @brief Creates a rectangle with the specified edges.
+         * @brief Creates a rectangle with the specified edge coordinates.
+         *
+         * @warning The parameter order intentionally follows the original
+         * WindowsPhoneSpeedyBlupi TinyRect layout: left, right, top, bottom.
+         * This is different from the more common left, top, right, bottom order.
          *
          * @param left Left edge.
          * @param right Right edge.
          * @param top Top edge.
          * @param bottom Bottom edge.
          *
-         * @note Status: Ported
+         * @note Status: IMPLEMENTED
          */
         TinyRect(const intcs left, const intcs right, const intcs top, const intcs bottom)
             : Left(left), Right(right), Top(top), Bottom(bottom)
         {
         }
+
+        /**
+ * @brief Creates a zero-size rectangle at the specified point.
+ *
+ * The point is used as both the left/right and top/bottom edge.
+ * This is useful for icon drawing methods where a TinyRect with zero width
+ * and height means "use the icon's default size".
+ *
+ * @param point Position of the zero-size rectangle.
+ *
+ * @note Status: IMPLEMENTED
+ */
+        explicit TinyRect(TinyPoint point);
 
         /**
          * @brief Gets the width of the rectangle.

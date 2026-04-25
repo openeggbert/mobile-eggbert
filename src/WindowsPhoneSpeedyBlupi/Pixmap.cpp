@@ -13,51 +13,54 @@
 #include "Microsoft/Xna/Framework/Graphics/SpriteSortMode.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "Microsoft/Xna/Framework/Color.hpp"
+#include "System/Math.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/Tables.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
-namespace WindowsPhoneSpeedyBlupi {
-    Pixmap::~Pixmap()
-    {
-        delete spriteBatch;
-        spriteBatch = nullptr;
-    }
+namespace WindowsPhoneSpeedyBlupi
+{
 
-    TinyRect Pixmap::getDrawBoundsProperty() {
-        TinyRect result;
+    TinyRect Pixmap::getDrawBoundsProperty()
+    {
+        TinyRect result{};
         double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
         double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
-        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480) {
-            screenWidth = screenHeight * (640.0f / 480.0f);
+        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
+        {
+            screenWidth = screenHeight * (640.0 / 480.0);
         }
-        if (screenWidth != 0.0 && screenHeight != 0.0) {
-            double num3;
-            double num4;
-            if (screenWidth / screenHeight < 1.3333333333333333) {
-                num3 = 640.0;
-                num4 = 640.0 * (screenHeight / screenWidth);
-            } else {
-                num3 = 480.0 * (screenWidth / screenHeight);
-                num4 = 480.0;
+        if (screenWidth != 0.0 && screenHeight != 0.0)
+        {
+            double drawWidth;
+            double drawHeight;
+            if (screenWidth / screenHeight < 1.3333333333333333)
+            {
+                drawWidth = 640.0;
+                drawHeight = 640.0 * (screenHeight / screenWidth);
+            }
+            else
+            {
+                drawWidth = 480.0 * (screenWidth / screenHeight);
+                drawHeight = 480.0;
             }
             result.Left = 0;
-            result.Right = (int) num3;
+            result.Right = static_cast<intcs>(drawWidth);
             result.Top = 0;
-            result.Bottom = (int) num4;
+            result.Bottom = static_cast<intcs>(drawHeight);
         }
-        return result;
-    }
-    TinyPoint Pixmap::getOriginProperty() const {
-        TinyPoint result;
-        result.X = (int) originX;
-        result.Y = (int) originY;
         return result;
     }
 
-    Pixmap::Pixmap(IGame1* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics):
+    TinyPoint Pixmap::getOriginProperty() const
+    {
+        return {static_cast<intcs>(originX), static_cast<intcs>(originY)};
+    }
+
+    Pixmap::Pixmap(IGame1* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics) :
         game1(game1),
-        graphics(graphics), spriteBatch(nullptr), bitmapText(Texture2D()), bitmapButton(Texture2D()), bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
+        graphics(graphics), spriteBatch(nullptr), bitmapText(Texture2D()), bitmapButton(Texture2D()),
+        bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
         bitmapObject(Texture2D()),
         bitmapElement(Texture2D()),
         bitmapExplo(Texture2D()), bitmapPad(Texture2D()),
@@ -65,16 +68,22 @@ namespace WindowsPhoneSpeedyBlupi {
         bitmapBlupiYoupie(Texture2D()),
         bitmapGear(Texture2D()),
         bitmapBackground(Texture2D()),
-        origin(Microsoft::Xna::Framework::Vector2(0.0f,0.0f)) {
+        origin(Microsoft::Xna::Framework::Vector2(0.0f, 0.0f))
+    {
         effect = Microsoft::Xna::Framework::Graphics::SpriteEffects::None;
     }
 
-    TinyPoint Pixmap::HotSpotToHud(TinyPoint& pos)
+    TinyPoint Pixmap::HotSpotToHud(TinyPoint pos)
     {
-        TinyPoint result;
-        result.X = (int)((double)(pos.X - (int)hotSpotX) / hotSpotZoom) + (int)hotSpotX - (int)originX;
-        result.Y = (int)((double)(pos.Y - (int)hotSpotY) / hotSpotZoom) + (int)hotSpotY - (int)originY;
-        return result;
+        if (hotSpotZoom == 0.0) {
+            return pos;
+        }
+        return {
+            static_cast<intcs>(static_cast<double>(pos.X - static_cast<intcs>(hotSpotX)) / hotSpotZoom) + static_cast<
+                intcs>(hotSpotX) - static_cast<intcs>(originX),
+            static_cast<intcs>(static_cast<double>(pos.Y - static_cast<intcs>(hotSpotY)) / hotSpotZoom) + static_cast<
+                intcs>(hotSpotY) - static_cast<intcs>(originY)
+        };
     }
 
     void Pixmap::SetHotSpot(const double zoom, const double x, const double y)
@@ -83,464 +92,486 @@ namespace WindowsPhoneSpeedyBlupi {
         hotSpotX = x;
         hotSpotY = y;
     }
-            void Pixmap::DrawInputButton(TinyRect rect, Def::ButtonGlyph& glyph, bool& pressed, bool& selected)
+
+    void Pixmap::DrawInputButton(TinyRect rect, Def::ButtonGlyph glyph, bool pressed, bool selected)
+    {
+        switch (glyph)
         {
-            switch (glyph)
+        case Def::ButtonGlyph::InitGamerA:
+            DrawIcon(14, selected ? 16 : 4, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::InitGamerB:
+            DrawIcon(14, selected ? 17 : 5, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::InitGamerC:
+            DrawIcon(14, selected ? 18 : 6, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::InitSetup:
+        case Def::ButtonGlyph::PauseSetup:
+            DrawIcon(14, 19, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::InitPlay:
+            DrawIcon(14, 7, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PauseMenu:
+        case Def::ButtonGlyph::ResumeMenu:
+            DrawIcon(14, 11, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PauseBack:
+            DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PauseRestart:
+            DrawIcon(14, 9, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PauseContinue:
+        case Def::ButtonGlyph::ResumeContinue:
+            DrawIcon(14, 10, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::WinLostReturn:
+            DrawIcon(14, 3, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::InitBuy:
+        case Def::ButtonGlyph::TrialBuy:
+            DrawIcon(14, 22, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::InitRanking:
+            DrawIcon(14, 12, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::TrialCancel:
+        case Def::ButtonGlyph::RankingContinue:
+            DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::SetupSounds:
+        case Def::ButtonGlyph::SetupJump:
+        case Def::ButtonGlyph::SetupZoom:
+        case Def::ButtonGlyph::SetupAccel:
+            DrawIcon(14, selected ? 13 : 21, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::SetupReset:
+            DrawIcon(14, 20, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::SetupReturn:
+            DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PlayJump:
+            DrawIcon(14, 2, rect, pressed ? 0.6 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PlayAction:
+            DrawIcon(14, 12, rect, pressed ? 0.6 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PlayDown:
+            DrawIcon(14, 23, rect, pressed ? 0.6 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::PlayPause:
+            DrawIcon(14, 3, rect, pressed ? 0.6 : 1.0, false);
+            break;
+        case Def::ButtonGlyph::Cheat1:
+        case Def::ButtonGlyph::Cheat2:
+        case Def::ButtonGlyph::Cheat3:
+        case Def::ButtonGlyph::Cheat4:
+        case Def::ButtonGlyph::Cheat5:
+        case Def::ButtonGlyph::Cheat6:
+        case Def::ButtonGlyph::Cheat7:
+        case Def::ButtonGlyph::Cheat8:
+        case Def::ButtonGlyph::Cheat9:
             {
-                case Def::ButtonGlyph::InitGamerB:
-                    DrawIcon(14, selected ? 17 : 5, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::InitGamerA:
-                    DrawIcon(14, selected ? 16 : 4, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::InitGamerC:
-                    DrawIcon(14, selected ? 18 : 6, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::InitSetup:
-                case Def::ButtonGlyph::PauseSetup:
-                    DrawIcon(14, 19, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::InitPlay:
-                    DrawIcon(14, 7, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PauseMenu:
-                case Def::ButtonGlyph::ResumeMenu:
-                    DrawIcon(14, 11, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PauseBack:
-                    DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PauseRestart:
-                    DrawIcon(14, 9, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PauseContinue:
-                case Def::ButtonGlyph::ResumeContinue:
-                    DrawIcon(14, 10, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::WinLostReturn:
-                    DrawIcon(14, 3, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::InitBuy:
-                case Def::ButtonGlyph::TrialBuy:
-                    DrawIcon(14, 22, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::InitRanking:
-                    DrawIcon(14, 12, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::TrialCancel:
-                case Def::ButtonGlyph::RankingContinue:
-                    DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::SetupSounds:
-                case Def::ButtonGlyph::SetupJump:
-                case Def::ButtonGlyph::SetupZoom:
-                case Def::ButtonGlyph::SetupAccel:
-                    DrawIcon(14, selected ? 13 : 21, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::SetupReset:
-                    DrawIcon(14, 20, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::SetupReturn:
-                    DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PlayJump:
-                    DrawIcon(14, 2, rect, pressed ? 0.6 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PlayAction:
-                    DrawIcon(14, 12, rect, pressed ? 0.6 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PlayDown:
-                    DrawIcon(14, 23, rect, pressed ? 0.6 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::PlayPause:
-                    DrawIcon(14, 3, rect, pressed ? 0.6 : 1.0, false);
-                    break;
-                case Def::ButtonGlyph::Cheat1:
-                case Def::ButtonGlyph::Cheat2:
-                case Def::ButtonGlyph::Cheat3:
-                case Def::ButtonGlyph::Cheat4:
-                case Def::ButtonGlyph::Cheat5:
-                case Def::ButtonGlyph::Cheat6:
-                case Def::ButtonGlyph::Cheat7:
-                case Def::ButtonGlyph::Cheat8:
-                case Def::ButtonGlyph::Cheat9:
-                    {
-                        DrawIcon(14, 0, rect, pressed ? 0.6 : 1.0, false);
-                        TinyPoint tinyPoint;
-                        tinyPoint.X = rect.Left + rect.getWidthProperty() / 2 - (int)originX;
-                        tinyPoint.Y = rect.Top + 28;
-                        TinyPoint pos = tinyPoint;
-                        Text::DrawTextCenter(*this, pos, Decor::GetCheatTinyText(glyph), 1.0);
-                        break;
-                    }
-                case Def::ButtonGlyph::Cheat11:
-                case Def::ButtonGlyph::Cheat12:
-                case Def::ButtonGlyph::Cheat21:
-                case Def::ButtonGlyph::Cheat22:
-                case Def::ButtonGlyph::Cheat31:
-                case Def::ButtonGlyph::Cheat32:
-                    break;
+                DrawIcon(14, 0, rect, pressed ? 0.6 : 1.0, false);
+                TinyPoint tinyPoint{
+                    rect.Left + rect.getWidthProperty() / 2 - static_cast<intcs>(originX),
+                    rect.Top + 28
+                };
+                Text::DrawTextCenter(*this, tinyPoint, Decor::GetCheatTinyText(glyph), 1.0);
+                break;
             }
+        case Def::ButtonGlyph::Cheat11:
+        case Def::ButtonGlyph::Cheat12:
+        case Def::ButtonGlyph::Cheat21:
+        case Def::ButtonGlyph::Cheat22:
+        case Def::ButtonGlyph::Cheat31:
+        case Def::ButtonGlyph::Cheat32:
+            break;
         }
+    }
 
-         void Pixmap::LoadContent()
+    void Pixmap::LoadContent()
+    {
+        spriteBatch = std::make_unique<Microsoft::Xna::Framework::Graphics::SpriteBatch>(
+            game1->getGraphicsDeviceProperty());
+        bitmapText = game1->getContentProperty().Load<Texture2D>("icons/text");
+        bitmapButton = game1->getContentProperty().Load<Texture2D>("icons/button");
+        bitmapJauge = game1->getContentProperty().Load<Texture2D>("icons/jauge");
+        bitmapBlupi = game1->getContentProperty().Load<Texture2D>("icons/blupi");
+        bitmapBlupi1 = game1->getContentProperty().Load<Texture2D>("icons/blupi1");
+        bitmapObject = game1->getContentProperty().Load<Texture2D>("icons/object-m");
+        bitmapElement = game1->getContentProperty().Load<Texture2D>("icons/element");
+        bitmapExplo = game1->getContentProperty().Load<Texture2D>("icons/explo");
+        bitmapPad = game1->getContentProperty().Load<Texture2D>("icons/pad");
+        bitmapSpeedyBlupi = game1->getContentProperty().Load<Texture2D>("backgrounds/speedyblupi");
+        bitmapBlupiYoupie = game1->getContentProperty().Load<Texture2D>("backgrounds/blupiyoupie");
+        bitmapGear = game1->getContentProperty().Load<Texture2D>("backgrounds/gear");
+        UpdateGeometry();
+    }
+
+    void Pixmap::UpdateGeometry()
+    {
+        double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
+        double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
+        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
         {
-            Microsoft::Xna::Framework::Graphics::GraphicsDevice& graphicsDeviceProperty = game1-> getGraphicsDeviceProperty();
-            spriteBatch = new Microsoft::Xna::Framework::Graphics::SpriteBatch(game1->getGraphicsDeviceProperty());
-            bitmapText = game1->getContentProperty().Load<Texture2D>("icons/text");
-            bitmapButton = game1->getContentProperty().Load<Texture2D>("icons/button");
-            bitmapJauge = game1->getContentProperty().Load<Texture2D>("icons/jauge");
-            bitmapBlupi = game1->getContentProperty().Load<Texture2D>("icons/blupi");
-            bitmapBlupi1 = game1->getContentProperty().Load<Texture2D>("icons/blupi1");
-            bitmapObject = game1->getContentProperty().Load<Texture2D>("icons/object-m");
-            bitmapElement = game1->getContentProperty().Load<Texture2D>("icons/element");
-            bitmapExplo = game1->getContentProperty().Load<Texture2D>("icons/explo");
-            bitmapPad = game1->getContentProperty().Load<Texture2D>("icons/pad");
-            bitmapSpeedyBlupi = game1->getContentProperty().Load<Texture2D>("backgrounds/speedyblupi");
-            bitmapBlupiYoupie = game1->getContentProperty().Load<Texture2D>("backgrounds/blupiyoupie");
-            bitmapGear = game1->getContentProperty().Load<Texture2D>("backgrounds/gear");
-            UpdateGeometry();
+            screenWidth = screenHeight * (640.0 / 480.0);
         }
+        double widthScale = screenWidth / 640.0;
+        double heightScale = screenHeight / 480.0;
+        zoom = System::Math::Min(widthScale, heightScale);
+        originX = (screenWidth - 640.0 * zoom) / 2.0;
+        originY = (screenHeight - 480.0 * zoom) / 2.0;
+    }
 
-        void Pixmap::UpdateGeometry()
+    void Pixmap::BackgroundCache(const string& name)
+    {
+        bitmapBackground = game1->getContentProperty().Load<Texture2D>("backgrounds/" + name);
+    }
+
+    bool Pixmap::Start()
+    {
+        graphics.getGraphicsDeviceProperty()->Clear(Microsoft::Xna::Framework::CornflowerBlue);
+        return true;
+    }
+
+    bool Pixmap::Finish()
+    {
+        return true;
+    }
+
+    void Pixmap::DrawBackground()
+    {
+        if (!spriteBatch)
         {
-            double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
-            double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
-            if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
-            {
-                screenWidth = screenHeight * (640.0f / 480.0f);
-            }
-            double val = screenWidth / 640.0;
-            double val2 = screenHeight / 480.0;
-            zoom = std::min(val, val2);
-            originX = (screenWidth - 640.0 * zoom) / 2.0;
-            originY = (screenHeight - 480.0 * zoom) / 2.0;
+            CNA::Logger::Error("Pixmap::DrawBackground called before LoadContent()");
+            return;
         }
-
-        void Pixmap::BackgroundCache(const string &name)
+        double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
+        double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
+        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
         {
-            bitmapBackground = game1->getContentProperty().Load<Texture2D>("backgrounds/" + name);
+            screenWidth = screenHeight * (640.0 / 480.0);
         }
-
-         bool Pixmap::Start()
+        const Texture2D* bitmap_ptr = GetBitmap(3);
+        if (bitmap_ptr == nullptr)
         {
-            graphics.getGraphicsDeviceProperty()->Clear(Microsoft::Xna::Framework::CornflowerBlue);
-            return true;
+            CNA::Logger::Error("GetBitmap returned nullptr for channel=3");
+            return;
         }
+        const Texture2D& bitmap = *bitmap_ptr;
+        Microsoft::Xna::Framework::Rectangle srcRectangle = GetSrcRectangle(bitmap, 10, 10, 10, 10, 0, 0);
+        Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(
+            0, 0, static_cast<intcs>(screenWidth), static_cast<intcs>(screenHeight));
+        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+                           Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::White);
+        spriteBatch->End();
+        TinyPoint dest{
+            static_cast<intcs>(originX),
+            static_cast<intcs>(originY)
+        };
+        TinyRect rect{};
+        rect.Left = 0;
+        rect.Top = 0;
+        rect.Right = 640;
+        rect.Bottom = 480;
+        DrawPart(3, dest, rect);
+    }
 
-         bool Pixmap::Finish()
+    void Pixmap::DrawChar(intcs rank, TinyPoint pos, double size)
+    {
+        pos.X = static_cast<intcs>(static_cast<double>(pos.X) + originX);
+        pos.Y = static_cast<intcs>(static_cast<double>(pos.Y) + originY);
+        TinyRect tinyRect{};
+        tinyRect.Left = pos.X;
+        tinyRect.Top = pos.Y;
+        tinyRect.Right = pos.X + static_cast<intcs>(32.0 * size);
+        tinyRect.Bottom = pos.Y + static_cast<intcs>(32.0 * size);
+        DrawIcon(6, rank, tinyRect, 1.0, false);
+    }
+
+    void Pixmap::HudIcon(intcs channel, intcs rank, TinyPoint pos)
+    {
+        pos.X = static_cast<intcs>(static_cast<double>(pos.X) + originX);
+        pos.Y = static_cast<intcs>(static_cast<double>(pos.Y) + originY);
+        TinyRect tinyRect{pos};
+        DrawIcon(channel, rank, tinyRect, 1.0, false);
+    }
+
+    void Pixmap::QuickIcon(intcs channel, intcs rank, TinyPoint pos)
+    {
+        TinyRect tinyRect{pos};
+        DrawIcon(channel, rank, tinyRect, 1.0, true);
+    }
+
+    void Pixmap::QuickIcon(intcs channel, intcs rank, TinyPoint pos, double opacity, double rotation)
+    {
+        TinyRect tinyRect{pos};
+        DrawIcon(channel, rank, tinyRect, opacity, rotation, true);
+    }
+
+    bool Pixmap::DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom)
+    {
+        if (!spriteBatch)
         {
-            return true;
+            CNA::Logger::Error("Pixmap::DrawPart called before LoadContent()");
+            return false;
         }
-
-         void Pixmap::DrawBackground()
+        const Texture2D* bitmap = GetBitmap(channel);
+        if (bitmap == nullptr)
         {
-            double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
-            double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
-            if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
-            {
-                screenWidth = screenHeight * (640.0f / 480.0f);
-            }
-            Texture2D bitmap = GetBitmap(3).value();
-            Microsoft::Xna::Framework::Rectangle srcRectangle = GetSrcRectangle(bitmap, 10, 10, 10, 10, 0, 0);
-            Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(0, 0, (int)screenWidth, (int)screenHeight);
-            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-            spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::White);
-            spriteBatch->End();
-            TinyPoint tinyPoint;
-            tinyPoint.X = (int)originX;
-            tinyPoint.Y = (int)originY;
-            TinyPoint dest = tinyPoint;
-            TinyRect tinyRect;
-            tinyRect.Left = 0;
-            tinyRect.Top = 0;
-            tinyRect.Right = 640;
-            tinyRect.Bottom = 480;
-            TinyRect rect = tinyRect;
-            DrawPart(3, dest, rect);
+            return false;
         }
-
-         void Pixmap::DrawChar(int rank, TinyPoint& pos, double size)
+        if (channel == 5)
         {
-            pos.X = (int)((double)pos.X + originX);
-            pos.Y = (int)((double)pos.Y + originY);
-            TinyRect tinyRect;
-            tinyRect.Left = pos.X;
-            tinyRect.Top = pos.Y;
-            tinyRect.Right = pos.X + (int)(32.0 * size);
-            tinyRect.Bottom = pos.Y + (int)(32.0 * size);
-            TinyRect rect = tinyRect;
-            DrawIcon(6, rank, rect, 1.0, false);
+            dest.X = static_cast<intcs>(static_cast<double>(dest.X) + originX);
+            dest.Y = static_cast<intcs>(static_cast<double>(dest.Y) + originY);
         }
+        using Microsoft::Xna::Framework::Rectangle;
+        Rectangle value = Rectangle(
+            rect.Left, rect.Top, rect.getWidthProperty(), rect.getHeightProperty());
+        Rectangle destinationRectangle = Rectangle(
+            dest.X,
+            dest.Y,
+            static_cast<intcs>(static_cast<double>(rect.getWidthProperty()) * zoom),
+            static_cast<intcs>(static_cast<double>(rect.getHeightProperty()) * zoom)
+            );
+        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+                           Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        spriteBatch->Draw(*bitmap, destinationRectangle, value, Microsoft::Xna::Framework::White);
+        spriteBatch->End();
+        return true;
+    }
 
-         void Pixmap::HudIcon(int channel, int rank, TinyPoint& pos)
+    void Pixmap::DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot)
+    {
+        if (!spriteBatch)
         {
-            pos.X = (int)((double)pos.X + originX);
-            pos.Y = (int)((double)pos.Y + originY);
-            TinyRect tinyRect;
-            tinyRect.Left = pos.X;
-            tinyRect.Top = pos.Y;
-            tinyRect.Right = pos.X;
-            tinyRect.Bottom = pos.Y;
-            TinyRect rect = tinyRect;
-            DrawIcon(channel, rank, rect, 1.0, false);
+            CNA::Logger::Error("Pixmap::DrawIcon called before LoadContent()");
+            return;
         }
+        DrawIcon(channel, icon, rect, opacity, 0.0, useHotSpot);
+    }
 
-         void Pixmap::QuickIcon(int channel, int rank, TinyPoint& pos)
+    void Pixmap::DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot)
+    {
+        if (!spriteBatch)
         {
-            TinyRect tinyRect;
-            tinyRect.Left = pos.X;
-            tinyRect.Top = pos.Y;
-            tinyRect.Right = pos.X;
-            tinyRect.Bottom = pos.Y;
-            TinyRect rect = tinyRect;
-            DrawIcon(channel, rank, rect, 1.0, true);
+            CNA::Logger::Error("Pixmap::DrawIcon called before LoadContent()");
+            return;
         }
-
-         void Pixmap::QuickIcon(int channel, int rank, TinyPoint& pos, double opacity, double rotation)
+        if (icon == -1)
         {
-            TinyRect tinyRect;
-            tinyRect.Left = pos.X;
-            tinyRect.Top = pos.Y;
-            tinyRect.Right = pos.X;
-            tinyRect.Bottom = pos.Y;
-            TinyRect rect = tinyRect;
-            DrawIcon(channel, rank, rect, opacity, rotation, true);
+            return;
         }
-
-         bool Pixmap::DrawPart(int channel, TinyPoint& dest, TinyRect& rect)
-        {
-            return DrawPart(channel, dest, rect, 1.0);
-        }
-
-         bool Pixmap::DrawPart(int channel, TinyPoint& dest, TinyRect& rect, double zoom)
-        {
-            std::optional<Texture2D> bitmap = GetBitmap(channel);
-            if (!bitmap.has_value())
-            {
-                return false;
-            }
-            if (channel == 5)
-            {
-                dest.X = (int)((double)dest.X + originX);
-                dest.Y = (int)((double)dest.Y + originY);
-            }
-            Microsoft::Xna::Framework::Rectangle value = Microsoft::Xna::Framework::Rectangle(rect.Left, rect.Top, rect.getWidthProperty(), rect.getHeightProperty());
-            Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(dest.X, dest.Y, (int)((double)rect.getWidthProperty() * zoom), (int)((double)rect.getHeightProperty() * zoom));
-            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-            spriteBatch->Draw(bitmap.value(), destinationRectangle, value, Microsoft::Xna::Framework::White);
-            spriteBatch->End();
-            return true;
-        }
-
-         void Pixmap::DrawIcon(int channel, int icon, TinyRect rect, double opacity, bool useHotSpot)
-        {
-            DrawIcon(channel, icon, rect, opacity, 0.0, useHotSpot);
-        }
-
-         void Pixmap::DrawIcon(int channel, int icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot)
-        {
-            if (icon == -1)
-            {
-                return;
-            }
         using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
-            if (channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
+        if (channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
+        {
+            static intcs padGameplayIconNumbers[] = {0, 1, 2, 3, 30, 12, 23};
+            for (intcs iconNumber : padGameplayIconNumbers)
             {
-                int padGameplayIconNumbers[] = { 0, 1, 2, 3, 30, 12, 23 };
-                for (int iconNumber : padGameplayIconNumbers)
+                if (iconNumber == icon)
                 {
-                    if(iconNumber == icon)
-                    {
-                        if(iconNumber == 1 && rect.Left > 100) { continue; }
-                        //Touch display is not connected and the icon is a gameplay icon. Nothing to do.
-                        return;
-                    }
+                    if (iconNumber == 1 && rect.Left > 100) { continue; }
+                    // Touch display is not connected and the icon is a gameplay icon. Nothing to do.
+                    return;
                 }
-
-            }
-            std::optional<Texture2D> bitmap = GetBitmap(channel);
-            if (!bitmap.has_value())
-            {
-                return;
-            }
-            int bitmapGridX;
-            int bitmapGridY;
-            int iconWidth;
-            int iconHeight;
-            int gap;
-            switch (channel)
-            {
-                case 2:
-                case 11:
-                case 12:
-                case 13:
-                    bitmapGridX = 60;
-                    bitmapGridY = 60;
-                    iconWidth = 60;
-                    iconHeight = 60;
-                    gap = 0;
-                    break;
-                case 1:
-                    bitmapGridX = 64;
-                    bitmapGridY = 64;
-                    iconWidth = 64;
-                    iconHeight = 64;
-                    gap = 1;
-                    break;
-                case 10:
-                    bitmapGridX = 60;
-                    bitmapGridY = 60;
-                    iconWidth = 60;
-                    iconHeight = 60;
-                    gap = 0;
-                    break;
-                case 9:
-                    bitmapGridX = 144;
-                    bitmapGridY = 144;
-                    iconHeight = Tables::table_explo_size[icon];
-                    iconWidth = std::max(iconHeight, 128);
-                    gap = 0;
-                    break;
-                case 6:
-                    bitmapGridX = 32;
-                    bitmapGridY = 32;
-                    iconWidth = 32;
-                    iconHeight = 32;
-                    gap = 0;
-                    break;
-                case 4:
-                    bitmapGridX = 40;
-                    bitmapGridY = 40;
-                    iconWidth = 40;
-                    iconHeight = 40;
-                    gap = 0;
-                    break;
-                case 14:
-                    bitmapGridX = 140;
-                    bitmapGridY = 140;
-                    iconWidth = 140;
-                    iconHeight = 140;
-                    gap = 0;
-                    break;
-                case 15:
-                    bitmapGridX = 640;
-                    bitmapGridY = 160;
-                    iconWidth = 640;
-                    iconHeight = 160;
-                    gap = 0;
-                    break;
-                case 16:
-                    bitmapGridX = 410;
-                    bitmapGridY = 380;
-                    iconWidth = 410;
-                    iconHeight = 380;
-                    gap = 0;
-                    break;
-                case 17:
-                    bitmapGridX = 226;
-                    bitmapGridY = 226;
-                    iconWidth = 226;
-                    iconHeight = 226;
-                    gap = 0;
-                    break;
-                default:
-                    bitmapGridX = 0;
-                    bitmapGridY = 0;
-                    iconWidth = 0;
-                    iconHeight = 0;
-                    gap = 0;
-                    break;
-            }
-            if (bitmapGridX != 0)
-            {
-                Microsoft::Xna::Framework::Rectangle srcRectangle = GetSrcRectangle(bitmap.value(), bitmapGridX, bitmapGridY, iconWidth, iconHeight, gap, icon);
-                Microsoft::Xna::Framework::Rectangle rectangle = GetDstRectangle(rect, iconWidth, iconHeight, useHotSpot);
-                float rotationRad = 0.0f;
-                if (rotationDeg != 0.0)
-                {
-                    rotationRad = (float)Misc::DegToRad(rotationDeg);
-                    rectangle = Misc::RotateAdjust(rectangle, rotationRad);
-                }
-                spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront, Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-                spriteBatch->Draw(bitmap, rectangle, srcRectangle, Microsoft::Xna::Framework::Color::FromNonPremultiplied(255, 255, 255, (int)(255.0 * opacity)), rotationRad, origin, effect, 0.0f);
-                spriteBatch->End();
             }
         }
-
-        Microsoft::Xna::Framework::Rectangle Pixmap::GetSrcRectangle(Texture2D& bitmap, int bitmapGridX, int bitmapGridY, int iconWidth, int iconHeight, int gap, int icon)
+        const Texture2D* bitmap = GetBitmap(channel);
+        if (bitmap == nullptr)
         {
-            int width = bitmap.getBoundsProperty().Width;
-            int height = bitmap.getBoundsProperty().Height;
-            int num = icon % (width / bitmapGridX);
-            int num2 = icon / (width / bitmapGridX);
-            bitmapGridX += gap;
-            bitmapGridY += gap;
-            return Microsoft::Xna::Framework::Rectangle(gap + num * bitmapGridX, gap + num2 * bitmapGridY, iconWidth, iconHeight);
+            return;
         }
-
-        Microsoft::Xna::Framework::Rectangle Pixmap::GetDstRectangle(TinyRect& rect, int iconWidth, int iconHeight, bool useHotSpot)
+        intcs bitmapGridX;
+        intcs bitmapGridY;
+        intcs iconWidth;
+        intcs iconHeight;
+        intcs gap;
+        switch (channel)
         {
-            int finalWidth = ((rect.getWidthProperty() == 0) ? iconWidth : rect.getWidthProperty());
-            int finalHeight = ((rect.getHeightProperty() == 0) ? iconHeight : rect.getHeightProperty());
-            int scaledLeftX = (int)((double)rect.Left * zoom);
-            int scaledTopY = (int)((double)rect.Top * zoom);
-            int scaledRightX = (int)((double)scaledLeftX + (double)finalWidth * zoom);
-            int scaledBottomY = (int)((double)scaledTopY + (double)finalHeight * zoom);
-            if (useHotSpot && hotSpotZoom > 1.0)
-            {
-                scaledLeftX -= (int)hotSpotX;
-                scaledTopY -= (int)hotSpotY;
-                scaledRightX -= (int)hotSpotX;
-                scaledBottomY -= (int)hotSpotY;
-                scaledLeftX = (int)((double)scaledLeftX * hotSpotZoom);
-                scaledTopY = (int)((double)scaledTopY * hotSpotZoom);
-                scaledRightX = (int)((double)scaledRightX * hotSpotZoom);
-                scaledBottomY = (int)((double)scaledBottomY * hotSpotZoom);
-                scaledLeftX += (int)hotSpotX;
-                scaledTopY += (int)hotSpotY;
-                scaledRightX += (int)hotSpotX;
-                scaledBottomY += (int)hotSpotY;
-            }
-            return Microsoft::Xna::Framework::Rectangle(scaledLeftX, scaledTopY, scaledRightX - scaledLeftX, scaledBottomY - scaledTopY);
+        case 2:
+        case 11:
+        case 12:
+        case 13:
+            bitmapGridX = 60;
+            bitmapGridY = 60;
+            iconWidth = 60;
+            iconHeight = 60;
+            gap = 0;
+            break;
+        case 1:
+            bitmapGridX = 64;
+            bitmapGridY = 64;
+            iconWidth = 64;
+            iconHeight = 64;
+            gap = 1;
+            break;
+        case 10:
+            bitmapGridX = 60;
+            bitmapGridY = 60;
+            iconWidth = 60;
+            iconHeight = 60;
+            gap = 0;
+            break;
+        case 9:
+            bitmapGridX = 144;
+            bitmapGridY = 144;
+            iconHeight = Tables::table_explo_size[icon];
+            iconWidth = System::Math::Max(iconHeight, 128);
+            gap = 0;
+            break;
+        case 6:
+            bitmapGridX = 32;
+            bitmapGridY = 32;
+            iconWidth = 32;
+            iconHeight = 32;
+            gap = 0;
+            break;
+        case 4:
+            bitmapGridX = 40;
+            bitmapGridY = 40;
+            iconWidth = 40;
+            iconHeight = 40;
+            gap = 0;
+            break;
+        case 14:
+            bitmapGridX = 140;
+            bitmapGridY = 140;
+            iconWidth = 140;
+            iconHeight = 140;
+            gap = 0;
+            break;
+        case 15:
+            bitmapGridX = 640;
+            bitmapGridY = 160;
+            iconWidth = 640;
+            iconHeight = 160;
+            gap = 0;
+            break;
+        case 16:
+            bitmapGridX = 410;
+            bitmapGridY = 380;
+            iconWidth = 410;
+            iconHeight = 380;
+            gap = 0;
+            break;
+        case 17:
+            bitmapGridX = 226;
+            bitmapGridY = 226;
+            iconWidth = 226;
+            iconHeight = 226;
+            gap = 0;
+            break;
+        default:
+            bitmapGridX = 0;
+            bitmapGridY = 0;
+            iconWidth = 0;
+            iconHeight = 0;
+            gap = 0;
+            break;
         }
-
-         std::optional<Texture2D> Pixmap::GetBitmap(int channel)
+        if (bitmapGridX != 0)
         {
-            switch (channel)
+            using Microsoft::Xna::Framework::Rectangle;
+            Rectangle srcRectangle = GetSrcRectangle(
+                *bitmap, bitmapGridX, bitmapGridY, iconWidth, iconHeight, gap, icon);
+            Rectangle rectangle = GetDstRectangle(rect, iconWidth, iconHeight, useHotSpot);
+            float rotationRad = 0.0f;
+            if (rotationDeg != 0.0)
             {
-                case 2:
-                    return bitmapBlupi;
-                case 11:
-                case 12:
-                case 13:
-                    return bitmapBlupi1;
-                case 1:
-                    return bitmapObject;
-                case 10:
-                    return bitmapElement;
-                case 9:
-                    return bitmapExplo;
-                case 6:
-                    return bitmapText;
-                case 4:
-                    return bitmapButton;
-                case 5:
-                    return bitmapJauge;
-                case 14:
-                    return bitmapPad;
-                case 15:
-                    return bitmapSpeedyBlupi;
-                case 16:
-                    return bitmapBlupiYoupie;
-                case 17:
-                    return bitmapGear;
-                case 3:
-                    return bitmapBackground;
-                default:
-                    return std::nullopt;;
+                rotationRad = static_cast<float>(Misc::DegToRad(rotationDeg));
+                rectangle = Misc::RotateAdjust(rectangle, rotationRad);
             }
+            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+                               Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+            spriteBatch->Draw(*bitmap, rectangle, srcRectangle,
+                              Microsoft::Xna::Framework::Color::FromNonPremultiplied(
+                                  255, 255, 255, static_cast<intcs>(255.0 * opacity)), rotationRad, origin, effect, 0.0f);
+            spriteBatch->End();
         }
+    }
 
+    Microsoft::Xna::Framework::Rectangle Pixmap::GetSrcRectangle(const Texture2D& bitmap, intcs bitmapGridX, intcs bitmapGridY,
+                                                                 intcs iconWidth, intcs iconHeight, intcs gap, intcs icon)
+    {
+        intcs width = bitmap.getBoundsProperty().Width;
+        // warning: variable height is not used
+        intcs height = bitmap.getBoundsProperty().Height;
+        intcs column = icon % (width / bitmapGridX);
+        intcs row = icon / (width / bitmapGridX);
+        bitmapGridX += gap;
+        bitmapGridY += gap;
+        return Microsoft::Xna::Framework::Rectangle(gap + column * bitmapGridX, gap + row * bitmapGridY, iconWidth,
+                                                    iconHeight);
+    }
+
+    Microsoft::Xna::Framework::Rectangle Pixmap::GetDstRectangle(TinyRect rect, intcs iconWidth, intcs iconHeight,
+                                                                 bool useHotSpot)
+    {
+        intcs finalWidth = ((rect.getWidthProperty() == 0) ? iconWidth : rect.getWidthProperty());
+        intcs finalHeight = ((rect.getHeightProperty() == 0) ? iconHeight : rect.getHeightProperty());
+        intcs scaledLeftX = (intcs)((double)rect.Left * zoom);
+        intcs scaledTopY = (intcs)((double)rect.Top * zoom);
+        intcs scaledRightX = (intcs)((double)scaledLeftX + (double)finalWidth * zoom);
+        intcs scaledBottomY = (intcs)((double)scaledTopY + (double)finalHeight * zoom);
+        if (useHotSpot && hotSpotZoom > 1.0)
+        {
+            scaledLeftX -= (intcs)hotSpotX;
+            scaledTopY -= (intcs)hotSpotY;
+            scaledRightX -= (intcs)hotSpotX;
+            scaledBottomY -= (intcs)hotSpotY;
+            scaledLeftX = (intcs)((double)scaledLeftX * hotSpotZoom);
+            scaledTopY = (intcs)((double)scaledTopY * hotSpotZoom);
+            scaledRightX = (intcs)((double)scaledRightX * hotSpotZoom);
+            scaledBottomY = (intcs)((double)scaledBottomY * hotSpotZoom);
+            scaledLeftX += (intcs)hotSpotX;
+            scaledTopY += (intcs)hotSpotY;
+            scaledRightX += (intcs)hotSpotX;
+            scaledBottomY += (intcs)hotSpotY;
+        }
+        return Microsoft::Xna::Framework::Rectangle(scaledLeftX, scaledTopY, scaledRightX - scaledLeftX,
+                                                    scaledBottomY - scaledTopY);
+    }
+
+    const Texture2D* Pixmap::GetBitmap(intcs channel)
+    {
+        switch (channel)
+        {
+        case 2:
+            return &bitmapBlupi;
+        case 11:
+        case 12:
+        case 13:
+            return &bitmapBlupi1;
+        case 1:
+            return &bitmapObject;
+        case 10:
+            return &bitmapElement;
+        case 9:
+            return &bitmapExplo;
+        case 6:
+            return &bitmapText;
+        case 4:
+            return &bitmapButton;
+        case 5:
+            return &bitmapJauge;
+        case 14:
+            return &bitmapPad;
+        case 15:
+            return &bitmapSpeedyBlupi;
+        case 16:
+            return &bitmapBlupiYoupie;
+        case 17:
+            return &bitmapGear;
+        case 3:
+            return &bitmapBackground;
+        default:
+            return nullptr;
+        }
+    }
 }
-

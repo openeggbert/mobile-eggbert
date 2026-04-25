@@ -11,6 +11,7 @@
 #include "Tables.hpp"
 #include "System/Random.hpp"
 #include "Jauge.hpp"
+#include "CppDotNet/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 
 // // WindowsPhoneSpeedyBlupi, Version=1.0.0.5, Culture=neutral, PublicKeyToken=6db12cd62dbec439

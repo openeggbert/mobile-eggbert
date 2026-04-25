@@ -2,6 +2,11 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    TinyRect::TinyRect(TinyPoint point)
+        : Left(point.X), Right(point.X), Top(point.Y), Bottom(point.Y)
+    {
+    }
+
     intcs TinyRect::getWidthProperty() const
     {
         return Right - Left;

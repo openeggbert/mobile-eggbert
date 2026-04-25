@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CppDotNet/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/IPixmap.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
@@ -20,7 +21,6 @@ namespace WindowsPhoneSpeedyBlupi
     private:
         [[nodiscard]] intcs getPosLeftProperty() const;
         [[nodiscard]] intcs getPosRightProperty() const;
-
 
         /*
                 NeoSdk::Property<byte> SelectedGamer;
