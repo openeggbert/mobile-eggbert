@@ -37,6 +37,50 @@ The C++ source code was derived from the following Git commit in the mobile-eggb
 git submodule init --recursive
 git submodule update --recursive
 
+### Linux native build
+
+```bash
+cmake -S . -B build-linux \
+  -DCNA_BACKEND_SDL_RENDERER=ON \
+  -DCNA_BACKEND_EASY_GL=OFF \
+  -DCNA_BACKEND_BGFX=OFF
+cmake --build build-linux --target WindowsPhoneSpeedyBlupi
+```
+
+### Windows native build
+
+```powershell
+cmake -S . -B build-windows \
+  -DCNA_BACKEND_SDL_RENDERER=ON \
+  -DCNA_BACKEND_EASY_GL=OFF \
+  -DCNA_BACKEND_BGFX=OFF
+cmake --build build-windows --target WindowsPhoneSpeedyBlupi
+```
+
+### Windows cross-build from Linux (MinGW-w64)
+
+**Important: Always use a clean build directory when switching toolchains (e.g., `rm -rf build-windows`).**
+
+1. Ensure you have `mingw-w64` installed (e.g., `sudo apt install mingw-w64`).
+2. Run the build:
+```bash
+# Ensure you are in mobile-eggbert directory
+rm -rf build-windows
+cmake -S . -B build-windows \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+  -DCNA_BACKEND_SDL_RENDERER=ON \
+  -DCNA_WINDOWS_DEPENDENCIES_ROOT=/path/to/windows/sdl3/libs
+cmake --build build-windows --target WindowsPhoneSpeedyBlupi
+```
+
+*Note: You must provide Windows-target SDL3 package configs (`SDL3`, `SDL3_image`, etc.) through `CNA_WINDOWS_DEPENDENCIES_ROOT` or `CMAKE_PREFIX_PATH`.*
+
+### Backend status
+
+- Windows: SDL_Renderer is the supported backend.
+- Linux: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed.
+- Android/Web: planned.
+
 ## Progress
 
 
