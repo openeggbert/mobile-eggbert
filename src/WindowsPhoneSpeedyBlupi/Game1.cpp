@@ -726,10 +726,12 @@ namespace WindowsPhoneSpeedyBlupi
             DrawTextRightButton(Def::ButtonGlyph::SetupAccel, MyResource::TX_BUTTON_SETUP_ACCEL);
             if (phase == Def::Phase::MainSetup)
             {
-                string text = Helper::formatString(MyResource::LoadString(MyResource::TX_BUTTON_SETUP_RESET),
-                                                   STRING_VECTOR(
-                                                       std::to_string(static_cast<char>(65 + gameData.
-                                                           getSelectedGamerProperty()))));
+                string text = Helper::formatString(
+                    MyResource::LoadString(MyResource::TX_BUTTON_SETUP_RESET),
+                    STRING_VECTOR(
+                        std::string(1, static_cast<char>('A' + gameData.getSelectedGamerProperty()))
+                    )
+                );
                 DrawTextRightButton(Def::ButtonGlyph::SetupReset, text);
             }
         }
@@ -770,8 +772,10 @@ namespace WindowsPhoneSpeedyBlupi
         tinyPoint.X = buttonRect.Right + 5 - pixmap->getOriginProperty().X;
         tinyPoint.Y = buttonRect.Top + 3 - pixmap->getOriginProperty().Y;
         TinyPoint pos = tinyPoint;
-        string text = Helper::formatString(MyResource::LoadString(MyResource::TX_GAMER_TITLE),
-                                           STRING_VECTOR(std::to_string(static_cast<char>(65 + gamer))));
+        string text = Helper::formatString(
+            MyResource::LoadString(MyResource::TX_GAMER_TITLE),
+            STRING_VECTOR(std::string(1, static_cast<char>('A' + gamer)))
+        );
         Text::DrawText(*pixmap.get(), pos, text, 0.7);
         TinyPoint tinyPoint2;
         tinyPoint2.X = buttonRect.Right + 5 - pixmap->getOriginProperty().X;
