@@ -4,11 +4,11 @@
 #include <sstream>
 
 #include "TinyPoint.hpp"
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using CppDotNet::intcs;
+    using SharpRuntime::intcs;
 
     /**
      * @brief Represents a tiny rectangle using integer boundaries.

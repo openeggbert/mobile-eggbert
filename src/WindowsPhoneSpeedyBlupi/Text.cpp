@@ -5,7 +5,7 @@
 namespace WindowsPhoneSpeedyBlupi
 {
     using System::String;
-    const CppDotNet::shortcs Text::table_char[1536] =
+    const SharpRuntime::shortcs Text::table_char[1536] =
     {
         0, 0, 0, -1, 0, 0, 1, 0, 0, -1,
         0, 0, 2, 0, 0, -1, 0, 0, 3, 0,
@@ -163,13 +163,13 @@ namespace WindowsPhoneSpeedyBlupi
         1, 0, 0, -1, 0, 0
     };
 
-    const CppDotNet::ubytecs Text::table_accents[15] =
+    const SharpRuntime::ubytecs Text::table_accents[15] =
     {
         252, 224, 226, 233, 232, 235, 234, 239, 238, 244,
         249, 251, 228, 246, 231
     };
 
-    const CppDotNet::ubytecs Text::table_width[128] =
+    const SharpRuntime::ubytecs Text::table_width[128] =
     {
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 32, 14, 13, 15, 15, 15, 15,
@@ -247,11 +247,11 @@ namespace WindowsPhoneSpeedyBlupi
     }
 
     // PORTED
-    intcs Text::GetOffset(CppDotNet::charcs c)
+    intcs Text::GetOffset(SharpRuntime::charcs c)
     {
         for (int i = 0; i < 15; i++)
         {
-            if (static_cast<CppDotNet::shortcs>(c) == table_accents[i])
+            if (static_cast<SharpRuntime::shortcs>(c) == table_accents[i])
             {
                 return 15 + i;
             }
@@ -265,7 +265,7 @@ namespace WindowsPhoneSpeedyBlupi
         return static_cast<intcs>(c);
     }
 
-    void Text::DrawChar(IPixmap& pixmap, TinyPoint& pos, const CppDotNet::charcs car, const double size)
+    void Text::DrawChar(IPixmap& pixmap, TinyPoint& pos, const SharpRuntime::charcs car, const double size)
     {
         TinyPoint pos2{};
         const intcs offset = GetOffset(car);
@@ -287,7 +287,7 @@ namespace WindowsPhoneSpeedyBlupi
         pos.X += GetCharWidth(car, size);
     }
 
-    intcs Text::GetCharWidth(const CppDotNet::charcs c, const double size)
+    intcs Text::GetCharWidth(const SharpRuntime::charcs c, const double size)
     {
         const intcs offset = GetOffset(c);
         return static_cast<intcs>((static_cast<double>(table_width[table_char[offset * 6]] + 1)) * size);

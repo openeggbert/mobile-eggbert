@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CppDotNet/Prop.hpp"
+#include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/IPixmap.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 

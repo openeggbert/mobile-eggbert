@@ -1,9 +1,9 @@
 #pragma once
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using CppDotNet::shortcs;
+    using SharpRuntime::shortcs;
 
     class Tables
     {

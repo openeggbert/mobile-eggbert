@@ -1,12 +1,12 @@
 #pragma once
 
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
     using ushort = unsigned short;
-    using CppDotNet::bytecs;
-    using CppDotNet::intcs;
+    using SharpRuntime::bytecs;
+    using SharpRuntime::intcs;
 
     class GameData
     {

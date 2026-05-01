@@ -3,11 +3,11 @@
 #include <string>
 #include <unordered_map>
 
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi {
     using std::string;
-    using CppDotNet::intcs;
+    using SharpRuntime::intcs;
     
     class MyResource
     {

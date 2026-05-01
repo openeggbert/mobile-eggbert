@@ -3,11 +3,11 @@
 #include <algorithm>
 #include <ranges>
 
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using CppDotNet::intcs;
+    using SharpRuntime::intcs;
 
     /**
      * @brief Provides global game constants, enums, and static helper members.

@@ -6,7 +6,7 @@
 #include "Tables.hpp"
 #include "System/Random.hpp"
 #include "Jauge.hpp"
-#include "CppDotNet/Prop.hpp"
+#include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 namespace WindowsPhoneSpeedyBlupi
 {

@@ -91,14 +91,14 @@ namespace WindowsPhoneSpeedyBlupi
             return;
         }
 
-        static constexpr CppDotNet::intcs SOUND_COUNT = 93;
+        static constexpr SharpRuntime::intcs SOUND_COUNT = 93;
 
         soundEffects.clear();
         soundEffects.reserve(SOUND_COUNT);
 
         using Microsoft::Xna::Framework::Audio::SoundEffect;
 
-        for (CppDotNet::intcs i = 0; i < SOUND_COUNT; ++i)
+        for (SharpRuntime::intcs i = 0; i < SOUND_COUNT; ++i)
         {
             std::ostringstream oss;
             oss << "sounds/sound"

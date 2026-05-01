@@ -3,11 +3,11 @@
 #include "TinyPoint.hpp"
 #include "TinyRect.hpp"
 #include "Microsoft/Xna/Framework/Rectangle.hpp"
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using CppDotNet::intcs;
+    using SharpRuntime::intcs;
     using WindowsPhoneSpeedyBlupi::TinyPoint;
 
     /**

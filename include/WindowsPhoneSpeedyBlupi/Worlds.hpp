@@ -4,14 +4,14 @@
 #include <string>
 #include <vector>
 
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 #include "System/Text/StringBuilder.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using CppDotNet::bytecs;
-    using CppDotNet::intcs;
+    using SharpRuntime::bytecs;
+    using SharpRuntime::intcs;
     using std::string;
 
     /**

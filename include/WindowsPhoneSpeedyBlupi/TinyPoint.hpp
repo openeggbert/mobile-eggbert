@@ -2,11 +2,11 @@
 
 #include <string>
 #include <sstream>
-#include "CppDotNet/CppDotNetHelper.hpp"
+#include "SharpRuntime/SharpRuntimeHelper.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    using CppDotNet::intcs;
+    using SharpRuntime::intcs;
 
     /**
      * @brief Represents a tiny 2D point with integer coordinates.

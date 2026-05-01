@@ -207,7 +207,7 @@ namespace WindowsPhoneSpeedyBlupi
             isolatedStorageFileStream.Write(
                 data,
                 0,
-                static_cast<CppDotNet::intcs>(dataSize));
+                static_cast<SharpRuntime::intcs>(dataSize));
 
             isolatedStorageFileStream.Close();
         }
