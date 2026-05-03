@@ -15,11 +15,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CNA_BACKEND_SDL_RENDERER ON CACHE BOOL "Enable SDL_Renderer backend in CNA")
-set(CNA_BACKEND_EASY_GL OFF CACHE BOOL "Enable easy-gl backend in CNA")
+set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "Enable SDL_Renderer backend in CNA")
+set(CNA_BACKEND_EASY_GL ON CACHE BOOL "Enable easy-gl backend in CNA")
 set(CNA_BACKEND_BGFX OFF CACHE BOOL "Enable bgfx backend in CNA")
 set(CNA_BACKEND_VULKAN OFF CACHE BOOL "Enable Vulkan backend in CNA")
-set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
+set(CNA_GRAPHICS_BACKEND "EASY_GL" CACHE STRING "Selected CNA backend")
 
 add_subdirectory(../../cna CNA)
 include_directories(../cna/include CNA)
@@ -34,7 +34,31 @@ target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURC
 find_package(SDL3 REQUIRED)
 find_package(SDL3_image REQUIRED)
 
-target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE CNA SDL3::SDL3)
+# CNA and the selected graphics backend static library have circular
+# symbol references on Linux (backend uses Color/Rectangle/Matrix from CNA,
+# CNA uses backend interfaces). Wrap them in a linker group so GNU ld
+# resolves both without depending on link order.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
+    set(_cna_backend_target "")
+    if(TARGET cna_backend_graphics_easygl)
+        set(_cna_backend_target cna_backend_graphics_easygl)
+    elseif(TARGET cna_backend_graphics_sdl_renderer)
+        set(_cna_backend_target cna_backend_graphics_sdl_renderer)
+    elseif(TARGET cna_backend_graphics_bgfx)
+        set(_cna_backend_target cna_backend_graphics_bgfx)
+    elseif(TARGET cna_backend_graphics_vulkan)
+        set(_cna_backend_target cna_backend_graphics_vulkan)
+    endif()
+    if(_cna_backend_target)
+        target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE
+            -Wl,--start-group CNA ${_cna_backend_target} -Wl,--end-group
+            SDL3::SDL3)
+    else()
+        target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE CNA SDL3::SDL3)
+    endif()
+else()
+    target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE CNA SDL3::SDL3)
+endif()
 
 if(TARGET SDL3::SDL3main)
     target_link_libraries(WindowsPhoneSpeedyBlupi PRIVATE SDL3::SDL3main)

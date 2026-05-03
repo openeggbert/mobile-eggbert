@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#define SOUND_ENABLED
-
 #ifndef SOUND_ENABLED
 #define SOUND_DISABLED
 #endif
