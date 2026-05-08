@@ -89,9 +89,9 @@ namespace WindowsPhoneSpeedyBlupi
         int fadeOutMission{0};
 
     public:
-        [[nodiscard]] bool getIsRankingModeProperty() const;
+        [[nodiscard]] bool getIsRankingModeProperty() const override;
 
-        [[nodiscard]] bool getIsTrialModeProperty() const;
+        [[nodiscard]] bool getIsTrialModeProperty() const override;
 
         Game1();
         virtual ~Game1();
@@ -112,53 +112,53 @@ namespace WindowsPhoneSpeedyBlupi
         void Update(Microsoft::Xna::Framework::GameTime& gameTime) override;
 
     private:
-        void MissionBack();
+        void MissionBack() override;
 
-        void StartMission(int mission);
+        void StartMission(int mission) override;
 
-        void ContinueMission();
+        void ContinueMission() override;
 
-        void CheatAction(Def::ButtonGlyph glyph);
+        void CheatAction(Def::ButtonGlyph glyph) override;
 
     protected:
         void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
     private:
-        void DrawBackgroundFade();
+        void DrawBackgroundFade() override;
 
-        void DrawButtonsBackground();
+        void DrawButtonsBackground() override;
 
-        void DrawButtonsText();
+        void DrawButtonsText() override;
 
-        void DrawButtonGamerText(Def::ButtonGlyph glyph, int gamer);
+        void DrawButtonGamerText(Def::ButtonGlyph glyph, int gamer) override;
 
-        void DrawTextRightButton(Def::ButtonGlyph glyph, int res);
+        void DrawTextRightButton(Def::ButtonGlyph glyph, int res) override;
 
-        void DrawTextRightButton(Def::ButtonGlyph glyph, std::string text);
+        void DrawTextRightButton(Def::ButtonGlyph glyph, std::string text) override;
 
-        void DrawTextUnderButton(Def::ButtonGlyph glyph, int res);
+        void DrawTextUnderButton(Def::ButtonGlyph glyph, int res) override;
 
-        void DrawWaitProgress();
+        void DrawWaitProgress() override;
 
-        void DrawDebug();
+        void DrawDebug() override;
 
-        void SetGamer(int gamer);
+        void SetGamer(int gamer) override;
 
-        void SetPhase(Def::Phase phase);
+        void SetPhase(Def::Phase phase) override;
 
-        void SetPhase(Def::Phase phase, int mission);
+        void SetPhase(Def::Phase phase, int mission) override;
 
-        void MemorizeGamerProgress();
+        void MemorizeGamerProgress() override;
 
     public:
-        void ToggleFullScreen();
-        bool IsFullScreen();
+        void ToggleFullScreen() override;
+        bool IsFullScreen() override;
 
-        Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics();
+        Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() override;
 
-        [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager& getContentProperty();
+        [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager& getContentProperty() override;
 
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice& getGraphicsDeviceProperty();
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::GraphicsDevice& getGraphicsDeviceProperty() override;
         GetTypeNameHPP()
     };
 };

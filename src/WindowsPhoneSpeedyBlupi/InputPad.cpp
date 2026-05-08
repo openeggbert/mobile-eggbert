@@ -486,7 +486,7 @@ namespace WindowsPhoneSpeedyBlupi {
             {
                 horizontalChange = accelSpeedX;
                 verticalChange = 0.0;
-                if (((uint)keyPress & 4u) != 0)
+                if (((unsigned int)keyPress & 4u) != 0)
                 {
                     verticalChange = 1.0;
                 }

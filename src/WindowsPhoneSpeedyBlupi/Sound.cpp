@@ -1,6 +1,7 @@
 #include "WindowsPhoneSpeedyBlupi/Sound.hpp"
 
 #include <algorithm>
+#include <iomanip>
 
 #ifndef SOUND_ENABLED
 #define SOUND_DISABLED
