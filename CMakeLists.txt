@@ -31,8 +31,8 @@ add_executable(WindowsPhoneSpeedyBlupi ${SOURCES}
 
 target_include_directories(WindowsPhoneSpeedyBlupi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-find_package(SDL3 REQUIRED)
-find_package(SDL3_image REQUIRED)
+# SDL3 is provided by CNA via vendored submodules (or system SDL if CNA_USE_SYSTEM_SDL=ON).
+# No separate find_package(SDL3) call is needed here.
 
 # CNA and the selected graphics backend static library have circular
 # symbol references on Linux (backend uses Color/Rectangle/Matrix from CNA,
@@ -74,12 +74,7 @@ if(EXISTS "${MOBILE_EGGBERT_CONTENT_DIR}")
 endif()
 
 if(WIN32)
-    add_custom_command(TARGET WindowsPhoneSpeedyBlupi POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_RUNTIME_DLLS:WindowsPhoneSpeedyBlupi>
-            $<TARGET_FILE_DIR:WindowsPhoneSpeedyBlupi>
-            COMMAND_EXPAND_LISTS
-            COMMENT "Copying runtime DLL dependencies")
+    cna_copy_sdl_runtime(WindowsPhoneSpeedyBlupi)
 endif()
 
 find_package(Doxygen)
