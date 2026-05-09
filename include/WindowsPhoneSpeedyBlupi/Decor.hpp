@@ -8,24 +8,18 @@
 #include "Jauge.hpp"
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
+#include "Decor/ObjectType.h"
 
 namespace WindowsPhoneSpeedyBlupi
 {
     class Decor
     {
-        enum class ObjectType : SharpRuntime::ushortcs
-        {
-            // TODO: Replace magic numeric object type IDs with named enum values.
-            // Investigate all assignments and comparisons of MoveObject::type in Decor.cpp.
-            // Known so far:
-            //   6 = life egg / extra life collectible.
-            // This value uses channel 10 and icons 21..28 in MoveObjectStepIcon().
-            // When collected, it triggers VoyageInit(..., 21, 10) and later increments m_nbVies.
-            // Keep the original numeric IDs to preserve compatibility with the original game data.
-        };
-
         enum class ChannelType
         {
+        };
+        enum class IconType
+        {
+
         };
 
         struct Cellule
@@ -35,7 +29,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         struct MoveObject
         {
-            intcs type;
+            ObjectType type;
             intcs stepAdvance;
             intcs stepRecede;
             intcs timeStopStart;
@@ -261,7 +255,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         TinyPoint m_sucettePos;
 
-        intcs m_sucetteType;
+        ObjectType m_sucetteType;
 
         intcs m_blupiLogicRotation;
 
@@ -579,7 +573,7 @@ namespace WindowsPhoneSpeedyBlupi
         bool IsMoveTraj(TinyPoint pos);
 
     private:
-        int SearchDistRight(TinyPoint pos, TinyPoint dir, int type);
+        int SearchDistRight(TinyPoint pos, TinyPoint dir, ObjectType type);
 
     private:
         bool IsVentillo(TinyPoint pos);
@@ -591,10 +585,10 @@ namespace WindowsPhoneSpeedyBlupi
         void StartSploutchGlu(TinyPoint pos);
 
     private:
-        int ObjectStart(TinyPoint pos, int type, int speed);
+        int ObjectStart(TinyPoint pos, ObjectType type, int speed);
 
     private:
-        bool ObjectDelete(TinyPoint pos, int type);
+        bool ObjectDelete(TinyPoint pos, ObjectType type);
 
     private:
         void ModifDecor(TinyPoint pos, int icon);
@@ -672,7 +666,7 @@ namespace WindowsPhoneSpeedyBlupi
         int MoveObjectFree();
 
     private:
-        int SortGetType(int type);
+        int SortGetType(ObjectType type);
 
     private:
         void MoveObjectSort();
@@ -684,7 +678,7 @@ namespace WindowsPhoneSpeedyBlupi
         int MoveObjectSearch(TinyPoint pos);
 
     private:
-        int MoveObjectSearch(TinyPoint pos, int type);
+        int MoveObjectSearch(TinyPoint pos, std::optional<ObjectType> type);
 
     private:
         void ByeByeHelico();
