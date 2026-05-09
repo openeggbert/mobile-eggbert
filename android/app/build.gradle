@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "org.openeggbert.speedyblupi"
     compileSdkVersion 35
@@ -28,9 +34,35 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            } else {
+                // key.properties not found – assembleRelease will fail with a clear message below
+            }
+        }
+    }
     buildTypes {
         release {
+            if (!keystorePropertiesFile.exists()) {
+                doFirst {
+                    throw new GradleException(
+                        "\n\n" +
+                        "========================================================\n" +
+                        " ERROR: key.properties not found in android/ directory.\n" +
+                        " Cannot build a signed release APK.\n" +
+                        " See ANDROID.md for instructions on creating key.properties.\n" +
+                        "========================================================\n"
+                    )
+                }
+            }
+            signingConfig signingConfigs.release
             minifyEnabled false
+            debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {

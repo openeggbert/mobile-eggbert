@@ -79,14 +79,80 @@ adb uninstall org.openeggbert.speedyblupi
 
 ---
 
-## Build a release APK (unsigned)
+## Creating release signing key
+
+Run this once to generate a keystore.  Keep the keystore and passwords safe — you
+will need them for every future update.
 
 ```bash
-./gradlew assembleRelease
+cd android
+keytool -genkeypair -v \
+  -keystore speedy-blupi-release.keystore \
+  -alias speedy-blupi \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
 ```
 
-To distribute the APK you must sign it.  See the
-[Android developer documentation on app signing](https://developer.android.com/studio/publish/app-signing).
+> ⚠️ **Do not commit the keystore to version control.**
+> ⚠️ **Do not lose the keystore.** If it is lost, you cannot publish future updates
+> signed with the same key — users will have to uninstall and reinstall the app.
+
+---
+
+## Creating key.properties
+
+Create the file `android/key.properties` (one directory above `app/`) with your
+real passwords:
+
+```properties
+storeFile=speedy-blupi-release.keystore
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=speedy-blupi
+keyPassword=YOUR_KEY_PASSWORD
+```
+
+> ⚠️ **Do not commit `key.properties` to version control.**
+> Both `key.properties` and `*.keystore` are listed in `.gitignore`.
+
+---
+
+## Building signed release APK
+
+```bash
+cd android
+export JAVA_HOME=/home/robertvokac/Downloads/openjdk-17.0.2_linux-x64_bin/jdk-17.0.2
+./gradlew clean assembleRelease
+```
+
+Release APK output:
+
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+If `key.properties` is not present, the build will stop immediately with a clear
+error message rather than a confusing Gradle failure.
+
+---
+
+## Verifying APK signature
+
+```bash
+apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+```
+
+---
+
+## Installing release APK on a phone
+
+```bash
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+> Users who install the APK from outside the Play Store may need to enable
+> **Install unknown apps** in their Android settings (Settings → Apps → Special
+> app access → Install unknown apps).
 
 ---
 
