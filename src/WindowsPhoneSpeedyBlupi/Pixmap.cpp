@@ -390,7 +390,7 @@ namespace WindowsPhoneSpeedyBlupi
             return;
         }
         using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
-        if (Config::TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE && channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
+        if (Config::TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE && CNA::getCurrentPlatform() != CNA::Platform::Android && channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
         {
             static intcs padGameplayIconNumbers[] = {0, 1, 2, 3, 30, 12, 23};
             for (intcs iconNumber : padGameplayIconNumbers)
