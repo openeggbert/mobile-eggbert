@@ -277,7 +277,7 @@ namespace WindowsPhoneSpeedyBlupi {
             for(Keys keys : keysToBeChecked) {
                 if (newKeyboardState.IsKeyDown(keys)) touchesOrClicks.push_back(TinyPoint(-1, (int)keys));
             }
-            if (newKeyboardState.IsKeyDown(Keys::F11))
+            if (CNA::getCurrentPlatform() != CNA::Platform::Android && CNA::getCurrentPlatform() != CNA::Platform::Web && newKeyboardState.IsKeyDown(Keys::F11))
             {
                 game1->ToggleFullScreen ();
                 INPUT_DEBUG("F11 was pressed.");
