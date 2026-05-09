@@ -11,19 +11,25 @@
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
-int main(int argc, char *args[]) {
+int main(int argc, char* args[])
+{
     CNA::Logger::Info("SpeedyBlupi: main entered");
     CNA::Logger::SetMinimumLevel(CNA::LogLevel::TRACE);
     CNA::Logger::Info("SpeedyBlupi: before Game1 construction");
-    try {
+    try
+    {
         WindowsPhoneSpeedyBlupi::Game1 game;
         CNA::Logger::Info("SpeedyBlupi: Game1 constructed, entering Run()");
         game.Run();
         CNA::Logger::Info("SpeedyBlupi: Run() returned normally");
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         CNA::Logger::Error(std::string("SpeedyBlupi: fatal exception in main: ") + e.what());
         return 1;
-    } catch (...) {
+    }
+    catch (...)
+    {
         CNA::Logger::Error("SpeedyBlupi: unknown fatal exception in main");
         return 1;
     }

@@ -8,6 +8,7 @@
 #include "Jauge.hpp"
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
+
 namespace WindowsPhoneSpeedyBlupi
 {
     class Decor
@@ -22,14 +23,16 @@ namespace WindowsPhoneSpeedyBlupi
             // When collected, it triggers VoyageInit(..., 21, 10) and later increments m_nbVies.
             // Keep the original numeric IDs to preserve compatibility with the original game data.
         };
+
         enum class ChannelType
         {
-
         };
+
         struct Cellule
         {
             intcs icon;
         };
+
         struct MoveObject
         {
             intcs type;
@@ -46,6 +49,7 @@ namespace WindowsPhoneSpeedyBlupi
             intcs channel;
             intcs icon;
         };
+
         class ByeByeObject
         {
         public:
@@ -59,6 +63,7 @@ namespace WindowsPhoneSpeedyBlupi
             double rotationSpeed;
             double speedX;
         };
+
         static constexpr intcs MAXMOVEOBJECT = 200;
         static constexpr intcs MAXQUART = 441;
         static constexpr intcs SCROLL_SPEED = 8;
@@ -309,312 +314,465 @@ namespace WindowsPhoneSpeedyBlupi
         std::unique_ptr<System::Random> m_random;
 
         std::vector<ByeByeObject> byeByeObjects;
+
     public:
         [[nodiscard]] TinyRect getDrawBoundsProperty() const;
         void setDrawBoundsProperty(const TinyRect v);
         DDATA(Def::ButtonGlyph, ButtonPressed)
+
     private:
         static void MoveObjectCopy(MoveObject& dst, const MoveObject& src);
+
     public:
         Decor();
+
     public:
         void Create(ISound* sound, IPixmap* pixmap, GameData* gameData);
+
     public:
         bool LoadImages();
+
     private:
         void InitDecor();
+
     public:
         void PlayPrepare(bool bTest);
+
     private:
         void BuildPrepare();
+
     public:
         int IsTerminated();
+
     public:
         void MoveStep();
+
     private:
         void ResetHotSpot();
+
     private:
         void MoveHotSpot();
+
     private:
         bool BlitzActif(intcs celx, intcs cely);
+
     public:
         void Build();
+
     private:
         void DrawInfo();
+
     private:
         bool IsDisplayInfo(int tableTresor);
+
     private:
         TinyPoint DecorNextAction();
+
     public:
         void SetSpeedX(double speed);
+
     public:
         void SetSpeedY(double speed);
+
     public:
         void KeyChange(int keyPress);
+
     private:
         void GetBlupiInfo(bool& bHelico, bool& bJeep, bool& bSkate, bool& bNage);
+
     private:
         int SoundEnviron(int sound, int obstacle);
+
     private:
         void PlaySound(int sound, TinyPoint pos);
+
     public:
         void StopSound();
+
     public:
         void StartSound();
+
     private:
         void StopSound(int sound);
+
     private:
         void AdaptMotorVehicleSound();
+
     private:
         void PosSound(TinyPoint pos);
+
     private:
         int GetRegion();
+
     private:
         void SetRegion(int region);
+
     private:
         int GetMusic();
+
     private:
         void SetMusic(int music);
+
     public:
         TinyPoint GetDim();
+
     public:
         void SetDim(TinyPoint dim);
+
     public:
         int GetMission();
+
     public:
         void SetMission(int mission);
+
     public:
         int GetNbVies();
+
     public:
         void SetNbVies(int nbVies);
+
     public:
         void InitializeDoors(GameData& gameData);
+
     public:
         void MemorizeDoors(GameData& gameData);
+
     public:
         static std::string GetCheatTinyText(Def::ButtonGlyph glyph);
+
     public:
         void CheatAction(Tables::CheatCodes cheat);
+
     private:
         void SetBuildOfficialMissions(bool bMode);
+
     private:
         void BlupiSearchIcon();
+
     private:
         bool BlupiIsGround();
+
     private:
         TinyRect BlupiRect(TinyPoint pos);
+
     private:
         void BlupiAdjust();
+
     private:
         bool BlupiBloque(TinyPoint pos, int dir);
+
     private:
         void BlupiStep();
+
     private:
         void BlupiDead(int action1, int action2);
+
     private:
         TinyPoint GetPosDecor(TinyPoint pos);
+
     private:
         void BlupiAddFifo(TinyPoint pos);
+
     private:
         bool DecorDetect(TinyRect rect);
+
     private:
         bool DecorDetect(TinyRect rect, bool bCaisse);
+
     private:
         bool TestPath(const TinyRect& rect, const TinyPoint& start, TinyPoint& end);
+
     private:
         void MoveObjectPollution();
+
     private:
         void MoveObjectPlouf(TinyPoint pos);
+
     private:
         void MoveObjectTiplouf(TinyPoint pos);
+
     private:
         void MoveObjectBlup(TinyPoint pos);
+
     private:
         int IsWorld(TinyPoint pos);
+
     private:
         void ActiveSwitch(bool bState, TinyPoint cel);
+
     private:
         int GetTypeBarre(TinyPoint pos);
+
     private:
         bool IsLave(TinyPoint pos);
+
     private:
         bool IsPiege(TinyPoint pos);
+
     private:
         bool IsGoutte(TinyPoint pos, bool bAlways);
+
     private:
         bool IsScie(TinyPoint pos);
+
     private:
         bool IsSwitch(TinyPoint pos, TinyPoint& celSwitch);
+
     private:
         bool IsEcraseur(TinyPoint pos);
+
     private:
         bool IsBlitz(TinyPoint pos, bool bAlways);
+
     private:
         bool IsRessort(TinyPoint pos);
+
     private:
         bool IsTemp(TinyPoint pos);
+
     private:
         bool IsBridge(TinyPoint pos, TinyPoint& celBridge);
+
     private:
         int IsDoor(TinyPoint pos, TinyPoint& celPorte);
+
     private:
         int IsTeleporte(TinyPoint pos);
+
     private:
         bool SearchTeleporte(TinyPoint pos, TinyPoint& newpos);
+
     private:
         bool IsNormalJump(TinyPoint pos);
+
     private:
         bool IsSurfWater(TinyPoint pos);
+
     private:
         bool IsDeepWater(TinyPoint pos);
+
     private:
         bool IsOutWater(TinyPoint pos);
+
     private:
         bool IsPassIcon(int icon);
+
     private:
         bool IsBlocIcon(int icon);
+
     private:
         void FlushBalleTraj();
+
     private:
         void SetBalleTraj(TinyPoint pos);
+
     private:
         bool IsBalleTraj(TinyPoint pos);
+
     private:
         void FlushMoveTraj();
+
     private:
         void SetMoveTraj(TinyPoint pos);
+
     private:
         bool IsMoveTraj(TinyPoint pos);
+
     private:
         int SearchDistRight(TinyPoint pos, TinyPoint dir, int type);
+
     private:
         bool IsVentillo(TinyPoint pos);
+
     private:
         void NetStopCloud(int rank);
+
     private:
         void StartSploutchGlu(TinyPoint pos);
+
     private:
         int ObjectStart(TinyPoint pos, int type, int speed);
+
     private:
         bool ObjectDelete(TinyPoint pos, int type);
+
     private:
         void ModifDecor(TinyPoint pos, int icon);
+
     private:
         void MoveObjectStep();
+
     private:
         void MoveObjectStepLine(int i);
+
     private:
         void MoveObjectStepIcon(int i);
+
     private:
         void DynamiteStart(int i, int dx, int dy);
+
     private:
         int AscenseurDetect(TinyRect rect, TinyPoint oldpos, TinyPoint newpos);
+
     private:
         void AscenseurVertigo(int i, bool& bVertigoLeft, bool& bVertigoRight);
+
     private:
         bool AscenseurShift(int i);
+
     private:
         void AscenseurSynchro(int i);
+
     private:
         void UpdateCaisse();
+
     private:
         bool TestPushCaisse(int i, TinyPoint pos, bool bPop);
+
     private:
         bool TestPushOneCaisse(int i, TinyPoint move, int b);
+
     private:
         void SearchLinkCaisse(int rank, bool bPop);
+
     private:
         bool AddLinkCaisse(int rank);
+
     private:
         int CaisseInFront();
+
     private:
         int CaisseGetMove(int max);
+
     private:
         int MockeryDetect(TinyPoint pos);
+
     private:
         bool BlupiElectro(TinyPoint pos);
+
     private:
         void MoveObjectFollow(TinyPoint pos);
+
     private:
         int MoveObjectDetect(TinyPoint pos, bool& bNear);
+
     private:
         int MoveAscenseurDetect(TinyPoint pos, int height);
+
     private:
         int MoveChargeDetect(TinyPoint pos);
+
     private:
         int MovePersoDetect(TinyPoint pos);
+
     private:
         int MoveObjectDelete(TinyPoint cel);
+
     private:
         int MoveObjectFree();
+
     private:
         int SortGetType(int type);
+
     private:
         void MoveObjectSort();
+
     private:
         void MoveObjectPriority(int i);
+
     private:
         int MoveObjectSearch(TinyPoint pos);
+
     private:
         int MoveObjectSearch(TinyPoint pos, int type);
+
     private:
         void ByeByeHelico();
+
     private:
         void ByeByeAdd(int channel, int icon, TinyPoint pos, double rotationSpeed, double animationSpeed);
+
     private:
         void ByeByeStep();
+
     private:
         void ByeByeDraw(TinyPoint posDecor);
+
     private:
         TinyPoint VoyageGetPosVie(int nbVies);
+
     private:
         void VoyageInit(TinyPoint start, TinyPoint end, int icon, int channel);
+
     private:
         void VoyageStep();
+
     private:
         void VoyageDraw();
+
     private:
         bool IsFloatingObject(int i);
+
     private:
         bool IsRightBorder(int x, int y, int dx, int dy);
+
     private:
         bool IsFromage(int x, int y);
+
     private:
         bool IsGrotte(int x, int y);
+
     private:
         void AdaptMidBorder(int x, int y);
+
     private:
         void AdaptBorder(TinyPoint cel);
+
     public:
         void CurrentDelete();
+
     public:
         bool CurrentWrite();
+
     public:
         bool CurrentRead();
+
     public:
         bool Read(int gamer, int rank, bool bUser);
+
     private:
         bool Delete(int gamer, int rank, bool bUser);
+
     private:
         bool FileExist(int gamer, int rank, bool bUser);
+
     private:
         bool SearchWorld(int world, TinyPoint& blupi, int& dir);
+
     private:
         bool SearchDoor(int n, TinyPoint& cel, TinyPoint& blupi);
+
     private:
         bool SearchGold(int n, TinyPoint& cel);
+
     public:
         void MainSwitchInitialize(int lastWorld);
+
     public:
         void AdaptDoors(bool bPrivate);
+
     private:
         void OpenDoorsTresor();
+
     private:
         void OpenDoor(TinyPoint cel);
+
     private:
         void OpenDoorsWin();
+
     private:
         void OpenGoldsWin();
+
     private:
         void DoorsLost();
     };

@@ -11,15 +11,18 @@
 
 #define readonly mutable
 
-namespace WindowsPhoneSpeedyBlupi {
-    class IGame1 {
+namespace WindowsPhoneSpeedyBlupi
+{
+    class IGame1
+    {
     protected:
         ~IGame1() = default;
-    public:
-        [[nodiscard]]virtual bool getIsRankingModeProperty() const = 0;
 
     public:
-        [[nodiscard]]virtual bool getIsTrialModeProperty() const = 0;
+        [[nodiscard]] virtual bool getIsRankingModeProperty() const = 0;
+
+    public:
+        [[nodiscard]] virtual bool getIsTrialModeProperty() const = 0;
 
     protected:
         virtual void Initialize() = 0;
@@ -34,7 +37,7 @@ namespace WindowsPhoneSpeedyBlupi {
 
         virtual void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) = 0;
 
-        virtual void Update(Microsoft::Xna::Framework::GameTime &gameTime) = 0;
+        virtual void Update(Microsoft::Xna::Framework::GameTime& gameTime) = 0;
 
     private:
         virtual void MissionBack() = 0;
@@ -46,7 +49,7 @@ namespace WindowsPhoneSpeedyBlupi {
         virtual void CheatAction(Def::ButtonGlyph glyph) = 0;
 
     protected:
-        virtual void Draw(const Microsoft::Xna::Framework::GameTime &gameTime) = 0;
+        virtual void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) = 0;
 
     private:
         virtual void DrawBackgroundFade() = 0;
@@ -87,5 +90,4 @@ namespace WindowsPhoneSpeedyBlupi {
 
         [[nodiscard]] virtual Microsoft::Xna::Framework::Graphics::GraphicsDevice& getGraphicsDeviceProperty() = 0;
     };
-
 }

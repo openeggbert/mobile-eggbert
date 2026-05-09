@@ -2,15 +2,16 @@
 
 #include "IPixmap.hpp"
 
-namespace WindowsPhoneSpeedyBlupi {
-
-using std::string;
+namespace WindowsPhoneSpeedyBlupi
+{
+    using std::string;
 
     class Text
     {
     public:
         Text() = delete;
         ~Text() = delete;
+
     private:
         static const SharpRuntime::shortcs table_char[1536];
 
@@ -38,5 +39,4 @@ using std::string;
 
         static void DrawCharSingle(IPixmap& pixmap, TinyPoint pos, intcs rank, double size);
     };
-
 }

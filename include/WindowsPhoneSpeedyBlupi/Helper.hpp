@@ -9,10 +9,12 @@
 #define TO_STRING(a) std::to_string(a)
 #define STRING_VECTOR(items) std::vector<string>{items}
 
-namespace WindowsPhoneSpeedyBlupi {
-    class Helper {
+namespace WindowsPhoneSpeedyBlupi
+{
+    class Helper
+    {
     public:
-        static std::string formatString(const std::string &format, const std::vector<std::string> &args);
+        static std::string formatString(const std::string& format, const std::vector<std::string>& args);
     };
 }
 

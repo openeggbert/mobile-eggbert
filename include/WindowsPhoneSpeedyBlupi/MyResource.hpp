@@ -5,10 +5,11 @@
 
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 
-namespace WindowsPhoneSpeedyBlupi {
+namespace WindowsPhoneSpeedyBlupi
+{
     using std::string;
     using SharpRuntime::intcs;
-    
+
     class MyResource
     {
     public:
@@ -151,7 +152,6 @@ namespace WindowsPhoneSpeedyBlupi {
         static const string& LoadString(intcs res);
 
     private:
-
         static void EnsureInitialized();
         static void Init();
 
@@ -164,7 +164,5 @@ namespace WindowsPhoneSpeedyBlupi {
         static void InitializeFR();
         static void InitializeEN();
         static void InitializeDE();
-
     };
 }
-

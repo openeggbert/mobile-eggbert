@@ -93,7 +93,8 @@ namespace WindowsPhoneSpeedyBlupi
         return result;
     }
 
-    bool Misc::IsInside(const TinyRect &rect, const TinyPoint &p) {
+    bool Misc::IsInside(const TinyRect& rect, const TinyPoint& p)
+    {
         return p.X >= rect.Left && p.X <= rect.Right && p.Y >= rect.Top && p.Y <= rect.Bottom;
     }
 
@@ -121,5 +122,4 @@ namespace WindowsPhoneSpeedyBlupi
     {
         return rect.getWidthProperty() <= 0 || rect.getHeightProperty() <= 0;
     }
-
 }

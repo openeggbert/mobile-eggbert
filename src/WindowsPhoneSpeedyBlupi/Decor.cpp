@@ -406,7 +406,8 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Decor::ResetHotSpot()
     {
-        m_pixmap->SetHotSpot(1.0, getDrawBoundsProperty().getWidthProperty() / 2, getDrawBoundsProperty().getHeightProperty() / 2);
+        m_pixmap->SetHotSpot(1.0, getDrawBoundsProperty().getWidthProperty() / 2,
+                             getDrawBoundsProperty().getHeightProperty() / 2);
     }
 
     void Decor::MoveHotSpot()
@@ -503,7 +504,7 @@ namespace WindowsPhoneSpeedyBlupi
         TinyPoint pos{
             posDecor.X * 2 / 3,
             pos.Y = posDecor.Y * 2 / 3
-            };
+        };
         int num = 1;
         TinyPoint tinyPoint;
         tinyPoint.X = m_drawBounds.Left;
@@ -3133,7 +3134,8 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (m_blupiHelico && (m_blupiFocus || m_blupiAction == 58))
         {
-            if (((unsigned int)m_keyPress & 2u) != 0 && m_blupiTimeFire == 0 && m_blupiAction != 3 && m_blupiAction != 58 &&
+            if (((unsigned int)m_keyPress & 2u) != 0 && m_blupiTimeFire == 0 && m_blupiAction != 3 && m_blupiAction !=
+                58 &&
                 flag2)
             {
                 if (m_blupiBullet == 0)

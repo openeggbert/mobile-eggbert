@@ -1,8 +1,9 @@
 #pragma once
 
-namespace WindowsPhoneSpeedyBlupi {
-
-    class ISound {
+namespace WindowsPhoneSpeedyBlupi
+{
+    class ISound
+    {
     public:
         virtual ~ISound() = default;
         virtual void LoadContent() = 0;
