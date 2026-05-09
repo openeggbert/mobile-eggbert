@@ -1,6 +1,9 @@
 package org.openeggbert.speedyblupi;
 
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Build;
+import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -17,6 +20,13 @@ import org.libsdl.app.SDLActivity;
  *
  * Native code lives in libmain.so (built from the game's C++ sources via CMake).
  * SDL3 discovers it by looking for a library named "main".
+ *
+ * Orientation is locked to sensorLandscape (both landscape sides allowed, portrait
+ * blocked) here and in AndroidManifest.xml because:
+ *   - SDLActivity.setOrientationBis() is called by SDL via JNI and can override the
+ *     manifest setting with FULL_USER, allowing portrait rotations.
+ *   - We override setOrientationBis() to always enforce SCREEN_ORIENTATION_SENSOR_LANDSCAPE.
+ *   - We also enforce it in onCreate/onResume/onConfigurationChanged for safety.
  */
 public class SpeedyBlupiActivity extends SDLActivity {
 
@@ -33,16 +43,47 @@ public class SpeedyBlupiActivity extends SDLActivity {
     }
 
     /**
-     * Enable immersive full-screen mode so that the status bar and navigation
-     * bar are hidden, giving the game the full physical surface area.
-     *
-     * This must be applied in onResume because the system may restore system UI
-     * after returning from the background or after dialogs.
+     * Force sensor-landscape at startup, before SDL has a chance to call setOrientationBis().
+     */
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+    }
+
+    /**
+     * Re-enforce landscape every time the activity resumes (e.g. after returning
+     * from the background, where SDL may have reset orientation).
+     * Also re-applies immersive full-screen mode.
      */
     @Override
     protected void onResume() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         super.onResume();
         hideSystemBars();
+    }
+
+    /**
+     * Re-enforce landscape if Android fires a configuration change (e.g. keyboard
+     * attached, screen size changed) that could allow a rotation transition.
+     */
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        super.onConfigurationChanged(newConfig);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+    }
+
+    /**
+     * Override the SDL JNI-callable orientation setter so that SDL internal logic
+     * (which may choose SENSOR_LANDSCAPE or FULL_USER based on window size/hints)
+     * cannot override our forced landscape lock.
+     */
+    @Override
+    public void setOrientationBis(int w, int h, boolean resizable, String hint) {
+        // Always force sensor-landscape (both sides, portrait blocked) regardless of SDL hint.
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     /**
