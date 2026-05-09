@@ -141,6 +141,14 @@ if(WIN32)
     cna_copy_sdl_runtime(${_game_target})
 endif()
 
+if(MINGW)
+    # Statically link the MinGW GCC and C++ runtime so the exe runs outside
+    # CLion/MSYS2 without needing libgcc_s_seh-1.dll / libstdc++-6.dll.
+    target_link_options(${_game_target} PRIVATE -static-libgcc -static-libstdc++)
+    # libwinpthread-1.dll cannot be statically linked this way; copy it instead.
+    cna_copy_mingw_runtime(${_game_target})
+endif()
+
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
     set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
