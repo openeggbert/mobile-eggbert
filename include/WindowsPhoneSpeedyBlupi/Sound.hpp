@@ -22,14 +22,14 @@ namespace WindowsPhoneSpeedyBlupi
         class Play
         {
             Microsoft::Xna::Framework::Audio::SoundEffectInstance sei;
-            const int channel;
+            const SoundChannel channel;
 
         public:
-            [[nodiscard]] int getChannelProperty() const;
+            [[nodiscard]] SoundChannel getChannelProperty() const;
 
             [[nodiscard]] bool getIsFreeProperty() const;
 
-            Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance,
+            Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, SoundChannel channel, double volume, double balance,
                  double pitch, bool isLooped);
 
             void Stop();
@@ -114,11 +114,11 @@ namespace WindowsPhoneSpeedyBlupi
 
         void StopAll() override;
 
-        bool PlayImage(int channel, TinyPoint pos, int rank = -1, bool bLoop = false) override;
+        bool PlayImage(SoundChannel channel, TinyPoint pos, int rank = -1, bool bLoop = false) override;
 
-        bool PosImage(int channel, TinyPoint pos) override;
+        bool PosImage(SoundChannel channel, TinyPoint pos) override;
 
-        bool Stop(int channel) override;
+        bool Stop(SoundChannel channel) override;
 
     private:
         double GetVolume(TinyPoint pos);

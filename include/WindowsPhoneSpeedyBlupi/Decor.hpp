@@ -8,8 +8,8 @@
 #include "Jauge.hpp"
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
-#include "decor/ObjectType.h"
-#include "enums/PixmapChannel.h"
+#include "decor/ObjectType.hpp"
+#include "enums/PixmapChannel.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -171,7 +171,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         bool m_blupiMotorHigh;
 
-        intcs m_blupiMotorSound;
+        SoundChannel m_blupiMotorSound;
 
         TinyPoint m_blupiPosHelico;
 
@@ -373,10 +373,10 @@ namespace WindowsPhoneSpeedyBlupi
         void GetBlupiInfo(bool& bHelico, bool& bJeep, bool& bSkate, bool& bNage);
 
     private:
-        int SoundEnviron(int sound, int obstacle);
+        SoundChannel SoundEnviron(SoundChannel sound, int obstacle);
 
     private:
-        void PlaySound(int sound, TinyPoint pos);
+        void PlaySound(SoundChannel sound, TinyPoint pos);
 
     public:
         void StopSound();
@@ -385,7 +385,7 @@ namespace WindowsPhoneSpeedyBlupi
         void StartSound();
 
     private:
-        void StopSound(int sound);
+        void StopSound(SoundChannel sound);
 
     private:
         void AdaptMotorVehicleSound();

@@ -2,6 +2,8 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    enum class SoundChannel : SharpRuntime::ushortcs;
+
     class ISound
     {
     public:
@@ -26,10 +28,10 @@ namespace WindowsPhoneSpeedyBlupi
 
         virtual void StopAll() = 0;
 
-        virtual bool PlayImage(int channel, TinyPoint pos, int rank = -1, bool bLoop = false) = 0;
+        virtual bool PlayImage(SoundChannel channel, TinyPoint pos, int rank = -1, bool bLoop = false) = 0;
 
-        virtual bool PosImage(int channel, TinyPoint pos) = 0;
+        virtual bool PosImage(SoundChannel channel, TinyPoint pos) = 0;
 
-        virtual bool Stop(int channel) = 0;
+        virtual bool Stop(SoundChannel channel) = 0;
     };
 }

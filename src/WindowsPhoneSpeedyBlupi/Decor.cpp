@@ -9,6 +9,7 @@
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
+#include "WindowsPhoneSpeedyBlupi/enums/SoundChannel.hpp"
 
 static constexpr SharpRuntime::intcs MAX_EGG_COUNT = 10;
 
@@ -73,7 +74,7 @@ namespace WindowsPhoneSpeedyBlupi
                      m_blupiBalloon(false),
                      m_blupiEcrase(false),
                      m_blupiMotorHigh(false),
-                     m_blupiMotorSound(0),
+                     m_blupiMotorSound(SoundChannel::SoundChannel0),
                      m_blupiRestart(false),
                      m_blupiFront(false),
                      m_blupiBullet(0), m_blupiCle(0),
@@ -144,7 +145,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_gameData = gameData;
         m_keyPress = 0;
         m_lastKeyPress = 0;
-        m_blupiMotorSound = 0;
+        m_blupiMotorSound = SoundChannel::SoundChannel0;
         InitDecor();
         TinyPoint pos{};
         pos.X = 90;
@@ -348,7 +349,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_scrollAdd.X = 0;
         m_scrollAdd.Y = 0;
         m_blupiPosHelico.X = -1;
-        m_blupiMotorSound = 0;
+        m_blupiMotorSound = SoundChannel::SoundChannel0;
         m_blupiFront = false;
         m_blupiNoBarre = 0;
         m_blupiValidPos = m_blupiPos;
@@ -489,7 +490,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (m_decor[celx][cely - 1].icon == 304 && (num == 0 || num == 7 || num == 18 || num == 25 || num == 33 || num
             == 44) && cely > 0)
         {
-            PlaySound(69, pos);
+            PlaySound(SoundChannel::SoundChannel69, pos);
         }
         if (num % 2 == 0)
         {
@@ -1162,17 +1163,17 @@ namespace WindowsPhoneSpeedyBlupi
         bNage = m_blupiNage | m_blupiSurf;
     }
 
-    int Decor::SoundEnviron(int sound, int obstacle)
+    SoundChannel Decor::SoundEnviron(SoundChannel sound, int obstacle)
     {
         if ((obstacle >= 32 && obstacle <= 34) || (obstacle >= 41 && obstacle <= 47) || (obstacle >= 139 && obstacle <=
             143))
         {
             switch (sound)
             {
-            case 4:
-                return 79;
-            case 3:
-                return 78;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel79;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel78;
             }
         }
         if ((obstacle >= 1 && obstacle <= 28) || (obstacle >= 78 && obstacle <= 90) || (obstacle >= 250 && obstacle <=
@@ -1180,73 +1181,114 @@ namespace WindowsPhoneSpeedyBlupi
         {
             switch (sound)
             {
-            case 4:
-                return 81;
-            case 3:
-                return 80;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel81;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel80;
             }
         }
         if ((obstacle >= 284 && obstacle <= 303) || obstacle == 338)
         {
             switch (sound)
             {
-            case 4:
-                return 83;
-            case 3:
-                return 82;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel83;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel82;
             }
         }
         if (obstacle >= 341 && obstacle <= 363)
         {
             switch (sound)
             {
-            case 4:
-                return 85;
-            case 3:
-                return 84;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel85;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel84;
             }
         }
         if (obstacle >= 215 && obstacle <= 234)
         {
             switch (sound)
             {
-            case 4:
-                return 87;
-            case 3:
-                return 86;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel87;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel86;
             }
         }
         if (obstacle >= 246 && obstacle <= 249)
         {
             switch (sound)
             {
-            case 4:
-                return 89;
-            case 3:
-                return 88;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel89;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel88;
             }
         }
         if (obstacle >= 107 && obstacle <= 109)
         {
             switch (sound)
             {
-            case 4:
-                return 91;
-            case 3:
-                return 90;
+            case SoundChannel::SoundChannel4:
+                return SoundChannel::SoundChannel91;
+            case SoundChannel::SoundChannel3:
+                return SoundChannel::SoundChannel90;
             }
         }
         return sound;
     }
 
-    void Decor::PlaySound(int sound, TinyPoint pos)
+    void Decor::PlaySound(SoundChannel sound, TinyPoint pos)
     {
-        if (!m_blupiHide || (sound != 1 && sound != 2 && sound != 3 && sound != 4 && sound != 5 && sound != 6 && sound
-            != 7 && sound != 20 && sound != 21 && sound != 22 && sound != 23 && sound != 24 && sound != 25 && sound !=
-            27 && sound != 32 && sound != 34 && sound != 35 && sound != 36 && sound != 37 && sound != 38 && sound != 39
-            && sound != 40 && sound != 46 && sound != 47 && sound != 48 && sound != 49 && sound != 64 && sound != 65 &&
-            sound != 78 && sound != 79 && sound != 80 && sound != 81 && sound != 82 && sound != 83 && sound != 84 &&
-            sound != 85 && sound != 86 && sound != 87 && sound != 88 && sound != 89 && sound != 90 && sound != 91))
+        int ranSound = ToRaw(sound);
+        if (!m_blupiHide || (
+            ranSound != 1 &&
+             ranSound != 2 &&
+             ranSound != 3 &&
+             ranSound != 4 &&
+             ranSound != 5 &&
+             ranSound != 6 &&
+             ranSound != 7 &&
+             ranSound != 20 &&
+             ranSound != 21 &&
+             ranSound != 22 &&
+             ranSound != 23 &&
+             ranSound != 24 &&
+             ranSound != 25 &&
+             ranSound != 27 &&
+             ranSound != 32 &&
+             ranSound != 34 &&
+             ranSound != 35 &&
+             ranSound != 36 &&
+             ranSound != 37 &&
+             ranSound != 38 &&
+             ranSound != 39 &&
+             ranSound != 40 &&
+             ranSound != 46 &&
+             ranSound != 47 &&
+             ranSound != 48 &&
+             ranSound != 49 &&
+             ranSound != 64 &&
+             ranSound != 65 &&
+            
+             ranSound != 78 &&
+             ranSound != 79 &&
+             ranSound != 80 &&
+             ranSound != 81 &&
+             ranSound != 82 &&
+             ranSound != 83 &&
+             ranSound != 84 &&
+            
+             ranSound != 85 &&
+             ranSound != 86 &&
+             ranSound != 87 &&
+             ranSound != 88 &&
+             ranSound != 89 &&
+             ranSound != 90 &&
+             ranSound != 91)
+            )
         {
             pos.X -= m_posDecor.X;
             pos.Y -= m_posDecor.Y;
@@ -1256,7 +1298,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Decor::StopSound()
     {
-        m_blupiMotorSound = 0;
+        m_blupiMotorSound = SoundChannel::SoundChannel0;
         m_sound->StopAll();
     }
 
@@ -1265,47 +1307,47 @@ namespace WindowsPhoneSpeedyBlupi
         AdaptMotorVehicleSound();
     }
 
-    void Decor::StopSound(int sound)
+    void Decor::StopSound(SoundChannel sound)
     {
         m_sound->Stop(sound);
     }
 
     void Decor::AdaptMotorVehicleSound()
     {
-        int num = 0;
-        int channel = 0;
-        int channel2 = 0;
+        SoundChannel num = SoundChannel::SoundChannel0;
+        SoundChannel channel = SoundChannel::SoundChannel0;
+        SoundChannel channel2 = SoundChannel::SoundChannel0;
         if (m_blupiHelico)
         {
-            num = (m_blupiMotorHigh ? 16 : 18);
-            channel = 15;
-            channel2 = 17;
+            num = (m_blupiMotorHigh ? SoundChannel::SoundChannel16 : SoundChannel::SoundChannel18);
+            channel = SoundChannel::SoundChannel15;
+            channel2 = SoundChannel::SoundChannel17;
         }
         else if (m_blupiJeep || m_blupiOver || m_blupiTank)
         {
-            num = (m_blupiMotorHigh ? 29 : 31);
-            channel = 28;
-            channel2 = 30;
+            num = (m_blupiMotorHigh ? SoundChannel::SoundChannel29 : SoundChannel::SoundChannel31);
+            channel = SoundChannel::SoundChannel28;
+            channel2 = SoundChannel::SoundChannel30;
         }
         if (m_blupiMotorSound != num)
         {
             TinyPoint blupiPos = m_blupiPos;
             blupiPos.X -= m_posDecor.X;
             blupiPos.Y -= m_posDecor.Y;
-            if (m_blupiMotorSound == 0 && num != 0)
+            if (m_blupiMotorSound == SoundChannel::SoundChannel0 && num != SoundChannel::SoundChannel0)
             {
                 m_sound->PlayImage(channel, blupiPos);
             }
-            if (m_blupiMotorSound != 0 && num == 0)
+            if (m_blupiMotorSound != SoundChannel::SoundChannel0 && num == SoundChannel::SoundChannel0)
             {
                 m_sound->PlayImage(channel2, blupiPos);
             }
-            if (m_blupiMotorSound != 0)
+            if (m_blupiMotorSound != SoundChannel::SoundChannel0)
             {
                 m_sound->Stop(m_blupiMotorSound);
             }
             m_blupiMotorSound = num;
-            if (m_blupiMotorSound != 0)
+            if (m_blupiMotorSound != SoundChannel::SoundChannel0)
             {
                 m_sound->PlayImage(m_blupiMotorSound, blupiPos, -1, true);
             }
@@ -1314,7 +1356,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Decor::PosSound(TinyPoint pos)
     {
-        if (m_blupiMotorSound != 0)
+        if (m_blupiMotorSound != SoundChannel::SoundChannel0)
         {
             pos.X -= m_posDecor.X;
             pos.Y -= m_posDecor.Y;
@@ -1481,7 +1523,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].posStart = m_moveObject[i].posCurrent;
                     m_moveObject[i].posEnd = m_moveObject[i].posCurrent;
                     MoveObjectStepIcon(i);
-                    PlaySound(10, m_moveObject[i].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel10, m_moveObject[i].posCurrent);
                 }
             }
         }
@@ -1497,10 +1539,10 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiSurf = false;
             m_blupiVent = false;
             m_blupiSuspend = false;
-            StopSound(16);
-            StopSound(18);
-            StopSound(29);
-            StopSound(31);
+            StopSound(SoundChannel::SoundChannel16);
+            StopSound(SoundChannel::SoundChannel18);
+            StopSound(SoundChannel::SoundChannel29);
+            StopSound(SoundChannel::SoundChannel31);
         }
         if (cheat == Tables::CheatCodes::Copter)
         {
@@ -1539,7 +1581,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].type = ObjectType::ObjectType0;
                     m_nbTresor++;
                     OpenDoorsTresor();
-                    PlaySound(11, m_moveObject[i].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel11, m_moveObject[i].posCurrent);
                 }
             }
         }
@@ -1558,11 +1600,11 @@ namespace WindowsPhoneSpeedyBlupi
                     {
                         m_bFoundCle = true;
                     }
-                    StopSound(16);
-                    StopSound(18);
-                    StopSound(29);
-                    StopSound(31);
-                    PlaySound(14, m_moveObject[i].posCurrent);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    StopSound(SoundChannel::SoundChannel29);
+                    StopSound(SoundChannel::SoundChannel31);
+                    PlaySound(SoundChannel::SoundChannel14, m_moveObject[i].posCurrent);
                     m_blupiAction = 13;
                     m_blupiPhase = 0;
                     m_blupiFocus = false;
@@ -1587,14 +1629,14 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 else
                 {
-                    PlaySound(13, m_moveObject[i].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel13, m_moveObject[i].posCurrent);
                 }
                 m_goalPhase = 50;
             }
         }
         if (cheat == Tables::CheatCodes::RoundShield)
         {
-            PlaySound(42, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel42, m_blupiPos);
             m_blupiShield = true;
             m_blupiPower = false;
             m_blupiCloud = false;
@@ -1617,12 +1659,12 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiCloud = false;
             m_blupiHide = false;
             m_blupiFocus = false;
-            PlaySound(50, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel50, m_blupiPos);
         }
         if (cheat == Tables::CheatCodes::Bombs)
         {
             m_blupiPerso = 10;
-            PlaySound(60, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel60, m_blupiPos);
         }
         if (cheat == Tables::CheatCodes::BirdLime)
         {
@@ -1658,7 +1700,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiHide = false;
             m_blupiJumpAie = false;
             m_blupiFocus = false;
-            PlaySound(58, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel58, m_blupiPos);
         }
         if (cheat == Tables::CheatCodes::Drink)
         {
@@ -1675,7 +1717,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiHide = false;
             m_blupiJumpAie = false;
             m_blupiFocus = false;
-            PlaySound(57, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel57, m_blupiPos);
         }
         if (cheat == Tables::CheatCodes::Overcraft)
         {
@@ -1693,7 +1735,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (cheat == Tables::CheatCodes::Dynamite)
         {
             m_blupiDynamite = 1;
-            PlaySound(60, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel60, m_blupiPos);
         }
         if (cheat == Tables::CheatCodes::WeelKeys)
         {
@@ -1705,13 +1747,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (!m_blupiHelico && !m_blupiOver)
         {
-            StopSound(16);
-            StopSound(18);
+            StopSound(SoundChannel::SoundChannel16);
+            StopSound(SoundChannel::SoundChannel18);
         }
         if (!m_blupiJeep && !m_blupiTank)
         {
-            StopSound(29);
-            StopSound(31);
+            StopSound(SoundChannel::SoundChannel29);
+            StopSound(SoundChannel::SoundChannel31);
         }
     }
 
@@ -1973,11 +2015,11 @@ namespace WindowsPhoneSpeedyBlupi
             330 == 245 || m_blupiPhase % 330 == 249 || m_blupiPhase % 330 == 255 || m_blupiPhase % 330 == 259 ||
             m_blupiPhase % 330 == 265 || m_blupiPhase % 330 == 269))
         {
-            PlaySound(37, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel37, m_blupiPos);
         }
         if (num2 == 31 && (m_blupiPhase % 328 == 118 || m_blupiPhase % 328 == 230 || m_blupiPhase % 328 == 278))
         {
-            PlaySound(36, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel36, m_blupiPos);
         }
         if ((num2 == 21 || num2 == 22) && m_blupiPhase % 12 == 0 && m_blupiSurf)
         {
@@ -2235,7 +2277,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiRestart = true;
             m_blupiAir = true;
             m_blupiPos.Y = m_blupiPos.Y / 64 * 64 + BLUPIOFFY;
-            PlaySound(8, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel8, m_blupiPos);
             return;
         }
         TinyRect rect = TinyRect();
@@ -2317,11 +2359,11 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
                 m_decorAction = 1;
                 m_decorPhase = 0;
-                StopSound(16);
-                StopSound(18);
-                StopSound(29);
-                StopSound(31);
-                PlaySound(10, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel16);
+                StopSound(SoundChannel::SoundChannel18);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
             }
             if (m_blupiJeep && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
             {
@@ -2331,11 +2373,11 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
                 m_decorAction = 1;
                 m_decorPhase = 0;
-                StopSound(16);
-                StopSound(18);
-                StopSound(29);
-                StopSound(31);
-                PlaySound(10, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel16);
+                StopSound(SoundChannel::SoundChannel18);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
             }
             if (m_blupiTank && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
             {
@@ -2345,11 +2387,11 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
                 m_decorAction = 1;
                 m_decorPhase = 0;
-                StopSound(16);
-                StopSound(18);
-                StopSound(29);
-                StopSound(31);
-                PlaySound(10, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel16);
+                StopSound(SoundChannel::SoundChannel18);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
             }
             if (m_blupiSkate && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
             {
@@ -2359,11 +2401,11 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
                 m_decorAction = 1;
                 m_decorPhase = 0;
-                StopSound(16);
-                StopSound(18);
-                StopSound(29);
-                StopSound(31);
-                PlaySound(10, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel16);
+                StopSound(SoundChannel::SoundChannel18);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
             }
             if (m_blupiFocus && m_blupiAction != 11 && m_blupiAction != 75 && m_blupiAction != 76 && m_blupiAction != 77
                 && m_blupiAction != 78 && m_blupiAction != 79 && m_blupiAction != 80 && m_blupiAction != 81)
@@ -2381,7 +2423,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             m_blupiAir = true;
             flag = true;
-            PlaySound(41, end);
+            PlaySound(SoundChannel::SoundChannel41, end);
         }
         if (((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !
             m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend &&
@@ -2398,12 +2440,12 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiPhase = 0;
                 if (m_blupiSkate)
                 {
-                    PlaySound(1, end);
+                    PlaySound(SoundChannel::SoundChannel1, end);
                     m_blupiVitesseY = (m_blupiPower ? (-17) : (-13));
                 }
                 else
                 {
-                    PlaySound(1, end);
+                    PlaySound(SoundChannel::SoundChannel1, end);
                     if (IsNormalJump(end))
                     {
                         m_blupiVitesseY = (m_blupiPower ? (-26) : (-16));
@@ -2426,11 +2468,11 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiAction != 81 && !m_blupiSkate)
                 {
                     m_blupiJumpAie = true;
-                    PlaySound(40, end);
+                    PlaySound(SoundChannel::SoundChannel40, end);
                 }
                 else
                 {
-                    PlaySound(SoundEnviron(4, detectIcon), end);
+                    PlaySound(SoundEnviron(SoundChannel::SoundChannel4, detectIcon), end);
                 }
                 m_blupiVitesseY = 1.0;
             }
@@ -2447,7 +2489,7 @@ namespace WindowsPhoneSpeedyBlupi
                 end.Y = end.Y / 32 * 32 + BLUPIOFFY;
                 if (!IsRessort(end))
                 {
-                    PlaySound(SoundEnviron(3, m_detectIcon), end);
+                    PlaySound(SoundEnviron(SoundChannel::SoundChannel3, m_detectIcon), end);
                 }
                 if (m_blupiFocus)
                 {
@@ -2478,7 +2520,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 m_blupiTransport = icon;
                 flag2 = false;
-                PlaySound(3, end);
+                PlaySound(SoundChannel::SoundChannel3, end);
                 end.Y = m_moveObject[icon].posCurrent.Y - 64 + BLUPIOFFY;
                 if (m_blupiFocus)
                 {
@@ -2515,7 +2557,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiCloud = true;
             m_blupiTimeShield = 100;
             m_jauges[1].SetHide(false);
-            PlaySound(55, end);
+            PlaySound(SoundChannel::SoundChannel55, end);
         }
         if (m_blupiAction == 58)
         {
@@ -2530,7 +2572,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiVitesseY -= 10.0;
                 if (ObjectStart(celSwitch, ObjectType::ObjectType23, 55) != -1)
                 {
-                    PlaySound(52, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel52, m_blupiPos);
                     m_blupiTimeFire = 10;
                     m_blupiBullet--;
                 }
@@ -2597,7 +2639,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiPhase == 4)
             {
-                PlaySound(47, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel47, m_blupiPos);
             }
             if (m_blupiPhase == 44)
             {
@@ -2610,7 +2652,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiPhase == 1)
             {
-                PlaySound(65, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel65, m_blupiPos);
                 m_blupiTimeMockery = 300;
             }
             if (m_blupiPhase == 92)
@@ -2624,7 +2666,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiPhase == 6)
             {
-                PlaySound(65, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel65, m_blupiPos);
                 m_blupiTimeMockery = 300;
             }
             if (m_blupiPhase == 104)
@@ -2638,7 +2680,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiPhase == 4)
             {
-                PlaySound(47, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel47, m_blupiPos);
             }
             if (m_blupiPhase == 60)
             {
@@ -2681,7 +2723,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiTimeShield = 100;
             m_blupiPosMagic = m_blupiPos;
             m_jauges[1].SetHide(false);
-            PlaySound(44, end);
+            PlaySound(SoundChannel::SoundChannel44, end);
         }
         if (m_blupiAction == 55 && m_blupiPhase == 36)
         {
@@ -2693,7 +2735,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiTimeShield = 100;
             m_blupiPosMagic = m_blupiPos;
             m_jauges[1].SetHide(false);
-            PlaySound(62, end);
+            PlaySound(SoundChannel::SoundChannel62, end);
         }
         if (m_blupiSpeedY < 0.0 && m_blupiLastSpeedY == 0.0 && m_blupiAction != 3 && m_blupiAction != 4 && m_blupiAction
             != 5 && m_blupiAction != 8 && m_blupiAction != 10 && m_blupiAction != 9 && !m_blupiAir && !m_blupiHelico &&
@@ -2740,12 +2782,12 @@ namespace WindowsPhoneSpeedyBlupi
         if (m_blupiAction == 7 && m_blupiPhase == 4)
         {
             m_scrollAdd.Y = -150;
-            PlaySound(21, end);
+            PlaySound(SoundChannel::SoundChannel21, end);
         }
         if (m_blupiAction == 6 && m_blupiPhase == 4)
         {
             m_scrollAdd.Y = 150;
-            PlaySound(7, end);
+            PlaySound(SoundChannel::SoundChannel7, end);
         }
         if (!m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !
             m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
@@ -2757,7 +2799,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 28;
                 m_blupiPhase = 0;
                 m_scrollAdd.Y = 0;
-                PlaySound(39, end);
+                PlaySound(SoundChannel::SoundChannel39, end);
             }
             if (m_blupiSpeedY > 0.0 && m_blupiSpeedX > 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != 29 && m_blupiDir
                 == 1 && (icon = CaisseInFront()) != -1)
@@ -2765,7 +2807,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 29;
                 m_blupiPhase = 0;
                 m_scrollAdd.Y = 0;
-                PlaySound(39, end);
+                PlaySound(SoundChannel::SoundChannel39, end);
             }
             if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != 28 &&
                 m_blupiDir == 2 && (icon = CaisseInFront()) != -1)
@@ -2774,7 +2816,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 28;
                 m_blupiPhase = 0;
                 m_scrollAdd.Y = 0;
-                PlaySound(39, end);
+                PlaySound(SoundChannel::SoundChannel39, end);
             }
             if (m_blupiSpeedY > 0.0 && m_blupiSpeedX < 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != 29 && m_blupiDir
                 == 2 && (icon = CaisseInFront()) != -1)
@@ -2782,7 +2824,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 29;
                 m_blupiPhase = 0;
                 m_scrollAdd.Y = 0;
-                PlaySound(39, end);
+                PlaySound(SoundChannel::SoundChannel39, end);
             }
             if (m_blupiAction == 29 && m_blupiActionOuf != 47)
             {
@@ -2823,14 +2865,14 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiAir)
                 {
-                    PlaySound(5, end);
+                    PlaySound(SoundChannel::SoundChannel5, end);
                     m_blupiAction = 59;
                     m_blupiPhase = 0;
                     m_blupiDir = 1;
                 }
                 else
                 {
-                    PlaySound(5, end);
+                    PlaySound(SoundChannel::SoundChannel5, end);
                     m_blupiAction = 3;
                     m_blupiPhase = 0;
                 }
@@ -2878,14 +2920,14 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiAir)
                 {
-                    PlaySound(5, end);
+                    PlaySound(SoundChannel::SoundChannel5, end);
                     m_blupiAction = 59;
                     m_blupiPhase = 0;
                     m_blupiDir = 2;
                 }
                 else
                 {
-                    PlaySound(5, end);
+                    PlaySound(SoundChannel::SoundChannel5, end);
                     m_blupiAction = 3;
                     m_blupiPhase = 0;
                 }
@@ -3085,16 +3127,16 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 m_blupiAction = 1;
                 m_blupiPhase = 0;
-                PlaySound(20, end);
+                PlaySound(SoundChannel::SoundChannel20, end);
             }
             m_scrollAdd.Y = 0;
             if (blupiAction == 14)
             {
-                StopSound(38);
+                StopSound(SoundChannel::SoundChannel38);
             }
             if (blupiAction == 29 || blupiAction == 28)
             {
-                StopSound(39);
+                StopSound(SoundChannel::SoundChannel39);
             }
         }
         if (!m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !
@@ -3149,7 +3191,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiBullet == 0)
                 {
-                    PlaySound(53, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel53, m_blupiPos);
                 }
                 else
                 {
@@ -3360,9 +3402,9 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiPhase = 0;
                     m_blupiPosHelico = m_blupiPos;
                     m_blupiFocus = true;
-                    StopSound(16);
-                    StopSound(18);
-                    PlaySound(17, m_blupiPos);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    PlaySound(SoundChannel::SoundChannel17, m_blupiPos);
                 }
             }
         }
@@ -3481,9 +3523,9 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiPhase = 0;
                     m_blupiPosHelico = m_blupiPos;
                     m_blupiFocus = true;
-                    StopSound(16);
-                    StopSound(18);
-                    PlaySound(17, m_blupiPos);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    PlaySound(SoundChannel::SoundChannel17, m_blupiPos);
                 }
             }
         }
@@ -3652,7 +3694,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiVitesseY != 0.0)
                 {
-                    PlaySound(3, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel3, m_blupiPos);
                 }
                 m_blupiVitesseY = 0.0;
             }
@@ -3668,7 +3710,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_blupiTransport = icon;
                     flag2 = false;
-                    PlaySound(3, end);
+                    PlaySound(SoundChannel::SoundChannel3, end);
                     end.Y = m_moveObject[icon].posCurrent.Y - 64 + BLUPIOFFY;
                 }
             }
@@ -3752,9 +3794,9 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 1;
                 m_blupiPhase = 0;
                 m_blupiPosHelico = m_blupiPos;
-                StopSound(29);
-                StopSound(31);
-                PlaySound(30, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel30, m_blupiPos);
             }
         }
         if (m_blupiTank && m_blupiFocus)
@@ -3768,7 +3810,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiBullet == 0)
                 {
-                    PlaySound(53, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel53, m_blupiPos);
                 }
                 else
                 {
@@ -3790,7 +3832,7 @@ namespace WindowsPhoneSpeedyBlupi
                     {
                         m_blupiAction = 53;
                         m_blupiPhase = 0;
-                        PlaySound(52, m_blupiPos);
+                        PlaySound(SoundChannel::SoundChannel52, m_blupiPos);
                         m_blupiTimeFire = 10;
                         m_blupiBullet--;
                     }
@@ -3813,7 +3855,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiVitesseY != 0.0)
                 {
-                    PlaySound(3, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel3, m_blupiPos);
                 }
                 m_blupiVitesseY = 0.0;
             }
@@ -3829,7 +3871,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_blupiTransport = icon;
                     flag2 = false;
-                    PlaySound(3, end);
+                    PlaySound(SoundChannel::SoundChannel3, end);
                     end.Y = m_moveObject[icon].posCurrent.Y - 64 + BLUPIOFFY;
                 }
             }
@@ -3884,9 +3926,9 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 1;
                 m_blupiPhase = 0;
                 m_blupiPosHelico = m_blupiPos;
-                StopSound(29);
-                StopSound(31);
-                PlaySound(30, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel30, m_blupiPos);
             }
         }
         if (m_blupiSkate && m_blupiFocus)
@@ -4089,7 +4131,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiActionOuf = 0;
                     m_jauges[0].SetHide(true);
                     m_jauges[1].SetHide(true);
-                    PlaySound(26, end);
+                    PlaySound(SoundChannel::SoundChannel26, end);
                 }
             }
         }
@@ -4226,7 +4268,7 @@ namespace WindowsPhoneSpeedyBlupi
                 end.Y -= 2;
                 m_blupiVitesseY = -11.0;
                 m_blupiNoBarre = 5;
-                PlaySound(35, end);
+                PlaySound(SoundChannel::SoundChannel35, end);
             }
         }
         if (getButtonPressedProperty() == Def::ButtonGlyph::PlayAction && !m_blupiHelico && !m_blupiOver && !
@@ -4251,7 +4293,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiAction = 87;
                     m_blupiPhase = 0;
                     m_blupiFocus = false;
-                    PlaySound(61, end);
+                    PlaySound(SoundChannel::SoundChannel61, end);
                     m_blupiDynamite--;
                 }
             }
@@ -4277,7 +4319,7 @@ namespace WindowsPhoneSpeedyBlupi
                         m_blupiAction = 46;
                         m_blupiPhase = 0;
                         m_blupiFocus = false;
-                        PlaySound(61, end);
+                        PlaySound(SoundChannel::SoundChannel61, end);
                         m_blupiPerso--;
                     }
                 }
@@ -4285,7 +4327,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_blupiAction = 47;
                     m_blupiPhase = 0;
-                    PlaySound(27, end);
+                    PlaySound(SoundChannel::SoundChannel27, end);
                 }
             }
         }
@@ -4353,7 +4395,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 else
                 {
-                    PlaySound(6, end);
+                    PlaySound(SoundChannel::SoundChannel6, end);
                     m_blupiAction = 8;
                     m_blupiPhase = 0;
                 }
@@ -4367,7 +4409,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 else
                 {
-                    PlaySound(6, end);
+                    PlaySound(SoundChannel::SoundChannel6, end);
                     m_blupiAction = 8;
                     m_blupiPhase = 0;
                 }
@@ -4376,7 +4418,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (!m_blupiHelico && !m_blupiOver)
                 {
-                    PlaySound(6, end);
+                    PlaySound(SoundChannel::SoundChannel6, end);
                 }
                 m_blupiAction = 10;
                 m_blupiPhase = 0;
@@ -4512,7 +4554,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiTimeShield == 10)
             {
-                PlaySound(43, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel43, m_blupiPos);
             }
             if (m_blupiTimeShield == 0)
             {
@@ -4529,7 +4571,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiTimeShield == 20)
             {
-                PlaySound(45, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel45, m_blupiPos);
             }
             if (m_blupiTimeShield == 0)
             {
@@ -4546,7 +4588,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiTimeShield == 25)
             {
-                PlaySound(56, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel56, m_blupiPos);
             }
             if (m_blupiTimeShield == 0)
             {
@@ -4563,7 +4605,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiTimeShield == 20)
             {
-                PlaySound(63, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel63, m_blupiPos);
             }
             if (m_blupiTimeShield == 0)
             {
@@ -4594,7 +4636,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X + 100;
                 celSwitch.Y = m_blupiPos.Y;
                 ObjectStart(celSwitch, ObjectType::ObjectType42, -10);
-                PlaySound(67, end);
+                PlaySound(SoundChannel::SoundChannel67, end);
             }
             else if (m_time % 3 == 0)
             {
@@ -4611,7 +4653,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType91, 0);
-                PlaySound(41, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel41, m_blupiPos);
             }
             else if (m_time % 2 == 0)
             {
@@ -4633,7 +4675,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType90, 0);
-                PlaySound(41, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel41, m_blupiPos);
             }
             else if (m_time % 2 == 0)
             {
@@ -4714,11 +4756,11 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
                 m_decorAction = 1;
                 m_decorPhase = 0;
-                StopSound(16);
-                StopSound(18);
-                StopSound(29);
-                StopSound(31);
-                PlaySound(10, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel16);
+                StopSound(SoundChannel::SoundChannel18);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
             }
         }
         if (!m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !
@@ -4770,7 +4812,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAir = false;
                 m_blupiNage = false;
                 m_blupiSurf = true;
-                PlaySound(25, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel25, m_blupiPos);
                 m_jauges[0].SetHide(true);
             }
             tinyPoint.X = m_blupiPos.X;
@@ -4793,7 +4835,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiVitesseY = -12.0;
                 }
                 MoveObjectTiplouf(m_blupiPos);
-                PlaySound(22, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel22, m_blupiPos);
                 m_jauges[0].SetHide(true);
             }
             if ((m_blupiSurf || m_blupiNage) && IsOutWater(m_blupiPos))
@@ -4815,7 +4857,7 @@ namespace WindowsPhoneSpeedyBlupi
                         m_blupiPos.Y -= 10;
                         m_blupiVitesseX = 0.0;
                         m_blupiVitesseY = -10.0;
-                        PlaySound(22, m_blupiPos);
+                        PlaySound(SoundChannel::SoundChannel22, m_blupiPos);
                         m_jauges[0].SetHide(true);
                     }
                 }
@@ -4829,7 +4871,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiPos.Y += 30;
                     m_blupiVitesseX = 0.0;
                     m_blupiVitesseY = 0.0;
-                    PlaySound(22, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel22, m_blupiPos);
                     m_jauges[0].SetHide(true);
                 }
                 else
@@ -4842,7 +4884,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_blupiPos.Y -= 10;
                     m_blupiVitesseX = 0.0;
                     m_blupiVitesseY = 0.0;
-                    PlaySound(22, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel22, m_blupiPos);
                     m_jauges[0].SetHide(true);
                 }
             }
@@ -4868,11 +4910,11 @@ namespace WindowsPhoneSpeedyBlupi
             ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
             m_decorAction = 1;
             m_decorPhase = 0;
-            StopSound(16);
-            StopSound(18);
-            StopSound(29);
-            StopSound(31);
-            PlaySound(10, m_blupiPos);
+            StopSound(SoundChannel::SoundChannel16);
+            StopSound(SoundChannel::SoundChannel18);
+            StopSound(SoundChannel::SoundChannel29);
+            StopSound(SoundChannel::SoundChannel31);
+            PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
         }
         if (m_blupiFocus && !m_blupiSuspend && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !
             m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !m_blupiSurf && m_blupiNoBarre == 0 &&
@@ -4889,7 +4931,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = 1;
                 m_blupiPhase = 0;
                 m_blupiActionOuf = 0;
-                PlaySound(34, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel34, m_blupiPos);
             }
         }
         if (m_blupiNoBarre > 0)
@@ -4907,22 +4949,22 @@ namespace WindowsPhoneSpeedyBlupi
             ObjectStart(celSwitch, ObjectType::ObjectType11, 0);
             m_decorAction = 2;
             m_decorPhase = 0;
-            StopSound(16);
-            StopSound(18);
-            StopSound(29);
-            StopSound(31);
-            PlaySound(10, m_blupiPos);
+            StopSound(SoundChannel::SoundChannel16);
+            StopSound(SoundChannel::SoundChannel18);
+            StopSound(SoundChannel::SoundChannel29);
+            StopSound(SoundChannel::SoundChannel31);
+            PlaySound(SoundChannel::SoundChannel10, m_blupiPos);
         }
         if (m_blupiAction != 30 && m_blupiFocus)
         {
             icon = IsWorld(m_blupiPos);
             if (icon != -1)
             {
-                StopSound(16);
-                StopSound(18);
-                StopSound(29);
-                StopSound(31);
-                PlaySound(32, m_blupiPos);
+                StopSound(SoundChannel::SoundChannel16);
+                StopSound(SoundChannel::SoundChannel18);
+                StopSound(SoundChannel::SoundChannel29);
+                StopSound(SoundChannel::SoundChannel31);
+                PlaySound(SoundChannel::SoundChannel32, m_blupiPos);
                 m_blupiAction = 30;
                 m_blupiPhase = 0;
                 m_blupiFocus = false;
@@ -4939,7 +4981,7 @@ namespace WindowsPhoneSpeedyBlupi
                 BlupiDead(76, -1);
                 m_blupiRestart = true;
                 m_blupiPos.Y = m_blupiPos.Y / 64 * 64 + BLUPIOFFY;
-                PlaySound(8, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel8, m_blupiPos);
             }
             if (IsPiege(m_blupiPos) && !m_blupiOver && !m_blupiJeep && !m_blupiTank && !m_blupiShield && !m_blupiHide &&
                 !m_bSuperBlupi && m_blupiFocus)
@@ -4948,7 +4990,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiRestart = true;
                 m_blupiAir = true;
                 ObjectStart(m_blupiPos, ObjectType::ObjectType53, 0);
-                PlaySound(51, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel51, m_blupiPos);
             }
             if (IsGoutte(m_blupiPos, false) && !m_blupiOver && !m_blupiJeep && !m_blupiTank && !m_blupiShield && !
                 m_blupiHide && !m_bSuperBlupi && m_blupiFocus)
@@ -4956,7 +4998,7 @@ namespace WindowsPhoneSpeedyBlupi
                 BlupiDead(54, -1);
                 m_blupiRestart = true;
                 m_blupiAir = true;
-                PlaySound(51, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel51, m_blupiPos);
             }
             if (IsScie(m_blupiPos) && !m_blupiOver && !m_blupiJeep && !m_blupiTank && !m_blupiShield && !m_blupiHide &&
                 !m_bSuperBlupi && m_blupiFocus)
@@ -4984,7 +5026,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiRestart = true;
                 m_blupiAir = true;
                 m_blupiPos.Y = m_blupiPos.Y / 64 * 64 + BLUPIOFFY;
-                PlaySound(8, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel8, m_blupiPos);
             }
             if (IsEcraseur(m_blupiPos) && !m_blupiEcrase && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi &&
                 m_blupiFocus)
@@ -5014,12 +5056,12 @@ namespace WindowsPhoneSpeedyBlupi
                 m_jauges[1].SetHide(false);
                 if (!m_blupiJeep && !m_blupiTank)
                 {
-                    StopSound(16);
-                    StopSound(18);
-                    StopSound(29);
-                    StopSound(31);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    StopSound(SoundChannel::SoundChannel29);
+                    StopSound(SoundChannel::SoundChannel31);
                 }
-                PlaySound(70, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel70, m_blupiPos);
                 ObjectStart(m_blupiPos, ObjectType::ObjectType41, -60);
                 ObjectStart(m_blupiPos, ObjectType::ObjectType41, 60);
                 ObjectStart(m_blupiPos, ObjectType::ObjectType41, 10);
@@ -5040,7 +5082,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiVitesseY = 0.0;
                 m_blupiFocus = false;
                 m_blupiPos.X = m_blupiPos.X / 64 * 64;
-                PlaySound(71, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel71, m_blupiPos);
                 celSwitch.X = m_blupiPos.X;
                 celSwitch.Y = m_blupiPos.Y - 5;
                 ObjectStart(celSwitch, ObjectType::ObjectType92, 0);
@@ -5208,7 +5250,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType91, 0);
-                PlaySound(41, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel41, m_blupiPos);
                 m_blupiPos.Y += 4;
                 m_blupiVitesseY = 0.0;
                 m_blupiPosHelico = m_blupiPos;
@@ -5250,12 +5292,12 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 if (!m_blupiJeep && !m_blupiTank)
                 {
-                    StopSound(16);
-                    StopSound(18);
-                    StopSound(29);
-                    StopSound(31);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    StopSound(SoundChannel::SoundChannel29);
+                    StopSound(SoundChannel::SoundChannel31);
                 }
-                PlaySound(10, m_moveObject[icon].posCurrent);
+                PlaySound(SoundChannel::SoundChannel10, m_moveObject[icon].posCurrent);
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType44 && m_blupiFocus && !m_blupiBalloon && !m_blupiShield && !m_blupiHide && !
                 m_bSuperBlupi)
@@ -5286,12 +5328,12 @@ namespace WindowsPhoneSpeedyBlupi
                 m_jauges[1].SetHide(false);
                 if (!m_blupiJeep && !m_blupiTank)
                 {
-                    StopSound(16);
-                    StopSound(18);
-                    StopSound(29);
-                    StopSound(31);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    StopSound(SoundChannel::SoundChannel29);
+                    StopSound(SoundChannel::SoundChannel31);
                 }
-                PlaySound(40, m_moveObject[icon].posCurrent);
+                PlaySound(SoundChannel::SoundChannel40, m_moveObject[icon].posCurrent);
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType90, 0);
@@ -5329,17 +5371,17 @@ namespace WindowsPhoneSpeedyBlupi
                     celSwitch.X -= 34;
                     celSwitch.Y -= 34;
                     ObjectStart(celSwitch, ObjectType::ObjectType10, 0);
-                    StopSound(16);
-                    StopSound(18);
-                    StopSound(29);
-                    StopSound(31);
-                    PlaySound(10, m_moveObject[icon].posCurrent);
+                    StopSound(SoundChannel::SoundChannel16);
+                    StopSound(SoundChannel::SoundChannel18);
+                    StopSound(SoundChannel::SoundChannel29);
+                    StopSound(SoundChannel::SoundChannel31);
+                    PlaySound(SoundChannel::SoundChannel10, m_moveObject[icon].posCurrent);
                     m_decorAction = 1;
                     m_decorPhase = 0;
                 }
                 else
                 {
-                    PlaySound(51, m_moveObject[icon].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel51, m_moveObject[icon].posCurrent);
                 }
                 m_blupiCloud = false;
                 m_blupiHide = false;
@@ -5447,7 +5489,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType25 && !m_blupiShield && !m_blupiHide && !m_blupiPower && m_blupiFocus)
             {
-                PlaySound(42, m_moveObject[icon].posCurrent);
+                PlaySound(SoundChannel::SoundChannel42, m_moveObject[icon].posCurrent);
                 m_blupiShield = true;
                 m_blupiPower = false;
                 m_blupiCloud = false;
@@ -5469,7 +5511,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiCloud = false;
                 m_blupiHide = false;
                 m_blupiFocus = false;
-                PlaySound(50, end);
+                PlaySound(SoundChannel::SoundChannel50, end);
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType40 && !m_blupiHide && m_blupiFocus)
             {
@@ -5478,7 +5520,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiTimeShield = 100;
                 m_blupiPosMagic = m_blupiPos;
                 m_jauges[1].SetHide(false);
-                PlaySound(66, end);
+                PlaySound(SoundChannel::SoundChannel66, end);
                 ObjectStart(m_blupiPos, ObjectType::ObjectType41, -60);
                 ObjectStart(m_blupiPos, ObjectType::ObjectType41, 60);
                 ObjectStart(m_blupiPos, ObjectType::ObjectType41, 10);
@@ -5498,7 +5540,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiPower = false;
                 m_blupiJumpAie = false;
                 m_blupiFocus = false;
-                PlaySound(57, end);
+                PlaySound(SoundChannel::SoundChannel57, end);
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType31 && !m_blupiShield && !m_blupiHide && !m_blupiPower && !m_blupiCloud && !
                 m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !
@@ -5512,7 +5554,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiFocus = false;
                 m_blupiCloud = true;
                 m_blupiTimeShield = 100;
-                PlaySound(58, end);
+                PlaySound(SoundChannel::SoundChannel58, end);
                 if (m_blupiHide)
                 {
                     m_blupiHide = false;
@@ -5542,7 +5584,7 @@ namespace WindowsPhoneSpeedyBlupi
                     celSwitch.X -= 34;
                     celSwitch.Y -= 34;
                     ObjectStart(celSwitch, ObjectType::ObjectType10, 0);
-                    PlaySound(10, m_moveObject[icon].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel10, m_moveObject[icon].posCurrent);
                     m_decorAction = 1;
                     m_decorPhase = 0;
                 }
@@ -5569,7 +5611,7 @@ namespace WindowsPhoneSpeedyBlupi
                 if (m_blupiDir == 1 && m_blupiPos.X > end.X)
                 {
                     end.X = m_blupiPos.X - 59;
-                    PlaySound(38, end);
+                    PlaySound(SoundChannel::SoundChannel38, end);
                     m_blupiActionOuf = 45;
                     m_blupiTimeOuf = 0;
                     m_blupiAction = 14;
@@ -5578,7 +5620,7 @@ namespace WindowsPhoneSpeedyBlupi
                 if (m_blupiDir == 2 && m_blupiPos.X < end.X)
                 {
                     end.X = m_blupiPos.X + 55;
-                    PlaySound(38, end);
+                    PlaySound(SoundChannel::SoundChannel38, end);
                     m_blupiActionOuf = 45;
                     m_blupiTimeOuf = 0;
                     m_blupiAction = 14;
@@ -5600,11 +5642,11 @@ namespace WindowsPhoneSpeedyBlupi
                             m_bFoundCle = true;
                         }
                         ByeByeHelico();
-                        StopSound(16);
-                        StopSound(18);
-                        StopSound(29);
-                        StopSound(31);
-                        PlaySound(14, m_moveObject[icon].posCurrent);
+                        StopSound(SoundChannel::SoundChannel16);
+                        StopSound(SoundChannel::SoundChannel18);
+                        StopSound(SoundChannel::SoundChannel29);
+                        StopSound(SoundChannel::SoundChannel31);
+                        PlaySound(SoundChannel::SoundChannel14, m_moveObject[icon].posCurrent);
                         m_blupiAction = 13;
                         m_blupiPhase = 0;
                         m_blupiFocus = false;
@@ -5613,7 +5655,7 @@ namespace WindowsPhoneSpeedyBlupi
                     }
                     else
                     {
-                        PlaySound(13, m_moveObject[icon].posCurrent);
+                        PlaySound(SoundChannel::SoundChannel13, m_moveObject[icon].posCurrent);
                     }
                     m_goalPhase = 50;
                 }
@@ -5691,7 +5733,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_blupiAction = m_blupiActionOuf;
                     m_blupiPhase = 0;
-                    PlaySound(46, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel46, m_blupiPos);
                 }
                 m_blupiActionOuf = 0;
             }
@@ -5706,7 +5748,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (m_blupiAction == 45 && m_blupiPhase == 4)
             {
-                PlaySound(46, m_blupiPos);
+                PlaySound(SoundChannel::SoundChannel46, m_blupiPos);
             }
             if (m_blupiActionOuf == 65 && m_blupiAction == 1)
             {
@@ -5723,7 +5765,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_blupiAction = m_blupiActionOuf;
                     m_blupiPhase = 0;
-                    PlaySound(48, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel48, m_blupiPos);
                 }
                 m_blupiActionOuf = 0;
             }
@@ -5733,7 +5775,7 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_blupiAction = m_blupiActionOuf;
                     m_blupiPhase = 0;
-                    PlaySound(49, m_blupiPos);
+                    PlaySound(SoundChannel::SoundChannel49, m_blupiPos);
                 }
                 m_blupiActionOuf = 0;
             }
@@ -5803,7 +5845,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             m_blupiAction = 84;
             m_blupiPhase = 0;
-            PlaySound(27, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel27, m_blupiPos);
         }
         if ((m_blupiAction == 11 && m_blupiPhase == 70) || (m_blupiAction == 75 && m_blupiPhase == 100) || (
             m_blupiAction == 76 && m_blupiPhase == 70) || (m_blupiAction == 77 && m_blupiPhase == 110) || (m_blupiAction
@@ -5836,7 +5878,7 @@ namespace WindowsPhoneSpeedyBlupi
         num2 = ((m_dimDecor.Y != 0) ? 6400 : 480);
         if (m_blupiPos.Y >= num2 + 1 && m_blupiPos.Y <= num2 + 40)
         {
-            PlaySound(8, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel8, m_blupiPos);
         }
         if (m_blupiPos.Y > num2 + 1000)
         {
@@ -5889,15 +5931,15 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (blupiAction == 63 && m_blupiAction != 63)
         {
-            StopSound(65);
+            StopSound(SoundChannel::SoundChannel65);
         }
         if (blupiAction == 64 && m_blupiAction != 64)
         {
-            StopSound(65);
+            StopSound(SoundChannel::SoundChannel65);
         }
         if (blupiAction == 83 && m_blupiAction != 83)
         {
-            StopSound(47);
+            StopSound(SoundChannel::SoundChannel47);
         }
         if (m_blupiFocus && !m_blupiAir && (!m_blupiHelico || BlupiIsGround()) && (!m_blupiOver || BlupiIsGround()) && !
             m_blupiBalloon && !m_blupiEcrase && !m_blupiShield && !m_blupiHide && !bVertigoLeft && !bVertigoRight &&
@@ -6003,10 +6045,10 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiActionOuf = 0;
         m_jauges[0].SetHide(true);
         m_jauges[1].SetHide(true);
-        StopSound(16);
-        StopSound(18);
-        StopSound(29);
-        StopSound(31);
+        StopSound(SoundChannel::SoundChannel16);
+        StopSound(SoundChannel::SoundChannel18);
+        StopSound(SoundChannel::SoundChannel29);
+        StopSound(SoundChannel::SoundChannel31);
         TinyPoint pos;
         TinyPoint pos2;
         if (m_blupiAction == 75)
@@ -6016,7 +6058,7 @@ namespace WindowsPhoneSpeedyBlupi
             pos2.X = m_blupiPos.X - m_posDecor.X;
             pos2.Y = m_blupiPos.Y - m_posDecor.Y - 300;
             VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 230, PixmapChannel::Element);
-            PlaySound(74, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel74, m_blupiPos);
         }
         if (m_blupiAction == 76)
         {
@@ -6025,14 +6067,14 @@ namespace WindowsPhoneSpeedyBlupi
             pos2.X = m_blupiPos.X - m_posDecor.X;
             pos2.Y = m_blupiPos.Y - m_posDecor.Y - 2000;
             VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 40, PixmapChannel::Element);
-            PlaySound(74, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel74, m_blupiPos);
         }
         if (m_blupiAction == 77)
         {
             ObjectStart(m_blupiPos, ObjectType::ObjectType41, -70);
             ObjectStart(m_blupiPos, ObjectType::ObjectType41, 20);
             ObjectStart(m_blupiPos, ObjectType::ObjectType41, -20);
-            PlaySound(75, m_blupiPos);
+            PlaySound(SoundChannel::SoundChannel75, m_blupiPos);
         }
     }
 
@@ -6377,7 +6419,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
         }
         pos.Y -= 45;
-        PlaySound(23, pos);
+        PlaySound(SoundChannel::SoundChannel23, pos);
         ObjectStart(pos, ObjectType::ObjectType14, 0);
     }
 
@@ -6399,13 +6441,13 @@ namespace WindowsPhoneSpeedyBlupi
             pos.X -= 5;
         }
         pos.Y -= 45;
-        PlaySound(64, pos);
+        PlaySound(SoundChannel::SoundChannel64, pos);
         ObjectStart(pos, ObjectType::ObjectType35, 0);
     }
 
     void Decor::MoveObjectBlup(TinyPoint pos)
     {
-        PlaySound(24, pos);
+        PlaySound(SoundChannel::SoundChannel24, pos);
         pos.Y -= 20;
         int num = 0;
         TinyPoint tinyPoint = pos;
@@ -6492,7 +6534,7 @@ namespace WindowsPhoneSpeedyBlupi
         pos.X = cel.X * 64;
         pos.Y = cel.Y * 64;
         ModifDecor(pos, bState ? 384 : 385);
-        PlaySound(bState ? 77 : 76, pos);
+        PlaySound(bState ? SoundChannel::SoundChannel77 : SoundChannel::SoundChannel76, pos);
         cel.X -= 20;
         for (int i = 0; i < 41; i++)
         {
@@ -7086,11 +7128,11 @@ namespace WindowsPhoneSpeedyBlupi
         pos2.X = pos.X - 28;
         pos2.Y = pos.Y + 15;
         ObjectStart(pos2, ObjectType::ObjectType100, 0);
-        StopSound(16);
-        StopSound(18);
-        StopSound(29);
-        StopSound(31);
-        PlaySound(51, pos);
+        StopSound(SoundChannel::SoundChannel16);
+        StopSound(SoundChannel::SoundChannel18);
+        StopSound(SoundChannel::SoundChannel29);
+        StopSound(SoundChannel::SoundChannel31);
+        PlaySound(SoundChannel::SoundChannel51, pos);
     }
 
     int Decor::ObjectStart(TinyPoint pos, ObjectType type, int speed)
@@ -7233,7 +7275,7 @@ namespace WindowsPhoneSpeedyBlupi
                     posCurrent.X -= 34;
                     posCurrent.Y -= 34;
                     ObjectStart(posCurrent, ObjectType::ObjectType8, 0);
-                    PlaySound(10, m_moveObject[i].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel10, m_moveObject[i].posCurrent);
                     m_decorAction = 1;
                     m_decorPhase = 0;
                     posCurrent = m_moveObject[i].posCurrent;
@@ -7250,7 +7292,7 @@ namespace WindowsPhoneSpeedyBlupi
                     posCurrent.Y += BLUPIOFFY;
                     ObjectDelete(m_moveObject[i].posCurrent, m_moveObject[i].type);
                     ObjectStart(posCurrent, ObjectType::ObjectType38, 55);
-                    PlaySound(59, posCurrent);
+                    PlaySound(SoundChannel::SoundChannel59, posCurrent);
                 }
             }
         }
@@ -7312,7 +7354,7 @@ namespace WindowsPhoneSpeedyBlupi
                 end.X -= 34;
                 end.Y -= 34;
                 ObjectStart(end, ObjectType::ObjectType9, 0);
-                PlaySound(10, end);
+                PlaySound(SoundChannel::SoundChannel10, end);
                 m_decorAction = 1;
                 m_decorPhase = 0;
             }
@@ -7779,11 +7821,11 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_moveObject[i].phase == 0)
             {
-                PlaySound(72, m_moveObject[i].posStart);
+                PlaySound(SoundChannel::SoundChannel72, m_moveObject[i].posStart);
             }
             if (m_moveObject[i].phase == 137)
             {
-                PlaySound(73, m_moveObject[i].posStart);
+                PlaySound(SoundChannel::SoundChannel73, m_moveObject[i].posStart);
             }
             if (m_moveObject[i].phase >= 157)
             {
@@ -8119,7 +8161,7 @@ namespace WindowsPhoneSpeedyBlupi
                 pos.Y = m_moveObject[i].posCurrent.Y + 40;
                 if (ObjectStart(pos, ObjectType::ObjectType23, 55) != -1)
                 {
-                    PlaySound(52, pos);
+                    PlaySound(SoundChannel::SoundChannel52, pos);
                 }
             }
         }
@@ -8181,7 +8223,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 if (ObjectStart(pos, ObjectType::ObjectType23, speed) != -1)
                 {
-                    PlaySound(52, pos);
+                    PlaySound(SoundChannel::SoundChannel52, pos);
                 }
             }
             if ((m_moveObject[i].step == 1 || m_moveObject[i].step == 3) && m_moveObject[i].time == 21)
@@ -8202,7 +8244,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 if (ObjectStart(pos, ObjectType::ObjectType23, speed) != -1)
                 {
-                    PlaySound(52, pos);
+                    PlaySound(SoundChannel::SoundChannel52, pos);
                 }
             }
         }
@@ -8294,7 +8336,7 @@ namespace WindowsPhoneSpeedyBlupi
         ObjectStart(posStart, ObjectType::ObjectType8, 0);
         if (dx == 0 && dy == 0)
         {
-            PlaySound(10, posStart);
+            PlaySound(SoundChannel::SoundChannel10, posStart);
             m_decorAction = 1;
             m_decorPhase = 0;
         }
@@ -8813,7 +8855,7 @@ namespace WindowsPhoneSpeedyBlupi
                 if (Misc::IntersectRect(dst, src2, src))
                 {
                     m_moveObject[i].type = ObjectType::ObjectType97;
-                    PlaySound(92, m_moveObject[i].posCurrent);
+                    PlaySound(SoundChannel::SoundChannel92, m_moveObject[i].posCurrent);
                 }
             }
         }
@@ -9244,46 +9286,46 @@ namespace WindowsPhoneSpeedyBlupi
         {
             m_voyageTotal = 40;
             m_nbVies--;
-            m_sound->PlayImage(9, end, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel9, end, -1, false);
         }
         if (m_voyageIcon == 21 && m_voyageChannel == PixmapChannel::Element)
         {
-            m_sound->PlayImage(12, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel12, start, -1, false);
         }
         if (m_voyageIcon == 6 && m_voyageChannel == PixmapChannel::Element)
         {
             if (m_nbTresor == m_totalTresor - 1)
             {
-                m_sound->PlayImage(19, start, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel19, start, -1, false);
             }
             else
             {
-                m_sound->PlayImage(11, start, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel11, start, -1, false);
             }
         }
         if (m_voyageIcon == 215 && m_voyageChannel == PixmapChannel::Element)
         {
-            m_sound->PlayImage(11, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel11, start, -1, false);
         }
         if (m_voyageIcon == 222 && m_voyageChannel == PixmapChannel::Element)
         {
-            m_sound->PlayImage(11, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel11, start, -1, false);
         }
         if (m_voyageIcon == 229 && m_voyageChannel == PixmapChannel::Element)
         {
-            m_sound->PlayImage(11, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel11, start, -1, false);
         }
         if (m_voyageIcon == 108 && m_voyageChannel == PixmapChannel::Button)
         {
-            m_sound->PlayImage(60, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel60, start, -1, false);
         }
         if (m_voyageIcon == 252 && m_voyageChannel == PixmapChannel::Element)
         {
-            m_sound->PlayImage(60, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel60, start, -1, false);
         }
         if (m_voyageIcon == 177 && m_voyageChannel == PixmapChannel::Element)
         {
-            m_sound->PlayImage(54, start, -1, false);
+            m_sound->PlayImage(SoundChannel::SoundChannel54, start, -1, false);
         }
         if (m_voyageIcon == 230 && m_voyageChannel == PixmapChannel::Element)
         {
@@ -9326,42 +9368,42 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     m_nbVies++;
                 }
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 6 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_nbTresor++;
                 OpenDoorsTresor();
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 215 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiCle |= 1;
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 222 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiCle |= 2;
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 229 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiCle |= 4;
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 108 && m_voyageChannel == PixmapChannel::Button)
             {
                 m_blupiPerso++;
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 252 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiDynamite++;
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 177 && m_voyageChannel == PixmapChannel::Element)
             {
-                m_sound->PlayImage(3, m_voyageEnd, -1, false);
+                m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             m_voyageIcon = -1;
         }
@@ -10540,7 +10582,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[num].phase = 0;
                     m_moveObject[num].channel = PixmapChannel::Object;
                     m_moveObject[num].icon = 183;
-                    PlaySound(33, m_moveObject[num].posStart);
+                    PlaySound(SoundChannel::SoundChannel33, m_moveObject[num].posStart);
                 }
             }
             for (int j = 0; j < 100; j++)
@@ -10637,7 +10679,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_moveObject[num].phase = 0;
         m_moveObject[num].channel = PixmapChannel::Object;
         m_moveObject[num].icon = icon;
-        PlaySound(33, m_moveObject[num].posStart);
+        PlaySound(SoundChannel::SoundChannel33, m_moveObject[num].posStart);
     }
 
     void Decor::OpenDoorsWin()

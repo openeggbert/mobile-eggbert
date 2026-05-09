@@ -13,6 +13,7 @@
 #include "WindowsPhoneSpeedyBlupi/Config.hpp"
 #include "WindowsPhoneSpeedyBlupi/IGame1.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
+#include "WindowsPhoneSpeedyBlupi/enums/SoundChannel.hpp"
 
 #define INPUT_DEBUG(msg) CNA::Logger::DebugIf(msg, Config::INPUT_DETAILED_DEBUGGING_ENABLED);
 #define INPUT_ENABLED
@@ -436,7 +437,7 @@ namespace WindowsPhoneSpeedyBlupi
             lastButtonDown == Def::ButtonGlyph::None)
         {
             TinyPoint pos(320, 240);
-            sound->PlayImage(0, pos);
+            sound->PlayImage(SoundChannel::SoundChannel0, pos);
         }
         if (buttonGlyph == Def::ButtonGlyph::None && lastButtonDown != Def::ButtonGlyph::None)
         {

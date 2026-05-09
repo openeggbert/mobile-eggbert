@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Def.hpp"
-#include "enums/PixmapChannel.h"
+#include "enums/PixmapChannel.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"

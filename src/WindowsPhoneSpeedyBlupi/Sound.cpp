@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include "WindowsPhoneSpeedyBlupi/enums/SoundChannel.hpp"
 
 #ifndef SOUND_ENABLED
 #define SOUND_DISABLED
@@ -9,7 +10,7 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    int Sound::Play::getChannelProperty() const { return channel; }
+    SoundChannel Sound::Play::getChannelProperty() const { return channel; }
 
     bool Sound::Play::getIsFreeProperty() const
     {
@@ -37,7 +38,7 @@ namespace WindowsPhoneSpeedyBlupi
      *              increase the pitch, while values less than 0 lower it (minimum is clamped to 0.0).
      * @param isLooped A boolean indicating whether the sound effect should loop continuously.
      */
-    Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, int channel, double volume, double balance,
+    Sound::Play::Play(Microsoft::Xna::Framework::Audio::SoundEffect& se, SoundChannel channel, double volume, double balance,
                       double pitch, bool isLooped) :
         channel(channel),
         sei(se.CreateInstance())
@@ -46,7 +47,7 @@ namespace WindowsPhoneSpeedyBlupi
         int b;
         return;
 #endif
-        int tableVolumePitchLengthIndex = channel * 2;
+        int tableVolumePitchLengthIndex = ToRaw(channel) * 2;
         if (tableVolumePitchLengthIndex >= 0 && tableVolumePitchLengthIndex < tableVolumePitchLength)
         {
             volume *= tableVolumePitch[tableVolumePitchLengthIndex];
@@ -167,7 +168,7 @@ namespace WindowsPhoneSpeedyBlupi
         plays.clear();
     }
 
-    bool Sound::PlayImage(int channel, TinyPoint pos, int rank, bool bLoop)
+    bool Sound::PlayImage(SoundChannel channel, TinyPoint pos, int rank, bool bLoop)
     {
 #ifdef SOUND_DISABLED
         return true;
@@ -176,9 +177,10 @@ namespace WindowsPhoneSpeedyBlupi
         {
             return true;
         }
-        if (channel >= 0 && channel < soundEffects.size())
+        const intcs rawChannel = ToRaw(channel);
+        if (rawChannel >= 0 && rawChannel < soundEffects.size())
         {
-            if (channel != 10 && std::any_of(plays.begin(), plays.end(),
+            if (channel != SoundChannel::SoundChannel10 && std::any_of(plays.begin(), plays.end(),
                                              [channel](const Play& p)
                                              {
                                                  return p.getChannelProperty() == channel && !p.getIsFreeProperty();
@@ -205,18 +207,18 @@ namespace WindowsPhoneSpeedyBlupi
             }
 
 
-            plays.emplace_back(soundEffects[channel], channel, (float)GetVolume(pos), (float)GetBalance(pos), 0.0,
+            plays.emplace_back(soundEffects[ToRaw(channel)], channel, (float)GetVolume(pos), (float)GetBalance(pos), 0.0,
                                bLoop);
         }
         return true;
     }
 
-    bool Sound::PosImage(int channel, TinyPoint pos)
+    bool Sound::PosImage(SoundChannel channel, TinyPoint pos)
     {
         return true;
     }
 
-    bool Sound::Stop(int channel)
+    bool Sound::Stop(SoundChannel channel)
     {
 #ifdef SOUND_DISABLED
         return true;
