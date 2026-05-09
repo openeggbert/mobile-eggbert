@@ -128,6 +128,32 @@ via `SDL_GetPrefPath("org.openeggbert", "speedyblupi")`.  This storage:
 
 ---
 
+## Android launcher icon
+
+The launcher icon is generated from `icon.bmp` into `res/mipmap-*` PNG files.
+Android does not use BMP directly for launcher icons.
+If `icon.bmp` changes, regenerate the PNG density variants with:
+
+```bash
+# Flat icons
+convert icon.bmp -resize 48x48   android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+convert icon.bmp -resize 72x72   android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+convert icon.bmp -resize 96x96   android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+convert icon.bmp -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+convert icon.bmp -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
+# Round icons (circular crop)
+for density_size in "mdpi:48" "hdpi:72" "xhdpi:96" "xxhdpi:144" "xxxhdpi:192"; do \
+  density="${density_size%%:*}"; size="${density_size##*:}"; half=$((size/2)); \
+  convert icon.bmp -resize ${size}x${size} \
+    \( +clone -alpha extract -draw "fill white circle ${half},${half} ${half},0" \) \
+    -alpha off -compose CopyOpacity -composite \
+    android/app/src/main/res/mipmap-${density}/ic_launcher_round.png; \
+done
+```
+
+---
+
 ## Troubleshooting
 
 ### Gradle build fails: "NDK not found"
