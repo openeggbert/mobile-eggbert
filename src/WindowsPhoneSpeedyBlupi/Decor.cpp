@@ -10,6 +10,8 @@
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
+static constexpr SharpRuntime::intcs MAX_EGG_COUNT = 10;
+
 namespace WindowsPhoneSpeedyBlupi
 {
     using log = CNA::Logger;
@@ -5425,7 +5427,7 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(m_moveObject[icon].posCurrent, 39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, 39, -10);
             }
-            if (m_moveObject[icon].type == 6 && m_nbVies < 10 && m_blupiFocus)
+            if (m_moveObject[icon].type == 6 && m_nbVies < MAX_EGG_COUNT && m_blupiFocus)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                 celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
@@ -9278,7 +9280,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (m_voyageIcon == 21 && m_voyageChannel == 10)
             {
-                if (m_nbVies < 10)
+                if (m_nbVies < MAX_EGG_COUNT)
                 {
                     m_nbVies++;
                 }

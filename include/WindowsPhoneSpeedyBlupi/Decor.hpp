@@ -12,6 +12,20 @@ namespace WindowsPhoneSpeedyBlupi
 {
     class Decor
     {
+        enum class ObjectType : SharpRuntime::ushortcs
+        {
+            // TODO: Replace magic numeric object type IDs with named enum values.
+            // Investigate all assignments and comparisons of MoveObject::type in Decor.cpp.
+            // Known so far:
+            //   6 = life egg / extra life collectible.
+            // This value uses channel 10 and icons 21..28 in MoveObjectStepIcon().
+            // When collected, it triggers VoyageInit(..., 21, 10) and later increments m_nbVies.
+            // Keep the original numeric IDs to preserve compatibility with the original game data.
+        };
+        enum class ChannelType
+        {
+
+        };
         struct Cellule
         {
             intcs icon;
