@@ -497,7 +497,7 @@ namespace WindowsPhoneSpeedyBlupi
                 rect = tinyRect2;
                 opacity = 1.0;
             }
-            pixmap->DrawIcon(15, 0, rect, opacity, false);
+            pixmap->DrawIcon(PixmapChannel::SpeedyBlupiBackground, 0, rect, opacity, false);
         }
         if (phase == Def::Phase::Init)
         {
@@ -524,7 +524,7 @@ namespace WindowsPhoneSpeedyBlupi
             tinyRect3.Top = (int)(280.0 - 190.0 * num);
             tinyRect3.Bottom = (int)(280.0 + 190.0 * num);
             TinyRect rect = tinyRect3;
-            pixmap->DrawIcon(16, 0, rect, opacity, 0.0, false);
+            pixmap->DrawIcon(PixmapChannel::BlupiYoupieBackground, 0, rect, opacity, 0.0, false);
         }
         if (phase == Def::Phase::Pause || phase == Def::Phase::Resume)
         {
@@ -539,7 +539,7 @@ namespace WindowsPhoneSpeedyBlupi
                 tinyRect4.Top = (int)(190.0 - 190.0 * num);
                 tinyRect4.Bottom = (int)(190.0 + 190.0 * num);
                 TinyRect rect = tinyRect4;
-                pixmap->DrawIcon(16, 0, rect, opacity, 0.0, false);
+                pixmap->DrawIcon(PixmapChannel::BlupiYoupieBackground, 0, rect, opacity, 0.0, false);
             }
             else if (fadeOutPhase == Def::Phase::PlaySetup)
             {
@@ -551,7 +551,7 @@ namespace WindowsPhoneSpeedyBlupi
                 tinyRect5.Top = 0;
                 tinyRect5.Bottom = 0;
                 TinyRect rect = tinyRect5;
-                pixmap->DrawIcon(16, 0, rect, 1.0, 0.0, false);
+                pixmap->DrawIcon(PixmapChannel::BlupiYoupieBackground, 0, rect, 1.0, 0.0, false);
             }
             else
             {
@@ -578,7 +578,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 if (rect.getWidthProperty() > 0 && rect.getHeightProperty() > 0)
                 {
-                    pixmap->DrawIcon(16, 0, rect, 1.0, rotation, false);
+                    pixmap->DrawIcon(PixmapChannel::BlupiYoupieBackground, 0, rect, 1.0, rotation, false);
                 }
             }
         }
@@ -607,7 +607,7 @@ namespace WindowsPhoneSpeedyBlupi
             tinyRect7.Top = 0;
             tinyRect7.Bottom = 160;
             TinyRect rect = tinyRect7;
-            pixmap->DrawIcon(15, 0, rect, num * num, false);
+            pixmap->DrawIcon(PixmapChannel::SpeedyBlupiBackground, 0, rect, num * num, false);
             TinyRect tinyRect8 = TinyRect();
             tinyRect8.Left = 487;
             tinyRect8.Right = 713;
@@ -622,8 +622,8 @@ namespace WindowsPhoneSpeedyBlupi
             TinyRect rect3 = tinyRect9;
             double opacity = 0.5 - num * 0.4;
             double rotation = (0.0 - num2) * 100.0 * 2.5;
-            pixmap->DrawIcon(17, 0, rect2, opacity, rotation, false);
-            pixmap->DrawIcon(17, 0, rect3, opacity, (0.0 - rotation) * 0.5, false);
+            pixmap->DrawIcon(PixmapChannel::GearBackground, 0, rect2, opacity, rotation, false);
+            pixmap->DrawIcon(PixmapChannel::GearBackground, 0, rect3, opacity, (0.0 - rotation) * 0.5, false);
         }
         if (phase == Def::Phase::Lost)
         {
@@ -641,7 +641,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (rect.getWidthProperty() > 0 && rect.getHeightProperty() > 0)
             {
-                pixmap->DrawIcon(16, 0, rect, 1.0, rotation, false);
+                pixmap->DrawIcon(PixmapChannel::BlupiYoupieBackground, 0, rect, 1.0, rotation, false);
             }
         }
         if (phase == Def::Phase::Win)
@@ -653,7 +653,7 @@ namespace WindowsPhoneSpeedyBlupi
             tinyRect11.Top = (int)(238.0 - 190.0 * num);
             tinyRect11.Bottom = (int)(238.0 + 190.0 * num);
             TinyRect rect = tinyRect11;
-            pixmap->DrawIcon(16, 0, rect, 1.0, 0.0, false);
+            pixmap->DrawIcon(PixmapChannel::BlupiYoupieBackground, 0, rect, 1.0, 0.0, false);
         }
     }
 
@@ -670,14 +670,14 @@ namespace WindowsPhoneSpeedyBlupi
             tinyRect.Top = height - 325;
             tinyRect.Bottom = height - 10;
             TinyRect rect = tinyRect;
-            pixmap->DrawIcon(14, 15, rect, 0.3, false);
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, rect, 0.3, false);
             TinyRect tinyRect2 = TinyRect();
             tinyRect2.Left = width - 170;
             tinyRect2.Right = width - 10;
             tinyRect2.Top = height - ((getIsTrialModeProperty() || getIsRankingModeProperty()) ? 325 : 195);
             tinyRect2.Bottom = height - 10;
             rect = tinyRect2;
-            pixmap->DrawIcon(14, 15, rect, 0.3, false);
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, rect, 0.3, false);
         }
     }
 

@@ -100,72 +100,72 @@ namespace WindowsPhoneSpeedyBlupi
         switch (glyph)
         {
         case Def::ButtonGlyph::InitGamerA:
-            DrawIcon(14, selected ? 16 : 4, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, selected ? 16 : 4, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::InitGamerB:
-            DrawIcon(14, selected ? 17 : 5, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, selected ? 17 : 5, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::InitGamerC:
-            DrawIcon(14, selected ? 18 : 6, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, selected ? 18 : 6, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::InitSetup:
         case Def::ButtonGlyph::PauseSetup:
-            DrawIcon(14, 19, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 19, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::InitPlay:
-            DrawIcon(14, 7, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 7, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::PauseMenu:
         case Def::ButtonGlyph::ResumeMenu:
-            DrawIcon(14, 11, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 11, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::PauseBack:
-            DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 8, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::PauseRestart:
-            DrawIcon(14, 9, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 9, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::PauseContinue:
         case Def::ButtonGlyph::ResumeContinue:
-            DrawIcon(14, 10, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 10, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::WinLostReturn:
-            DrawIcon(14, 3, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 3, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::InitBuy:
         case Def::ButtonGlyph::TrialBuy:
-            DrawIcon(14, 22, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 22, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::InitRanking:
-            DrawIcon(14, 12, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 12, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::TrialCancel:
         case Def::ButtonGlyph::RankingContinue:
-            DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 8, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::SetupSounds:
         case Def::ButtonGlyph::SetupJump:
         case Def::ButtonGlyph::SetupZoom:
         case Def::ButtonGlyph::SetupAccel:
-            DrawIcon(14, selected ? 13 : 21, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, selected ? 13 : 21, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::SetupReset:
-            DrawIcon(14, 20, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 20, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::SetupReturn:
-            DrawIcon(14, 8, rect, pressed ? 0.8 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 8, rect, pressed ? 0.8 : 1.0, false);
             break;
         case Def::ButtonGlyph::PlayJump:
-            DrawIcon(14, 2, rect, pressed ? 0.6 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 2, rect, pressed ? 0.6 : 1.0, false);
             break;
         case Def::ButtonGlyph::PlayAction:
-            DrawIcon(14, 12, rect, pressed ? 0.6 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 12, rect, pressed ? 0.6 : 1.0, false);
             break;
         case Def::ButtonGlyph::PlayDown:
-            DrawIcon(14, 23, rect, pressed ? 0.6 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 23, rect, pressed ? 0.6 : 1.0, false);
             break;
         case Def::ButtonGlyph::PlayPause:
-            DrawIcon(14, 3, rect, pressed ? 0.6 : 1.0, false);
+            DrawIcon(PixmapChannel::Pad, 3, rect, pressed ? 0.6 : 1.0, false);
             break;
         case Def::ButtonGlyph::Cheat1:
         case Def::ButtonGlyph::Cheat2:
@@ -177,7 +177,7 @@ namespace WindowsPhoneSpeedyBlupi
         case Def::ButtonGlyph::Cheat8:
         case Def::ButtonGlyph::Cheat9:
             {
-                DrawIcon(14, 0, rect, pressed ? 0.6 : 1.0, false);
+                DrawIcon(PixmapChannel::Pad, 0, rect, pressed ? 0.6 : 1.0, false);
                 TinyPoint tinyPoint{
                     rect.Left + rect.getWidthProperty() / 2 - static_cast<intcs>(originX),
                     rect.Top + 28
@@ -264,7 +264,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             screenWidth = screenHeight * (640.0 / 480.0);
         }
-        const Texture2D* bitmap_ptr = GetBitmap(3);
+        const Texture2D* bitmap_ptr = GetBitmap(PixmapChannel::Background);
         if (bitmap_ptr == nullptr)
         {
             CNA::Logger::Error("GetBitmap returned nullptr for channel=3");
@@ -287,7 +287,7 @@ namespace WindowsPhoneSpeedyBlupi
         rect.Top = 0;
         rect.Right = 640;
         rect.Bottom = 480;
-        DrawPart(3, dest, rect);
+        DrawPart(PixmapChannel::Background, dest, rect);
     }
 
     void Pixmap::DrawChar(intcs rank, TinyPoint pos, double size)
@@ -299,10 +299,10 @@ namespace WindowsPhoneSpeedyBlupi
         tinyRect.Top = pos.Y;
         tinyRect.Right = pos.X + static_cast<intcs>(32.0 * size);
         tinyRect.Bottom = pos.Y + static_cast<intcs>(32.0 * size);
-        DrawIcon(6, rank, tinyRect, 1.0, false);
+        DrawIcon(PixmapChannel::Text, rank, tinyRect, 1.0, false);
     }
 
-    void Pixmap::HudIcon(intcs channel, intcs rank, TinyPoint pos)
+    void Pixmap::HudIcon(PixmapChannel channel, intcs rank, TinyPoint pos)
     {
         pos.X = static_cast<intcs>(static_cast<double>(pos.X) + originX);
         pos.Y = static_cast<intcs>(static_cast<double>(pos.Y) + originY);
@@ -310,24 +310,24 @@ namespace WindowsPhoneSpeedyBlupi
         DrawIcon(channel, rank, tinyRect, 1.0, false);
     }
 
-    void Pixmap::QuickIcon(intcs channel, intcs rank, TinyPoint pos)
+    void Pixmap::QuickIcon(PixmapChannel channel, intcs rank, TinyPoint pos)
     {
         TinyRect tinyRect{pos};
         DrawIcon(channel, rank, tinyRect, 1.0, true);
     }
 
-    void Pixmap::QuickIcon(intcs channel, intcs rank, TinyPoint pos, double opacity, double rotation)
+    void Pixmap::QuickIcon(PixmapChannel channel, intcs rank, TinyPoint pos, double opacity, double rotation)
     {
         TinyRect tinyRect{pos};
         DrawIcon(channel, rank, tinyRect, opacity, rotation, true);
     }
 
-    bool Pixmap::DrawPart(intcs channel, TinyPoint dest, TinyRect rect)
+    bool Pixmap::DrawPart(PixmapChannel channel, TinyPoint dest, TinyRect rect)
     {
         return DrawPart(channel, dest, rect, 1.0);
     }
 
-    bool Pixmap::DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom)
+    bool Pixmap::DrawPart(PixmapChannel channel, TinyPoint dest, TinyRect rect, double zoom)
     {
         if (!spriteBatch)
         {
@@ -339,7 +339,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             return false;
         }
-        if (channel == 5)
+        if (channel == PixmapChannel::Jauge)
         {
             CNA::Logger::Debug(
                 "Pixmap::DrawPart ch5 BEFORE origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
@@ -368,7 +368,7 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
-    void Pixmap::DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot)
+    void Pixmap::DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot)
     {
         if (!spriteBatch)
         {
@@ -378,7 +378,7 @@ namespace WindowsPhoneSpeedyBlupi
         DrawIcon(channel, icon, rect, opacity, 0.0, useHotSpot);
     }
 
-    void Pixmap::DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot)
+    void Pixmap::DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, double rotationDeg, bool useHotSpot)
     {
         if (!spriteBatch)
         {
@@ -391,7 +391,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
         if (Config::TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE && CNA::getCurrentPlatform() !=
-            CNA::Platform::Android && channel == 14 && !TouchPanel::GetCapabilities().getIsConnectedProperty())
+            CNA::Platform::Android && channel == PixmapChannel::Pad && !TouchPanel::GetCapabilities().getIsConnectedProperty())
         {
             static intcs padGameplayIconNumbers[] = {0, 1, 2, 3, 30, 12, 23};
             for (intcs iconNumber : padGameplayIconNumbers)
@@ -416,73 +416,73 @@ namespace WindowsPhoneSpeedyBlupi
         intcs gap;
         switch (channel)
         {
-        case 2:
-        case 11:
-        case 12:
-        case 13:
+        case PixmapChannel::Blupi:
+        case PixmapChannel::Blupi1_11:
+        case PixmapChannel::Blupi1_12:
+        case PixmapChannel::Blupi1_13:
             bitmapGridX = 60;
             bitmapGridY = 60;
             iconWidth = 60;
             iconHeight = 60;
             gap = 0;
             break;
-        case 1:
+        case PixmapChannel::Object:
             bitmapGridX = 64;
             bitmapGridY = 64;
             iconWidth = 64;
             iconHeight = 64;
             gap = 1;
             break;
-        case 10:
+        case PixmapChannel::Element:
             bitmapGridX = 60;
             bitmapGridY = 60;
             iconWidth = 60;
             iconHeight = 60;
             gap = 0;
             break;
-        case 9:
+        case PixmapChannel::Explosion:
             bitmapGridX = 144;
             bitmapGridY = 144;
             iconHeight = Tables::table_explo_size[icon];
             iconWidth = System::Math::Max(iconHeight, 128);
             gap = 0;
             break;
-        case 6:
+        case PixmapChannel::Text:
             bitmapGridX = 32;
             bitmapGridY = 32;
             iconWidth = 32;
             iconHeight = 32;
             gap = 0;
             break;
-        case 4:
+        case PixmapChannel::Button:
             bitmapGridX = 40;
             bitmapGridY = 40;
             iconWidth = 40;
             iconHeight = 40;
             gap = 0;
             break;
-        case 14:
+        case PixmapChannel::Pad:
             bitmapGridX = 140;
             bitmapGridY = 140;
             iconWidth = 140;
             iconHeight = 140;
             gap = 0;
             break;
-        case 15:
+        case PixmapChannel::SpeedyBlupiBackground:
             bitmapGridX = 640;
             bitmapGridY = 160;
             iconWidth = 640;
             iconHeight = 160;
             gap = 0;
             break;
-        case 16:
+        case PixmapChannel::BlupiYoupieBackground:
             bitmapGridX = 410;
             bitmapGridY = 380;
             iconWidth = 410;
             iconHeight = 380;
             gap = 0;
             break;
-        case 17:
+        case PixmapChannel::GearBackground:
             bitmapGridX = 226;
             bitmapGridY = 226;
             iconWidth = 226;
@@ -563,37 +563,37 @@ namespace WindowsPhoneSpeedyBlupi
                                                     scaledBottomY - scaledTopY);
     }
 
-    const Texture2D* Pixmap::GetBitmap(intcs channel)
+    const Texture2D* Pixmap::GetBitmap(PixmapChannel channel)
     {
         switch (channel)
         {
-        case 2:
+        case PixmapChannel::Blupi:
             return &bitmapBlupi;
-        case 11:
-        case 12:
-        case 13:
+        case PixmapChannel::Blupi1_11:
+        case PixmapChannel::Blupi1_12:
+        case PixmapChannel::Blupi1_13:
             return &bitmapBlupi1;
-        case 1:
+        case PixmapChannel::Object:
             return &bitmapObject;
-        case 10:
+        case PixmapChannel::Element:
             return &bitmapElement;
-        case 9:
+        case PixmapChannel::Explosion:
             return &bitmapExplo;
-        case 6:
+        case PixmapChannel::Text:
             return &bitmapText;
-        case 4:
+        case PixmapChannel::Button:
             return &bitmapButton;
-        case 5:
+        case PixmapChannel::Jauge:
             return &bitmapJauge;
-        case 14:
+        case PixmapChannel::Pad:
             return &bitmapPad;
-        case 15:
+        case PixmapChannel::SpeedyBlupiBackground:
             return &bitmapSpeedyBlupi;
-        case 16:
+        case PixmapChannel::BlupiYoupieBackground:
             return &bitmapBlupiYoupie;
-        case 17:
+        case PixmapChannel::GearBackground:
             return &bitmapGear;
-        case 3:
+        case PixmapChannel::Background:
             return &bitmapBackground;
         default:
             return nullptr;

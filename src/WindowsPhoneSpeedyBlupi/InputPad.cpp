@@ -556,9 +556,9 @@ namespace WindowsPhoneSpeedyBlupi
 #endif
         if (!accelStarted && getPhaseProperty() == Def::Phase::Play)
         {
-            pixmap->DrawIcon(14, 0, GetPadBounds(getPadCenterProperty(), padRadius / 2), 1.0, false);
+            pixmap->DrawIcon(PixmapChannel::Pad, 0, GetPadBounds(getPadCenterProperty(), padRadius / 2), 1.0, false);
             TinyPoint center = (padPressed ? padTouchPos : getPadCenterProperty());
-            pixmap->DrawIcon(14, 1, GetPadBounds(center, padRadius / 2), 1.0, false);
+            pixmap->DrawIcon(PixmapChannel::Pad, 1, GetPadBounds(center, padRadius / 2), 1.0, false);
         }
         for (Def::ButtonGlyph buttonGlyph : getButtonGlyphsProperty())
         {

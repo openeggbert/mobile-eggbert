@@ -53,7 +53,7 @@ namespace WindowsPhoneSpeedyBlupi
                      m_blupiVitesseY(0),
                      m_blupiIcon(0),
                      m_blupiSec(0),
-                     m_blupiChannel(0),
+                     m_blupiChannel(PixmapChannel::PixmapChannel0),
                      m_blupiTransport(0),
                      m_blupiFocus(false),
                      m_blupiAir(false),
@@ -105,7 +105,7 @@ namespace WindowsPhoneSpeedyBlupi
                      m_blupiRealRotation(0),
                      m_blupiOffsetY(0),
                      m_voyageIcon(0),
-                     m_voyageChannel(0), m_voyagePhase(0),
+                     m_voyageChannel(PixmapChannel::PixmapChannel0), m_voyagePhase(0),
                      m_voyageTotal(0),
                      m_decorAction(0),
                      m_decorPhase(0),
@@ -211,7 +211,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_moveObject[0].phase = 0;
         m_moveObject[0].step = 1;
         m_moveObject[0].time = 0;
-        m_moveObject[0].channel = 10;
+        m_moveObject[0].channel = PixmapChannel::Element;
         m_moveObject[0].icon = 0;
         m_moveObject[1].type = ObjectType::ObjectType7;
         m_moveObject[1].stepAdvance = 1;
@@ -225,7 +225,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_moveObject[1].phase = 0;
         m_moveObject[1].step = 1;
         m_moveObject[1].time = 0;
-        m_moveObject[1].channel = 10;
+        m_moveObject[1].channel = PixmapChannel::Element;
         m_moveObject[1].icon = 29;
         m_blupiStartPos.X = 66;
         m_blupiStartPos.Y = 192 + BLUPIOFFY;
@@ -233,7 +233,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiAction = 1;
         m_blupiPhase = 0;
         m_blupiIcon = 0;
-        m_blupiChannel = 2;
+        m_blupiChannel = PixmapChannel::Blupi;
         m_blupiFocus = true;
         m_blupiAir = false;
         m_blupiHelico = false;
@@ -518,7 +518,7 @@ namespace WindowsPhoneSpeedyBlupi
             rect.Bottom = 480;
             for (int j = 0; j < 2; j++)
             {
-                m_pixmap->DrawPart(3, tinyPoint, rect);
+                m_pixmap->DrawPart(PixmapChannel::Background, tinyPoint, rect);
                 tinyPoint.Y += rect.getHeightProperty() - num;
                 rect.Top = 0;
                 rect.Bottom = 480;
@@ -540,7 +540,7 @@ namespace WindowsPhoneSpeedyBlupi
                 if (i >= 0 && i < 100 && j >= 0 && j < 100)
                 {
                     int num2 = m_bigDecor[i][j].icon;
-                    int channel = 9;
+                    PixmapChannel channel = PixmapChannel::Explosion;
                     if (num2 != -1)
                     {
                         pos.X = tinyPoint.X;
@@ -548,7 +548,7 @@ namespace WindowsPhoneSpeedyBlupi
                         if (num2 == 203)
                         {
                             num2 = Tables::table_marine[m_time / 3 % 11];
-                            channel = 1;
+                            channel = PixmapChannel::Object;
                         }
                         if (num2 >= 66 && num2 <= 68)
                         {
@@ -576,7 +576,7 @@ namespace WindowsPhoneSpeedyBlupi
                     int num2 = m_decor[i][j].icon;
                     if (num2 == 384 || num2 == 385)
                     {
-                        m_pixmap->QuickIcon(1, num2, tinyPoint);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, tinyPoint);
                     }
                 }
                 tinyPoint.Y += 64;
@@ -604,10 +604,10 @@ namespace WindowsPhoneSpeedyBlupi
                 {
                     int num2 = Tables::table_shield_blupi[m_time / 2 % 16];
                     tinyPoint.Y -= 2;
-                    m_pixmap->QuickIcon(10, num2, tinyPoint);
+                    m_pixmap->QuickIcon(PixmapChannel::Element, num2, tinyPoint);
                     tinyPoint.Y += 2;
                     num2 = Tables::table_shieldloop[m_time / 2 % 5];
-                    m_pixmap->QuickIcon(10, num2, tinyPoint);
+                    m_pixmap->QuickIcon(PixmapChannel::Element, num2, tinyPoint);
                 }
                 m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
             }
@@ -617,7 +617,7 @@ namespace WindowsPhoneSpeedyBlupi
                 if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                 {
                     int num2 = Tables::table_magicloop[m_time / 2 % 5];
-                    m_pixmap->QuickIcon(10, num2, tinyPoint);
+                    m_pixmap->QuickIcon(PixmapChannel::Element, num2, tinyPoint);
                 }
                 m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
             }
@@ -631,7 +631,7 @@ namespace WindowsPhoneSpeedyBlupi
                         int num2 = 48 + (m_time + k) / 1 % 6;
                         pos.X = tinyPoint.X - 34;
                         pos.Y = tinyPoint.Y - 34;
-                        m_pixmap->QuickIcon(9, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Explosion, num2, pos);
                     }
                 }
                 m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
@@ -691,13 +691,13 @@ namespace WindowsPhoneSpeedyBlupi
                         tinyPoint2.Y = tinyPoint.Y - num4 * 3;
                         TinyPoint pos2 = tinyPoint2;
                         double opacity2 = (50.0 - (double)num4) / 50.0;
-                        m_pixmap->QuickIcon(10, rank, pos2, opacity2, 0.0);
+                        m_pixmap->QuickIcon(PixmapChannel::Element, rank, pos2, opacity2, 0.0);
                     }
                 }
                 if (m_bDrawSecret && m_moveObject[num3].type == ObjectType::ObjectType12 && m_moveObject[num3].icon != 32 && m_moveObject[
                     num3].icon != 33 && m_moveObject[num3].icon != 34)
                 {
-                    m_pixmap->QuickIcon(1, 214, tinyPoint);
+                    m_pixmap->QuickIcon(PixmapChannel::Object, 214, tinyPoint);
                 }
             }
         }
@@ -731,7 +731,7 @@ namespace WindowsPhoneSpeedyBlupi
                     switch (num2)
                     {
                     default:
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                         break;
                     case 68:
                     case 91:
@@ -805,20 +805,20 @@ namespace WindowsPhoneSpeedyBlupi
                     if (num2 == 68)
                     {
                         num2 = Tables::table_decor_lave[(i * 13 + j * 7 + m_time / 2) % 8];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 373)
                     {
                         num2 = ((!m_blupiFocus)
                                     ? Tables::table_decor_piege2[(i * 13 + j * 7 + m_time / 2) % 4]
                                     : Tables::table_decor_piege1[(i * 13 + j * 7 + m_time / 4) % 16]);
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 404 || num2 == 410)
                     {
                         num2 = Tables::table_decor_goutte[(i * 13 + j * 7 + m_time / 2) % 48];
                         pos.Y -= 9;
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                         if (num2 >= 404 && num2 <= 407)
                         {
                             m_decor[i][j].icon = 404;
@@ -831,73 +831,73 @@ namespace WindowsPhoneSpeedyBlupi
                     if (num2 == 317)
                     {
                         num2 = Tables::table_decor_ecraseur[m_time / 3 % 10];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 378)
                     {
                         num2 = Tables::table_decor_scie[(i * 13 + j * 7 + m_time / 1) % 6];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 324)
                     {
                         num2 = Tables::table_decor_temp[m_time / 4 % 20];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 92)
                     {
                         num2 = Tables::table_decor_eau1[(i * 13 + j * 7 + m_time / 3) % 6];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 91)
                     {
                         int num5 = 3 + (i * 17 + j * 13) % 3;
                         num2 = Tables::table_decor_eau2[(i * 11 + j * 7 + m_time / num5) % 6];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 305 && BlitzActif(i, j))
                     {
                         num2 = m_random.get()->Next(305, 308);
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 110)
                     {
                         num2 = Tables::table_decor_ventg[m_time / 1 % 4];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 114)
                     {
                         num2 = Tables::table_decor_ventd[m_time / 1 % 4];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 118)
                     {
                         num2 = Tables::table_decor_venth[m_time / 1 % 4];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 122)
                     {
                         num2 = Tables::table_decor_ventb[m_time / 1 % 4];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 126)
                     {
                         num2 = Tables::table_decor_ventillog[m_time / 2 % 3];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 129)
                     {
                         num2 = Tables::table_decor_ventillod[m_time / 2 % 3];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 132)
                     {
                         num2 = Tables::table_decor_ventilloh[m_time / 2 % 3];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                     if (num2 == 135)
                     {
                         num2 = Tables::table_decor_ventillob[m_time / 2 % 3];
-                        m_pixmap->QuickIcon(1, num2, pos);
+                        m_pixmap->QuickIcon(PixmapChannel::Object, num2, pos);
                     }
                 }
                 tinyPoint.Y += 64;
@@ -938,21 +938,21 @@ namespace WindowsPhoneSpeedyBlupi
         pos.Y = 417;
         for (int i = 0; i < m_nbVies; i++)
         {
-            m_pixmap->HudIcon(2, 48, pos);
+            m_pixmap->HudIcon(PixmapChannel::Blupi, 48, pos);
             pos.X += 16;
         }
         pos.X = 570;
         pos.Y = 442;
         for (int i = 0; i < m_blupiBullet; i++)
         {
-            m_pixmap->HudIcon(10, 176, pos);
+            m_pixmap->HudIcon(PixmapChannel::Element, 176, pos);
             pos.X += 4;
         }
         if (m_blupiPerso > 0)
         {
             pos.X = 0;
             pos.Y = 438;
-            m_pixmap->HudIcon(4, 108, pos);
+            m_pixmap->HudIcon(PixmapChannel::Button, 108, pos);
             string text = Helper::formatString("= {0}", STRING_VECTOR(std::to_string(m_blupiPerso)));
             pos.X = 32;
             pos.Y = 452;
@@ -962,25 +962,25 @@ namespace WindowsPhoneSpeedyBlupi
         {
             pos.X = 505;
             pos.Y = 414;
-            m_pixmap->HudIcon(10, 252, pos);
+            m_pixmap->HudIcon(PixmapChannel::Element, 252, pos);
         }
         if (((unsigned int)m_blupiCle & (true ? 1u : 0u)) != 0)
         {
             pos.X = 520;
             pos.Y = 418;
-            m_pixmap->HudIcon(10, 215, pos);
+            m_pixmap->HudIcon(PixmapChannel::Element, 215, pos);
         }
         if (((unsigned int)m_blupiCle & 2u) != 0)
         {
             pos.X = 530;
             pos.Y = 418;
-            m_pixmap->HudIcon(10, 222, pos);
+            m_pixmap->HudIcon(PixmapChannel::Element, 222, pos);
         }
         if (((unsigned int)m_blupiCle & 4u) != 0)
         {
             pos.X = 540;
             pos.Y = 418;
-            m_pixmap->HudIcon(10, 229, pos);
+            m_pixmap->HudIcon(PixmapChannel::Element, 229, pos);
         }
         if ((m_mission != 1 && m_mission % 10 != 0) || m_bPrivate)
         {
@@ -990,7 +990,7 @@ namespace WindowsPhoneSpeedyBlupi
             tinyRect.Top = 445;
             tinyRect.Bottom = 480;
             TinyRect rect = tinyRect;
-            m_pixmap->DrawIcon(14, 15, rect, 0.6, false);
+            m_pixmap->DrawIcon(PixmapChannel::Pad, 15, rect, 0.6, false);
             string text = Helper::formatString("{0}/{1}", std::vector{TO_STRING(m_nbTresor), TO_STRING(m_totalTresor)});
             pos.X = 460;
             pos.Y = 450;
@@ -1047,7 +1047,7 @@ namespace WindowsPhoneSpeedyBlupi
                     tinyRect2.Top = 0;
                     tinyRect2.Bottom = 40;
                     TinyRect rect2 = tinyRect2;
-                    m_pixmap->DrawIcon(14, 15, rect2, 1.0, false);
+                    m_pixmap->DrawIcon(PixmapChannel::Pad, 15, rect2, 1.0, false);
                     double num4 = Text::GetTextWidth(text, 1.0);
                     double num5 = std::min(640.0 / num4, 1.0);
                     pos.X = 320;
@@ -2002,11 +2002,11 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (num2 == 11 || num2 == 75 || num2 == 76 || num2 == 54 || (num2 == 57 && num < 266))
         {
-            m_blupiChannel = 10;
+            m_blupiChannel = PixmapChannel::Element;
         }
         else
         {
-            m_blupiChannel = 2;
+            m_blupiChannel = PixmapChannel::Blupi;
         }
         int num8 = m_blupiDir;
         if (m_blupiInvert)
@@ -2020,7 +2020,7 @@ namespace WindowsPhoneSpeedyBlupi
                 num8 = 2;
             }
         }
-        if (num8 == 1 && m_blupiChannel == 2)
+        if (num8 == 1 && m_blupiChannel == PixmapChannel::Blupi)
         {
             if (num2 == 31)
             {
@@ -2042,7 +2042,7 @@ namespace WindowsPhoneSpeedyBlupi
                 num = Tables::table_mirror[num];
             }
         }
-        if (num8 == 1 && m_blupiChannel == 10 && num >= 168 && num <= 171)
+        if (num8 == 1 && m_blupiChannel == PixmapChannel::Element && num >= 168 && num <= 171)
         {
             num += 4;
         }
@@ -4683,7 +4683,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 m_moveObject[icon].type = ObjectType::ObjectType58;
                 m_moveObject[icon].icon = m_blupiIcon;
-                m_moveObject[icon].channel = 2;
+                m_moveObject[icon].channel = PixmapChannel::Blupi;
                 m_moveObject[icon].phase = 0;
                 m_moveObject[icon].posCurrent = m_blupiPos;
                 m_moveObject[icon].posStart = m_moveObject[icon].posCurrent;
@@ -5060,7 +5060,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.Y = 418;
                 tinyPoint2.X = celBridge.X * 64 - m_posDecor.X;
                 tinyPoint2.Y = celBridge.Y * 64 - m_posDecor.Y;
-                VoyageInit(celSwitch, m_pixmap->HotSpotToHud(tinyPoint2), 214 + (num - 334) * 7, 10);
+                VoyageInit(celSwitch, m_pixmap->HotSpotToHud(tinyPoint2), 214 + (num - 334) * 7, PixmapChannel::Element);
             }
         }
         if (!m_blupiHelico && !m_blupiSuspend && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiSkate && !
@@ -5169,7 +5169,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                 tinyPoint2.X = 570;
                 tinyPoint2.Y = 430;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 177, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 177, PixmapChannel::Element);
                 m_blupiBullet += 10;
                 if (m_blupiBullet > 10)
                 {
@@ -5387,13 +5387,13 @@ namespace WindowsPhoneSpeedyBlupi
                 TinyPoint end2;
                 end2.X = 430;
                 end2.Y = 430;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end2, 6, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end2, 6, PixmapChannel::Element);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -10);
             }
-            if (m_moveObject[icon].type == ObjectType::ObjectType49 && (m_voyageIcon != 215 || m_voyageChannel != 10) && (m_blupiCle & 1) ==
+            if (m_moveObject[icon].type == ObjectType::ObjectType49 && (m_voyageIcon != 215 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & 1) ==
                 0)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5402,13 +5402,13 @@ namespace WindowsPhoneSpeedyBlupi
                 TinyPoint end3;
                 end3.X = 520;
                 end3.Y = 418;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end3, 215, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end3, 215, PixmapChannel::Element);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -10);
             }
-            if (m_moveObject[icon].type == ObjectType::ObjectType50 && (m_voyageIcon != 222 || m_voyageChannel != 10) && (m_blupiCle & 2) ==
+            if (m_moveObject[icon].type == ObjectType::ObjectType50 && (m_voyageIcon != 222 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & 2) ==
                 0)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5417,13 +5417,13 @@ namespace WindowsPhoneSpeedyBlupi
                 TinyPoint end4;
                 end4.X = 530;
                 end4.Y = 418;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end4, 222, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end4, 222, PixmapChannel::Element);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -10);
             }
-            if (m_moveObject[icon].type == ObjectType::ObjectType51 && (m_voyageIcon != 229 || m_voyageChannel != 10) && (m_blupiCle & 4) ==
+            if (m_moveObject[icon].type == ObjectType::ObjectType51 && (m_voyageIcon != 229 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & 4) ==
                 0)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5432,7 +5432,7 @@ namespace WindowsPhoneSpeedyBlupi
                 TinyPoint end5;
                 end5.X = 540;
                 end5.Y = 418;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end5, 229, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), end5, 229, PixmapChannel::Element);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 60);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
@@ -5443,7 +5443,7 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                 celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
                 celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), VoyageGetPosVie(m_nbVies + 1), 21, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), VoyageGetPosVie(m_nbVies + 1), 21, PixmapChannel::Element);
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType25 && !m_blupiShield && !m_blupiHide && !m_blupiPower && m_blupiFocus)
             {
@@ -5531,7 +5531,7 @@ namespace WindowsPhoneSpeedyBlupi
                         celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                         tinyPoint2.X = 0;
                         tinyPoint2.Y = 438;
-                        VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 108, 4);
+                        VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 108, PixmapChannel::Button);
                     }
                 }
                 else if (!m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
@@ -5548,7 +5548,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType55 && m_blupiFocus && m_blupiDynamite == 0 && (m_voyageIcon != 252 ||
-                m_voyageChannel != 10) && getButtonPressedProperty() == Def::ButtonGlyph::PlayAction)
+                m_voyageChannel != PixmapChannel::Element) && getButtonPressedProperty() == Def::ButtonGlyph::PlayAction)
             {
                 setButtonPressedProperty(Def::ButtonGlyph::None);
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
@@ -5556,7 +5556,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.Y = m_moveObject[icon].posCurrent.Y - m_posDecor.Y;
                 tinyPoint2.X = 505;
                 tinyPoint2.Y = 414;
-                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 252, 10);
+                VoyageInit(m_pixmap->HotSpotToHud(celSwitch), tinyPoint2, 252, PixmapChannel::Element);
                 m_blupiAction = 86;
                 m_blupiPhase = 0;
                 m_blupiFocus = false;
@@ -5823,7 +5823,7 @@ namespace WindowsPhoneSpeedyBlupi
                 TinyPoint posDecor = GetPosDecor(m_blupiPos);
                 celSwitch.X = m_blupiPos.X - posDecor.X - 30;
                 celSwitch.Y = m_blupiPos.Y - posDecor.Y;
-                VoyageInit(VoyageGetPosVie(m_nbVies), m_pixmap->HotSpotToHud(celSwitch), 48, 2);
+                VoyageInit(VoyageGetPosVie(m_nbVies), m_pixmap->HotSpotToHud(celSwitch), 48, PixmapChannel::Blupi);
             }
             else
             {
@@ -6015,7 +6015,7 @@ namespace WindowsPhoneSpeedyBlupi
             pos.Y = m_blupiPos.Y - m_posDecor.Y;
             pos2.X = m_blupiPos.X - m_posDecor.X;
             pos2.Y = m_blupiPos.Y - m_posDecor.Y - 300;
-            VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 230, 10);
+            VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 230, PixmapChannel::Element);
             PlaySound(74, m_blupiPos);
         }
         if (m_blupiAction == 76)
@@ -6024,7 +6024,7 @@ namespace WindowsPhoneSpeedyBlupi
             pos.Y = m_blupiPos.Y - m_posDecor.Y;
             pos2.X = m_blupiPos.X - m_posDecor.X;
             pos2.Y = m_blupiPos.Y - m_posDecor.Y - 2000;
-            VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 40, 10);
+            VoyageInit(m_pixmap->HotSpotToHud(pos), m_pixmap->HotSpotToHud(pos2), 40, PixmapChannel::Element);
             PlaySound(74, m_blupiPos);
         }
         if (m_blupiAction == 77)
@@ -7206,7 +7206,7 @@ namespace WindowsPhoneSpeedyBlupi
         int icon2 = m_decor[pos.X / 64][pos.Y / 64].icon;
         if (icon == -1 && icon2 >= 126 && icon2 <= 137)
         {
-            ByeByeAdd(1, icon2, pos, 17.0, 1.0);
+            ByeByeAdd(PixmapChannel::Object, icon2, pos, 17.0, 1.0);
         }
         m_decor[pos.X / 64][pos.Y / 64].icon = icon;
     }
@@ -7440,57 +7440,57 @@ namespace WindowsPhoneSpeedyBlupi
         if (m_moveObject[i].type == ObjectType::ObjectType2)
         {
             m_moveObject[i].icon = 12 + m_moveObject[i].phase / 2 % 9;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType3)
         {
             m_moveObject[i].icon = 48 + m_moveObject[i].phase / 2 % 9;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType16)
         {
             m_moveObject[i].icon = 69 + m_moveObject[i].phase / 1 % 9;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType96)
         {
             m_moveObject[i].icon = Tables::table_follow1[m_moveObject[i].phase / 1 % 26];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType97)
         {
             m_moveObject[i].icon = Tables::table_follow2[m_moveObject[i].phase / 1 % 5];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType200)
         {
             m_moveObject[i].icon = 257 + m_moveObject[i].phase / 1 % 6;
-            m_moveObject[i].channel = 2;
+            m_moveObject[i].channel = PixmapChannel::Blupi;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType201)
         {
             m_moveObject[i].icon = 257 + m_moveObject[i].phase / 1 % 6;
-            m_moveObject[i].channel = 11;
+            m_moveObject[i].channel = PixmapChannel::Blupi1_11;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType202)
         {
             m_moveObject[i].icon = 257 + m_moveObject[i].phase / 1 % 6;
-            m_moveObject[i].channel = 12;
+            m_moveObject[i].channel = PixmapChannel::Blupi1_12;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType203)
         {
             m_moveObject[i].icon = 257 + m_moveObject[i].phase / 1 % 6;
-            m_moveObject[i].channel = 13;
+            m_moveObject[i].channel = PixmapChannel::Blupi1_13;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType55)
         {
             m_moveObject[i].icon = 252;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType56)
         {
             m_moveObject[i].icon = Tables::table_dynamitef[m_moveObject[i].phase / 1 % 100];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
             if (m_moveObject[i].phase == 50)
             {
                 DynamiteStart(i, 0, 0);
@@ -7542,67 +7542,67 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 m_moveObject[i].icon = 11 - m_moveObject[i].phase / 3 % 11;
             }
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType6)
         {
             m_moveObject[i].icon = 21 + m_moveObject[i].phase / 4 % 8;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType7)
         {
             m_moveObject[i].icon = 29 + m_moveObject[i].phase / 3 % 8;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType21)
         {
             m_moveObject[i].icon = Tables::table_cle[m_moveObject[i].phase / 3 % 12];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType49)
         {
             m_moveObject[i].icon = Tables::table_cle1[m_moveObject[i].phase / 3 % 12];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType50)
         {
             m_moveObject[i].icon = Tables::table_cle2[m_moveObject[i].phase / 3 % 12];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType51)
         {
             m_moveObject[i].icon = Tables::table_cle3[m_moveObject[i].phase / 3 % 12];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType24)
         {
             m_moveObject[i].icon = Tables::table_skate[m_moveObject[i].phase / 1 % 34];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType25)
         {
             m_moveObject[i].icon = Tables::table_shield[m_moveObject[i].phase / 2 % 16];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType26)
         {
             m_moveObject[i].icon = Tables::table_power[m_moveObject[i].phase / 2 % 8];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType40)
         {
             m_moveObject[i].icon = Tables::table_invert[m_moveObject[i].phase / 2 % 20];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType31)
         {
             m_moveObject[i].icon = Tables::table_charge[m_moveObject[i].phase / 2 % 6];
-            m_moveObject[i].channel = 1;
+            m_moveObject[i].channel = PixmapChannel::Object;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType27)
         {
             m_moveObject[i].icon = Tables::table_magictrack[m_moveObject[i].phase / 1 % 24];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
             if (m_moveObject[i].phase >= 24)
             {
                 m_moveObject[i].type = ObjectType::ObjectType0;
@@ -7611,7 +7611,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (m_moveObject[i].type == ObjectType::ObjectType57)
         {
             m_moveObject[i].icon = Tables::table_shieldtrack[m_moveObject[i].phase / 1 % 20];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
             if (m_moveObject[i].phase >= 20)
             {
                 m_moveObject[i].type = ObjectType::ObjectType0;
@@ -7620,7 +7620,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (m_moveObject[i].type == ObjectType::ObjectType39)
         {
             m_moveObject[i].icon = Tables::table_tresortrack[m_moveObject[i].phase / 1 % 11];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
             if (m_moveObject[i].phase >= 11)
             {
                 m_moveObject[i].type = ObjectType::ObjectType0;
@@ -7639,7 +7639,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo1[m_moveObject[i].phase];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType9)
@@ -7651,7 +7651,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo2[m_moveObject[i].phase % 20];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType10)
@@ -7663,7 +7663,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo3[m_moveObject[i].phase / 1 % 20];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType11)
@@ -7675,7 +7675,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo4[m_moveObject[i].phase / 1 % 9];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType90)
@@ -7687,7 +7687,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo5[m_moveObject[i].phase / 1 % 12];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType91)
@@ -7699,7 +7699,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo6[m_moveObject[i].phase / 1 % 6];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType92)
@@ -7711,7 +7711,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo7[m_moveObject[i].phase / 1 % 128];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType93)
@@ -7723,7 +7723,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_explo8[m_moveObject[i].phase / 1 % 5];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType98)
@@ -7735,7 +7735,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_sploutch1[m_moveObject[i].phase / 1 % 10];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType99)
@@ -7747,7 +7747,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_sploutch2[m_moveObject[i].phase / 1 % 13];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType100)
@@ -7759,7 +7759,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_sploutch3[m_moveObject[i].phase / 1 % 18];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType53)
@@ -7771,7 +7771,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_tentacule[m_moveObject[i].phase / 2 % 45];
-                m_moveObject[i].channel = 9;
+                m_moveObject[i].channel = PixmapChannel::Explosion;
             }
         }
         TinyPoint pos;
@@ -7792,7 +7792,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_bridge[m_moveObject[i].phase / 1 % 157];
-                m_moveObject[i].channel = 1;
+                m_moveObject[i].channel = PixmapChannel::Object;
                 pos.X = m_moveObject[i].posStart.X / 64;
                 pos.Y = m_moveObject[i].posStart.Y / 64;
                 m_decor[pos.X][pos.Y].icon = m_moveObject[i].icon;
@@ -7807,7 +7807,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_pollution[m_moveObject[i].phase / 2 % 8];
-                m_moveObject[i].channel = 10;
+                m_moveObject[i].channel = PixmapChannel::Element;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType41)
@@ -7819,7 +7819,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_invertstart[m_moveObject[i].phase / 2 % 8];
-                m_moveObject[i].channel = 10;
+                m_moveObject[i].channel = PixmapChannel::Element;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType42)
@@ -7831,7 +7831,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_invertstop[m_moveObject[i].phase / 2 % 8];
-                m_moveObject[i].channel = 10;
+                m_moveObject[i].channel = PixmapChannel::Element;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType14)
@@ -7843,7 +7843,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_plouf[m_moveObject[i].phase / 2 % 7];
-                m_moveObject[i].channel = 1;
+                m_moveObject[i].channel = PixmapChannel::Object;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType35)
@@ -7855,13 +7855,13 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_tiplouf[m_moveObject[i].phase / 2 % 7];
-                m_moveObject[i].channel = 1;
+                m_moveObject[i].channel = PixmapChannel::Object;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType15)
         {
             m_moveObject[i].icon = Tables::table_blup[m_moveObject[i].phase / 2 % 20];
-            m_moveObject[i].channel = 1;
+            m_moveObject[i].channel = PixmapChannel::Object;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType4)
         {
@@ -7903,7 +7903,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].icon = Tables::table_bulldozer_left[m_moveObject[i].time % 8];
                 }
             }
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType17)
         {
@@ -7945,7 +7945,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].icon = Tables::table_poisson_left[m_moveObject[i].time % 8];
                 }
             }
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType20)
         {
@@ -7987,7 +7987,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].icon = Tables::table_oiseau_left[m_moveObject[i].time % 8];
                 }
             }
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType44)
         {
@@ -8029,7 +8029,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].icon = Tables::table_guepe_left[m_moveObject[i].time % 6];
                 }
             }
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType54)
         {
@@ -8071,7 +8071,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].icon = Tables::table_creature_left[m_moveObject[i].time % 8];
                 }
             }
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType32)
         {
@@ -8209,7 +8209,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (m_moveObject[i].type == ObjectType::ObjectType34)
         {
             m_moveObject[i].icon = Tables::table_glu[m_moveObject[i].phase / 1 % 25];
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType37)
         {
@@ -8220,7 +8220,7 @@ namespace WindowsPhoneSpeedyBlupi
             else
             {
                 m_moveObject[i].icon = Tables::table_clear[m_moveObject[i].phase / 1 % 70];
-                m_moveObject[i].channel = 10;
+                m_moveObject[i].channel = PixmapChannel::Element;
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType38)
@@ -8234,48 +8234,48 @@ namespace WindowsPhoneSpeedyBlupi
                 m_moveObject[i].icon = Tables::table_electro[m_moveObject[i].phase / 1 % 90];
                 if (m_moveObject[i].phase < 30)
                 {
-                    m_moveObject[i].channel = 12;
+                    m_moveObject[i].channel = PixmapChannel::Blupi1_12;
                 }
                 else
                 {
-                    m_moveObject[i].channel = 10;
+                    m_moveObject[i].channel = PixmapChannel::Element;
                 }
             }
         }
         if (m_moveObject[i].type == ObjectType::ObjectType13)
         {
             m_moveObject[i].icon = 68;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType46)
         {
             m_moveObject[i].icon = 208;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType19)
         {
             m_moveObject[i].icon = 89;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType28)
         {
             m_moveObject[i].icon = 167;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType23)
         {
             m_moveObject[i].icon = 176;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType29)
         {
             m_moveObject[i].icon = 177;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         if (m_moveObject[i].type == ObjectType::ObjectType30)
         {
             m_moveObject[i].icon = 178;
-            m_moveObject[i].channel = 10;
+            m_moveObject[i].channel = PixmapChannel::Element;
         }
         m_moveObject[i].phase++;
         if (m_moveObject[i].phase > 32700)
@@ -8373,7 +8373,7 @@ namespace WindowsPhoneSpeedyBlupi
                         SearchLinkCaisse(i, true);
                         for (int l = 0; l < m_nbLinkCaisse; l++)
                         {
-                            int channel = m_moveObject[m_linkCaisse[l]].channel;
+                            PixmapChannel channel = m_moveObject[m_linkCaisse[l]].channel;
                             int icon2 = m_moveObject[m_linkCaisse[l]].icon;
                             TinyPoint posCurrent = m_moveObject[m_linkCaisse[l]].posCurrent;
                             double num = m_random.get()->Next(7, 23);
@@ -9136,11 +9136,11 @@ namespace WindowsPhoneSpeedyBlupi
     {
         if (m_blupiHelico)
         {
-            ByeByeAdd(10, 68, m_blupiPos, 7.0, 0.5);
+            ByeByeAdd(PixmapChannel::Element, 68, m_blupiPos, 7.0, 0.5);
         }
     }
 
-    void Decor::ByeByeAdd(int channel, int icon, TinyPoint pos, double rotationSpeed, double animationSpeed)
+    void Decor::ByeByeAdd(PixmapChannel channel, int icon, TinyPoint pos, double rotationSpeed, double animationSpeed)
     {
         ByeByeObject byeByeObject;
         byeByeObject.channel = channel;
@@ -9190,7 +9190,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             byeByeObject.rotation += byeByeObject.rotationSpeed;
             byeByeObject.phase += byeByeObject.animationSpeed;
-            if (byeByeObject.channel == 10 && byeByeObject.icon >= 187 && byeByeObject.icon <= 194)
+            if (byeByeObject.channel == PixmapChannel::Element && byeByeObject.icon >= 187 && byeByeObject.icon <= 194)
             {
                 byeByeObject.icon = Tables::table_invert[(int)byeByeObject.phase / 2 % 20];
             }
@@ -9225,7 +9225,7 @@ namespace WindowsPhoneSpeedyBlupi
         return result;
     }
 
-    void Decor::VoyageInit(TinyPoint start, TinyPoint end, int icon, int channel)
+    void Decor::VoyageInit(TinyPoint start, TinyPoint end, int icon, PixmapChannel channel)
     {
         if (m_voyageIcon != -1)
         {
@@ -9240,17 +9240,17 @@ namespace WindowsPhoneSpeedyBlupi
         int num2 = std::abs(end.Y - start.Y);
         m_voyagePhase = 0;
         m_voyageTotal = (num + num2) / 10;
-        if (m_voyageIcon == 48 && m_voyageChannel == 2)
+        if (m_voyageIcon == 48 && m_voyageChannel == PixmapChannel::Blupi)
         {
             m_voyageTotal = 40;
             m_nbVies--;
             m_sound->PlayImage(9, end, -1, false);
         }
-        if (m_voyageIcon == 21 && m_voyageChannel == 10)
+        if (m_voyageIcon == 21 && m_voyageChannel == PixmapChannel::Element)
         {
             m_sound->PlayImage(12, start, -1, false);
         }
-        if (m_voyageIcon == 6 && m_voyageChannel == 10)
+        if (m_voyageIcon == 6 && m_voyageChannel == PixmapChannel::Element)
         {
             if (m_nbTresor == m_totalTresor - 1)
             {
@@ -9261,35 +9261,35 @@ namespace WindowsPhoneSpeedyBlupi
                 m_sound->PlayImage(11, start, -1, false);
             }
         }
-        if (m_voyageIcon == 215 && m_voyageChannel == 10)
+        if (m_voyageIcon == 215 && m_voyageChannel == PixmapChannel::Element)
         {
             m_sound->PlayImage(11, start, -1, false);
         }
-        if (m_voyageIcon == 222 && m_voyageChannel == 10)
+        if (m_voyageIcon == 222 && m_voyageChannel == PixmapChannel::Element)
         {
             m_sound->PlayImage(11, start, -1, false);
         }
-        if (m_voyageIcon == 229 && m_voyageChannel == 10)
+        if (m_voyageIcon == 229 && m_voyageChannel == PixmapChannel::Element)
         {
             m_sound->PlayImage(11, start, -1, false);
         }
-        if (m_voyageIcon == 108 && m_voyageChannel == 4)
+        if (m_voyageIcon == 108 && m_voyageChannel == PixmapChannel::Button)
         {
             m_sound->PlayImage(60, start, -1, false);
         }
-        if (m_voyageIcon == 252 && m_voyageChannel == 10)
+        if (m_voyageIcon == 252 && m_voyageChannel == PixmapChannel::Element)
         {
             m_sound->PlayImage(60, start, -1, false);
         }
-        if (m_voyageIcon == 177 && m_voyageChannel == 10)
+        if (m_voyageIcon == 177 && m_voyageChannel == PixmapChannel::Element)
         {
             m_sound->PlayImage(54, start, -1, false);
         }
-        if (m_voyageIcon == 230 && m_voyageChannel == 10)
+        if (m_voyageIcon == 230 && m_voyageChannel == PixmapChannel::Element)
         {
             m_voyageTotal = 100;
         }
-        if (m_voyageIcon == 40 && m_voyageChannel == 10)
+        if (m_voyageIcon == 40 && m_voyageChannel == PixmapChannel::Element)
         {
             m_voyageTotal = 50;
         }
@@ -9303,7 +9303,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (m_voyagePhase < m_voyageTotal)
         {
-            if (m_time % 2 == 0 && m_voyageIcon >= 230 && m_voyageIcon <= 241 && m_voyageChannel == 10)
+            if (m_time % 2 == 0 && m_voyageIcon >= 230 && m_voyageIcon <= 241 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_voyageIcon++;
                 if (m_voyageIcon > 241)
@@ -9314,13 +9314,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
         else
         {
-            if (m_voyageIcon == 48 && m_voyageChannel == 2)
+            if (m_voyageIcon == 48 && m_voyageChannel == PixmapChannel::Blupi)
             {
                 m_blupiAction = 1;
                 m_blupiPhase = 0;
                 m_blupiFocus = true;
             }
-            if (m_voyageIcon == 21 && m_voyageChannel == 10)
+            if (m_voyageIcon == 21 && m_voyageChannel == PixmapChannel::Element)
             {
                 if (m_nbVies < MAX_EGG_COUNT)
                 {
@@ -9328,38 +9328,38 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 6 && m_voyageChannel == 10)
+            if (m_voyageIcon == 6 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_nbTresor++;
                 OpenDoorsTresor();
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 215 && m_voyageChannel == 10)
+            if (m_voyageIcon == 215 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiCle |= 1;
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 222 && m_voyageChannel == 10)
+            if (m_voyageIcon == 222 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiCle |= 2;
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 229 && m_voyageChannel == 10)
+            if (m_voyageIcon == 229 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiCle |= 4;
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 108 && m_voyageChannel == 4)
+            if (m_voyageIcon == 108 && m_voyageChannel == PixmapChannel::Button)
             {
                 m_blupiPerso++;
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 252 && m_voyageChannel == 10)
+            if (m_voyageIcon == 252 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_blupiDynamite++;
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
-            if (m_voyageIcon == 177 && m_voyageChannel == 10)
+            if (m_voyageIcon == 177 && m_voyageChannel == PixmapChannel::Element)
             {
                 m_sound->PlayImage(3, m_voyageEnd, -1, false);
             }
@@ -9375,7 +9375,7 @@ namespace WindowsPhoneSpeedyBlupi
             return;
         }
         int num = m_voyagePhase;
-        if (m_voyageIcon == 40 && m_voyageChannel == 10)
+        if (m_voyageIcon == 40 && m_voyageChannel == PixmapChannel::Element)
         {
             num -= 30;
             if (num < 0)
@@ -9386,11 +9386,11 @@ namespace WindowsPhoneSpeedyBlupi
         TinyPoint pos;
         pos.X = m_voyageStart.X + (m_voyageEnd.X - m_voyageStart.X) * num / m_voyageTotal;
         pos.Y = m_voyageStart.Y + (m_voyageEnd.Y - m_voyageStart.Y) * num / m_voyageTotal;
-        if (m_voyageIcon != 40 || m_voyageChannel != 10 || num != 0)
+        if (m_voyageIcon != 40 || m_voyageChannel != PixmapChannel::Element || num != 0)
         {
             m_pixmap->HudIcon(m_voyageChannel, m_voyageIcon, pos);
         }
-        if (m_voyageIcon == 40 && m_voyageChannel == 10)
+        if (m_voyageIcon == 40 && m_voyageChannel == PixmapChannel::Element)
         {
             int array[7] = {-8, -6, -4, 0, 4, 6, 8};
             pos.X -= 34;
@@ -10034,7 +10034,7 @@ namespace WindowsPhoneSpeedyBlupi
         Worlds::WriteDoubleField("_blupiVitesseY_", m_blupiVitesseY);
         Worlds::WriteIntField("_blupiIcon_", m_blupiIcon);
         Worlds::WriteIntField("_blupiSec_", m_blupiSec);
-        Worlds::WriteIntField("_blupiChannel_", m_blupiChannel);
+        Worlds::WriteIntField("_blupiChannel_", ToRaw(m_blupiChannel));
         Worlds::WritePointField("_blupiVector_", m_blupiVector);
         Worlds::WriteIntField("_blupiTransport_", m_blupiTransport);
         Worlds::WriteBoolField("_blupiFocus_", m_blupiFocus);
@@ -10088,7 +10088,7 @@ namespace WindowsPhoneSpeedyBlupi
         Worlds::WritePointField("_scrollPoint_", m_scrollPoint);
         Worlds::WritePointField("_scrollAdd_", m_scrollAdd);
         Worlds::WriteIntField("_voyageIcon_", m_voyageIcon);
-        Worlds::WriteIntField("_voyageChannel_", m_voyageChannel);
+        Worlds::WriteIntField("_voyageChannel_", ToRaw(m_voyageChannel));
         Worlds::WriteIntField("_voyagePhase_", m_voyagePhase);
         Worlds::WriteIntField("_voyageTotal_", m_voyageTotal);
         Worlds::WritePointField("_voyageStart_", m_voyageStart);
@@ -10144,7 +10144,7 @@ namespace WindowsPhoneSpeedyBlupi
                 Worlds::WriteIntField("step", m_moveObject[m].step);
                 Worlds::WriteIntField("time", m_moveObject[m].time);
                 Worlds::WriteIntField("phase", m_moveObject[m].phase);
-                Worlds::WriteIntField("channel", m_moveObject[m].channel);
+                Worlds::WriteIntField("channel", ToRaw(m_moveObject[m].channel));
                 Worlds::WriteIntField("icon", m_moveObject[m].icon);
                 Worlds::WriteEndSection();
             }
@@ -10189,7 +10189,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiVitesseY = Worlds::GetDoubleField(lines, linesLength, "DescFile", 0, "_blupiVitesseY_");
         m_blupiIcon = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiIcon_");
         m_blupiSec = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiSec_");
-        m_blupiChannel = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiChannel_");
+        m_blupiChannel = ToPixmapChannel(Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiChannel_"));
         m_blupiVector = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_blupiVector_");
         m_blupiTransport = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiTransport_");
         m_blupiFocus = Worlds::GetBoolField(lines, linesLength, "DescFile", 0, "_blupiFocus_");
@@ -10243,7 +10243,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_scrollPoint = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_scrollPoint_");
         m_scrollAdd = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_scrollAdd_");
         m_voyageIcon = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_voyageIcon_");
-        m_voyageChannel = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_voyageChannel_");
+        m_voyageChannel = ToPixmapChannel(Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_voyageChannel_"));
         m_voyagePhase = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_voyagePhase_");
         m_voyageTotal = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_voyageTotal_");
         m_voyageStart = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_voyageStart_");
@@ -10302,7 +10302,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_moveObject[intField2].step = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "step");
             m_moveObject[intField2].time = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "time");
             m_moveObject[intField2].phase = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "phase");
-            m_moveObject[intField2].channel = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "channel");
+            m_moveObject[intField2].channel = ToPixmapChannel(Worlds::GetIntField(lines, linesLength, "MoveObject", n, "channel"));
             m_moveObject[intField2].icon = Worlds::GetIntField(lines, linesLength, "MoveObject", n, "icon");
         }
         for (int num = 0; num < 2; num++)
@@ -10374,7 +10374,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_moveObject[n].step = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "step");
             m_moveObject[n].time = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "time");
             m_moveObject[n].phase = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "phase");
-            m_moveObject[n].channel = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "channel");
+            m_moveObject[n].channel = ToPixmapChannel(Worlds::GetIntField(array, vectorSize, "MoveObject", n, "channel"));
             m_moveObject[n].icon = Worlds::GetIntField(array, vectorSize, "MoveObject", n, "icon");
             if (m_moveObject[n].type == ObjectType::ObjectType54)
             {
@@ -10538,7 +10538,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[num].step = 1;
                     m_moveObject[num].time = 0;
                     m_moveObject[num].phase = 0;
-                    m_moveObject[num].channel = 1;
+                    m_moveObject[num].channel = PixmapChannel::Object;
                     m_moveObject[num].icon = 183;
                     PlaySound(33, m_moveObject[num].posStart);
                 }
@@ -10635,7 +10635,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_moveObject[num].step = 1;
         m_moveObject[num].time = 0;
         m_moveObject[num].phase = 0;
-        m_moveObject[num].channel = 1;
+        m_moveObject[num].channel = PixmapChannel::Object;
         m_moveObject[num].icon = icon;
         PlaySound(33, m_moveObject[num].posStart);
     }

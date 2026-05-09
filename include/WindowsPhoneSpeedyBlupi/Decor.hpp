@@ -8,15 +8,13 @@
 #include "Jauge.hpp"
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
-#include "Decor/ObjectType.h"
+#include "decor/ObjectType.h"
+#include "enums/PixmapChannel.h"
 
 namespace WindowsPhoneSpeedyBlupi
 {
     class Decor
     {
-        enum class ChannelType
-        {
-        };
         enum class IconType
         {
 
@@ -40,14 +38,14 @@ namespace WindowsPhoneSpeedyBlupi
             intcs step;
             intcs time;
             intcs phase;
-            intcs channel;
+            PixmapChannel channel;
             intcs icon;
         };
 
         class ByeByeObject
         {
         public:
-            intcs channel;
+            PixmapChannel channel;
             intcs icon;
             double posX;
             double posY;
@@ -127,7 +125,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         intcs m_blupiSec;
 
-        intcs m_blupiChannel;
+        PixmapChannel m_blupiChannel;
 
         TinyPoint m_blupiVector;
 
@@ -269,7 +267,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         intcs m_voyageIcon;
 
-        intcs m_voyageChannel;
+        PixmapChannel m_voyageChannel;
 
         intcs m_voyagePhase;
 
@@ -684,7 +682,7 @@ namespace WindowsPhoneSpeedyBlupi
         void ByeByeHelico();
 
     private:
-        void ByeByeAdd(int channel, int icon, TinyPoint pos, double rotationSpeed, double animationSpeed);
+        void ByeByeAdd(PixmapChannel channel, int icon, TinyPoint pos, double rotationSpeed, double animationSpeed);
 
     private:
         void ByeByeStep();
@@ -696,7 +694,7 @@ namespace WindowsPhoneSpeedyBlupi
         TinyPoint VoyageGetPosVie(int nbVies);
 
     private:
-        void VoyageInit(TinyPoint start, TinyPoint end, int icon, int channel);
+        void VoyageInit(TinyPoint start, TinyPoint end, int icon, PixmapChannel channel);
 
     private:
         void VoyageStep();

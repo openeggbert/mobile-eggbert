@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Def.hpp"
+#include "enums/PixmapChannel.h"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 #include "WindowsPhoneSpeedyBlupi/TinyRect.hpp"
@@ -58,19 +59,19 @@ namespace WindowsPhoneSpeedyBlupi
 
         virtual void DrawChar(intcs rank, TinyPoint pos, double size) = 0;
 
-        virtual void HudIcon(intcs channel, intcs rank, TinyPoint pos) = 0;
+        virtual void HudIcon(PixmapChannel channel, intcs rank, TinyPoint pos) = 0;
 
-        virtual void QuickIcon(intcs channel, intcs rank, TinyPoint pos) = 0;
+        virtual void QuickIcon(PixmapChannel channel, intcs rank, TinyPoint pos) = 0;
 
-        virtual void QuickIcon(intcs channel, intcs rank, TinyPoint pos, double opacity, double rotation) = 0;
+        virtual void QuickIcon(PixmapChannel channel, intcs rank, TinyPoint pos, double opacity, double rotation) = 0;
 
-        virtual bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect) = 0;
+        virtual bool DrawPart(PixmapChannel channel, TinyPoint dest, TinyRect rect) = 0;
 
-        virtual bool DrawPart(intcs channel, TinyPoint dest, TinyRect rect, double zoom) = 0;
+        virtual bool DrawPart(PixmapChannel channel, TinyPoint dest, TinyRect rect, double zoom) = 0;
 
-        virtual void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot) = 0;
+        virtual void DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, bool useHotSpot) = 0;
 
-        virtual void DrawIcon(intcs channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
+        virtual void DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
                               bool useHotSpot) = 0;
     };
 }

@@ -59,7 +59,7 @@ namespace WindowsPhoneSpeedyBlupi
             rect.Right = 124;
             rect.Top = 0;
             rect.Bottom = 22;
-            m_pixmap->DrawPart(5, m_pos, rect, m_zoom);
+            m_pixmap->DrawPart(PixmapChannel::Jauge, m_pos, rect, m_zoom);
             if (filledWidth > 0)
             {
                 rect.Left = 0;
@@ -71,7 +71,7 @@ namespace WindowsPhoneSpeedyBlupi
                     " T=" + std::to_string(rect.Top) +
                     " R=" + std::to_string(rect.Right) +
                     " B=" + std::to_string(rect.Bottom));
-                m_pixmap->DrawPart(5, m_pos, rect, m_zoom);
+                m_pixmap->DrawPart(PixmapChannel::Jauge, m_pos, rect, m_zoom);
             }
         }
     }
