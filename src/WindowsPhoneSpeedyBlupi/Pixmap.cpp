@@ -4,6 +4,7 @@
 
 #include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
 
+#include "CNA/Logger.hpp"
 #include "CNA/Platform.hpp"
 #include "Microsoft/Xna/Framework/Rectangle.hpp"
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
@@ -196,8 +197,11 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Pixmap::LoadContent()
     {
+        CNA::Logger::Info("SpeedyBlupi: Pixmap::LoadContent entered");
+        CNA::Logger::Info("SpeedyBlupi: asset root = " + game1->getContentProperty().getRootDirectoryProperty());
         spriteBatch = std::make_unique<Microsoft::Xna::Framework::Graphics::SpriteBatch>(
             game1->getGraphicsDeviceProperty());
+        CNA::Logger::Info("SpeedyBlupi: loading icons/text");
         bitmapText = game1->getContentProperty().Load<Texture2D>("icons/text");
         bitmapButton = game1->getContentProperty().Load<Texture2D>("icons/button");
         bitmapJauge = game1->getContentProperty().Load<Texture2D>("icons/jauge");
@@ -210,6 +214,7 @@ namespace WindowsPhoneSpeedyBlupi
         bitmapSpeedyBlupi = game1->getContentProperty().Load<Texture2D>("backgrounds/speedyblupi");
         bitmapBlupiYoupie = game1->getContentProperty().Load<Texture2D>("backgrounds/blupiyoupie");
         bitmapGear = game1->getContentProperty().Load<Texture2D>("backgrounds/gear");
+        CNA::Logger::Info("SpeedyBlupi: Pixmap::LoadContent done");
         UpdateGeometry();
     }
 
@@ -230,7 +235,9 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Pixmap::BackgroundCache(const string& name)
     {
+        CNA::Logger::Info("SpeedyBlupi: BackgroundCache loading backgrounds/" + name);
         bitmapBackground = game1->getContentProperty().Load<Texture2D>("backgrounds/" + name);
+        CNA::Logger::Info("SpeedyBlupi: BackgroundCache done backgrounds/" + name);
     }
 
     bool Pixmap::Start()
