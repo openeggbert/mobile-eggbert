@@ -30,8 +30,8 @@ set(CNA_BACKEND_BGFX   OFF CACHE BOOL "Enable bgfx backend in CNA")
 set(CNA_BACKEND_VULKAN OFF CACHE BOOL "Enable Vulkan backend in CNA")
 set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)")
 
-add_subdirectory(../../cna CNA)
-include_directories(../cna/include CNA)
+add_subdirectory(../cna CNA)
+include_directories(cna/include CNA)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
