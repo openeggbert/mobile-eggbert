@@ -144,6 +144,7 @@ namespace WindowsPhoneSpeedyBlupi
         static constexpr intcs DIMTEXTX = 32;
         static constexpr intcs DIMTEXTY = 32;
 
+        //TODO: These values exist in the enum class PixmapChannel
         static constexpr intcs CHOBJECT = 1;
         static constexpr intcs CHBLUPI = 2;
         static constexpr intcs CHDECOR = 3;
