@@ -53,7 +53,7 @@ namespace WindowsPhoneSpeedyBlupi
                      m_blupiVitesseX(0),
                      m_blupiVitesseY(0),
                      m_blupiIcon(0),
-                     m_blupiSec(0),
+                     m_blupiSec(SecretPower::None),
                      m_blupiChannel(PixmapChannel::PixmapChannel0),
                      m_blupiTransport(0),
                      m_blupiFocus(false),
@@ -584,7 +584,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             tinyPoint.X += 64;
         }
-        m_blupiSec = 0;
+        m_blupiSec = SecretPower::None;
         if (!m_blupiFront)
         {
             double rotation = 0.0;
@@ -600,7 +600,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (m_blupiShield)
             {
-                m_blupiSec = 1;
+                m_blupiSec = SecretPower::Shield;
                 if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                 {
                     int num2 = Tables::table_shield_blupi[m_time / 2 % 16];
@@ -614,7 +614,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             else if (m_blupiPower)
             {
-                m_blupiSec = 2;
+                m_blupiSec = SecretPower::Power;
                 if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                 {
                     int num2 = Tables::table_magicloop[m_time / 2 % 5];
@@ -624,7 +624,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             else if (m_blupiCloud)
             {
-                m_blupiSec = 3;
+                m_blupiSec = SecretPower::Cloud;
                 if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                 {
                     for (int k = 0; k < 3; k++)
@@ -639,7 +639,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             else if (m_blupiHide)
             {
-                m_blupiSec = 4;
+                m_blupiSec = SecretPower::Hide;
                 if (m_blupiTimeShield > 25 || m_time % 4 < 2)
                 {
                     m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 0.3, rotation);
@@ -10073,7 +10073,7 @@ namespace WindowsPhoneSpeedyBlupi
         Worlds::WriteDoubleField("_blupiVitesseX_", m_blupiVitesseX);
         Worlds::WriteDoubleField("_blupiVitesseY_", m_blupiVitesseY);
         Worlds::WriteIntField("_blupiIcon_", m_blupiIcon);
-        Worlds::WriteIntField("_blupiSec_", m_blupiSec);
+        Worlds::WriteIntField("_blupiSec_", ToRaw(m_blupiSec));
         Worlds::WriteIntField("_blupiChannel_", ToRaw(m_blupiChannel));
         Worlds::WritePointField("_blupiVector_", m_blupiVector);
         Worlds::WriteIntField("_blupiTransport_", m_blupiTransport);
@@ -10228,7 +10228,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiVitesseX = Worlds::GetDoubleField(lines, linesLength, "DescFile", 0, "_blupiVitesseX_");
         m_blupiVitesseY = Worlds::GetDoubleField(lines, linesLength, "DescFile", 0, "_blupiVitesseY_");
         m_blupiIcon = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiIcon_");
-        m_blupiSec = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiSec_");
+        m_blupiSec = ToSecretPower(Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiSec_"));
         m_blupiChannel = ToPixmapChannel(Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiChannel_"));
         m_blupiVector = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_blupiVector_");
         m_blupiTransport = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiTransport_");

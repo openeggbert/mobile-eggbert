@@ -123,7 +123,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         intcs m_blupiIcon;
 
-        intcs m_blupiSec;
+        SecretPower m_blupiSec;
 
         PixmapChannel m_blupiChannel;
 
