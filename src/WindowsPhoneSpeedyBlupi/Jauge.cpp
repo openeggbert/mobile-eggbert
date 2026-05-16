@@ -50,7 +50,7 @@ namespace WindowsPhoneSpeedyBlupi
             int filledWidth = m_level * 114 / 100;
             CNA::Logger::Debug(
                 "Jauge::Draw: level=" + std::to_string(m_level) +
-                ", mode=" + std::to_string(jauge_mode_to_int(m_mode)) +
+                ", mode=" + std::to_string(ToRaw(m_mode)) +
                 ", filledWidth=" + std::to_string(filledWidth) +
                 ", zoom=" + std::to_string(m_zoom) +
                 ", pos=(" + std::to_string(m_pos.X) + "," + std::to_string(m_pos.Y) + ")");
@@ -64,8 +64,8 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 rect.Left = 0;
                 rect.Right = 6 + filledWidth;
-                rect.Top = 22 * jauge_mode_to_int(m_mode);
-                rect.Bottom = 22 * (jauge_mode_to_int(m_mode) + 1);
+                rect.Top = 22 * ToRaw(m_mode);
+                rect.Bottom = 22 * (ToRaw(m_mode) + 1);
                 CNA::Logger::Debug(
                     "Jauge::Draw fill rect: L=" + std::to_string(rect.Left) +
                     " T=" + std::to_string(rect.Top) +

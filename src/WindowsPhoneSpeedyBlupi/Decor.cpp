@@ -10195,7 +10195,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             Worlds::WriteSection("Jauge");
             Worlds::WriteBoolField("hide", m_jauges[n].GetHide());
-            Worlds::WriteIntField("mode", jauge_mode_to_int(m_jauges[n].GetMode()));
+            Worlds::WriteIntField("mode", ToRaw(m_jauges[n].GetMode()));
             Worlds::WriteIntField("level", m_jauges[n].GetLevel());
             Worlds::WriteEndSection();
         }

@@ -289,7 +289,7 @@ namespace WindowsPhoneSpeedyBlupi
         };
         for (Keys keys : keysToBeChecked)
         {
-            if (newKeyboardState.IsKeyDown(keys)) touchesOrClicks.push_back(TinyPoint(-1, (int)keys));
+            if (newKeyboardState.IsKeyDown(keys)) touchesOrClicks.push_back(TinyPoint(-1, static_cast<int>(keys)));
         }
         static bool F11_pressed_previously = false;
         if (CNA::getCurrentPlatform() != CNA::Platform::Android && CNA::getCurrentPlatform() != CNA::Platform::Web &&

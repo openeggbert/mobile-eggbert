@@ -13,12 +13,12 @@ namespace WindowsPhoneSpeedyBlupi
         Yellow = 3 // charge
     };
 
-    inline intcs jauge_mode_to_int(JaugeMode mode)
+    inline intcs ToRaw(JaugeMode mode)
     {
         return static_cast<intcs>(mode);
     }
 
-    inline JaugeMode jauge_mode_from_int(intcs mode)
+    inline JaugeMode ToJaugeMode(intcs mode)
     {
         return static_cast<JaugeMode>(mode);
     }
@@ -162,7 +162,7 @@ namespace WindowsPhoneSpeedyBlupi
          */
         void SetMode(int mode)
         {
-            SetMode(jauge_mode_from_int(mode));
+            SetMode(ToJaugeMode(mode));
         }
 
         /**
