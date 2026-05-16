@@ -161,10 +161,6 @@ namespace WindowsPhoneSpeedyBlupi
         static constexpr intcs CHBLUPIYOUPIE = 16;
         static constexpr intcs CHGEAR = 17;
 
-        // revival
-        static constexpr intcs SCALE = 1;
-        static constexpr intcs FPS = 20;
-
         /**
          * @brief Gets the HasSound property value.
          *

@@ -10,6 +10,7 @@
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
 #include "System/EventArgs.hpp"
 #include "System/String.hpp"
+#include "WindowsPhoneSpeedyBlupi/Config.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 #include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
@@ -66,7 +67,7 @@ namespace WindowsPhoneSpeedyBlupi
         graphics.setIsFullScreenProperty(false);
         string content = "Content";
         Game::getContentProperty().setRootDirectoryProperty(content);
-        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(500000L));
+        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(500000L / TIME_SCALE));
         Game::setInactiveSleepTimeProperty(System::TimeSpan::FromSeconds(1.0));
         missionToStart1 = -1;
         missionToStart2 = -1;

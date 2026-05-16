@@ -14,7 +14,7 @@
 int main(int argc, char* args[])
 {
     CNA::Logger::Info("SpeedyBlupi: main entered");
-    CNA::Logger::SetMinimumLevel(CNA::LogLevel::TRACE);
+    CNA::Logger::SetMinimumLevel(CNA::LogLevel::ERROR);
     CNA::Logger::Info("SpeedyBlupi: before Game1 construction");
     try
     {
