@@ -3,7 +3,8 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    enum class ObjectType : SharpRuntime::ushortcs
+    using ObjectTypeUnderlying = SharpRuntime::ubytecs;
+    enum class ObjectType : ObjectTypeUnderlying
     {
         ObjectType0 = 0,
         ObjectType1 = 1,
@@ -219,15 +220,15 @@ namespace WindowsPhoneSpeedyBlupi
         // Keep the original numeric IDs to preserve compatibility with the original game data.
     };
 
-    static constexpr auto ToRaw(ObjectType type) -> SharpRuntime::ushortcs
+    static constexpr auto ToRaw(ObjectType type) -> ObjectTypeUnderlying
     {
-        return static_cast<SharpRuntime::ushortcs>(type);
+        return static_cast<ObjectTypeUnderlying>(type);
     }
 
     static constexpr auto ToObjectType(const int value) -> ObjectType
     {
         return static_cast<ObjectType>(
-            static_cast<SharpRuntime::ushortcs>(value)
+            static_cast<ObjectTypeUnderlying>(value)
         );
     }
 

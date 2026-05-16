@@ -3,7 +3,8 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    enum class SoundChannel : SharpRuntime::ushortcs
+    using SoundChannelUnderlying = SharpRuntime::ubytecs;
+    enum class SoundChannel : SoundChannelUnderlying
     {
         SoundChannel0 = 0,
         SoundChannel1 = 1,
@@ -100,15 +101,15 @@ namespace WindowsPhoneSpeedyBlupi
         SoundChannel92 = 92
     };
 
-    static constexpr auto ToRaw(SoundChannel type) -> SharpRuntime::ushortcs
+    static constexpr auto ToRaw(SoundChannel type) -> SoundChannelUnderlying
     {
-        return static_cast<SharpRuntime::ushortcs>(type);
+        return static_cast<SoundChannelUnderlying>(type);
     }
 
     static constexpr auto ToSoundChannel(const int value) -> SoundChannel
     {
         return static_cast<SoundChannel>(
-            static_cast<SharpRuntime::ushortcs>(value)
+            static_cast<SoundChannelUnderlying>(value)
         );
     }
     //

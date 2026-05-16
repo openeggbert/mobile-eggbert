@@ -9,7 +9,7 @@
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 #include "decor/ObjectType.hpp"
-#include "enums/PixmapChannel.hpp"
+#include "def/PixmapChannel.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -111,7 +111,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         TinyPoint m_blupiValidPos;
 
-        intcs m_blupiAction;
+        BlupiAction m_blupiAction;
 
         intcs m_blupiDir;
 
@@ -201,7 +201,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         intcs m_blupiTimeOuf;
 
-        intcs m_blupiActionOuf;
+        BlupiAction m_blupiActionOuf;
 
         intcs m_blupiFifoNb;
 
@@ -457,7 +457,7 @@ namespace WindowsPhoneSpeedyBlupi
         void BlupiStep();
 
     private:
-        void BlupiDead(int action1, int action2);
+        void BlupiDead(BlupiAction action1, std::optional<BlupiAction> action2 = std::nullopt);
 
     private:
         TinyPoint GetPosDecor(TinyPoint pos);

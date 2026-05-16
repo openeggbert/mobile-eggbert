@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <iomanip>
-#include "WindowsPhoneSpeedyBlupi/enums/SoundChannel.hpp"
+#include "WindowsPhoneSpeedyBlupi/def/SoundChannel.hpp"
 
 #ifndef SOUND_ENABLED
 #define SOUND_DISABLED

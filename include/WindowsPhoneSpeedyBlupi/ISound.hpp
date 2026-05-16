@@ -2,7 +2,7 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    enum class SoundChannel : SharpRuntime::ushortcs;
+    enum class SoundChannel : SharpRuntime::ubytecs;
 
     class ISound
     {

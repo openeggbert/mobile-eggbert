@@ -3,7 +3,8 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    enum class PixmapChannel : SharpRuntime::ushortcs
+    using PixmapChannelUnderlying = SharpRuntime::ubytecs;
+    enum class PixmapChannel : PixmapChannelUnderlying
     {
         PixmapChannel0 = 0,
         Object = 1,
@@ -24,15 +25,15 @@ namespace WindowsPhoneSpeedyBlupi
 
     };
 
-    static constexpr auto ToRaw(PixmapChannel type) -> SharpRuntime::ushortcs
+    static constexpr auto ToRaw(PixmapChannel type) -> PixmapChannelUnderlying
     {
-        return static_cast<SharpRuntime::ushortcs>(type);
+        return static_cast<PixmapChannelUnderlying>(type);
     }
 
     static constexpr auto ToPixmapChannel(const int value) -> PixmapChannel
     {
         return static_cast<PixmapChannel>(
-            static_cast<SharpRuntime::ushortcs>(value)
+            static_cast<PixmapChannelUnderlying>(value)
         );
     }
     //
