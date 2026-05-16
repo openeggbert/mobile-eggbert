@@ -40,7 +40,8 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 # We use a CMake variable so all subsequent target_* calls use the right name.
 if(ANDROID)
     set(_game_target main)
-    add_library(${_game_target} SHARED ${SOURCES})
+    add_library(${_game_target} SHARED ${SOURCES}
+            include/WindowsPhoneSpeedyBlupi/def/Direction.hpp)
 else()
     set(_game_target WindowsPhoneSpeedyBlupi)
     add_executable(${_game_target} ${SOURCES})

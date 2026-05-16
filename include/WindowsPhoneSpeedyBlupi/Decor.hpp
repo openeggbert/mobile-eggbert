@@ -113,7 +113,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         BlupiAction m_blupiAction;
 
-        intcs m_blupiDir;
+        Direction m_blupiDir;
 
         intcs m_blupiPhase;
 
@@ -209,7 +209,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         TinyPoint m_blupiStartPos;
 
-        intcs m_blupiStartDir;
+        Direction m_blupiStartDir;
 
         double m_blupiSpeedX;
 
@@ -739,7 +739,7 @@ namespace WindowsPhoneSpeedyBlupi
         bool FileExist(int gamer, int rank, bool bUser);
 
     private:
-        bool SearchWorld(int world, TinyPoint& blupi, int& dir);
+        bool SearchWorld(int world, TinyPoint& blupi, Direction& dir);
 
     private:
         bool SearchDoor(int n, TinyPoint& cel, TinyPoint& blupi);

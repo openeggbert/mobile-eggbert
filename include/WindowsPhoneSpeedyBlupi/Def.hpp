@@ -5,6 +5,7 @@
 
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 #include "WindowsPhoneSpeedyBlupi/def/BlupiAction.hpp"
+#include "WindowsPhoneSpeedyBlupi/def/Direction.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -156,9 +157,6 @@ namespace WindowsPhoneSpeedyBlupi
         static constexpr intcs CHSPEEDYBLUPI = 15;
         static constexpr intcs CHBLUPIYOUPIE = 16;
         static constexpr intcs CHGEAR = 17;
-
-        static constexpr intcs DIR_LEFT = 1;
-        static constexpr intcs DIR_RIGHT = 2;
 
         static constexpr intcs SEC_SHIELD = 1;
         static constexpr intcs SEC_POWER = 2;
