@@ -123,7 +123,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Game1::OnActivated(std::any sender, System::EventArgs args)
     {
-        continueMission = 1;
+        continueMission = ContinueMissionType::Pending;
         Game::OnActivated(sender, args);
     }
 
@@ -184,9 +184,9 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (phase == Def::Phase::Wait)
         {
-            if (continueMission == 2)
+            if (continueMission == ContinueMissionType::Active)
             {
-                continueMission = 0;
+                continueMission = ContinueMissionType::None;
                 if (decor.CurrentRead())
                 {
                     SetPhase(Def::Phase::Resume);
@@ -430,9 +430,9 @@ namespace WindowsPhoneSpeedyBlupi
     void Game1::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
         // CNA::Logger::Trace("Game1::Draw");
-        if (continueMission == 1)
+        if (continueMission == ContinueMissionType::Pending)
         {
-            continueMission = 2;
+            continueMission = ContinueMissionType::Active;
         }
         if (phase == Def::Phase::Wait || phase == Def::Phase::Init || phase == Def::Phase::Pause || phase ==
             Def::Phase::Resume || phase == Def::Phase::Lost || phase == Def::Phase::Win || phase ==
@@ -842,7 +842,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Game1::DrawWaitProgress()
     {
-        if (continueMission != 0)
+        if (continueMission != ContinueMissionType::None)
         {
             return;
         }

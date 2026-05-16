@@ -160,10 +160,6 @@ namespace WindowsPhoneSpeedyBlupi
         static constexpr intcs CHBLUPIYOUPIE = 16;
         static constexpr intcs CHGEAR = 17;
 
-        static constexpr intcs KEY_JUMP = 1;
-        static constexpr intcs KEY_FIRE = 2;
-        static constexpr intcs KEY_DOWN = 4;
-
         // revival
         static constexpr intcs SCALE = 1;
         static constexpr intcs FPS = 20;

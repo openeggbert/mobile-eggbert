@@ -365,11 +365,11 @@ namespace WindowsPhoneSpeedyBlupi
                 case Def::ButtonGlyph::PlayJump:
                     INPUT_DEBUG("Jumping detected");
                     accelWaitZero = false;
-                    keyPress |= 1;
+                    keyPress |= ToRaw(KeyPressFlags::Jump);
                     break;
                 case Def::ButtonGlyph::PlayDown:
                     accelWaitZero = false;
-                    keyPress |= 4;
+                    keyPress |= ToRaw(KeyPressFlags::Down);
                     break;
                 case Def::ButtonGlyph::InitGamerA:
                 case Def::ButtonGlyph::InitGamerB:
@@ -515,7 +515,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             horizontalChange = accelSpeedX;
             verticalChange = 0.0;
-            if (((unsigned int)keyPress & 4u) != 0)
+            if (((unsigned int)keyPress & ToRaw(KeyPressFlags::Down)) != 0)
             {
                 verticalChange = 1.0;
             }

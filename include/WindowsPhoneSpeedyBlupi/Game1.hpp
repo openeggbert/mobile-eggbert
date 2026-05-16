@@ -9,6 +9,7 @@
 #include "IPixmap.hpp"
 #include "ISound.hpp"
 #include "InputPad.hpp"
+#include "def/ContinueMission.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "Microsoft/Xna/Framework/GameTime.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
@@ -70,7 +71,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         int cheatGesteIndex = 0;
 
-        int continueMission = 0;
+        ContinueMissionType continueMission = ContinueMissionType::None;
 
         Jauge waitJauge;
 
