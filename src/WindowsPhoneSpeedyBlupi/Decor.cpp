@@ -2413,7 +2413,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = BlupiAction::Air;
                 m_blupiPhase = 0;
             }
-            if (((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0 && m_blupiFocus)
+            if (((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0 && m_blupiFocus)
             {
                 m_blupiVitesseY = (m_blupiPower ? (-25) : (-19));
             }
@@ -2425,7 +2425,7 @@ namespace WindowsPhoneSpeedyBlupi
             flag = true;
             PlaySound(SoundChannel::SoundChannel41, end);
         }
-        if (((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !
+        if (((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !
             m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend &&
             m_blupiFocus)
         {
@@ -2762,7 +2762,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiAction = BlupiAction::Down;
             m_blupiPhase = 0;
         }
-        if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != BlupiAction::Turn && m_blupiAction
+        if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & ToRaw(KeyPressFlags::Jump)) == 0 && m_blupiAction != BlupiAction::Turn && m_blupiAction
             != BlupiAction::Jump && m_blupiAction != BlupiAction::Air && m_blupiAction != BlupiAction::Down && m_blupiAction != BlupiAction::StopPop && m_blupiAction != BlupiAction::Vertigo &&
             m_blupiAction != BlupiAction::Advance && m_blupiAction != BlupiAction::Recede && !m_blupiAir && !m_blupiHelico && !m_blupiOver && !
             m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !m_blupiSkate && !m_blupiNage && !
@@ -2792,7 +2792,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (!m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase && !m_blupiJeep && !m_blupiTank && !
             m_blupiSkate && !m_blupiNage && !m_blupiSurf && !m_blupiSuspend && m_blupiFocus)
         {
-            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != BlupiAction::StopPop &&
+            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & ToRaw(KeyPressFlags::Jump)) == 0 && m_blupiAction != BlupiAction::StopPop &&
                 m_blupiDir == Direction::Left && (icon = CaisseInFront()) != -1)
             {
                 end.X = m_moveObject[icon].posCurrent.X + 64 - 5;
@@ -2801,7 +2801,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_scrollAdd.Y = 0;
                 PlaySound(SoundChannel::SoundChannel39, end);
             }
-            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX > 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != BlupiAction::Pop &&
+            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX > 0.0 && (m_keyPress & ToRaw(KeyPressFlags::Jump)) == 0 && m_blupiAction != BlupiAction::Pop &&
                 m_blupiDir == Direction::Left && (icon = CaisseInFront()) != -1)
             {
                 m_blupiAction = BlupiAction::Pop;
@@ -2809,7 +2809,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_scrollAdd.Y = 0;
                 PlaySound(SoundChannel::SoundChannel39, end);
             }
-            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != BlupiAction::StopPop &&
+            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX == 0.0 && (m_keyPress & ToRaw(KeyPressFlags::Jump)) == 0 && m_blupiAction != BlupiAction::StopPop &&
                 m_blupiDir == Direction::Right && (icon = CaisseInFront()) != -1)
             {
                 end.X = m_moveObject[icon].posCurrent.X - 60 + 5;
@@ -2818,7 +2818,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_scrollAdd.Y = 0;
                 PlaySound(SoundChannel::SoundChannel39, end);
             }
-            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX < 0.0 && (m_keyPress & 1) == 0 && m_blupiAction != BlupiAction::Pop && m_blupiDir
+            if (m_blupiSpeedY > 0.0 && m_blupiSpeedX < 0.0 && (m_keyPress & ToRaw(KeyPressFlags::Jump)) == 0 && m_blupiAction != BlupiAction::Pop && m_blupiDir
                 == Direction::Right && (icon = CaisseInFront()) != -1)
             {
                 m_blupiAction = BlupiAction::Pop;
@@ -3185,7 +3185,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (m_blupiHelico && (m_blupiFocus || m_blupiAction == BlupiAction::HelicoGlu))
         {
-            if (((unsigned int)m_keyPress & 2u) != 0 && m_blupiTimeFire == 0 && m_blupiAction != BlupiAction::Turn && m_blupiAction != BlupiAction::HelicoGlu &&
+            if (((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Fire)) != 0 && m_blupiTimeFire == 0 && m_blupiAction != BlupiAction::Turn && m_blupiAction != BlupiAction::HelicoGlu &&
                 flag2)
             {
                 if (m_blupiBullet == 0)
@@ -3215,7 +3215,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (Def::getEasyMoveProperty())
             {
-                if (m_blupiSpeedY <= -1.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+                if (m_blupiSpeedY <= -1.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
                 {
                     if (m_blupiVitesseY > -7.0)
                     {
@@ -3248,7 +3248,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             else
             {
-                if (m_blupiSpeedY <= -1.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+                if (m_blupiSpeedY <= -1.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
                 {
                     if (m_blupiVitesseY > -10.0)
                     {
@@ -3435,7 +3435,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 flag4 = false;
             }
-            if ((m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0) && !flag4)
+            if ((m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0) && !flag4)
             {
                 if (m_blupiVitesseY == 0.0 && icon != -1)
                 {
@@ -3530,7 +3530,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (m_blupiBalloon && m_blupiFocus)
         {
-            if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+            if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
             {
                 if (m_blupiVitesseY > -5.0 && m_time % 6 == 0)
                 {
@@ -3805,7 +3805,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAction = BlupiAction::Stop;
                 m_blupiPhase = 0;
             }
-            if (((unsigned int)m_keyPress & 2u) != 0 && m_blupiTimeFire == 0 && m_blupiAction != BlupiAction::Turn)
+            if (((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Fire)) != 0 && m_blupiTimeFire == 0 && m_blupiAction != BlupiAction::Turn)
             {
                 if (m_blupiBullet == 0)
                 {
@@ -4024,7 +4024,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiTransport == -1)
             {
-                if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+                if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
                 {
                     if (m_blupiVitesseY > -5.0)
                     {
@@ -4138,7 +4138,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiTransport == -1)
             {
-                if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+                if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
                 {
                     if (m_blupiVitesseY > -5.0)
                     {
@@ -4247,13 +4247,13 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiActionOuf = BlupiAction::Ouf5;
                 m_blupiTimeOuf = 0;
             }
-            if ((((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0 || m_blupiSpeedY < 0.0) && m_blupiAction != BlupiAction::Jump &&
+            if ((((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0 || m_blupiSpeedY < 0.0) && m_blupiAction != BlupiAction::Jump &&
                 m_blupiAction != BlupiAction::Turn)
             {
                 m_blupiAction = BlupiAction::Jump;
                 m_blupiPhase = 0;
             }
-            if ((m_keyPress & 1) == 0 && m_blupiSpeedY == 0.0 && m_blupiAction == BlupiAction::Jump)
+            if ((m_keyPress & ToRaw(KeyPressFlags::Jump)) == 0 && m_blupiSpeedY == 0.0 && m_blupiAction == BlupiAction::Jump)
             {
                 m_blupiAction = BlupiAction::Stop;
                 m_blupiPhase = 0;
@@ -4817,7 +4817,7 @@ namespace WindowsPhoneSpeedyBlupi
             tinyPoint.X = m_blupiPos.X;
             tinyPoint.Y = m_blupiPos.Y - 60;
             if ((m_blupiSurf || m_blupiNage) && (m_blupiPos.Y % 64 == 64 - BLUPISURF || m_blupiPos.Y % 64 == 32) &&
-                IsOutWater(tinyPoint) && ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+                IsOutWater(tinyPoint) && ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
             {
                 m_blupiNage = false;
                 m_blupiSurf = false;
@@ -6331,7 +6331,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (m_blupiOver)
         {
-            if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & (true ? 1u : 0u)) != 0)
+            if (m_blupiSpeedY < 0.0 || ((unsigned int)m_keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
             {
                 if (m_time % 20 != 0 && m_time % 20 != 2 && m_time % 20 != 5 && m_time % 20 != 8 && m_time % 20 != 11 &&
                     m_time % 20 != 13 && m_time % 20 != 14 && m_time % 20 != 18)
