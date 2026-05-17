@@ -319,7 +319,14 @@ namespace WindowsPhoneSpeedyBlupi
         if (phase == Def::Phase::Play)
         {
             decor.setButtonPressedProperty(buttonPressed);
+#ifndef LEGACY
+            for (int speedStep = 0; speedStep < gameSpeed; speedStep++)
+            {
+#endif
             decor.MoveStep();
+#ifndef LEGACY
+            }
+#endif
             int num2 = decor.IsTerminated();
             if (num2 != 0)
             {
@@ -977,6 +984,21 @@ namespace WindowsPhoneSpeedyBlupi
     }
 
     bool Game1::IsFullScreen() { return this->graphics.getIsFullScreenProperty(); }
+
+#ifndef LEGACY
+    void Game1::SetGameSpeed(int speed)
+    {
+        if (speed == 1 || speed == 2 || speed == 4 || speed == 8)
+        {
+            gameSpeed = speed;
+        }
+    }
+
+    int Game1::getGameSpeed() const
+    {
+        return gameSpeed;
+    }
+#endif
 
     Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager Game1::getGraphics()
     {

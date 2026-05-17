@@ -103,6 +103,11 @@ namespace WindowsPhoneSpeedyBlupi
 
         virtual bool IsFullScreen() = 0;
 
+#ifndef LEGACY
+        virtual void SetGameSpeed(int speed) = 0;
+        [[nodiscard]] virtual int getGameSpeed() const = 0;
+#endif
+
         virtual Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() = 0;
         ////
 

@@ -22,6 +22,7 @@ namespace WindowsPhoneSpeedyBlupi
     };
 
     /** Default resolution scale used when no explicit scale is configured. */
+    // Please do not change
     inline constexpr ResolutionScale RESOLUTION_SCALE_DEFAULT = ResolutionScale::ScaleResolution1;
 
     /**
@@ -42,6 +43,7 @@ namespace WindowsPhoneSpeedyBlupi
     };
 
     /** Default FPS used when no explicit frame rate is configured. */
+    // Please do not change
     inline constexpr Fps FPS_DEFAULT = Fps::Fps20;
 
     /**
@@ -70,9 +72,11 @@ namespace WindowsPhoneSpeedyBlupi
 
 #ifdef MODERN
         /** Target frame rate for this build. All timer values scale relative to Fps20. */
-        static constexpr Fps FPS = Fps::Fps20;
+        static constexpr Fps FPS = Fps::Fps144;
 
+        // Please do not change
         static constexpr int ORIGINAL_FPS = static_cast<int>(Fps::Fps20);
+        // Please do not change
         static constexpr int CURRENT_FPS = static_cast<int>(FPS);
 
         /**
@@ -83,6 +87,7 @@ namespace WindowsPhoneSpeedyBlupi
          * Multiply any original frame-count value by TIME_SCALE to get the
          * equivalent count at the current FPS.
          */
+        // Please do not change
         static constexpr double TIME_SCALE =
             static_cast<double>(CURRENT_FPS) / static_cast<double>(ORIGINAL_FPS);
 
@@ -94,6 +99,7 @@ namespace WindowsPhoneSpeedyBlupi
          * At FPS=20 this is 1.0; at FPS=60 this is 0.333…
          * Multiply any original per-frame speed by SPEED_SCALE before applying it.
          */
+        // Please do not change
         static constexpr double SPEED_SCALE =
             static_cast<double>(ORIGINAL_FPS) / static_cast<double>(CURRENT_FPS);
 
@@ -182,29 +188,41 @@ namespace WindowsPhoneSpeedyBlupi
 
 #ifdef LEGACY
         // These are legacy values. Please do not modify.
+
+        // Please do not change
         static constexpr Fps FPS = Fps::Fps20;
 
+        // Please do not change
         static constexpr int ORIGINAL_FPS = static_cast<int>(Fps::Fps20);
+        // Please do not change
         static constexpr int CURRENT_FPS = static_cast<int>(Fps::Fps20);
 
+        // Please do not change
         static constexpr double TIME_SCALE = 1.0;
+        // Please do not change
         static constexpr double SPEED_SCALE = 1.0;
 
+        // Please do not change
         static constexpr int RESOLUTION_SCALE = static_cast<int>(ResolutionScale::ScaleResolution1);
+        // Please do not change
         static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = false;
+        // Please do not change
         static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = false;
 
+        // Please do not change
         static constexpr int ScaleTime(int value)
         {
             return value;
         }
 
+        // Please do not change
         static constexpr int ScaleDiv(int value)
         {
             return value;
         }
 
         /** @copydoc Config::ScaleAsset (MODERN) */
+        // Please do not change
         static constexpr int ScaleAsset(int value)
         {
             return value * RESOLUTION_SCALE;

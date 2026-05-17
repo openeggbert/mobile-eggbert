@@ -311,6 +311,37 @@ namespace WindowsPhoneSpeedyBlupi
             fullscreen_timeout--;
         }
 
+#ifndef LEGACY
+        static bool F5_pressed_previously = false;
+        static bool F6_pressed_previously = false;
+        static bool F7_pressed_previously = false;
+        static bool F8_pressed_previously = false;
+        if (newKeyboardState.IsKeyDown(Keys::F5) && !F5_pressed_previously)
+        {
+            game1->SetGameSpeed(1);
+            INPUT_DEBUG("F5 was pressed: game speed set to 1x.");
+        }
+        F5_pressed_previously = newKeyboardState.IsKeyDown(Keys::F5);
+        if (newKeyboardState.IsKeyDown(Keys::F6) && !F6_pressed_previously)
+        {
+            game1->SetGameSpeed(2);
+            INPUT_DEBUG("F6 was pressed: game speed set to 2x.");
+        }
+        F6_pressed_previously = newKeyboardState.IsKeyDown(Keys::F6);
+        if (newKeyboardState.IsKeyDown(Keys::F7) && !F7_pressed_previously)
+        {
+            game1->SetGameSpeed(4);
+            INPUT_DEBUG("F7 was pressed: game speed set to 4x.");
+        }
+        F7_pressed_previously = newKeyboardState.IsKeyDown(Keys::F7);
+        if (newKeyboardState.IsKeyDown(Keys::F8) && !F8_pressed_previously)
+        {
+            game1->SetGameSpeed(8);
+            INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
+        }
+        F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
+#endif
+
         bool keyPressedUp = false;
         bool keyPressedDown = false;
         bool keyPressedLeft = false;

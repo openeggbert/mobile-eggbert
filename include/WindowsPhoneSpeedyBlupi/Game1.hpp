@@ -143,6 +143,11 @@ namespace WindowsPhoneSpeedyBlupi
         /** The mission to load after the current fade-out animation completes. */
         int fadeOutMission{0};
 
+#ifndef LEGACY
+        /** Current game speed multiplier: 1, 2, 4, or 8. */
+        int gameSpeed{1};
+#endif
+
     public:
         [[nodiscard]] bool getIsRankingModeProperty() const override;
 
@@ -208,6 +213,11 @@ namespace WindowsPhoneSpeedyBlupi
     public:
         void ToggleFullScreen() override;
         bool IsFullScreen() override;
+
+#ifndef LEGACY
+        void SetGameSpeed(int speed) override;
+        [[nodiscard]] int getGameSpeed() const override;
+#endif
 
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() override;
 
