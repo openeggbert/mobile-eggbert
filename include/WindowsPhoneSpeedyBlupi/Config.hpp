@@ -36,7 +36,7 @@ namespace WindowsPhoneSpeedyBlupi
 
 #ifdef MODERN
         /** Target frame rate for this build. All timer values scale relative to Fps20. */
-        static constexpr Fps FPS = Fps::Fps20;
+        static constexpr Fps FPS = Fps::Fps144;
         
         // Please do not change
         static constexpr int CURRENT_FPS = static_cast<int>(FPS);

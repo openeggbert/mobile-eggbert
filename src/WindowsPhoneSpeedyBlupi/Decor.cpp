@@ -469,6 +469,9 @@ namespace WindowsPhoneSpeedyBlupi
             m_hotSpotFinalX = getDrawBoundsProperty().getWidthProperty() / 2;
             m_hotSpotFinalY = getDrawBoundsProperty().getHeightProperty() / 2;
         }
+#ifdef MODERN
+        m_hotSpotFinalZoom *= m_cheatZoomFactor;
+#endif
         m_hotSpotStepZoom = Config::SPEED_SCALE / 30.0;
         m_hotSpotStepX = 10.0 * Config::SPEED_SCALE;
         m_hotSpotStepY = 10.0 * Config::SPEED_SCALE;
@@ -520,6 +523,24 @@ namespace WindowsPhoneSpeedyBlupi
         TinyRect rect{};
         rect.Left = pos.X % 640;
         rect.Right = 640;
+#ifdef MODERN
+        // When zoomed out, the hotspot transform shrinks all world sprites toward the
+        // screen centre.  Extra world tiles must be rendered on all sides so that the
+        // enlarged visible area is filled with actual content instead of black/empty space.
+        int zoomExtraX = 0;
+        int zoomExtraY = 0;
+        if (m_cheatZoomFactor > 0.0 && m_cheatZoomFactor < 1.0)
+        {
+            // How many extra pixels are needed outside each screen edge after the
+            // inverse zoom:  extraPx = screenHalf * (1/zoom - 1)
+            // Round up to the nearest 64-pixel tile boundary.
+            double invScale = 1.0 / m_cheatZoomFactor - 1.0;
+            zoomExtraX = static_cast<int>(
+                std::ceil(m_drawBounds.getWidthProperty()  * 0.5 * invScale / 64.0));
+            zoomExtraY = static_cast<int>(
+                std::ceil(m_drawBounds.getHeightProperty() * 0.5 * invScale / 64.0));
+        }
+#endif
         for (int i = 0; i < 3; i++)
         {
             tinyPoint.Y = m_drawBounds.Top;
@@ -540,11 +561,19 @@ namespace WindowsPhoneSpeedyBlupi
                 break;
             }
         }
+#ifdef MODERN
+        tinyPoint.X = m_drawBounds.Left - posDecor.X % 64 - 64 - zoomExtraX * 64;
+        for (int i = posDecor.X / 64 - 1 - zoomExtraX; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 3 + zoomExtraX; i++)
+        {
+            tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64 + 2 - 64 - zoomExtraY * 64;
+            for (int j = posDecor.Y / 64 - 1 - zoomExtraY; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2 + zoomExtraY; j++)
+#else
         tinyPoint.X = m_drawBounds.Left - posDecor.X % 64 - 64;
         for (int i = posDecor.X / 64 - 1; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 3; i++)
         {
             tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64 + 2 - 64;
             for (int j = posDecor.Y / 64 - 1; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
+#endif
             {
                 if (i >= 0 && i < 100 && j >= 0 && j < 100)
                 {
@@ -574,11 +603,19 @@ namespace WindowsPhoneSpeedyBlupi
             }
             tinyPoint.X += 64;
         }
+#ifdef MODERN
+        tinyPoint.X = m_drawBounds.Left - posDecor.X % 64 - zoomExtraX * 64;
+        for (int i = posDecor.X / 64 - zoomExtraX; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2 + zoomExtraX; i++)
+        {
+            tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64 - zoomExtraY * 64;
+            for (int j = posDecor.Y / 64 - zoomExtraY; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2 + zoomExtraY; j++)
+#else
         tinyPoint.X = m_drawBounds.Left - posDecor.X % 64;
         for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2; i++)
         {
             tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64;
             for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
+#endif
             {
                 if (i >= 0 && i < 100 && j >= 0 && j < 100 && m_decor[i][j].icon != -1)
                 {
@@ -671,6 +708,15 @@ namespace WindowsPhoneSpeedyBlupi
         }
         for (int num3 = MAXMOVEOBJECT - 1; num3 >= 0; num3--)
         {
+#ifdef MODERN
+            if (m_moveObject[num3].type != ObjectType::ObjectType0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 - zoomExtraX * 64 && m_moveObject[num3]
+                .posCurrent.Y >= posDecor.Y - 64 - zoomExtraY * 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.
+                getWidthProperty() + zoomExtraX * 64 && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty() + zoomExtraY * 64
+                && (m_moveObject[num3].type < ObjectType::ObjectType8 || m_moveObject[num3].type > ObjectType::ObjectType11) && (m_moveObject[num3].type < ObjectType::ObjectType90 ||
+                    m_moveObject[num3].type > ObjectType::ObjectType95) && (m_moveObject[num3].type < ObjectType::ObjectType98 || m_moveObject[num3].type > ObjectType::ObjectType100) &&
+                m_moveObject[num3].type != ObjectType::ObjectType53 && m_moveObject[num3].type != ObjectType::ObjectType1 && m_moveObject[num3].type != ObjectType::ObjectType47 &&
+                m_moveObject[num3].type != ObjectType::ObjectType48)
+#else
             if (m_moveObject[num3].type != ObjectType::ObjectType0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3]
                 .posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.
                 getWidthProperty() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty()
@@ -678,6 +724,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[num3].type > ObjectType::ObjectType95) && (m_moveObject[num3].type < ObjectType::ObjectType98 || m_moveObject[num3].type > ObjectType::ObjectType100) &&
                 m_moveObject[num3].type != ObjectType::ObjectType53 && m_moveObject[num3].type != ObjectType::ObjectType1 && m_moveObject[num3].type != ObjectType::ObjectType47 &&
                 m_moveObject[num3].type != ObjectType::ObjectType48)
+#endif
             {
                 tinyPoint.X = m_drawBounds.Left + m_moveObject[num3].posCurrent.X - posDecor.X;
                 tinyPoint.Y = m_drawBounds.Top + m_moveObject[num3].posCurrent.Y - posDecor.Y;
@@ -717,11 +764,19 @@ namespace WindowsPhoneSpeedyBlupi
                 }
             }
         }
+#ifdef MODERN
+        tinyPoint.X = m_drawBounds.Left - posDecor.X % 64 - zoomExtraX * 64;
+        for (int i = posDecor.X / 64 - zoomExtraX; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2 + zoomExtraX; i++)
+        {
+            tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64 - zoomExtraY * 64;
+            for (int j = posDecor.Y / 64 - zoomExtraY; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2 + zoomExtraY; j++)
+#else
         tinyPoint.X = m_drawBounds.Left - posDecor.X % 64;
         for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2; i++)
         {
             tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64;
             for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
+#endif
             {
                 if (i >= 0 && i < 100 && j >= 0 && j < 100 && m_decor[i][j].icon != -1)
                 {
@@ -798,21 +853,36 @@ namespace WindowsPhoneSpeedyBlupi
         }
         for (int num3 = 0; num3 < MAXMOVEOBJECT; num3++)
         {
+#ifdef MODERN
+            if ((m_moveObject[num3].type == ObjectType::ObjectType1 || m_moveObject[num3].type == ObjectType::ObjectType47 || m_moveObject[num3].type == ObjectType::ObjectType48) &&
+                m_moveObject[num3].posCurrent.X >= posDecor.X - 64 - zoomExtraX * 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64 - zoomExtraY * 64
+                && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidthProperty() + zoomExtraX * 64 && m_moveObject[num3]
+                .posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty() + zoomExtraY * 64)
+#else
             if ((m_moveObject[num3].type == ObjectType::ObjectType1 || m_moveObject[num3].type == ObjectType::ObjectType47 || m_moveObject[num3].type == ObjectType::ObjectType48) &&
                 m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3].posCurrent.Y >= posDecor.Y - 64
                 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.getWidthProperty() && m_moveObject[num3]
                 .posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty())
+#endif
             {
                 tinyPoint.X = m_drawBounds.Left + m_moveObject[num3].posCurrent.X - posDecor.X;
                 tinyPoint.Y = m_drawBounds.Top + m_moveObject[num3].posCurrent.Y - posDecor.Y;
                 m_pixmap->QuickIcon(m_moveObject[num3].channel, m_moveObject[num3].icon, tinyPoint);
             }
         }
+#ifdef MODERN
+        tinyPoint.X = m_drawBounds.Left - posDecor.X % 64 - zoomExtraX * 64;
+        for (int i = posDecor.X / 64 - zoomExtraX; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2 + zoomExtraX; i++)
+        {
+            tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64 - zoomExtraY * 64;
+            for (int j = posDecor.Y / 64 - zoomExtraY; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2 + zoomExtraY; j++)
+#else
         tinyPoint.X = m_drawBounds.Left - posDecor.X % 64;
         for (int i = posDecor.X / 64; i < posDecor.X / 64 + m_drawBounds.getWidthProperty() / 64 + 2; i++)
         {
             tinyPoint.Y = m_drawBounds.Top - posDecor.Y % 64;
             for (int j = posDecor.Y / 64; j < posDecor.Y / 64 + m_drawBounds.getHeightProperty() / 64 + 2; j++)
+#endif
             {
                 if (i >= 0 && i < 100 && j >= 0 && j < 100 && m_decor[i][j].icon != -1)
                 {
@@ -923,6 +993,15 @@ namespace WindowsPhoneSpeedyBlupi
         ByeByeDraw(posDecor);
         for (int num3 = 0; num3 < MAXMOVEOBJECT; num3++)
         {
+#ifdef MODERN
+            if (m_moveObject[num3].type != ObjectType::ObjectType0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 - zoomExtraX * 64 && m_moveObject[num3]
+                .posCurrent.Y >= posDecor.Y - 64 - zoomExtraY * 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.
+                getWidthProperty() + zoomExtraX * 64 && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty() + zoomExtraY * 64
+                && ((m_moveObject[num3].type >= ObjectType::ObjectType8 && m_moveObject[num3].type <= ObjectType::ObjectType11) || (m_moveObject[num3].type >= ObjectType::ObjectType90 &&
+                        m_moveObject[num3].type <= ObjectType::ObjectType95) || (m_moveObject[num3].type >= ObjectType::ObjectType98 && m_moveObject[num3].type <=
+                        ObjectType::ObjectType100)
+                    || m_moveObject[num3].type == ObjectType::ObjectType53))
+#else
             if (m_moveObject[num3].type != ObjectType::ObjectType0 && m_moveObject[num3].posCurrent.X >= posDecor.X - 64 && m_moveObject[num3]
                 .posCurrent.Y >= posDecor.Y - 64 && m_moveObject[num3].posCurrent.X <= posDecor.X + m_drawBounds.
                 getWidthProperty() && m_moveObject[num3].posCurrent.Y <= posDecor.Y + m_drawBounds.getHeightProperty()
@@ -930,6 +1009,7 @@ namespace WindowsPhoneSpeedyBlupi
                         m_moveObject[num3].type <= ObjectType::ObjectType95) || (m_moveObject[num3].type >= ObjectType::ObjectType98 && m_moveObject[num3].type <=
                         ObjectType::ObjectType100)
                     || m_moveObject[num3].type == ObjectType::ObjectType53))
+#endif
             {
                 tinyPoint.X = m_drawBounds.Left + m_moveObject[num3].posCurrent.X - posDecor.X;
                 tinyPoint.Y = m_drawBounds.Top + m_moveObject[num3].posCurrent.Y - posDecor.Y;
@@ -10897,6 +10977,11 @@ namespace WindowsPhoneSpeedyBlupi
     bool Decor::IsGhost()
     {
         return m_blupiGhost;
+    }
+
+    void Decor::SetCheatZoom(double factor)
+    {
+        m_cheatZoomFactor = factor;
     }
 #endif
 

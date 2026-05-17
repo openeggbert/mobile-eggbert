@@ -11,6 +11,7 @@
 #include "WindowsPhoneSpeedyBlupi/IPixmap.hpp"
 #include "WindowsPhoneSpeedyBlupi/Slider.hpp"
 #include "WindowsPhoneSpeedyBlupi/ISound.hpp"
+#include "WindowsPhoneSpeedyBlupi/def/Zoom.hpp"
 
 #define VECTOR_CONTAINS(vector, element) count( vector .begin(), vector. end(), element );
 
@@ -115,6 +116,8 @@ namespace WindowsPhoneSpeedyBlupi
         bool quick_cheat_enabled = false;
         /** True when the ghost cheat is currently enabled (mirrors decor->IsGhost()). */
         bool ghost_cheat_enabled = false;
+        /** Current zoom cheat state. */
+        ZoomCheat zoom_cheat_state = ZoomCheat::Zoom100;
 #endif
 
     public:

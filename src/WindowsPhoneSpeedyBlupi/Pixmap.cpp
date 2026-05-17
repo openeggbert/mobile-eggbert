@@ -647,6 +647,24 @@ namespace WindowsPhoneSpeedyBlupi
             scaledRightX += (intcs)hotSpotX;
             scaledBottomY += (intcs)hotSpotY;
         }
+#ifdef MODERN
+        else if (useHotSpot && hotSpotZoom > 0.0 && hotSpotZoom < 1.0)
+        {
+            // Zoom-out: scale coordinates relative to hotspot center.
+            scaledLeftX -= (intcs)hotSpotX;
+            scaledTopY -= (intcs)hotSpotY;
+            scaledRightX -= (intcs)hotSpotX;
+            scaledBottomY -= (intcs)hotSpotY;
+            scaledLeftX = (intcs)((double)scaledLeftX * hotSpotZoom);
+            scaledTopY = (intcs)((double)scaledTopY * hotSpotZoom);
+            scaledRightX = (intcs)((double)scaledRightX * hotSpotZoom);
+            scaledBottomY = (intcs)((double)scaledBottomY * hotSpotZoom);
+            scaledLeftX += (intcs)hotSpotX;
+            scaledTopY += (intcs)hotSpotY;
+            scaledRightX += (intcs)hotSpotX;
+            scaledBottomY += (intcs)hotSpotY;
+        }
+#endif
         return Microsoft::Xna::Framework::Rectangle(scaledLeftX, scaledTopY, scaledRightX - scaledLeftX,
                                                     scaledBottomY - scaledTopY);
     }

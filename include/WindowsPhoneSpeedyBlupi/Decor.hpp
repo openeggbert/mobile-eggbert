@@ -327,6 +327,9 @@ namespace WindowsPhoneSpeedyBlupi
 #ifdef MODERN
         /** True when the Ghost cheat mode is active (semi-transparent, free flight, no interactions). */
         bool m_blupiGhost = false;
+
+        /** Cheat zoom multiplier applied to hotspot zoom: 1.0 = normal, 0.75 = 25% out, 0.5 = 50% out. */
+        double m_cheatZoomFactor = 1.0;
 #endif
 
         /** True when Blupi's controls are inverted (left/right swapped). */
@@ -1153,6 +1156,16 @@ namespace WindowsPhoneSpeedyBlupi
         void AdaptDoors(bool bPrivate);
 
         bool IsGhost();
+
+#ifdef MODERN
+        /**
+         * @brief Sets the cheat zoom multiplier applied to the hotspot zoom.
+         *
+         * @param factor 1.0 = normal, 0.75 = 25% zoomed out, 0.5 = 50% zoomed out.
+         */
+        void SetCheatZoom(double factor);
+#endif
+
     private:
         void OpenDoorsTresor();
 

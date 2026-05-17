@@ -434,6 +434,7 @@ namespace WindowsPhoneSpeedyBlupi
                         { "quick",              Tables::CheatCodes::Quick,              true },
                         { "ghost",              Tables::CheatCodes::Ghost,              false },
                         { "debug",              Tables::CheatCodes::Debug,              true },
+                        { "zoom",               Tables::CheatCodes::Zoom,               false },
 #endif
                     };
                     static const int cheatEntriesCount = static_cast<int>(sizeof(cheatEntries) / sizeof(cheatEntries[0]));
@@ -457,12 +458,49 @@ namespace WindowsPhoneSpeedyBlupi
                             {
                                 debug_cheat_enabled = !debug_cheat_enabled;
                             }
+                            else if (cheatEntries[ci].code == Tables::CheatCodes::Zoom)
+                            {
+                                // Zoom is handled below in the post-action block.
+                            }
 #endif
                             else
                             {
                                 decor->CheatAction(cheatEntries[ci].code);
                             }
 #ifdef MODERN
+                            if (cheatEntries[ci].code == Tables::CheatCodes::Zoom)
+                            {
+                                // Cycle: Zoom100 -> Zoom50 -> Zoom25 -> Zoom12 -> Zoom100
+                                // Remove old zoom labels from activePersistentCheats.
+                                activePersistentCheats.erase(
+                                    std::remove_if(activePersistentCheats.begin(), activePersistentCheats.end(),
+                                        [](const std::string& s){ return s == "zoom50" || s == "zoom25" || s == "zoom12"; }),
+                                    activePersistentCheats.end());
+                                if (zoom_cheat_state == ZoomCheat::Zoom100)
+                                {
+                                    zoom_cheat_state = ZoomCheat::Zoom50;
+                                    decor->SetCheatZoom(0.5);
+                                    activePersistentCheats.push_back("zoom50");
+                                }
+                                else if (zoom_cheat_state == ZoomCheat::Zoom50)
+                                {
+                                    zoom_cheat_state = ZoomCheat::Zoom25;
+                                    decor->SetCheatZoom(0.25);
+                                    activePersistentCheats.push_back("zoom25");
+                                }
+                                else if (zoom_cheat_state == ZoomCheat::Zoom25)
+                                {
+                                    zoom_cheat_state = ZoomCheat::Zoom12;
+                                    decor->SetCheatZoom(0.125);
+                                    activePersistentCheats.push_back("zoom12");
+                                }
+                                else
+                                {
+                                    zoom_cheat_state = ZoomCheat::Zoom100;
+                                    decor->SetCheatZoom(1.0);
+                                    // No label added for Zoom100 (normal view).
+                                }
+                            }
                             if (cheatEntries[ci].code == Tables::CheatCodes::Debug)
                             {
                                 // handled above; no-op here
@@ -831,6 +869,19 @@ namespace WindowsPhoneSpeedyBlupi
             ),
             activePersistentCheats.end()
         );
+        // When leaving a level (not in Play phase), reset zoom cheat to normal.
+        if (getPhaseProperty() != Def::Phase::Play && zoom_cheat_state != ZoomCheat::Zoom100)
+        {
+            zoom_cheat_state = ZoomCheat::Zoom100;
+            if (decor != nullptr)
+            {
+                decor->SetCheatZoom(1.0);
+            }
+            activePersistentCheats.erase(
+                std::remove_if(activePersistentCheats.begin(), activePersistentCheats.end(),
+                    [](const std::string& s){ return s == "zoom50" || s == "zoom25" || s == "zoom12"; }),
+                activePersistentCheats.end());
+        }
 #endif
 #ifdef MODERN
         if (getPhaseProperty() == Def::Phase::Play && debug_cheat_enabled)
@@ -856,6 +907,17 @@ namespace WindowsPhoneSpeedyBlupi
             }
             dbgLines.push_back("ghost: " + std::string(ghost_cheat_enabled ? "true" : "false"));
             dbgLines.push_back("quick: " + std::string(quick_cheat_enabled ? "true" : "false"));
+            {
+                std::string zStr;
+                switch (zoom_cheat_state)
+                {
+                    case ZoomCheat::Zoom50:  zStr = "zoom50"; break;
+                    case ZoomCheat::Zoom25:  zStr = "zoom25"; break;
+                    case ZoomCheat::Zoom12:  zStr = "zoom12"; break;
+                    default:                 zStr = "off"; break;
+                }
+                dbgLines.push_back("zoom: " + zStr);
+            }
             dbgLines.push_back("cheatMenu: " + std::string(showCheatMenu ? "true" : "false"));
             dbgLines.push_back("touches: " + std::to_string(touchOrClickCount));
             dbgLines.push_back("pad: " + std::string(padPressed ? "true" : "false"));
