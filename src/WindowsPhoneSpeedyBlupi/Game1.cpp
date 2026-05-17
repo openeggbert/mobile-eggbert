@@ -67,7 +67,7 @@ namespace WindowsPhoneSpeedyBlupi
         graphics.setIsFullScreenProperty(false);
         string content = "Content";
         Game::getContentProperty().setRootDirectoryProperty(content);
-        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(500000L / TIME_SCALE));
+        Game::setTargetElapsedTimeProperty(System::TimeSpan::FromTicks(static_cast<long>(500000L / Config::TIME_SCALE)));
         Game::setInactiveSleepTimeProperty(System::TimeSpan::FromSeconds(1.0));
         missionToStart1 = -1;
         missionToStart2 = -1;
@@ -162,7 +162,7 @@ namespace WindowsPhoneSpeedyBlupi
         phaseTime++;
         if (fadeOutPhase != Def::Phase::None)
         {
-            if (phaseTime >= 20)
+            if (phaseTime >= Config::ScaleTime(20))
             {
                 SetPhase(fadeOutPhase);
             }
@@ -473,7 +473,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
         if (phase == Def::Phase::Init)
         {
-            double num = std::min((double)phaseTime / 20.0, 1.0);
+            double num = std::min((double)phaseTime / Config::ScaleTime(20), 1.0);
             TinyRect rect;
             double opacity;
             if (fadeOutPhase == Def::Phase::MainSetup)
@@ -502,7 +502,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (phase == Def::Phase::Init)
         {
-            double num = std::min((double)phaseTime / 20.0, 1.0);
+            double num = std::min((double)phaseTime / Config::ScaleTime(20), 1.0);
             double opacity;
             if (fadeOutPhase == Def::Phase::MainSetup)
             {
@@ -531,7 +531,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (fadeOutPhase == Def::Phase::Play)
             {
-                double num = std::min((double)phaseTime / 20.0, 1.0);
+                double num = std::min((double)phaseTime / Config::ScaleTime(20), 1.0);
                 double opacity = 1.0 - num;
                 num = 1.0 + num * 10.0;
                 TinyRect tinyRect4 = TinyRect();
@@ -544,7 +544,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             else if (fadeOutPhase == Def::Phase::PlaySetup)
             {
-                double num = std::min((double)phaseTime / 20.0, 1.0);
+                double num = std::min((double)phaseTime / Config::ScaleTime(20), 1.0);
                 num *= num;
                 TinyRect tinyRect5 = TinyRect();
                 tinyRect5.Left = (int)(213.0 + 800.0 * num);
@@ -559,11 +559,11 @@ namespace WindowsPhoneSpeedyBlupi
                 double num;
                 if (fadeOutPhase == Def::Phase::None)
                 {
-                    num = std::min((double)phaseTime / 15.0, 1.0);
+                    num = std::min((double)phaseTime / Config::ScaleTime(15), 1.0);
                 }
                 else
                 {
-                    num = std::min((double)phaseTime / 15.0, 1.0);
+                    num = std::min((double)phaseTime / Config::ScaleTime(15), 1.0);
                     num = 1.0 - num;
                 }
                 TinyRect tinyRect6 = TinyRect();
@@ -585,17 +585,17 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (phase == Def::Phase::MainSetup || phase == Def::Phase::PlaySetup)
         {
-            double num = std::min((double)phaseTime / 20.0, 1.0);
+            double num = std::min((double)phaseTime / Config::ScaleTime(20), 1.0);
             num = 1.0 - (1.0 - num) * (1.0 - num);
             double num2;
-            if (phaseTime < 20)
+            if (phaseTime < Config::ScaleTime(20))
             {
-                num2 = (double)phaseTime / 20.0;
+                num2 = (double)phaseTime / Config::ScaleTime(20);
                 num2 = 1.0 - (1.0 - num2) * (1.0 - num2);
             }
             else
             {
-                num2 = 1.0 + ((double)phaseTime - 20.0) / 400.0;
+                num2 = 1.0 + ((double)phaseTime - Config::ScaleTime(20)) / Config::ScaleTime(400);
             }
             if (fadeOutPhase != Def::Phase::None)
             {
@@ -628,7 +628,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (phase == Def::Phase::Lost)
         {
-            double num = std::min((double)phaseTime / 100.0, 1.0);
+            double num = std::min((double)phaseTime / Config::ScaleTime(100), 1.0);
             TinyRect tinyRect10 = TinyRect();
             tinyRect10.Left = (int)(418.0 - 205.0 * num);
             tinyRect10.Right = (int)(418.0 + 205.0 * num);
@@ -647,7 +647,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (phase == Def::Phase::Win)
         {
-            double num = std::sin(static_cast<double>(phaseTime) / 3.0) / 2.0 + 1.0;
+            double num = std::sin(static_cast<double>(phaseTime) / Config::ScaleTime(3)) / 2.0 + 1.0;
             TinyRect tinyRect11 = TinyRect();
             tinyRect11.Left = (int)(418.0 - 205.0 * num);
             tinyRect11.Right = (int)(418.0 + 205.0 * num);

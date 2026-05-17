@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 //#define LEGACY
 
 #ifndef LEGACY
@@ -22,34 +24,62 @@ namespace WindowsPhoneSpeedyBlupi
         Fps20 = 20,
         Fps30 = 30,
         Fps60 = 60,
+        Fps90 = 90,
         Fps120 = 120,
         Fps144 = 144,
     };
 
     inline Fps FPS_DEFAULT = Fps::Fps20;
 
+    struct Config
+    {
 #ifdef LEGACY
-    static constexpr bool LEGACY_ENABLED = true;
+        static constexpr bool LEGACY_ENABLED = true;
 #else
-    static constexpr bool LEGACY_ENABLED = false;
+        static constexpr bool LEGACY_ENABLED = false;
 #endif
 
 #ifdef MODERN
-    static constexpr Fps FPS = Fps::Fps20;
-    static constexpr double TIME_SCALE = static_cast<double>(FPS) / static_cast<double>(Fps::Fps20);
-    static constexpr double SPEED_SCALE = static_cast<double>(Fps::Fps20) / static_cast<double>(FPS);
-    static constexpr intcs RESOLUTION_SCALE = static_cast<intcs>(ResolutionScale::ScaleResolution1);
-    static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = true;
-    static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = false;
+        static constexpr Fps FPS = Fps::Fps20;
+        static constexpr double TIME_SCALE = static_cast<double>(FPS) / static_cast<double>(Fps::Fps20);
+        static constexpr double SPEED_SCALE = static_cast<double>(Fps::Fps20) / static_cast<double>(FPS);
+        static constexpr int RESOLUTION_SCALE = static_cast<int>(ResolutionScale::ScaleResolution1);
+        static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = true;
+        static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = false;
+
+        // Scale a frame-count timer value (delays, phases, cooldowns) to current FPS.
+        // At FPS=20: returns value unchanged. At FPS=60: returns value*3.
+        static constexpr int ScaleTime(int value)
+        {
+            return static_cast<int>(std::round(static_cast<double>(value) * TIME_SCALE));
+        }
+
+        // Scale an integer animation frame divisor to current FPS.
+        // At FPS=20: returns value unchanged. At FPS=60: returns value*3.
+        static constexpr int ScaleDiv(int value)
+        {
+            return static_cast<int>(std::round(static_cast<double>(value) * TIME_SCALE));
+        }
 #endif
 
 #ifdef LEGACY
-    // These are legacy values. Please, do not modify.
-    static constexpr Fps FPS = Fps::Fps20;
-    static constexpr double TIME_SCALE = static_cast<double>(FPS) / static_cast<double>(Fps::Fps20);
-    static constexpr double SPEED_SCALE = static_cast<double>(Fps::Fps20) / static_cast<double>(FPS);
-    static constexpr intcs RESOLUTION_SCALE = static_cast<intcs>(ResolutionScale::ResolutionScale);
-    static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = false;
-    static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = false;
+        // These are legacy values. Please do not modify.
+        static constexpr Fps FPS = Fps::Fps20;
+        static constexpr double TIME_SCALE = static_cast<double>(FPS) / static_cast<double>(Fps::Fps20);
+        static constexpr double SPEED_SCALE = static_cast<double>(Fps::Fps20) / static_cast<double>(FPS);
+        static constexpr int RESOLUTION_SCALE = static_cast<int>(ResolutionScale::ScaleResolution1);
+        static constexpr bool TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE = false;
+        static constexpr bool INPUT_DETAILED_DEBUGGING_ENABLED = false;
+
+        static constexpr int ScaleTime(int value)
+        {
+            return static_cast<int>(std::round(static_cast<double>(value) * TIME_SCALE));
+        }
+
+        static constexpr int ScaleDiv(int value)
+        {
+            return static_cast<int>(std::round(static_cast<double>(value) * TIME_SCALE));
+        }
 #endif
+    };
 }

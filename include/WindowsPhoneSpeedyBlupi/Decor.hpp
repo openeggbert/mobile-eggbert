@@ -121,6 +121,11 @@ namespace WindowsPhoneSpeedyBlupi
 
         double m_blupiVitesseY;
 
+        // Sub-pixel accumulators for Blupi physics at high FPS.
+        // Accumulates fractional pixel deltas so integer truncation doesn't cause height loss.
+        double m_blupiSubPixelX = 0.0;
+        double m_blupiSubPixelY = 0.0;
+
         intcs m_blupiIcon;
 
         SecretPower m_blupiSec;
