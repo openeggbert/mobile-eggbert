@@ -252,6 +252,9 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiPower = false;
         m_blupiCloud = false;
         m_blupiHide = false;
+#ifdef MODERN
+        m_blupiGhost = false;
+#endif
         m_blupiInvert = false;
         m_blupiBalloon = false;
         m_blupiEcrase = false;
@@ -310,6 +313,9 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiPower = false;
         m_blupiCloud = false;
         m_blupiHide = false;
+#ifdef MODERN
+        m_blupiGhost = false;
+#endif
         m_blupiInvert = false;
         m_blupiBalloon = false;
         m_blupiEcrase = false;
@@ -639,6 +645,13 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, 1.0, rotation);
             }
+#ifdef MODERN
+            else if (m_blupiGhost)
+            {
+                static constexpr double kGhostBlupiOpacity = 0.75;
+                m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, kGhostBlupiOpacity, rotation);
+            }
+#endif
             else if (m_blupiHide)
             {
                 m_blupiSec = SecretPower::Hide;
@@ -927,6 +940,14 @@ namespace WindowsPhoneSpeedyBlupi
         {
             tinyPoint.X = m_drawBounds.Left + m_blupiPos.X - posDecor.X;
             tinyPoint.Y = m_drawBounds.Top + m_blupiPos.Y - posDecor.Y;
+#ifdef MODERN
+            if (m_blupiGhost)
+            {
+                static constexpr double kGhostBlupiOpacity = 0.75;
+                m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint, kGhostBlupiOpacity, 0.0);
+            }
+            else
+#endif
             m_pixmap->QuickIcon(m_blupiChannel, m_blupiIcon, tinyPoint);
         }
         DrawInfo();
@@ -1748,6 +1769,45 @@ namespace WindowsPhoneSpeedyBlupi
         {
             m_blupiCle |= 7;
         }
+#ifdef MODERN
+        if (cheat == Tables::CheatCodes::Ghost)
+        {
+            if (!m_blupiGhost)
+            {
+                m_blupiGhost = true;
+                m_blupiHelico = false;
+                m_blupiOver = false;
+                m_blupiJeep = false;
+                m_blupiTank = false;
+                m_blupiSkate = false;
+                m_blupiNage = false;
+                m_blupiSurf = false;
+                m_blupiSuspend = false;
+                m_blupiAir = false;
+                m_blupiVitesseX = 0.0;
+                m_blupiVitesseY = 0.0;
+                m_blupiSubPixelX = 0.0;
+                m_blupiSubPixelY = 0.0;
+                m_blupiVector = TinyPoint();
+                m_blupiAction = BlupiAction::Stop;
+                m_blupiPhase = 0;
+            }
+            else
+            {
+                if (!DecorDetect(BlupiRect(m_blupiPos)))
+                {
+                    m_blupiGhost = false;
+                    m_blupiVitesseX = 0.0;
+                    m_blupiVitesseY = 0.0;
+                    m_blupiSubPixelX = 0.0;
+                    m_blupiSubPixelY = 0.0;
+                    m_blupiAction = BlupiAction::Stop;
+                    m_blupiPhase = 0;
+                    m_blupiAir = !BlupiIsGround();
+                }
+            }
+        }
+#endif
         if (!m_blupiShield && !m_blupiHide && !m_blupiCloud && !m_blupiPower)
         {
             m_jauges[1].SetHide(true);
@@ -2270,6 +2330,77 @@ namespace WindowsPhoneSpeedyBlupi
         return DecorDetect(rect);
     }
 
+#ifdef MODERN
+    void Decor::BlupiGhostStep()
+    {
+        // Ghost mode: free flying movement based on directional input, no gravity,
+        // no collision response. Only world bounds are enforced.
+        int dx = 0;
+        int dy = 0;
+        if constexpr (Config::FPS == Fps::Fps20)
+        {
+            dx = static_cast<int>(m_blupiSpeedX * 4.0);
+            dy = static_cast<int>(m_blupiSpeedY * 4.0);
+        }
+        else
+        {
+            m_blupiSubPixelX += m_blupiSpeedX * Config::SPEED_SCALE * 4.0;
+            m_blupiSubPixelY += m_blupiSpeedY * Config::SPEED_SCALE * 4.0;
+            dx = static_cast<int>(std::floor(m_blupiSubPixelX));
+            dy = static_cast<int>(std::floor(m_blupiSubPixelY));
+            m_blupiSubPixelX -= dx;
+            m_blupiSubPixelY -= dy;
+        }
+
+        if (dx != 0)
+        {
+            m_blupiDir = (dx < 0) ? Direction::Left : Direction::Right;
+        }
+
+        m_blupiPos.X += dx;
+        m_blupiPos.Y += dy;
+
+        // Clamp to world bounds (tile map is 100x100 tiles at 64px each = 6400px).
+        m_blupiPos.X = std::max(0, std::min(m_blupiPos.X, 6400 - 64));
+        m_blupiPos.Y = std::max(0, std::min(m_blupiPos.Y, 6400 - 64));
+
+        // Update animation: march when moving, stop when idle.
+        if (dx != 0 || dy != 0)
+        {
+            if (m_blupiAction != BlupiAction::March)
+            {
+                m_blupiAction = BlupiAction::March;
+                m_blupiPhase = 0;
+            }
+        }
+        else
+        {
+            if (m_blupiAction != BlupiAction::Stop)
+            {
+                m_blupiAction = BlupiAction::Stop;
+                m_blupiPhase = 0;
+            }
+        }
+
+        BlupiSearchIcon();
+
+        // Update camera/scroll so it follows Blupi during ghost flight (mirrors normal BlupiStep scroll logic).
+        TinyPoint ghostEnd;
+        ghostEnd.X = m_blupiPos.X + 30 + m_scrollAdd.X;
+        ghostEnd.Y = m_blupiPos.Y + 30 + m_scrollAdd.Y;
+        int ghostSpeed = SCROLL_SPEED;
+        int ghostDx = std::abs(m_scrollPoint.X - ghostEnd.X);
+        int ghostDy = std::abs(m_scrollPoint.Y - ghostEnd.Y);
+        if (ghostDx > SCROLL_MARGX * 2) { ghostSpeed += (ghostDx - SCROLL_MARGX * 2) / 4; }
+        if (ghostDy > SCROLL_MARGY * 2) { ghostSpeed += (ghostDy - SCROLL_MARGY * 2) / 4; }
+        if (m_scrollPoint.X < ghostEnd.X) { m_scrollPoint.X += ghostSpeed; if (m_scrollPoint.X >= ghostEnd.X) m_scrollPoint.X = ghostEnd.X; }
+        if (m_scrollPoint.X > ghostEnd.X) { m_scrollPoint.X -= ghostSpeed; if (m_scrollPoint.X <= ghostEnd.X) m_scrollPoint.X = ghostEnd.X; }
+        if (m_scrollPoint.Y < ghostEnd.Y) { m_scrollPoint.Y += ghostSpeed; if (m_scrollPoint.Y >= ghostEnd.Y) m_scrollPoint.Y = ghostEnd.Y; }
+        if (m_scrollPoint.Y > ghostEnd.Y) { m_scrollPoint.Y -= ghostSpeed; if (m_scrollPoint.Y <= ghostEnd.Y) m_scrollPoint.Y = ghostEnd.Y; }
+        m_posDecor = GetPosDecor(m_scrollPoint);
+    }
+#endif
+
     // Core Blupi physics and action state-machine update. Called once per frame from MoveStep().
     // Order of operations:
     //   1. BlupiAdjust() — resolves stuck-in-wall situations from the previous frame.
@@ -2286,6 +2417,13 @@ namespace WindowsPhoneSpeedyBlupi
     // Do not call this method directly; use MoveStep().
     void Decor::BlupiStep()
     {
+#ifdef MODERN
+        if (m_blupiGhost)
+        {
+            BlupiGhostStep();
+            return;
+        }
+#endif
         TinyPoint celSwitch;
         TinyPoint celBridge;
         BlupiAdjust();
@@ -6106,6 +6244,9 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiPower = false;
         m_blupiCloud = false;
         m_blupiHide = false;
+#ifdef MODERN
+        m_blupiGhost = false;
+#endif
         m_blupiInvert = false;
         m_blupiBalloon = false;
         m_blupiEcrase = false;
@@ -8890,6 +9031,12 @@ namespace WindowsPhoneSpeedyBlupi
 
     bool Decor::BlupiElectro(TinyPoint pos)
     {
+#ifdef MODERN
+        if (m_blupiGhost)
+        {
+            return false;
+        }
+#endif
         if (!m_blupiCloud)
         {
             return false;
@@ -8914,6 +9061,12 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Decor::MoveObjectFollow(TinyPoint pos)
     {
+#ifdef MODERN
+        if (m_blupiGhost)
+        {
+            return;
+        }
+#endif
         if (m_blupiHide)
         {
             return;
@@ -8942,6 +9095,13 @@ namespace WindowsPhoneSpeedyBlupi
 
     int Decor::MoveObjectDetect(TinyPoint pos, bool& bNear)
     {
+#ifdef MODERN
+        if (m_blupiGhost)
+        {
+            bNear = false;
+            return -1;
+        }
+#endif
         TinyRect src = BlupiRect(pos);
         src.Left = pos.X + 16;
         src.Right = pos.X + 60 - 16;
@@ -9049,6 +9209,12 @@ namespace WindowsPhoneSpeedyBlupi
 
     int Decor::MoveChargeDetect(TinyPoint pos)
     {
+#ifdef MODERN
+        if (m_blupiGhost)
+        {
+            return -1;
+        }
+#endif
         TinyRect src = TinyRect();
         src.Left = pos.X + 16;
         src.Right = pos.X + 60 - 16;
@@ -9075,6 +9241,12 @@ namespace WindowsPhoneSpeedyBlupi
 
     int Decor::MovePersoDetect(TinyPoint pos)
     {
+#ifdef MODERN
+        if (m_blupiGhost)
+        {
+            return -1;
+        }
+#endif
         TinyRect src = TinyRect();
         src.Left = pos.X + 16;
         src.Right = pos.X + 60 - 16;
@@ -10719,6 +10891,11 @@ namespace WindowsPhoneSpeedyBlupi
                 }
             }
         }
+    }
+
+    bool Decor::IsGhost()
+    {
+        return m_blupiGhost;
     }
 
     void Decor::OpenDoorsTresor()

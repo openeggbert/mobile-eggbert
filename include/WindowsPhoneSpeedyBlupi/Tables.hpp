@@ -66,6 +66,9 @@ namespace WindowsPhoneSpeedyBlupi
 #ifndef LEGACY
             ,Quick                 ///< The game speed can be switched to 2x, 4x or 8x
 #endif
+#ifdef MODERN
+            ,Ghost                 ///< Ghost mode: semi-transparent, free flight, no interactions.
+#endif
         };
 
         /**

@@ -8,6 +8,7 @@
 #include "WindowsPhoneSpeedyBlupi/def/Direction.hpp"
 #include "WindowsPhoneSpeedyBlupi/def/SecretPower.hpp"
 #include "WindowsPhoneSpeedyBlupi/def/KeyPressFlags.hpp"
+#include "WindowsPhoneSpeedyBlupi/def/GameSpeed.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {

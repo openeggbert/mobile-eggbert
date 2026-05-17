@@ -144,8 +144,8 @@ namespace WindowsPhoneSpeedyBlupi
         int fadeOutMission{0};
 
 #ifndef LEGACY
-        /** Current game speed multiplier: 1, 2, 4, or 8. */
-        int gameSpeed{1};
+        /** Current game speed multiplier: Normal, Fast, Faster, Fastest. */
+        GameSpeed gameSpeed{GameSpeed::Normal};
 #endif
 
     public:
@@ -215,8 +215,8 @@ namespace WindowsPhoneSpeedyBlupi
         bool IsFullScreen() override;
 
 #ifndef LEGACY
-        void SetGameSpeed(int speed) override;
-        [[nodiscard]] int getGameSpeed() const override;
+        void SetGameSpeed(GameSpeed speed) override;
+        [[nodiscard]] GameSpeed getGameSpeed() const override;
 #endif
 
         Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() override;

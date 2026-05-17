@@ -1,5 +1,6 @@
 #pragma once
 
+#include "WindowsPhoneSpeedyBlupi/Config.hpp"
 #include "GameData.hpp"
 #include "IPixmap.hpp"
 #include "ISound.hpp"
@@ -322,6 +323,11 @@ namespace WindowsPhoneSpeedyBlupi
 
         /** True when the Hide secret power is active (invisibility). */
         bool m_blupiHide;
+
+#ifdef MODERN
+        /** True when the Ghost cheat mode is active (semi-transparent, free flight, no interactions). */
+        bool m_blupiGhost = false;
+#endif
 
         /** True when Blupi's controls are inverted (left/right swapped). */
         bool m_blupiInvert;
@@ -803,6 +809,11 @@ namespace WindowsPhoneSpeedyBlupi
     private:
         void BlupiStep();
 
+#ifdef MODERN
+    private:
+        void BlupiGhostStep();
+#endif
+
     private:
         void BlupiDead(BlupiAction action1, std::optional<BlupiAction> action2 = std::nullopt);
 
@@ -1141,6 +1152,7 @@ namespace WindowsPhoneSpeedyBlupi
          */
         void AdaptDoors(bool bPrivate);
 
+        bool IsGhost();
     private:
         void OpenDoorsTresor();
 

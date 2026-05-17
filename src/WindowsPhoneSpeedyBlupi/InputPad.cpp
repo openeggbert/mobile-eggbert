@@ -320,42 +320,57 @@ namespace WindowsPhoneSpeedyBlupi
             fullscreen_timeout--;
         }
 
-#ifndef LEGACY
+#ifdef MODERN
         static bool quick_cheat_enabled = false;
+        static bool ghost_cheat_enabled = false;
 
+        if (ghost_cheat_enabled != decor->IsGhost())
+        {
+            ghost_cheat_enabled = decor->IsGhost();
+        }
+        static GameSpeed game_speed_before_quick_cheat{GameSpeed::Normal};
+
+        if (!quick_cheat_enabled && !ghost_cheat_enabled && game1->getGameSpeed() > GameSpeed::Fast)
+        {
+            game1->SetGameSpeed(GameSpeed::Normal);
+        }
         static bool F5_pressed_previously = false;
         static bool F6_pressed_previously = false;
         static bool F7_pressed_previously = false;
         static bool F8_pressed_previously = false;
 
-        if (newKeyboardState.IsKeyDown(Keys::F5) && !F5_pressed_previously)
+        if (!ghost_cheat_enabled)
         {
-            game1->SetGameSpeed(1);
-            INPUT_DEBUG("F5 was pressed: game speed set to 1x.");
-        }
-        F5_pressed_previously = newKeyboardState.IsKeyDown(Keys::F5);
-        if (newKeyboardState.IsKeyDown(Keys::F6) && !F6_pressed_previously)
-        {
-            game1->SetGameSpeed(2);
-            INPUT_DEBUG("F6 was pressed: game speed set to 2x.");
-        }
-        F6_pressed_previously = newKeyboardState.IsKeyDown(Keys::F6);
+            if (newKeyboardState.IsKeyDown(Keys::F5) && !F5_pressed_previously)
+            {
+                game1->SetGameSpeed(ToGameSpeed(Keys::F5));
+                INPUT_DEBUG("F5 was pressed: game speed set to 1x.");
+            }
+            F5_pressed_previously = newKeyboardState.IsKeyDown(Keys::F5);
+            if (newKeyboardState.IsKeyDown(Keys::F6) && !F6_pressed_previously)
+            {
+                game1->SetGameSpeed(ToGameSpeed(Keys::F6));
+                INPUT_DEBUG("F6 was pressed: game speed set to 2x.");
+            }
+            F6_pressed_previously = newKeyboardState.IsKeyDown(Keys::F6);
 
-        if (quick_cheat_enabled)
-        {
-            if (newKeyboardState.IsKeyDown(Keys::F7) && !F7_pressed_previously)
+            if (quick_cheat_enabled)
             {
-                game1->SetGameSpeed(4);
-                INPUT_DEBUG("F7 was pressed: game speed set to 4x.");
+                if (newKeyboardState.IsKeyDown(Keys::F7) && !F7_pressed_previously)
+                {
+                    game1->SetGameSpeed(ToGameSpeed(Keys::F7));
+                    INPUT_DEBUG("F7 was pressed: game speed set to 4x.");
+                }
+                F7_pressed_previously = newKeyboardState.IsKeyDown(Keys::F7);
+                if (newKeyboardState.IsKeyDown(Keys::F8) && !F8_pressed_previously)
+                {
+                    game1->SetGameSpeed(ToGameSpeed(Keys::F8));
+                    INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
+                }
+                F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
             }
-            F7_pressed_previously = newKeyboardState.IsKeyDown(Keys::F7);
-            if (newKeyboardState.IsKeyDown(Keys::F8) && !F8_pressed_previously)
-            {
-                game1->SetGameSpeed(8);
-                INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
-            }
-            F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
         }
+
         static bool F12_pressed_previously = false;
         if (newKeyboardState.IsKeyDown(Keys::F12) && !F12_pressed_previously)
         {
@@ -416,7 +431,10 @@ namespace WindowsPhoneSpeedyBlupi
                         { "iovercraft",             Tables::CheatCodes::Overcraft,             false  },
                         { "udynamite",              Tables::CheatCodes::Dynamite,              false },
                         { "weelkeys",              Tables::CheatCodes::WeelKeys,              false },
+#ifdef MODERN
                         { "quick",              Tables::CheatCodes::Quick,              true },
+                        { "ghost",              Tables::CheatCodes::Ghost,              false },
+#endif
                     };
                     static const int cheatEntriesCount = static_cast<int>(sizeof(cheatEntries) / sizeof(cheatEntries[0]));
 
@@ -429,14 +447,34 @@ namespace WindowsPhoneSpeedyBlupi
                             if (cheatEntries[ci].code == Tables::CheatCodes::Quick)
                             {
                                 quick_cheat_enabled = ! quick_cheat_enabled;
-                                if (!quick_cheat_enabled && game1->getGameSpeed() > 2)
+                                if (!quick_cheat_enabled && game1->getGameSpeed() > GameSpeed::Fast)
                                 {
-                                    game1->SetGameSpeed(2);
+                                    game1->SetGameSpeed(GameSpeed::Fast);
                                 }
                             } else
                             {
                                 decor->CheatAction(cheatEntries[ci].code);
                             }
+#ifdef MODERN
+                            if (cheatEntries[ci].code == Tables::CheatCodes::Ghost)
+                            {
+                                ghost_cheat_enabled = decor->IsGhost();
+                                // Sync activePersistentCheats based on the real runtime ghost state.
+                                activePersistentCheats.erase(
+                                    std::remove(activePersistentCheats.begin(), activePersistentCheats.end(), std::string("ghost")),
+                                    activePersistentCheats.end());
+                                if (ghost_cheat_enabled)
+                                {
+                                    activePersistentCheats.push_back("ghost");
+                                    game_speed_before_quick_cheat = game1->getGameSpeed();
+                                    game1->SetGameSpeed(GameSpeed::Faster);
+                                }
+                                else
+                                {
+                                    game1->SetGameSpeed(game_speed_before_quick_cheat);
+                                }
+                            }
+#endif
                             if (cheatEntries[ci].code == Tables::CheatCodes::OpenDoors)
                             {
                                 decor->CheatAction(Tables::CheatCodes::WeelKeys);
@@ -768,6 +806,21 @@ namespace WindowsPhoneSpeedyBlupi
         {
             accelSlider.Draw(*pixmap);
         }
+#ifdef MODERN
+        // Sync ghost entry in activePersistentCheats with the actual runtime ghost state,
+        // so the UI label is never shown after Back/level-exit when ghost is no longer active.
+        activePersistentCheats.erase(
+            std::remove_if(
+                activePersistentCheats.begin(),
+                activePersistentCheats.end(),
+                [this](const std::string& cheatName)
+                {
+                    return cheatName == "ghost" && (decor == nullptr || !decor->IsGhost());
+                }
+            ),
+            activePersistentCheats.end()
+        );
+#endif
 #ifndef LEGACY
         if (getPhaseProperty() == Def::Phase::Play && !activePersistentCheats.empty())
         {
@@ -799,11 +852,11 @@ namespace WindowsPhoneSpeedyBlupi
 #ifdef MODERN
         if (getPhaseProperty() == Def::Phase::Play && game1 != nullptr)
         {
-            int spd = game1->getGameSpeed();
-            if (spd > 1)
+            GameSpeed spd = game1->getGameSpeed();
+            if (spd > GameSpeed::Normal)
             {
                 TinyRect drawBounds = pixmap->getDrawBoundsProperty();
-                std::string speedText = std::to_string(spd) + "x";
+                std::string speedText = std::to_string(ToRaw(spd)) + "x";
                 constexpr double speedTextScale = 0.55;
                 constexpr int padding = 3;
                 int textW = Text::GetTextWidth(speedText, speedTextScale);

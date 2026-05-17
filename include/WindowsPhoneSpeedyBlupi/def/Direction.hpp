@@ -16,7 +16,7 @@ namespace WindowsPhoneSpeedyBlupi
      * @note This is gameplay/logic state, not a rendering flag. Do not use it as
      *       a direct sprite index or SpriteEffects value without the animation table lookup.
      */
-    enum class Direction : SharpRuntime::ushortcs
+    enum class Direction : DirectionUnderlying
     {
         None  = 0,
         Left  = 1,   ///< Facing left (DIR_LEFT).
