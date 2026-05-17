@@ -335,9 +335,10 @@ namespace WindowsPhoneSpeedyBlupi
 
         {
             // Activation area: top-left 10% of screen width and height (screen-space pixels).
-            const int kActivationW = static_cast<int>(screenWidth * 0.10f);
-            const int kActivationH = static_cast<int>(screenHeight * 0.10f);
-            constexpr int kHoldFrames = 2 * Config::CURRENT_FPS;  // 2 seconds
+            const int kLargerDim   = std::max(screenWidth, screenHeight);
+            const int kActivationW = static_cast<int>(kLargerDim * 0.20f);
+            const int kActivationH = static_cast<int>(kLargerDim * 0.10f);
+            constexpr int kHoldFrames = 1 * Config::CURRENT_FPS;  // 1 second
 
             bool inActivationArea = false;
             for (const TinyPoint& tp : touchesOrClicks)
@@ -918,6 +919,14 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 verticalChange = 1.0;
             }
+#ifdef MODERN
+            // In ghost mode, the Jump button moves Blupi upward (verticalChange = -1).
+            if (decor != nullptr && decor->IsGhost()
+                && ((unsigned int)keyPress & ToRaw(KeyPressFlags::Jump)) != 0)
+            {
+                verticalChange = -1.0;
+            }
+#endif
         }
         decor->SetSpeedX(horizontalChange);
         decor->SetSpeedY(verticalChange);
