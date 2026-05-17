@@ -68,6 +68,7 @@ namespace WindowsPhoneSpeedyBlupi
 #endif
 #ifdef MODERN
             ,Ghost                 ///< Ghost mode: semi-transparent, free flight, no interactions.
+            ,Debug                 ///< Debug overlay: shows runtime state in top-right corner.
 #endif
         };
 

@@ -108,6 +108,14 @@ namespace WindowsPhoneSpeedyBlupi
         /** Debounce state for letter keys A-Z (index 0=A, 25=Z). */
         bool letterPrev[26] = {};
 #endif
+#ifdef MODERN
+        /** True when the debug overlay cheat is currently enabled. */
+        bool debug_cheat_enabled = false;
+        /** True when the quick cheat is currently enabled. */
+        bool quick_cheat_enabled = false;
+        /** True when the ghost cheat is currently enabled (mirrors decor->IsGhost()). */
+        bool ghost_cheat_enabled = false;
+#endif
 
     public:
         DDATA(Def::Phase, Phase)

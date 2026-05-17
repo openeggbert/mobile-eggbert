@@ -10893,10 +10893,12 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+#ifdef MODERN
     bool Decor::IsGhost()
     {
         return m_blupiGhost;
     }
+#endif
 
     void Decor::OpenDoorsTresor()
     {

@@ -321,8 +321,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
 #ifdef MODERN
-        static bool quick_cheat_enabled = false;
-        static bool ghost_cheat_enabled = false;
+        // quick_cheat_enabled, ghost_cheat_enabled, debug_cheat_enabled are member fields.
 
         if (ghost_cheat_enabled != decor->IsGhost())
         {
@@ -434,6 +433,7 @@ namespace WindowsPhoneSpeedyBlupi
 #ifdef MODERN
                         { "quick",              Tables::CheatCodes::Quick,              true },
                         { "ghost",              Tables::CheatCodes::Ghost,              false },
+                        { "debug",              Tables::CheatCodes::Debug,              true },
 #endif
                     };
                     static const int cheatEntriesCount = static_cast<int>(sizeof(cheatEntries) / sizeof(cheatEntries[0]));
@@ -451,11 +451,22 @@ namespace WindowsPhoneSpeedyBlupi
                                 {
                                     game1->SetGameSpeed(GameSpeed::Fast);
                                 }
-                            } else
+                            }
+#ifdef MODERN
+                            else if (cheatEntries[ci].code == Tables::CheatCodes::Debug)
+                            {
+                                debug_cheat_enabled = !debug_cheat_enabled;
+                            }
+#endif
+                            else
                             {
                                 decor->CheatAction(cheatEntries[ci].code);
                             }
 #ifdef MODERN
+                            if (cheatEntries[ci].code == Tables::CheatCodes::Debug)
+                            {
+                                // handled above; no-op here
+                            }
                             if (cheatEntries[ci].code == Tables::CheatCodes::Ghost)
                             {
                                 ghost_cheat_enabled = decor->IsGhost();
@@ -820,6 +831,61 @@ namespace WindowsPhoneSpeedyBlupi
             ),
             activePersistentCheats.end()
         );
+#endif
+#ifdef MODERN
+        if (getPhaseProperty() == Def::Phase::Play && debug_cheat_enabled)
+        {
+            constexpr double dbgScale = 0.50;
+            constexpr int dbgLineH = 16;
+            constexpr int dbgPadding = 3;
+            TinyPoint origin = pixmap->getOriginProperty();
+            std::vector<std::string> dbgLines;
+            {
+                std::string phaseStr;
+                switch (getPhaseProperty())
+                {
+                    case Def::Phase::Play:      phaseStr = "Play"; break;
+                    case Def::Phase::First:     phaseStr = "Init"; break;
+                    default:                    phaseStr = "Other"; break;
+                }
+                dbgLines.push_back("phase: " + phaseStr);
+            }
+            if (game1 != nullptr)
+            {
+                dbgLines.push_back("speed: " + std::to_string(ToRaw(game1->getGameSpeed())) + "x");
+            }
+            dbgLines.push_back("ghost: " + std::string(ghost_cheat_enabled ? "true" : "false"));
+            dbgLines.push_back("quick: " + std::string(quick_cheat_enabled ? "true" : "false"));
+            dbgLines.push_back("cheatMenu: " + std::string(showCheatMenu ? "true" : "false"));
+            dbgLines.push_back("touches: " + std::to_string(touchOrClickCount));
+            dbgLines.push_back("pad: " + std::string(padPressed ? "true" : "false"));
+            dbgLines.push_back("accel: " + std::string(accelStarted ? "true" : "false"));
+            int maxW = 0;
+            for (const auto& l : dbgLines)
+            {
+                int w = Text::GetTextWidth(l, dbgScale);
+                if (w > maxW) maxW = w;
+            }
+            int totalH = static_cast<int>(dbgLines.size()) * dbgLineH;
+            // Use fixed logical game width (640) so the overlay stays in the
+            // visible area regardless of screen aspect ratio.
+            constexpr int kLogicalWidth = 640;
+            int rightEdge = kLogicalWidth - 5;
+            int leftEdge  = rightEdge - maxW;
+            TinyRect bgRect;
+            bgRect.Left   = leftEdge - dbgPadding + origin.X;
+            bgRect.Right  = rightEdge + dbgPadding + origin.X;
+            bgRect.Top    = 5 - dbgPadding + origin.Y;
+            bgRect.Bottom = 5 + totalH + dbgPadding + origin.Y;
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, bgRect, 0.6, false);
+            int posY = 5;
+            for (const auto& l : dbgLines)
+            {
+                TinyPoint pos{leftEdge, posY};
+                Text::DrawTextLeft(*pixmap, pos, l, dbgScale);
+                posY += dbgLineH;
+            }
+        }
 #endif
 #ifndef LEGACY
         if (getPhaseProperty() == Def::Phase::Play && !activePersistentCheats.empty())
