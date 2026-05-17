@@ -22,6 +22,17 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    // Scales a source rectangle from 1x logical coordinates to loaded-texture pixels.
+    // Destination rectangles and game coordinates are left unchanged.
+    static TinyRect ScaleSourceRect(TinyRect rect)
+    {
+        return TinyRect(
+            rect.Left   * Config::RESOLUTION_SCALE,
+            rect.Right  * Config::RESOLUTION_SCALE,
+            rect.Top    * Config::RESOLUTION_SCALE,
+            rect.Bottom * Config::RESOLUTION_SCALE
+        );
+    }
     TinyRect Pixmap::getDrawBoundsProperty()
     {
         TinyRect result{};
@@ -201,19 +212,51 @@ namespace WindowsPhoneSpeedyBlupi
         CNA::Logger::Info("SpeedyBlupi: asset root = " + game1->getContentProperty().getRootDirectoryProperty());
         spriteBatch = std::make_unique<Microsoft::Xna::Framework::Graphics::SpriteBatch>(
             game1->getGraphicsDeviceProperty());
-        CNA::Logger::Info("SpeedyBlupi: loading icons/text");
-        bitmapText = game1->getContentProperty().Load<Texture2D>("icons/text");
-        bitmapButton = game1->getContentProperty().Load<Texture2D>("icons/button");
-        bitmapJauge = game1->getContentProperty().Load<Texture2D>("icons/jauge");
-        bitmapBlupi = game1->getContentProperty().Load<Texture2D>("icons/blupi");
-        bitmapBlupi1 = game1->getContentProperty().Load<Texture2D>("icons/blupi1");
-        bitmapObject = game1->getContentProperty().Load<Texture2D>("icons/object-m");
-        bitmapElement = game1->getContentProperty().Load<Texture2D>("icons/element");
-        bitmapExplo = game1->getContentProperty().Load<Texture2D>("icons/explo");
-        bitmapPad = game1->getContentProperty().Load<Texture2D>("icons/pad");
-        bitmapSpeedyBlupi = game1->getContentProperty().Load<Texture2D>("backgrounds/speedyblupi");
-        bitmapBlupiYoupie = game1->getContentProperty().Load<Texture2D>("backgrounds/blupiyoupie");
-        bitmapGear = game1->getContentProperty().Load<Texture2D>("backgrounds/gear");
+
+        // Select asset sub-folders based on the configured resolution scale.
+        // Icons:
+        //   1x -> "icons/"    (original assets)
+        //   2x -> "icons2x/"  (TODO: 2x assets not yet available)
+        //   4x -> "icons4x/"  (4x upscaled assets)
+        // Backgrounds:
+        //   1x -> "backgrounds/"
+        //   2x -> "backgrounds2x/"  (TODO: 2x assets not yet available)
+        //   4x -> "backgrounds4x/"
+        std::string iconPrefix;
+        std::string backgroundPrefix;
+        switch (Config::RESOLUTION_SCALE)
+        {
+        case 4:
+            iconPrefix       = "icons4x/";
+            backgroundPrefix = "backgrounds4x/";
+            break;
+        case 2:
+            // TODO: 2x assets are not yet available. Add icons2x/ and backgrounds2x/ when ready.
+            iconPrefix       = "icons2x/";
+            backgroundPrefix = "backgrounds2x/";
+            break;
+        default:
+            iconPrefix       = "icons/";
+            backgroundPrefix = "backgrounds/";
+            break;
+        }
+        CNA::Logger::Info("SpeedyBlupi: loading icons (prefix=" + iconPrefix + ")");
+        CNA::Logger::Info("SpeedyBlupi: loading backgrounds (prefix=" + backgroundPrefix + ")");
+
+        bitmapText    = game1->getContentProperty().Load<Texture2D>(iconPrefix + "text");
+        bitmapButton  = game1->getContentProperty().Load<Texture2D>(iconPrefix + "button");
+        bitmapJauge   = game1->getContentProperty().Load<Texture2D>(iconPrefix + "jauge");
+        bitmapBlupi   = game1->getContentProperty().Load<Texture2D>(iconPrefix + "blupi");
+        bitmapBlupi1  = game1->getContentProperty().Load<Texture2D>(iconPrefix + "blupi1");
+        bitmapObject  = game1->getContentProperty().Load<Texture2D>(iconPrefix + "object-m");
+        bitmapElement = game1->getContentProperty().Load<Texture2D>(iconPrefix + "element");
+        bitmapExplo   = game1->getContentProperty().Load<Texture2D>(iconPrefix + "explo");
+        bitmapPad     = game1->getContentProperty().Load<Texture2D>(iconPrefix + "pad");
+
+        bitmapSpeedyBlupi = game1->getContentProperty().Load<Texture2D>(backgroundPrefix + "speedyblupi");
+        bitmapBlupiYoupie = game1->getContentProperty().Load<Texture2D>(backgroundPrefix + "blupiyoupie");
+        bitmapGear        = game1->getContentProperty().Load<Texture2D>(backgroundPrefix + "gear");
+
         CNA::Logger::Info("SpeedyBlupi: Pixmap::LoadContent done");
         UpdateGeometry();
     }
@@ -235,9 +278,16 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Pixmap::BackgroundCache(const string& name)
     {
-        CNA::Logger::Info("SpeedyBlupi: BackgroundCache loading backgrounds/" + name);
-        bitmapBackground = game1->getContentProperty().Load<Texture2D>("backgrounds/" + name);
-        CNA::Logger::Info("SpeedyBlupi: BackgroundCache done backgrounds/" + name);
+        std::string backgroundPrefix;
+        switch (Config::RESOLUTION_SCALE)
+        {
+        case 4:  backgroundPrefix = "backgrounds4x/"; break;
+        case 2:  backgroundPrefix = "backgrounds2x/"; break;
+        default: backgroundPrefix = "backgrounds/";   break;
+        }
+        CNA::Logger::Info("SpeedyBlupi: BackgroundCache loading " + backgroundPrefix + name);
+        bitmapBackground = game1->getContentProperty().Load<Texture2D>(backgroundPrefix + name);
+        CNA::Logger::Info("SpeedyBlupi: BackgroundCache done " + backgroundPrefix + name);
     }
 
     bool Pixmap::Start()
@@ -352,9 +402,14 @@ namespace WindowsPhoneSpeedyBlupi
                 "Pixmap::DrawPart ch5 AFTER origin: dest=(" + std::to_string(dest.X) + "," + std::to_string(dest.Y) +
                 "), origin=(" + std::to_string(originX) + "," + std::to_string(originY) + ")");
         }
+        // Scale the source rectangle from 1x logical coordinates to the actual
+        // texture pixels of the loaded (possibly 2x or 4x) sprite sheet.
+        TinyRect scaledRect = ScaleSourceRect(rect);
         using Microsoft::Xna::Framework::Rectangle;
         Rectangle value = Rectangle(
-            rect.Left, rect.Top, rect.getWidthProperty(), rect.getHeightProperty());
+            scaledRect.Left, scaledRect.Top, scaledRect.getWidthProperty(), scaledRect.getHeightProperty());
+        // Destination rectangle stays in logical (1x) coordinates so that on-screen
+        // sizes remain identical regardless of asset resolution.
         Rectangle destinationRectangle = Rectangle(
             dest.X,
             dest.Y,
@@ -409,100 +464,133 @@ namespace WindowsPhoneSpeedyBlupi
         {
             return;
         }
-        intcs bitmapGridX;
-        intcs bitmapGridY;
-        intcs iconWidth;
-        intcs iconHeight;
-        intcs gap;
+        // Source dimensions: address pixels in the loaded (possibly scaled) texture.
+        intcs srcGridX;
+        intcs srcGridY;
+        intcs srcIconWidth;
+        intcs srcIconHeight;
+        intcs srcGap;
+        // Destination dimensions: logical 1x on-screen sizes (never scaled).
+        intcs dstIconWidth;
+        intcs dstIconHeight;
+
         switch (channel)
         {
         case PixmapChannel::Blupi:
         case PixmapChannel::Blupi1_11:
         case PixmapChannel::Blupi1_12:
         case PixmapChannel::Blupi1_13:
-            bitmapGridX = 60;
-            bitmapGridY = 60;
-            iconWidth = 60;
-            iconHeight = 60;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(60);
+            srcGridY     = Config::ScaleAsset(60);
+            srcIconWidth  = Config::ScaleAsset(60);
+            srcIconHeight = Config::ScaleAsset(60);
+            srcGap       = 0;
+            dstIconWidth  = 60;
+            dstIconHeight = 60;
             break;
         case PixmapChannel::Object:
-            bitmapGridX = 64;
-            bitmapGridY = 64;
-            iconWidth = 64;
-            iconHeight = 64;
-            gap = 1;
+            srcGridX     = Config::ScaleAsset(64);
+            srcGridY     = Config::ScaleAsset(64);
+            srcIconWidth  = Config::ScaleAsset(64);
+            srcIconHeight = Config::ScaleAsset(64);
+            srcGap       = Config::ScaleAsset(1);
+            dstIconWidth  = 64;
+            dstIconHeight = 64;
             break;
         case PixmapChannel::Element:
-            bitmapGridX = 60;
-            bitmapGridY = 60;
-            iconWidth = 60;
-            iconHeight = 60;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(60);
+            srcGridY     = Config::ScaleAsset(60);
+            srcIconWidth  = Config::ScaleAsset(60);
+            srcIconHeight = Config::ScaleAsset(60);
+            srcGap       = 0;
+            dstIconWidth  = 60;
+            dstIconHeight = 60;
             break;
         case PixmapChannel::Explosion:
-            bitmapGridX = 144;
-            bitmapGridY = 144;
-            iconHeight = Tables::table_explo_size[icon];
-            iconWidth = System::Math::Max(iconHeight, 128);
-            gap = 0;
+            {
+                intcs baseIconHeight = Tables::table_explo_size[icon];
+                intcs baseIconWidth  = System::Math::Max(baseIconHeight, 128);
+                srcGridX     = Config::ScaleAsset(144);
+                srcGridY     = Config::ScaleAsset(144);
+                srcIconHeight = Config::ScaleAsset(baseIconHeight);
+                srcIconWidth  = Config::ScaleAsset(baseIconWidth);
+                srcGap       = 0;
+                dstIconWidth  = baseIconWidth;
+                dstIconHeight = baseIconHeight;
+            }
             break;
         case PixmapChannel::Text:
-            bitmapGridX = 32;
-            bitmapGridY = 32;
-            iconWidth = 32;
-            iconHeight = 32;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(32);
+            srcGridY     = Config::ScaleAsset(32);
+            srcIconWidth  = Config::ScaleAsset(32);
+            srcIconHeight = Config::ScaleAsset(32);
+            srcGap       = 0;
+            dstIconWidth  = 32;
+            dstIconHeight = 32;
             break;
         case PixmapChannel::Button:
-            bitmapGridX = 40;
-            bitmapGridY = 40;
-            iconWidth = 40;
-            iconHeight = 40;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(40);
+            srcGridY     = Config::ScaleAsset(40);
+            srcIconWidth  = Config::ScaleAsset(40);
+            srcIconHeight = Config::ScaleAsset(40);
+            srcGap       = 0;
+            dstIconWidth  = 40;
+            dstIconHeight = 40;
             break;
         case PixmapChannel::Pad:
-            bitmapGridX = 140;
-            bitmapGridY = 140;
-            iconWidth = 140;
-            iconHeight = 140;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(140);
+            srcGridY     = Config::ScaleAsset(140);
+            srcIconWidth  = Config::ScaleAsset(140);
+            srcIconHeight = Config::ScaleAsset(140);
+            srcGap       = 0;
+            dstIconWidth  = 140;
+            dstIconHeight = 140;
             break;
         case PixmapChannel::SpeedyBlupiBackground:
-            bitmapGridX = 640;
-            bitmapGridY = 160;
-            iconWidth = 640;
-            iconHeight = 160;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(640);
+            srcGridY     = Config::ScaleAsset(160);
+            srcIconWidth  = Config::ScaleAsset(640);
+            srcIconHeight = Config::ScaleAsset(160);
+            srcGap       = 0;
+            dstIconWidth  = 640;
+            dstIconHeight = 160;
             break;
         case PixmapChannel::BlupiYoupieBackground:
-            bitmapGridX = 410;
-            bitmapGridY = 380;
-            iconWidth = 410;
-            iconHeight = 380;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(410);
+            srcGridY     = Config::ScaleAsset(380);
+            srcIconWidth  = Config::ScaleAsset(410);
+            srcIconHeight = Config::ScaleAsset(380);
+            srcGap       = 0;
+            dstIconWidth  = 410;
+            dstIconHeight = 380;
             break;
         case PixmapChannel::GearBackground:
-            bitmapGridX = 226;
-            bitmapGridY = 226;
-            iconWidth = 226;
-            iconHeight = 226;
-            gap = 0;
+            srcGridX     = Config::ScaleAsset(226);
+            srcGridY     = Config::ScaleAsset(226);
+            srcIconWidth  = Config::ScaleAsset(226);
+            srcIconHeight = Config::ScaleAsset(226);
+            srcGap       = 0;
+            dstIconWidth  = 226;
+            dstIconHeight = 226;
             break;
         default:
-            bitmapGridX = 0;
-            bitmapGridY = 0;
-            iconWidth = 0;
-            iconHeight = 0;
-            gap = 0;
+            srcGridX     = 0;
+            srcGridY     = 0;
+            srcIconWidth  = 0;
+            srcIconHeight = 0;
+            srcGap       = 0;
+            dstIconWidth  = 0;
+            dstIconHeight = 0;
             break;
         }
-        if (bitmapGridX != 0)
+        if (srcGridX != 0)
         {
             using Microsoft::Xna::Framework::Rectangle;
             Rectangle srcRectangle = GetSrcRectangle(
-                *bitmap, bitmapGridX, bitmapGridY, iconWidth, iconHeight, gap, icon);
-            Rectangle rectangle = GetDstRectangle(rect, iconWidth, iconHeight, useHotSpot);
+                *bitmap, srcGridX, srcGridY, srcIconWidth, srcIconHeight, srcGap, icon);
+            // GetDstRectangle uses the unscaled logical destination size so that
+            // on-screen sprite sizes remain unchanged at any RESOLUTION_SCALE.
+            Rectangle rectangle = GetDstRectangle(rect, dstIconWidth, dstIconHeight, useHotSpot);
             float rotationRad = 0.0f;
             if (rotationDeg != 0.0)
             {

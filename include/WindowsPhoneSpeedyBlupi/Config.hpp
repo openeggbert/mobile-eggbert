@@ -152,6 +152,22 @@ namespace WindowsPhoneSpeedyBlupi
         {
             return static_cast<int>(std::round(static_cast<double>(value) * TIME_SCALE));
         }
+
+        /**
+         * @brief Scales an integer pixel/size value by the asset resolution scale.
+         *
+         * Use this to convert 1x sprite sheet coordinates (cell widths, heights,
+         * gaps, offsets) to the corresponding pixel values in the loaded texture.
+         * At RESOLUTION_SCALE=1 the value is returned unchanged.
+         *
+         * @param value Size in 1x sprite-sheet pixels.
+         * @return Equivalent size in the loaded texture pixels.
+         */
+        static constexpr int ScaleAsset(int value)
+        {
+            return value * RESOLUTION_SCALE;
+        }
+
 #endif
 
 #ifdef LEGACY
@@ -172,6 +188,13 @@ namespace WindowsPhoneSpeedyBlupi
         {
             return static_cast<int>(std::round(static_cast<double>(value) * TIME_SCALE));
         }
+
+        /** @copydoc Config::ScaleAsset (MODERN) */
+        static constexpr int ScaleAsset(int value)
+        {
+            return value * RESOLUTION_SCALE;
+        }
+
 #endif
     };
 }
