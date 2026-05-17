@@ -3,6 +3,7 @@
 #ifdef MODERN
 #include <string>
 #include <vector>
+#include "Microsoft/Xna/Framework/Input/Keys.hpp"
 #endif
 
 #include "Microsoft/Devices/Sensors/Accelerometer.hpp"
@@ -119,6 +120,16 @@ namespace WindowsPhoneSpeedyBlupi
         /** Current zoom cheat state. */
         ZoomCheat zoom_cheat_state = ZoomCheat::Zoom100;
         int cheats_display_timer = 0;  ///< Frames remaining for the cheats overlay. 0 = hidden.
+
+        // --- Virtual on-screen keyboard (MODERN only) ---
+        /** True when the virtual keyboard overlay is visible. */
+        bool virtualKeyboardVisible = false;
+        /** Number of consecutive frames the activation area has been held. */
+        int virtualKeyboardHoldFrames = 0;
+        /** True after the keyboard has been shown once for the current hold gesture. */
+        bool virtualKeyboardActivationConsumed = false;
+        /** Virtual key presses injected this frame by on-screen keyboard taps. */
+        std::vector<Microsoft::Xna::Framework::Input::Keys> virtualKeysPressedThisFrame;
 #endif
 
     public:

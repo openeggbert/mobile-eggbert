@@ -321,6 +321,136 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
 #ifdef MODERN
+        // --- Virtual on-screen keyboard activation ---
+        // Clear virtual keys from the previous frame.
+        virtualKeysPressedThisFrame.clear();
+
+        // Helper: returns true if a key is pressed physically OR via the virtual keyboard this frame.
+        auto IsKeyDownOrVirtual = [&](Keys key) -> bool
+        {
+            if (newKeyboardState.IsKeyDown(key)) return true;
+            return std::find(virtualKeysPressedThisFrame.begin(), virtualKeysPressedThisFrame.end(), key)
+                   != virtualKeysPressedThisFrame.end();
+        };
+
+        {
+            // Activation area: top-left 10% of screen width and height (screen-space pixels).
+            const int kActivationW = static_cast<int>(screenWidth * 0.10f);
+            const int kActivationH = static_cast<int>(screenHeight * 0.10f);
+            constexpr int kHoldFrames = 2 * Config::CURRENT_FPS;  // 2 seconds
+
+            bool inActivationArea = false;
+            for (const TinyPoint& tp : touchesOrClicks)
+            {
+                if (tp.X == -1) continue;  // keyboard event, not a touch
+                if (tp.X >= 0 && tp.X <= kActivationW && tp.Y >= 0 && tp.Y <= kActivationH)
+                {
+                    inActivationArea = true;
+                    break;
+                }
+            }
+
+            if (inActivationArea && !virtualKeyboardActivationConsumed)
+            {
+                virtualKeyboardHoldFrames++;
+                if (virtualKeyboardHoldFrames >= kHoldFrames)
+                {
+                    virtualKeyboardVisible = true;
+                    virtualKeyboardActivationConsumed = true;
+                    INPUT_DEBUG("Virtual keyboard activated.");
+                }
+            }
+            else if (!inActivationArea)
+            {
+                virtualKeyboardHoldFrames = 0;
+                virtualKeyboardActivationConsumed = false;
+            }
+        }
+
+        // When the virtual keyboard is visible, detect taps on its key rectangles.
+        // Key rectangles are defined in Draw(); replicate layout here for hit testing.
+        // Layout is drawn starting at a fixed position in the centre-bottom of logical screen.
+        if (virtualKeyboardVisible)
+        {
+            // Match the layout defined in DrawVirtualKeyboard() / Draw().
+            // Touchy coordinates are in screen-space; key rects must include origin offset.
+            constexpr int kKeyW = 58;
+            constexpr int kKeyH = 58;
+            constexpr int kKeyGap = 5;
+            constexpr int kRowGap = 5;
+            constexpr int kPanelX = 20;
+            constexpr int kPanelY = 270;
+
+            TinyPoint origin = pixmap->getOriginProperty();
+
+            // Key rows: F* on top (F5-F8 left, F12 right), then QWERTY
+            static const Keys fnLeftRow[] = { Keys::F5, Keys::F6, Keys::F7, Keys::F8 };
+            static const Keys fnRightRow[] = { Keys::F12 };
+            static const Keys row0[] = { Keys::Q, Keys::W, Keys::E, Keys::R, Keys::T, Keys::Y, Keys::U, Keys::I, Keys::O, Keys::P };
+            static const Keys row1[] = { Keys::A, Keys::S, Keys::D, Keys::F, Keys::G, Keys::H, Keys::J, Keys::K, Keys::L };
+            static const Keys row2[] = { Keys::Z, Keys::X, Keys::C, Keys::V, Keys::B, Keys::N, Keys::M };
+
+            constexpr int kPanelW = 10 * (kKeyW + kKeyGap) - kKeyGap;
+            constexpr int kF12OffsetX = kPanelW - kKeyW;  // right-aligned
+
+            struct KbRow { const Keys* keys; int count; int offsetX; int rowY; };
+            const KbRow rows[] = {
+                { fnLeftRow,  4, 0,           0 },
+                { fnRightRow, 1, kF12OffsetX, 0 },
+                { row0, 10, 0, kKeyH + kRowGap },
+                { row1,  9, (kKeyW + kKeyGap) / 2, 2 * (kKeyH + kRowGap) },
+                { row2,  7, (kKeyW + kKeyGap), 3 * (kKeyH + kRowGap) },
+            };
+
+            // Close button: top-right corner of the panel (screen-space, with origin offset).
+            int panelW = kPanelW;
+            TinyRect closeRect;
+            closeRect.Left   = kPanelX + panelW - kKeyW + origin.X;
+            closeRect.Right  = kPanelX + panelW + origin.X;
+            closeRect.Top    = kPanelY - kKeyH - kRowGap + origin.Y;
+            closeRect.Bottom = kPanelY - kRowGap + origin.Y;
+
+            bool keyboardConsumedTouch = false;
+            for (const TinyPoint& tp : touchesOrClicks)
+            {
+                if (tp.X == -1) continue;
+
+                // Close button
+                if (Misc::IsInside(closeRect, tp))
+                {
+                    virtualKeyboardVisible = false;
+                    keyboardConsumedTouch = true;
+                    INPUT_DEBUG("Virtual keyboard closed.");
+                    break;
+                }
+
+                // Key rows (screen-space, with origin offset)
+                for (const KbRow& row : rows)
+                {
+                    for (int ki = 0; ki < row.count; ki++)
+                    {
+                        TinyRect keyRect;
+                        keyRect.Left   = kPanelX + row.offsetX + ki * (kKeyW + kKeyGap) + origin.X;
+                        keyRect.Right  = keyRect.Left + kKeyW;
+                        keyRect.Top    = kPanelY + row.rowY + origin.Y;
+                        keyRect.Bottom = keyRect.Top + kKeyH;
+                        if (Misc::IsInside(keyRect, tp))
+                        {
+                            virtualKeysPressedThisFrame.push_back(row.keys[ki]);
+                            keyboardConsumedTouch = true;
+                            INPUT_DEBUG(std::string("Virtual key pressed: ") + std::to_string(static_cast<int>(row.keys[ki])));
+                        }
+                    }
+                }
+            }
+
+            // Consume all touches so they don't also trigger game buttons.
+            if (keyboardConsumedTouch || virtualKeyboardVisible)
+            {
+                touchesOrClicks.clear();
+            }
+        }
+
         // quick_cheat_enabled, ghost_cheat_enabled, debug_cheat_enabled are member fields.
 
         if (ghost_cheat_enabled != decor->IsGhost())
@@ -340,43 +470,43 @@ namespace WindowsPhoneSpeedyBlupi
 
         if (!ghost_cheat_enabled)
         {
-            if (newKeyboardState.IsKeyDown(Keys::F5) && !F5_pressed_previously)
+            if (IsKeyDownOrVirtual(Keys::F5) && !F5_pressed_previously)
             {
                 game1->SetGameSpeed(ToGameSpeed(Keys::F5));
                 INPUT_DEBUG("F5 was pressed: game speed set to 1x.");
             }
-            F5_pressed_previously = newKeyboardState.IsKeyDown(Keys::F5);
-            if (newKeyboardState.IsKeyDown(Keys::F6) && !F6_pressed_previously)
+            F5_pressed_previously = IsKeyDownOrVirtual(Keys::F5);
+            if (IsKeyDownOrVirtual(Keys::F6) && !F6_pressed_previously)
             {
                 game1->SetGameSpeed(ToGameSpeed(Keys::F6));
                 INPUT_DEBUG("F6 was pressed: game speed set to 2x.");
             }
-            F6_pressed_previously = newKeyboardState.IsKeyDown(Keys::F6);
+            F6_pressed_previously = IsKeyDownOrVirtual(Keys::F6);
 
             if (quick_cheat_enabled)
             {
-                if (newKeyboardState.IsKeyDown(Keys::F7) && !F7_pressed_previously)
+                if (IsKeyDownOrVirtual(Keys::F7) && !F7_pressed_previously)
                 {
                     game1->SetGameSpeed(ToGameSpeed(Keys::F7));
                     INPUT_DEBUG("F7 was pressed: game speed set to 4x.");
                 }
-                F7_pressed_previously = newKeyboardState.IsKeyDown(Keys::F7);
-                if (newKeyboardState.IsKeyDown(Keys::F8) && !F8_pressed_previously)
+                F7_pressed_previously = IsKeyDownOrVirtual(Keys::F7);
+                if (IsKeyDownOrVirtual(Keys::F8) && !F8_pressed_previously)
                 {
                     game1->SetGameSpeed(ToGameSpeed(Keys::F8));
                     INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
                 }
-                F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
+                F8_pressed_previously = IsKeyDownOrVirtual(Keys::F8);
             }
         }
 
         static bool F12_pressed_previously = false;
-        if (newKeyboardState.IsKeyDown(Keys::F12) && !F12_pressed_previously)
+        if (IsKeyDownOrVirtual(Keys::F12) && !F12_pressed_previously)
         {
             showCheatMenu = !showCheatMenu;
             INPUT_DEBUG(std::string("F12 was pressed: cheat menu toggled to ") + (showCheatMenu ? "visible" : "hidden") + ".");
         }
-        F12_pressed_previously = newKeyboardState.IsKeyDown(Keys::F12);
+        F12_pressed_previously = IsKeyDownOrVirtual(Keys::F12);
 
         // Typed cheat code detection: accumulate letters typed during Play phase.
         // When the accumulated string matches a known cheat code name, activate it.
@@ -390,7 +520,7 @@ namespace WindowsPhoneSpeedyBlupi
             };
             for (int li = 0; li < 26; li++)
             {
-                bool down = newKeyboardState.IsKeyDown(letterKeys[li]);
+                bool down = IsKeyDownOrVirtual(letterKeys[li]);
                 if (down && !letterPrev[li])
                 {
                     typedCheatBuffer += static_cast<char>('a' + li);
@@ -567,7 +697,7 @@ namespace WindowsPhoneSpeedyBlupi
             };
             for (int li = 0; li < 26; li++)
             {
-                letterPrev[li] = newKeyboardState.IsKeyDown(letterKeysOuter[li]);
+                letterPrev[li] = IsKeyDownOrVirtual(letterKeysOuter[li]);
             }
         }
 #endif
@@ -1088,6 +1218,82 @@ namespace WindowsPhoneSpeedyBlupi
                 pixmap->DrawIcon(PixmapChannel::Pad, 15, bgRect, 0.6, false);
                 TinyPoint pos{5, baseY};
                 Text::DrawTextLeft(*pixmap, pos, speedText, speedTextScale);
+            }
+        }
+
+        // --- Virtual on-screen keyboard drawing ---
+        if (virtualKeyboardVisible)
+        {
+            constexpr int kKeyW = 58;
+            constexpr int kKeyH = 58;
+            constexpr int kKeyGap = 5;
+            constexpr int kRowGap = 5;
+            constexpr int kPanelX = 20;
+            constexpr int kPanelY = 270;
+            constexpr double kKeyOpacity = 0.75;
+            constexpr double kKeyTextScale = 0.69;
+
+            // Key label text: F5-F8 left, F12 right-aligned, then QWERTY rows.
+            static const char* fnLeftLabels[]  = { "F5","F6","F7","F8" };
+            static const char* fnRightLabels[] = { "F12" };
+            static const char* row0Labels[] = { "Q","W","E","R","T","Y","U","I","O","P" };
+            static const char* row1Labels[] = { "A","S","D","F","G","H","J","K","L" };
+            static const char* row2Labels[] = { "Z","X","C","V","B","N","M" };
+
+            constexpr int kPanelW = 10 * (kKeyW + kKeyGap) - kKeyGap;
+            constexpr int kF12OffsetX = kPanelW - kKeyW;  // right-aligned
+
+            struct KbRow { const char* const* labels; int count; int offsetX; int rowY; };
+            const KbRow rows[] = {
+                { fnLeftLabels,  4, 0,           0 },
+                { fnRightLabels, 1, kF12OffsetX, 0 },
+                { row0Labels, 10, 0, kKeyH + kRowGap },
+                { row1Labels,  9, (kKeyW + kKeyGap) / 2, 2 * (kKeyH + kRowGap) },
+                { row2Labels,  7, (kKeyW + kKeyGap), 3 * (kKeyH + kRowGap) },
+            };
+
+            int panelW = kPanelW;
+            int panelH = 4 * (kKeyH + kRowGap) + kRowGap + kKeyH;
+
+            // Draw keyboard panel background.
+            TinyPoint origin = pixmap->getOriginProperty();
+            TinyRect panelRect;
+            panelRect.Left   = kPanelX - 4 + origin.X;
+            panelRect.Right  = kPanelX + panelW + 4 + origin.X;
+            panelRect.Top    = kPanelY - kKeyH - kRowGap - 4 + origin.Y;
+            panelRect.Bottom = kPanelY + panelH + 4 + origin.Y;
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, panelRect, 0.85, false);
+
+            // Draw close button (X) in top-right of panel.
+            TinyRect closeRect;
+            closeRect.Left   = kPanelX + panelW - kKeyW + origin.X;
+            closeRect.Right  = kPanelX + panelW + origin.X;
+            closeRect.Top    = kPanelY - kKeyH - kRowGap + origin.Y;
+            closeRect.Bottom = kPanelY - kRowGap + origin.Y;
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, closeRect, kKeyOpacity, false);
+            {
+                int tx = kPanelX + panelW - kKeyW + (kKeyW - Text::GetTextWidth("X", kKeyTextScale)) / 2;
+                int ty = kPanelY - kKeyH - kRowGap + (kKeyH - 12) / 2;
+                Text::DrawTextLeft(*pixmap, TinyPoint{tx, ty}, "X", kKeyTextScale);
+            }
+
+            // Draw key rows.
+            for (const KbRow& row : rows)
+            {
+                for (int ki = 0; ki < row.count; ki++)
+                {
+                    TinyRect keyRect;
+                    keyRect.Left   = kPanelX + row.offsetX + ki * (kKeyW + kKeyGap) + origin.X;
+                    keyRect.Right  = keyRect.Left + kKeyW;
+                    keyRect.Top    = kPanelY + row.rowY + origin.Y;
+                    keyRect.Bottom = keyRect.Top + kKeyH;
+                    pixmap->DrawIcon(PixmapChannel::Pad, 15, keyRect, kKeyOpacity, false);
+                    const std::string label = row.labels[ki];
+                    int tw = Text::GetTextWidth(label, kKeyTextScale);
+                    int tx = kPanelX + row.offsetX + ki * (kKeyW + kKeyGap) + (kKeyW - tw) / 2;
+                    int ty = kPanelY + row.rowY + (kKeyH - 12) / 2;
+                    Text::DrawTextLeft(*pixmap, TinyPoint{tx, ty}, label, kKeyTextScale);
+                }
             }
         }
 #endif
