@@ -379,11 +379,11 @@ namespace WindowsPhoneSpeedyBlupi
             constexpr int kKeyGap = 5;
             constexpr int kRowGap = 5;
             constexpr int kPanelX = 20;
-            constexpr int kPanelY = 270;
+            constexpr int kPanelY = 10;
 
             TinyPoint origin = pixmap->getOriginProperty();
 
-            // Key rows: F* on top (F5-F8 left, F12 right), then QWERTY
+            // Key rows: F* on top (F5-F8 left, F12 right, X close right of F12), then QWERTY
             static const Keys fnLeftRow[] = { Keys::F5, Keys::F6, Keys::F7, Keys::F8 };
             static const Keys fnRightRow[] = { Keys::F12 };
             static const Keys row0[] = { Keys::Q, Keys::W, Keys::E, Keys::R, Keys::T, Keys::Y, Keys::U, Keys::I, Keys::O, Keys::P };
@@ -392,6 +392,7 @@ namespace WindowsPhoneSpeedyBlupi
 
             constexpr int kPanelW = 10 * (kKeyW + kKeyGap) - kKeyGap;
             constexpr int kF12OffsetX = kPanelW - kKeyW;  // right-aligned
+            constexpr int kCloseOffsetX = kF12OffsetX + kKeyW + kKeyGap;  // right of F12
 
             struct KbRow { const Keys* keys; int count; int offsetX; int rowY; };
             const KbRow rows[] = {
@@ -402,13 +403,13 @@ namespace WindowsPhoneSpeedyBlupi
                 { row2,  7, (kKeyW + kKeyGap), 3 * (kKeyH + kRowGap) },
             };
 
-            // Close button: top-right corner of the panel (screen-space, with origin offset).
+            // Close button: right of F12 on the same row.
             int panelW = kPanelW;
             TinyRect closeRect;
-            closeRect.Left   = kPanelX + panelW - kKeyW + origin.X;
-            closeRect.Right  = kPanelX + panelW + origin.X;
-            closeRect.Top    = kPanelY - kKeyH - kRowGap + origin.Y;
-            closeRect.Bottom = kPanelY - kRowGap + origin.Y;
+            closeRect.Left   = kPanelX + kCloseOffsetX + origin.X;
+            closeRect.Right  = kPanelX + kCloseOffsetX + kKeyW + origin.X;
+            closeRect.Top    = kPanelY + origin.Y;
+            closeRect.Bottom = kPanelY + kKeyH + origin.Y;
 
             bool keyboardConsumedTouch = false;
             for (const TinyPoint& tp : touchesOrClicks)
@@ -1229,11 +1230,11 @@ namespace WindowsPhoneSpeedyBlupi
             constexpr int kKeyGap = 5;
             constexpr int kRowGap = 5;
             constexpr int kPanelX = 20;
-            constexpr int kPanelY = 270;
+            constexpr int kPanelY = 10;
             constexpr double kKeyOpacity = 0.75;
             constexpr double kKeyTextScale = 0.69;
 
-            // Key label text: F5-F8 left, F12 right-aligned, then QWERTY rows.
+            // Key label text: F5-F8 left, F12 right-aligned, X close right of F12, then QWERTY rows.
             static const char* fnLeftLabels[]  = { "F5","F6","F7","F8" };
             static const char* fnRightLabels[] = { "F12" };
             static const char* row0Labels[] = { "Q","W","E","R","T","Y","U","I","O","P" };
@@ -1242,6 +1243,7 @@ namespace WindowsPhoneSpeedyBlupi
 
             constexpr int kPanelW = 10 * (kKeyW + kKeyGap) - kKeyGap;
             constexpr int kF12OffsetX = kPanelW - kKeyW;  // right-aligned
+            constexpr int kCloseOffsetX = kF12OffsetX + kKeyW + kKeyGap;  // right of F12
 
             struct KbRow { const char* const* labels; int count; int offsetX; int rowY; };
             const KbRow rows[] = {
@@ -1252,7 +1254,7 @@ namespace WindowsPhoneSpeedyBlupi
                 { row2Labels,  7, (kKeyW + kKeyGap), 3 * (kKeyH + kRowGap) },
             };
 
-            int panelW = kPanelW;
+            int panelW = kCloseOffsetX + kKeyW;  // panel wide enough to include X button
             int panelH = 4 * (kKeyH + kRowGap) + kRowGap + kKeyH;
 
             // Draw keyboard panel background.
@@ -1260,20 +1262,20 @@ namespace WindowsPhoneSpeedyBlupi
             TinyRect panelRect;
             panelRect.Left   = kPanelX - 4 + origin.X;
             panelRect.Right  = kPanelX + panelW + 4 + origin.X;
-            panelRect.Top    = kPanelY - kKeyH - kRowGap - 4 + origin.Y;
+            panelRect.Top    = kPanelY - 4 + origin.Y;
             panelRect.Bottom = kPanelY + panelH + 4 + origin.Y;
             pixmap->DrawIcon(PixmapChannel::Pad, 15, panelRect, 0.85, false);
 
-            // Draw close button (X) in top-right of panel.
+            // Draw close button (X) right of F12 on the same row.
             TinyRect closeRect;
-            closeRect.Left   = kPanelX + panelW - kKeyW + origin.X;
-            closeRect.Right  = kPanelX + panelW + origin.X;
-            closeRect.Top    = kPanelY - kKeyH - kRowGap + origin.Y;
-            closeRect.Bottom = kPanelY - kRowGap + origin.Y;
+            closeRect.Left   = kPanelX + kCloseOffsetX + origin.X;
+            closeRect.Right  = kPanelX + kCloseOffsetX + kKeyW + origin.X;
+            closeRect.Top    = kPanelY + origin.Y;
+            closeRect.Bottom = kPanelY + kKeyH + origin.Y;
             pixmap->DrawIcon(PixmapChannel::Pad, 15, closeRect, kKeyOpacity, false);
             {
-                int tx = kPanelX + panelW - kKeyW + (kKeyW - Text::GetTextWidth("X", kKeyTextScale)) / 2;
-                int ty = kPanelY - kKeyH - kRowGap + (kKeyH - 12) / 2;
+                int tx = kPanelX + kCloseOffsetX + (kKeyW - Text::GetTextWidth("X", kKeyTextScale)) / 2;
+                int ty = kPanelY + (kKeyH - 12) / 2;
                 Text::DrawTextLeft(*pixmap, TinyPoint{tx, ty}, "X", kKeyTextScale);
             }
 
