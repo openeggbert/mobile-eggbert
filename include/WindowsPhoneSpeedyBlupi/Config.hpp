@@ -1,6 +1,7 @@
 #pragma once
 
-//#define LEGACY
+#include "WindowsPhoneSpeedyBlupi/ConfigDef.hpp"
+#define LEGACY
 
 #ifndef LEGACY
 #define MODERN
@@ -8,43 +9,13 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
-    /**
-     * @brief Selects the rendering resolution multiplier for the game viewport.
-     *
-     * Used to scale the base 640x480 logical resolution up for high-DPI displays.
-     * Only ScaleResolution1 (1:1) is currently active in production builds.
-     */
-    enum class ResolutionScale
-    {
-        ScaleResolution1 = 1, ///< Native 640x480 logical resolution (default).
-        ScaleResolution2 = 2, ///< 2x upscale (1280x960 logical).
-        ScaleResolution4 = 4 ///< 4x upscale (2560x1920 logical).
-    };
-
-    /** Default resolution scale used when no explicit scale is configured. */
-    // Please do not change
-    inline constexpr ResolutionScale RESOLUTION_SCALE_DEFAULT = ResolutionScale::ScaleResolution1;
-
-    /**
-     * @brief Target update rates supported by the compile-time configuration.
-     *
-     * Fps20 is the original stable timing. Higher values are experimental and require
-     * gameplay code to preserve the original real-time behavior using Config::ScaleTime(),
-     * Config::ScaleDiv() and Config::SPEED_SCALE where appropriate.
-     */
-    enum class Fps
-    {
-        Fps20 = 20, ///< Original game speed (default).
-        Fps30 = 30,
-        Fps60 = 60,
-        Fps90 = 90,
-        Fps120 = 120,
-        Fps144 = 144,
-    };
-
-    /** Default FPS used when no explicit frame rate is configured. */
-    // Please do not change
-    inline constexpr Fps FPS_DEFAULT = Fps::Fps20;
+#ifdef LEGACY
+    /** True when the legacy (original behaviour) mode is compiled in. */
+    static constexpr bool LEGACY_ENABLED = true;
+#else
+    /** False when the modern port mode is compiled in. */
+    static constexpr bool LEGACY_ENABLED = false;
+#endif
 
     /**
      * @brief Compile-time configuration constants for the game port.
@@ -62,20 +33,11 @@ namespace WindowsPhoneSpeedyBlupi
      */
     struct Config
     {
-#ifdef LEGACY
-        /** True when the legacy (original behaviour) mode is compiled in. */
-        static constexpr bool LEGACY_ENABLED = true;
-#else
-        /** False when the modern port mode is compiled in. */
-        static constexpr bool LEGACY_ENABLED = false;
-#endif
 
 #ifdef MODERN
         /** Target frame rate for this build. All timer values scale relative to Fps20. */
-        static constexpr Fps FPS = Fps::Fps144;
-
-        // Please do not change
-        static constexpr int ORIGINAL_FPS = static_cast<int>(Fps::Fps20);
+        static constexpr Fps FPS = Fps::Fps20;
+        
         // Please do not change
         static constexpr int CURRENT_FPS = static_cast<int>(FPS);
 
@@ -193,8 +155,6 @@ namespace WindowsPhoneSpeedyBlupi
         static constexpr Fps FPS = Fps::Fps20;
 
         // Please do not change
-        static constexpr int ORIGINAL_FPS = static_cast<int>(Fps::Fps20);
-        // Please do not change
         static constexpr int CURRENT_FPS = static_cast<int>(Fps::Fps20);
 
         // Please do not change
@@ -228,6 +188,19 @@ namespace WindowsPhoneSpeedyBlupi
             return value * RESOLUTION_SCALE;
         }
 
+#endif
+
+#ifdef LEGACY
+
+        static_assert(FPS == Fps::Fps20, "LEGACY mode must use Fps20");
+        static_assert(CURRENT_FPS == static_cast<int>(Fps::Fps20), "LEGACY mode CURRENT_FPS must be 20");
+        static_assert(TIME_SCALE == 1.0, "LEGACY mode TIME_SCALE must be 1.0");
+        static_assert(SPEED_SCALE == 1.0, "LEGACY mode SPEED_SCALE must be 1.0");
+        static_assert(RESOLUTION_SCALE == static_cast<int>(ResolutionScale::ScaleResolution1),
+                      "LEGACY mode RESOLUTION_SCALE must be 1");
+        static_assert(TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE == false,
+                      "LEGACY mode must not hide touch buttons");
+        static_assert(INPUT_DETAILED_DEBUGGING_ENABLED == false, "LEGACY mode must not enable input debugging");
 #endif
     };
 }
