@@ -891,37 +891,55 @@ namespace WindowsPhoneSpeedyBlupi
             constexpr int dbgPadding = 3;
             TinyPoint origin = pixmap->getOriginProperty();
             std::vector<std::string> dbgLines;
+
+            // --- Gameplay state from Decor ---
+            if (decor != nullptr)
             {
-                std::string phaseStr;
-                switch (getPhaseProperty())
-                {
-                    case Def::Phase::Play:      phaseStr = "Play"; break;
-                    case Def::Phase::First:     phaseStr = "Init"; break;
-                    default:                    phaseStr = "Other"; break;
-                }
-                dbgLines.push_back("phase: " + phaseStr);
+                // Game time: convert frame ticks to seconds (50 fps assumed)
+                int ticks = decor->GetTime();
+                int secs  = ticks / 50;
+                int mins  = secs / 60;
+                secs      = secs % 60;
+                char timeBuf[32];
+                std::snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d (%d)", mins, secs, ticks);
+                dbgLines.push_back("time: " + std::string(timeBuf));
+
+                dbgLines.push_back("mission: " + std::to_string(decor->GetMission()));
+                dbgLines.push_back("region:  " + std::to_string(decor->GetRegionDebug()));
+                dbgLines.push_back("lives:   " + std::to_string(decor->GetNbVies()));
+
+                TinyPoint bp = decor->GetBlupiPos();
+                dbgLines.push_back("pos: " + std::to_string(bp.X) + "," + std::to_string(bp.Y));
+
+                // Cell coordinates (each tile is 64px)
+                dbgLines.push_back("cel: " + std::to_string(bp.X / 64) + "," + std::to_string(bp.Y / 64));
+
+                // Velocities — format with one decimal
+                char vxBuf[24], vyBuf[24];
+                std::snprintf(vxBuf, sizeof(vxBuf), "%.1f", decor->GetBlupiVX());
+                std::snprintf(vyBuf, sizeof(vyBuf), "%.1f", decor->GetBlupiVY());
+                dbgLines.push_back("vx: " + std::string(vxBuf) + "  vy: " + std::string(vyBuf));
+
+                // Mode flags — show only active ones
+                std::string flags;
+                if (decor->GetBlupiAir())    flags += "air ";
+                if (decor->GetBlupiHelico()) flags += "heli ";
+                if (decor->GetBlupiSkate())  flags += "skate ";
+                if (decor->GetBlupiNage())   flags += "swim ";
+                if (decor->IsGhost())        flags += "ghost ";
+                if (flags.empty()) flags = "-";
+                dbgLines.push_back("mode: " + flags);
             }
+
+            // --- Input / system state ---
             if (game1 != nullptr)
             {
                 dbgLines.push_back("speed: " + std::to_string(ToRaw(game1->getGameSpeed())) + "x");
             }
-            dbgLines.push_back("ghost: " + std::string(ghost_cheat_enabled ? "true" : "false"));
-            dbgLines.push_back("quick: " + std::string(quick_cheat_enabled ? "true" : "false"));
-            {
-                std::string zStr;
-                switch (zoom_cheat_state)
-                {
-                    case ZoomCheat::Zoom50:  zStr = "zoom50"; break;
-                    case ZoomCheat::Zoom25:  zStr = "zoom25"; break;
-                    case ZoomCheat::Zoom12:  zStr = "zoom12"; break;
-                    default:                 zStr = "off"; break;
-                }
-                dbgLines.push_back("zoom: " + zStr);
-            }
-            dbgLines.push_back("cheatMenu: " + std::string(showCheatMenu ? "true" : "false"));
             dbgLines.push_back("touches: " + std::to_string(touchOrClickCount));
-            dbgLines.push_back("pad: " + std::string(padPressed ? "true" : "false"));
-            dbgLines.push_back("accel: " + std::string(accelStarted ? "true" : "false"));
+            dbgLines.push_back("pad: " + std::string(padPressed ? "on" : "off")
+                               + "  accel: " + std::string(accelStarted ? "on" : "off"));
+
             int maxW = 0;
             for (const auto& l : dbgLines)
             {

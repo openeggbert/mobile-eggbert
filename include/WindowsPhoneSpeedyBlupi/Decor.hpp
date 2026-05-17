@@ -1164,6 +1164,33 @@ namespace WindowsPhoneSpeedyBlupi
          * @param factor 1.0 = normal, 0.75 = 25% zoomed out, 0.5 = 50% zoomed out.
          */
         void SetCheatZoom(double factor);
+
+        /** Returns the current game time counter (frame ticks since level start). */
+        int GetTime() const { return m_time; }
+
+        /** Returns the current Blupi position in game-space pixel coordinates. */
+        TinyPoint GetBlupiPos() const { return m_blupiPos; }
+
+        /** Returns Blupi's current horizontal velocity (sub-pixels per frame). */
+        double GetBlupiVX() const { return m_blupiVitesseX; }
+
+        /** Returns Blupi's current vertical velocity (sub-pixels per frame). */
+        double GetBlupiVY() const { return m_blupiVitesseY; }
+
+        /** Returns true if Blupi is currently airborne. */
+        bool GetBlupiAir() const { return m_blupiAir; }
+
+        /** Returns true if Blupi is on the helicopter. */
+        bool GetBlupiHelico() const { return m_blupiHelico; }
+
+        /** Returns true if Blupi is on skates. */
+        bool GetBlupiSkate() const { return m_blupiSkate; }
+
+        /** Returns true if Blupi is swimming. */
+        bool GetBlupiNage() const { return m_blupiNage; }
+
+        /** Returns the current region index (MODERN debug helper). */
+        int GetRegionDebug() { return GetRegion(); }
 #endif
 
     private:
