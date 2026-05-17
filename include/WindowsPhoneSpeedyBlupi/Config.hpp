@@ -1,7 +1,7 @@
 #pragma once
 
 #include "WindowsPhoneSpeedyBlupi/ConfigDef.hpp"
-#define LEGACY
+//#define LEGACY
 
 #ifndef LEGACY
 #define MODERN

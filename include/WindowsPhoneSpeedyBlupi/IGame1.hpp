@@ -8,6 +8,7 @@
 #include "Microsoft/Xna/Framework/GameTime.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
 #include "System/EventArgs.hpp"
+#include "WindowsPhoneSpeedyBlupi/Config.hpp"
 
 #define readonly mutable
 
