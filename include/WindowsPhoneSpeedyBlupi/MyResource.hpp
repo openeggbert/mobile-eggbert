@@ -10,9 +10,24 @@ namespace WindowsPhoneSpeedyBlupi
     using std::string;
     using SharpRuntime::intcs;
 
+    /**
+     * @brief Provides localised string resources for the game's UI.
+     *
+     * MyResource is the C++ port of the original C# resource system. It maps integer
+     * resource IDs (TX_* constants) to localised strings for the active language
+     * (French, English, or German). Strings are used for button labels, HUD text,
+     * tutorial messages, and the ranking/trial screens.
+     *
+     * Strings are loaded lazily on first access via EnsureInitialized(). The active
+     * language is detected from the platform locale at that point.
+     *
+     * @note All TX_* constants are resource IDs, not array indices.
+     * @note This is localisation/UI code. It does not affect gameplay state.
+     */
     class MyResource
     {
     public:
+        /** Resource ID for the "Play" button label. */
         static const intcs TX_BUTTON_PLAY;
         static const intcs TX_BUTTON_MENU;
         static const intcs TX_BUTTON_BACK;
@@ -149,6 +164,15 @@ namespace WindowsPhoneSpeedyBlupi
         static std::unordered_map<intcs, std::string> resources;
 
     public:
+        /**
+         * @brief Returns the localised string for the given resource ID.
+         *
+         * Initialises the resource table on first call. If @p res is not a known
+         * resource ID, returns an empty string.
+         *
+         * @param res Resource ID (one of the TX_* constants).
+         * @return Const reference to the localised string.
+         */
         static const string& LoadString(intcs res);
 
     private:

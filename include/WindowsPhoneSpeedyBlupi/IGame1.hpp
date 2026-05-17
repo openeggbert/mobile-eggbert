@@ -13,6 +13,26 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    /**
+     * @brief Interface for the top-level game object that drives the game loop.
+     *
+     * IGame1 exposes the portion of Game1's interface that subsystems (Decor,
+     * InputPad, Pixmap, Sound) need to call back into the game layer. It provides
+     * access to the graphics device, content manager, and game-mode flags, and
+     * declares all game-loop lifecycle methods that the XNA/CNA Game base class
+     * calls each frame.
+     *
+     * The concrete implementation is Game1, which owns:
+     * - The graphics device manager (GraphicsDeviceManager).
+     * - The Pixmap rendering subsystem.
+     * - The Sound audio subsystem.
+     * - The Decor gameplay simulation.
+     * - The InputPad input handler.
+     * - The GameData persistent state.
+     *
+     * @note The interface exists to allow subsystems to reference Game1 without
+     *       creating a circular include dependency. Do not add gameplay logic here.
+     */
     class IGame1
     {
     protected:

@@ -2250,6 +2250,10 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    // Checks whether Blupi is blocked by a solid tile in the given horizontal direction.
+    // Only tests a narrow 2-pixel wide column on the leading edge of the bounding box,
+    // in the lower 20 pixels of Blupi's height (foot-level collision).
+    // dir > 0 = moving right, dir < 0 = moving left.
     bool Decor::BlupiBloque(TinyPoint pos, int dir)
     {
         TinyRect rect = BlupiRect(pos);
@@ -2266,6 +2270,20 @@ namespace WindowsPhoneSpeedyBlupi
         return DecorDetect(rect);
     }
 
+    // Core Blupi physics and action state-machine update. Called once per frame from MoveStep().
+    // Order of operations:
+    //   1. BlupiAdjust() — resolves stuck-in-wall situations from the previous frame.
+    //   2. Compute the proposed movement vector (end = current pos + m_blupiVector).
+    //   3. Apply wind/ventilator tile effects if Blupi is on an air-vent tile.
+    //   4. Check if Blupi is standing on ground (flag2) and test ceiling (flag3).
+    //   5. Detect airborne state transitions, spring/ressort bounces, teleporters, etc.
+    //   6. Execute the current BlupiAction state machine branch (march, jump, helico, ...),
+    //      which computes the next m_blupiVector from m_blupiSpeedX/Y and current state.
+    //   7. Snap Blupi to the grid after movement via BlupiAdjust().
+    //
+    // All positions are in game-space pixel coordinates.
+    // m_blupiVector is consumed and reset here each frame.
+    // Do not call this method directly; use MoveStep().
     void Decor::BlupiStep()
     {
         TinyPoint celSwitch;
@@ -6175,6 +6193,10 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    // Collision test: checks whether rect intersects any solid tile or (if bCaisse=true) any crate.
+    // Uses game-space pixel coordinates. The tile map is tested at 16x16 pixel granularity using
+    // table_decor_quart to look up which quarter-cells within a 64x64 tile are solid.
+    // Sets m_detectIcon to the last intersected tile icon on collision.
     bool Decor::DecorDetect(TinyRect rect)
     {
         return DecorDetect(rect, true);
@@ -6185,6 +6207,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_detectIcon = -1;
         if (rect.Left < 0 || rect.Top < 0)
         {
+            // Treat positions outside the left/top of the world as solid boundaries.
             return true;
         }
         int num = ((m_dimDecor.X != 0) ? 6400 : 640);
@@ -7303,6 +7326,12 @@ namespace WindowsPhoneSpeedyBlupi
         m_decor[pos.X / 64][pos.Y / 64].icon = icon;
     }
 
+    // Advances all active moving objects by one frame.
+    // Resets Blupi's transport link and movement vector at the start of each frame so that
+    // lift (ascenseur) objects can re-establish them if Blupi is standing on one.
+    // MoveObjectStepLine() moves the object along its linear path.
+    // MoveObjectStepIcon() advances the animation phase and resolves object-specific behavior
+    // (collecting items, enemy AI, enemy-player collision, etc.).
     void Decor::MoveObjectStep()
     {
         m_blupiVector.X = 0;

@@ -4,18 +4,37 @@
 namespace WindowsPhoneSpeedyBlupi
 {
     using SoundChannelUnderlying = SharpRuntime::ubytecs;
+
+    /**
+     * @brief Identifies a specific sound effect slot used by the Sound system.
+     *
+     * Each SoundChannel value corresponds to one entry in the sound effect asset list
+     * loaded by Sound::LoadContent(). The channel index directly maps to the sound
+     * asset file index; do not renumber these values.
+     *
+     * Multiple channels may play simultaneously. The Sound class maintains a list of
+     * active Play instances keyed by SoundChannel to allow stopping a specific sound
+     * (e.g., motor loop sounds for vehicles).
+     *
+     * The tableVolumePitch table in Sound uses two entries per channel (volume, pitch),
+     * so valid indices are 0..92 (tableVolumePitch length 200 / 2 = 100 entries).
+     *
+     * @note Channel 0 is reserved. Channels 1..92 correspond to game sound effects.
+     * @note These are audio resource identifiers. Do not confuse with PixmapChannel.
+     * @note Stored as an unsigned byte (ubytecs) to match the original C# enum layout.
+     */
     enum class SoundChannel : SoundChannelUnderlying
     {
-        SoundChannel0 = 0,
-        SoundChannel1 = 1,
-        SoundChannel2 = 2,
-        SoundChannel3 = 3,
-        SoundChannel4 = 4,
-        SoundChannel5 = 5,
-        SoundChannel6 = 6,
-        SoundChannel7 = 7,
-        SoundChannel8 = 8,
-        SoundChannel9 = 9,
+        SoundChannel0  = 0,
+        SoundChannel1  = 1,
+        SoundChannel2  = 2,
+        SoundChannel3  = 3,
+        SoundChannel4  = 4,
+        SoundChannel5  = 5,
+        SoundChannel6  = 6,
+        SoundChannel7  = 7,
+        SoundChannel8  = 8,
+        SoundChannel9  = 9,
         SoundChannel10 = 10,
         SoundChannel11 = 11,
         SoundChannel12 = 12,
@@ -101,11 +120,25 @@ namespace WindowsPhoneSpeedyBlupi
         SoundChannel92 = 92
     };
 
+    /**
+     * @brief Returns the raw underlying byte value of a SoundChannel.
+     * @param type The channel to convert.
+     * @return Underlying unsigned byte value.
+     */
     static constexpr auto ToRaw(SoundChannel type) -> SoundChannelUnderlying
     {
         return static_cast<SoundChannelUnderlying>(type);
     }
 
+    /**
+     * @brief Converts an integer to a SoundChannel enum value.
+     *
+     * Used when looking up sound channel indices from gameplay tables.
+     * The caller is responsible for ensuring @p value is in the range 0..92.
+     *
+     * @param value Raw integer channel index.
+     * @return Corresponding SoundChannel enum value.
+     */
     static constexpr auto ToSoundChannel(const int value) -> SoundChannel
     {
         return static_cast<SoundChannel>(

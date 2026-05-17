@@ -4,6 +4,25 @@
 namespace WindowsPhoneSpeedyBlupi
 {
     using ObjectTypeUnderlying = SharpRuntime::ubytecs;
+    /**
+     * @brief Identifies the type of a moving object in the level.
+     *
+     * Each value corresponds to a specific object class: enemies, crates, projectiles,
+     * collectibles, platform lifts, hazards, etc. The type determines the animation
+     * table used, the collision behaviour, and whether the object interacts with Blupi.
+     *
+     * Values are numeric IDs from the original game. The mapping from numeric ID to
+     * game concept is not fully documented; see the TODO comment at the bottom of the
+     * enum for known values. Do not assume a value's meaning without checking the
+     * animation and collision code in Decor.cpp.
+     *
+     * Numeric IDs must not be changed because they are stored in level files and
+     * must match the original game data format exactly.
+     *
+     * @note This is gameplay data. Do not confuse ObjectType values with sprite/icon
+     *       indices or PixmapChannel values.
+     * @note Stored as an unsigned byte (ubytecs) to match the original C# enum layout.
+     */
     enum class ObjectType : ObjectTypeUnderlying
     {
         ObjectType0 = 0,

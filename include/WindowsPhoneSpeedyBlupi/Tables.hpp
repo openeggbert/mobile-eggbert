@@ -5,42 +5,79 @@ namespace WindowsPhoneSpeedyBlupi
 {
     using SharpRuntime::shortcs;
 
+    /**
+     * @brief Static repository of all original game data tables.
+     *
+     * Tables contains the animation data, movement trajectories, sprite sequences,
+     * environment/hazard data, and other lookup tables ported directly from the
+     * original game. All values in these arrays come from the original C# source
+     * and must not be changed without fully understanding the animation and gameplay
+     * logic that indexes into them.
+     *
+     * Table format notes:
+     * - Animation tables (e.g., table_blupi, table_bulldozer_*) typically contain
+     *   sequences of (channel, icon, dx, dy, ...) tuples read by step counters.
+     * - table_decor_quart drives the quarter-tile tile-adaptation system.
+     * - table_decor_action drives animated tile sprites.
+     * - table_explo_size provides per-channel explosion bounding sizes.
+     *
+     * @note Do not renumber, reorder, or resize any table without updating all code
+     *       that indexes into it. Array sizes are part of the original game's data contract.
+     * @note table_training1..4 are the only mutable tables (modified by Init() based on
+     *       the player's current platform/mode). All others are const.
+     * @note This is data code, not gameplay logic. Tables does not own any runtime state.
+     */
     class Tables
     {
     public:
         Tables() = delete;
         ~Tables() = delete;
 
+        /**
+         * @brief Cheat code identifiers recognised by Decor::CheatAction().
+         *
+         * Each value activates a specific debug/cheat effect in the current level.
+         * Cheats are entered via the cheat button gesture sequence defined in Game1.
+         */
         enum class CheatCodes
         {
-            BuildOfficialMissions,
-            OpenDoors,
-            CleanAll,
-            SuperBlupi,
-            LayEgg,
-            KillEgg,
-            Skate,
-            Copter,
-            Jeep,
-            AllTreasure,
-            EndGoal,
-            ShowSecret,
-            RoundShield,
-            Lollipop,
-            Bombs,
-            BirdLime,
-            Tank,
-            PowerCharge,
-            Drink,
-            Overcraft,
-            Dynamite,
-            WeelKeys
+            BuildOfficialMissions, ///< Toggle official mission builder mode.
+            OpenDoors,             ///< Open all doors in the current level.
+            CleanAll,              ///< Remove all objects from the level.
+            SuperBlupi,            ///< Enable Super Blupi enhanced mode.
+            LayEgg,                ///< Place an egg in front of Blupi.
+            KillEgg,               ///< Remove the nearest egg.
+            Skate,                 ///< Give Blupi the skateboard.
+            Copter,                ///< Give Blupi the helicopter.
+            Jeep,                  ///< Give Blupi the jeep.
+            AllTreasure,           ///< Collect all treasures instantly.
+            EndGoal,               ///< Trigger the level win condition.
+            ShowSecret,            ///< Reveal secret paths.
+            RoundShield,           ///< Activate the Shield power-up.
+            Lollipop,              ///< Activate the lollipop power-up.
+            Bombs,                 ///< Give Blupi a supply of dynamite.
+            BirdLime,              ///< Activate bird-lime/glue effect.
+            Tank,                  ///< Give Blupi the tank vehicle.
+            PowerCharge,           ///< Activate the Power charge.
+            Drink,                 ///< Trigger the drink animation.
+            Overcraft,             ///< Give Blupi the overcraft.
+            Dynamite,              ///< Give Blupi extra dynamite.
+            WeelKeys               ///< Give Blupi a set of keys.
         };
 
+        /**
+         * @brief Blupi player animation table.
+         *
+         * Contains sequences of (channel, icon, offsetX, offsetY, ...) tuples indexed
+         * by (BlupiAction, phase, direction). This is the primary animation data for
+         * the player character. Do not modify.
+         */
         static const shortcs table_blupi[2911];
 
+        /** Mirror/flip variant of table_blupi for left/right direction switching. */
         static const shortcs table_mirror[335];
 
+        /** Per-phase horizontal movement speed values for walking animation. */
         static const shortcs table_vitesse_march[4];
 
         static const shortcs table_vitesse_nage[7];
@@ -239,20 +276,34 @@ namespace WindowsPhoneSpeedyBlupi
 
         static const shortcs table_ressort[8];
 
+        /**
+         * @brief Mutable training level data tables.
+         *
+         * These four tables hold the tile layout for the in-game training/tutorial
+         * levels. Unlike the other const tables, these may be modified by Init()
+         * to adapt tutorial content to the current platform mode.
+         * Do not write to them outside of Init().
+         */
         static shortcs table_training1[133];
-
         static shortcs table_training2[31];
-
         static shortcs table_training3[67];
-
         static shortcs table_training4[31];
 
+        /** Animated tile action sequences used by Decor for scripted tile animations. */
         static const shortcs table_decor_action[519];
 
+        /** Per-explosion-channel bounding-size table for explosion rendering. */
         static const shortcs table_explo_size[100];
 
+        /** Terminal world/level descriptor used for end-of-game state. */
         static const shortcs world_terminal[30];
 
+        /**
+         * @brief Initialises mutable tables based on the current platform/mode configuration.
+         *
+         * Must be called once at startup before any table data is accessed.
+         * Currently adapts the training level tables for the active game mode.
+         */
         static void Init();
     };
 }
