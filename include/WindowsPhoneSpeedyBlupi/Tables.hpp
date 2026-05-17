@@ -70,6 +70,7 @@ namespace WindowsPhoneSpeedyBlupi
             ,Ghost                 ///< Ghost mode: semi-transparent, free flight, no interactions.
             ,Debug                 ///< Debug overlay: shows runtime state in top-right corner.
             ,Zoom                  ///< Zoom cheat: cycles through zoom-out levels (100%, 25%, 50%).
+            ,Cheats                ///< Cheats overlay: shows list of all cheats for 5 seconds.
 #endif
         };
 

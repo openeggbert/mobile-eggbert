@@ -118,6 +118,7 @@ namespace WindowsPhoneSpeedyBlupi
         bool ghost_cheat_enabled = false;
         /** Current zoom cheat state. */
         ZoomCheat zoom_cheat_state = ZoomCheat::Zoom100;
+        int cheats_display_timer = 0;  ///< Frames remaining for the cheats overlay. 0 = hidden.
 #endif
 
     public:

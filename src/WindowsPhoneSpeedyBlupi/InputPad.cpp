@@ -435,6 +435,7 @@ namespace WindowsPhoneSpeedyBlupi
                         { "ghost",              Tables::CheatCodes::Ghost,              false },
                         { "debug",              Tables::CheatCodes::Debug,              true },
                         { "zoom",               Tables::CheatCodes::Zoom,               false },
+                        { "cheats",             Tables::CheatCodes::Cheats,             false },
 #endif
                     };
                     static const int cheatEntriesCount = static_cast<int>(sizeof(cheatEntries) / sizeof(cheatEntries[0]));
@@ -461,6 +462,11 @@ namespace WindowsPhoneSpeedyBlupi
                             else if (cheatEntries[ci].code == Tables::CheatCodes::Zoom)
                             {
                                 // Zoom is handled below in the post-action block.
+                            }
+                            else if (cheatEntries[ci].code == Tables::CheatCodes::Cheats)
+                            {
+                                // Show cheats overlay for 5 seconds (100 frames at 20fps).
+                                cheats_display_timer = 5 * Config::CURRENT_FPS;
                             }
 #endif
                             else
@@ -996,6 +1002,71 @@ namespace WindowsPhoneSpeedyBlupi
         }
 #endif
 #ifdef MODERN
+        // Cheats overlay: show all cheat names centred on screen for 5 seconds.
+        if (cheats_display_timer > 0)
+        {
+            cheats_display_timer--;
+            // Collect all cheat names from the static cheatEntries table.
+            static const char* allCheatNames[] = {
+                "buildofficialmissions", "opendoors", "cleanall", "megablupi",
+                "layegg", "killegg", "funskate", "givecopter", "jeepdrive",
+                "alltreasure", "endgoal", "showsecret", "roundshield", "quicklollypop",
+                "tenbombs", "birdlime", "drivetank", "powercharge", "hidedrink",
+                "iovercraft", "udynamite", "weelkeys",
+                "quick", "ghost", "debug", "zoom", "cheats"
+            };
+            constexpr int allCheatNamesCount = static_cast<int>(sizeof(allCheatNames) / sizeof(allCheatNames[0]));
+            constexpr double chScale = 0.55;
+            constexpr int chLineH = 18;
+            constexpr int chPadding = 6;
+            constexpr int chColGap = 12;  // gap between the two columns
+            constexpr int kGameW = 480;
+            constexpr int kGameH = 480;
+            // Split cheats into two columns.
+            int col0Count = (allCheatNamesCount + 1) / 2;   // left column (ceiling half)
+            int col1Count = allCheatNamesCount - col0Count;  // right column
+            int maxW0 = 0, maxW1 = 0;
+            for (int i = 0; i < col0Count; i++)
+            {
+                int w = Text::GetTextWidth(allCheatNames[i], chScale);
+                if (w > maxW0) maxW0 = w;
+            }
+            for (int i = col0Count; i < allCheatNamesCount; i++)
+            {
+                int w = Text::GetTextWidth(allCheatNames[i], chScale);
+                if (w > maxW1) maxW1 = w;
+            }
+            int totalW = maxW0 + chColGap + maxW1;
+            int rowCount = col0Count;  // left column has more or equal rows
+            int totalH = rowCount * chLineH;
+            // Centre the overlay in the logical game area (640×480).
+            int bgLeft  = (kGameW - totalW)  / 2 - chPadding;
+            int bgTop   = (kGameH - totalH) / 2 - chPadding;
+            int bgRight  = bgLeft + totalW  + chPadding * 2;
+            int bgBottom = bgTop  + totalH + chPadding * 2;
+            TinyPoint chOrigin = pixmap->getOriginProperty();
+            TinyRect bgRect;
+            bgRect.Left   = bgLeft  + chOrigin.X;
+            bgRect.Right  = bgRight + chOrigin.X;
+            bgRect.Top    = bgTop   + chOrigin.Y;
+            bgRect.Bottom = bgBottom + chOrigin.Y;
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, bgRect, 0.7, false);
+            int startX0 = bgLeft + chPadding;
+            int startX1 = startX0 + maxW0 + chColGap;
+            int startY  = bgTop + chPadding;
+            // Draw left column.
+            for (int i = 0; i < col0Count; i++)
+            {
+                TinyPoint pos{startX0, startY + i * chLineH};
+                Text::DrawTextLeft(*pixmap, pos, allCheatNames[i], chScale);
+            }
+            // Draw right column.
+            for (int i = 0; i < col1Count; i++)
+            {
+                TinyPoint pos{startX1, startY + i * chLineH};
+                Text::DrawTextLeft(*pixmap, pos, allCheatNames[col0Count + i], chScale);
+            }
+        }
         if (getPhaseProperty() == Def::Phase::Play && game1 != nullptr)
         {
             GameSpeed spd = game1->getGameSpeed();
