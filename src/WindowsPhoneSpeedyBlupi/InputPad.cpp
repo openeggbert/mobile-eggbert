@@ -340,6 +340,15 @@ namespace WindowsPhoneSpeedyBlupi
             INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
         }
         F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
+
+        static bool F12_pressed_previously = false;
+        if (newKeyboardState.IsKeyDown(Keys::F12) && !F12_pressed_previously)
+        {
+            showCheatMenu = !showCheatMenu;
+            INPUT_DEBUG(std::string("F12 was pressed: cheat menu toggled to ") + (showCheatMenu ? "visible" : "hidden") + ".");
+        }
+        F12_pressed_previously = newKeyboardState.IsKeyDown(Keys::F12);
+
 #endif
 
         bool keyPressedUp = false;
@@ -651,7 +660,7 @@ namespace WindowsPhoneSpeedyBlupi
         double cheatButtonSizeFactor = drawBoundsHeight / 3.5;
         if (glyph >= Def::ButtonGlyph::Cheat1 && glyph <= Def::ButtonGlyph::Cheat9)
         {
-            int cheatNumber = (int)(static_cast<intcs>(glyph) - 35);
+            int cheatNumber = (int)(static_cast<intcs>(glyph) - static_cast<intcs>(Def::ButtonGlyph::Cheat1));
             TinyRect result = TinyRect();
             result.Left = 80 * cheatNumber;
             result.Right = 80 * (cheatNumber + 1);

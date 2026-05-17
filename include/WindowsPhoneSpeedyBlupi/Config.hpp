@@ -191,7 +191,6 @@ namespace WindowsPhoneSpeedyBlupi
 #endif
 
 #ifdef LEGACY
-
         static_assert(FPS == Fps::Fps20, "LEGACY mode must use Fps20");
         static_assert(CURRENT_FPS == static_cast<int>(Fps::Fps20), "LEGACY mode CURRENT_FPS must be 20");
         static_assert(TIME_SCALE == 1.0, "LEGACY mode TIME_SCALE must be 1.0");
