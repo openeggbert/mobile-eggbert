@@ -1,5 +1,10 @@
 #include "WindowsPhoneSpeedyBlupi/InputPad.hpp"
 
+#ifndef LEGACY
+#include <algorithm>
+#include <string>
+#endif
+
 #include "CNA/Platform.hpp"
 #include "Microsoft/Devices/Sensors/AccelerometerFailedException.hpp"
 #include "Microsoft/Xna/Framework/Input/Keyboard.hpp"
@@ -13,6 +18,10 @@
 #include "WindowsPhoneSpeedyBlupi/Config.hpp"
 #include "WindowsPhoneSpeedyBlupi/IGame1.hpp"
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
+#ifndef LEGACY
+#include "WindowsPhoneSpeedyBlupi/Text.hpp"
+#endif
+
 #include "WindowsPhoneSpeedyBlupi/def/SoundChannel.hpp"
 
 #define INPUT_DEBUG(msg) CNA::Logger::DebugIf(msg, Config::INPUT_DETAILED_DEBUGGING_ENABLED);
@@ -312,10 +321,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
 #ifndef LEGACY
+        static bool quick_cheat_enabled = false;
+
         static bool F5_pressed_previously = false;
         static bool F6_pressed_previously = false;
         static bool F7_pressed_previously = false;
         static bool F8_pressed_previously = false;
+
         if (newKeyboardState.IsKeyDown(Keys::F5) && !F5_pressed_previously)
         {
             game1->SetGameSpeed(1);
@@ -328,19 +340,22 @@ namespace WindowsPhoneSpeedyBlupi
             INPUT_DEBUG("F6 was pressed: game speed set to 2x.");
         }
         F6_pressed_previously = newKeyboardState.IsKeyDown(Keys::F6);
-        if (newKeyboardState.IsKeyDown(Keys::F7) && !F7_pressed_previously)
-        {
-            game1->SetGameSpeed(4);
-            INPUT_DEBUG("F7 was pressed: game speed set to 4x.");
-        }
-        F7_pressed_previously = newKeyboardState.IsKeyDown(Keys::F7);
-        if (newKeyboardState.IsKeyDown(Keys::F8) && !F8_pressed_previously)
-        {
-            game1->SetGameSpeed(8);
-            INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
-        }
-        F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
 
+        if (quick_cheat_enabled)
+        {
+            if (newKeyboardState.IsKeyDown(Keys::F7) && !F7_pressed_previously)
+            {
+                game1->SetGameSpeed(4);
+                INPUT_DEBUG("F7 was pressed: game speed set to 4x.");
+            }
+            F7_pressed_previously = newKeyboardState.IsKeyDown(Keys::F7);
+            if (newKeyboardState.IsKeyDown(Keys::F8) && !F8_pressed_previously)
+            {
+                game1->SetGameSpeed(8);
+                INPUT_DEBUG("F8 was pressed: game speed set to 8x.");
+            }
+            F8_pressed_previously = newKeyboardState.IsKeyDown(Keys::F8);
+        }
         static bool F12_pressed_previously = false;
         if (newKeyboardState.IsKeyDown(Keys::F12) && !F12_pressed_previously)
         {
@@ -349,6 +364,119 @@ namespace WindowsPhoneSpeedyBlupi
         }
         F12_pressed_previously = newKeyboardState.IsKeyDown(Keys::F12);
 
+        // Typed cheat code detection: accumulate letters typed during Play phase.
+        // When the accumulated string matches a known cheat code name, activate it.
+        if (getPhaseProperty() == Def::Phase::Play)
+        {
+            static const Keys letterKeys[26] = {
+                Keys::A, Keys::B, Keys::C, Keys::D, Keys::E, Keys::F, Keys::G, Keys::H,
+                Keys::I, Keys::J, Keys::K, Keys::L, Keys::M, Keys::N, Keys::O, Keys::P,
+                Keys::Q, Keys::R, Keys::S, Keys::T, Keys::U, Keys::V, Keys::W, Keys::X,
+                Keys::Y, Keys::Z
+            };
+            for (int li = 0; li < 26; li++)
+            {
+                bool down = newKeyboardState.IsKeyDown(letterKeys[li]);
+                if (down && !letterPrev[li])
+                {
+                    typedCheatBuffer += static_cast<char>('a' + li);
+                    if (typedCheatBuffer.size() > 32)
+                    {
+                        typedCheatBuffer = typedCheatBuffer.substr(typedCheatBuffer.size() - 32);
+                    }
+
+                    // Map cheat code names to CheatCodes enum values.
+                    // persistent = true means the cheat toggles a lasting state.
+                    struct CheatEntry
+                    {
+                        const char* name;
+                        Tables::CheatCodes code;
+                        bool persistent;
+                    };
+                    static const CheatEntry cheatEntries[] = {
+                        { "buildofficialmissions", Tables::CheatCodes::BuildOfficialMissions, true  },
+                        { "opendoors",             Tables::CheatCodes::OpenDoors,             true },
+                        { "cleanall",              Tables::CheatCodes::CleanAll,              false },
+                        { "megablupi",            Tables::CheatCodes::SuperBlupi,            true  },
+                        { "layegg",                Tables::CheatCodes::LayEgg,                false },
+                        { "killegg",               Tables::CheatCodes::KillEgg,               false },
+                        { "funskate",                 Tables::CheatCodes::Skate,                 false  },
+                        { "givecopter",                Tables::CheatCodes::Copter,                false  },
+                        { "jeepdrive",                  Tables::CheatCodes::Jeep,                  false  },
+                        { "alltreasure",           Tables::CheatCodes::AllTreasure,           false },
+                        { "endgoal",               Tables::CheatCodes::EndGoal,               false },
+                        { "showsecret",            Tables::CheatCodes::ShowSecret,            true },
+                        { "roundshield",           Tables::CheatCodes::RoundShield,           false  },
+                        { "quicklollypop",              Tables::CheatCodes::Lollipop,              false  },
+                        { "tenbombs",                 Tables::CheatCodes::Bombs,                 false },
+                        { "birdlime",              Tables::CheatCodes::BirdLime,              false  },
+                        { "drivetank",                  Tables::CheatCodes::Tank,                  false  },
+                        { "powercharge",           Tables::CheatCodes::PowerCharge,           false },
+                        { "hidedrink",                 Tables::CheatCodes::Drink,                 false },
+                        { "iovercraft",             Tables::CheatCodes::Overcraft,             false  },
+                        { "udynamite",              Tables::CheatCodes::Dynamite,              false },
+                        { "weelkeys",              Tables::CheatCodes::WeelKeys,              false },
+                        { "quick",              Tables::CheatCodes::Quick,              true },
+                    };
+                    static const int cheatEntriesCount = static_cast<int>(sizeof(cheatEntries) / sizeof(cheatEntries[0]));
+
+                    for (int ci = 0; ci < cheatEntriesCount; ci++)
+                    {
+                        const std::string name = cheatEntries[ci].name;
+                        if (typedCheatBuffer.size() >= name.size() &&
+                            typedCheatBuffer.substr(typedCheatBuffer.size() - name.size()) == name)
+                        {
+                            if (cheatEntries[ci].code == Tables::CheatCodes::Quick)
+                            {
+                                quick_cheat_enabled = ! quick_cheat_enabled;
+                                if (!quick_cheat_enabled && game1->getGameSpeed() > 2)
+                                {
+                                    game1->SetGameSpeed(2);
+                                }
+                            } else
+                            {
+                                decor->CheatAction(cheatEntries[ci].code);
+                            }
+                            if (cheatEntries[ci].code == Tables::CheatCodes::OpenDoors)
+                            {
+                                decor->CheatAction(Tables::CheatCodes::WeelKeys);
+                            }
+                            if (cheatEntries[ci].persistent)
+                            {
+                                const std::string& n = name;
+                                auto it = std::find(activePersistentCheats.begin(), activePersistentCheats.end(), n);
+                                if (it != activePersistentCheats.end())
+                                {
+                                    activePersistentCheats.erase(it);
+                                }
+                                else
+                                {
+                                    activePersistentCheats.push_back(n);
+                                }
+                            }
+                            typedCheatBuffer.clear();
+                            INPUT_DEBUG(std::string("Typed cheat activated: ") + name);
+                            break;
+                        }
+                    }
+                }
+                letterPrev[li] = down;
+            }
+        }
+        else
+        {
+            // Update debounce state even outside Play so we don't get spurious triggers on entry.
+            static const Keys letterKeysOuter[26] = {
+                Keys::A, Keys::B, Keys::C, Keys::D, Keys::E, Keys::F, Keys::G, Keys::H,
+                Keys::I, Keys::J, Keys::K, Keys::L, Keys::M, Keys::N, Keys::O, Keys::P,
+                Keys::Q, Keys::R, Keys::S, Keys::T, Keys::U, Keys::V, Keys::W, Keys::X,
+                Keys::Y, Keys::Z
+            };
+            for (int li = 0; li < 26; li++)
+            {
+                letterPrev[li] = newKeyboardState.IsKeyDown(letterKeysOuter[li]);
+            }
+        }
 #endif
 
         bool keyPressedUp = false;
@@ -640,6 +768,59 @@ namespace WindowsPhoneSpeedyBlupi
         {
             accelSlider.Draw(*pixmap);
         }
+#ifndef LEGACY
+        if (getPhaseProperty() == Def::Phase::Play && !activePersistentCheats.empty())
+        {
+            constexpr int padding = 3;
+            constexpr double cheatTextScale = 0.55;
+            constexpr int lineHeight = 18;
+            int maxWidth = 0;
+            for (const std::string& cheatName : activePersistentCheats)
+            {
+                int w = Text::GetTextWidth(cheatName, cheatTextScale);
+                if (w > maxWidth) maxWidth = w;
+            }
+            int totalHeight = static_cast<int>(activePersistentCheats.size()) * lineHeight;
+            TinyPoint origin = pixmap->getOriginProperty();
+            TinyRect bgRect;
+            bgRect.Left   = 5 - padding + origin.X;
+            bgRect.Right  = 5 + maxWidth + padding + origin.X;
+            bgRect.Top    = 5 - padding + origin.Y;
+            bgRect.Bottom = 5 + totalHeight + padding + origin.Y;
+            pixmap->DrawIcon(PixmapChannel::Pad, 15, bgRect, 0.6, false);
+            TinyPoint pos{5, 5};
+            for (const std::string& cheatName : activePersistentCheats)
+            {
+                Text::DrawTextLeft(*pixmap, pos, cheatName, cheatTextScale);
+                pos.Y += lineHeight;
+            }
+        }
+#endif
+#ifdef MODERN
+        if (getPhaseProperty() == Def::Phase::Play && game1 != nullptr)
+        {
+            int spd = game1->getGameSpeed();
+            if (spd > 1)
+            {
+                TinyRect drawBounds = pixmap->getDrawBoundsProperty();
+                std::string speedText = std::to_string(spd) + "x";
+                constexpr double speedTextScale = 0.55;
+                constexpr int padding = 3;
+                int textW = Text::GetTextWidth(speedText, speedTextScale);
+                constexpr int textH = 14;
+                int baseY = drawBounds.getHeightProperty() - 22;
+                TinyPoint speedOrigin = pixmap->getOriginProperty();
+                TinyRect bgRect;
+                bgRect.Left   = 5 - padding + speedOrigin.X;
+                bgRect.Right  = 5 + textW + padding + speedOrigin.X;
+                bgRect.Top    = baseY - padding + speedOrigin.Y;
+                bgRect.Bottom = baseY + textH + padding + speedOrigin.Y;
+                pixmap->DrawIcon(PixmapChannel::Pad, 15, bgRect, 0.6, false);
+                TinyPoint pos{5, baseY};
+                Text::DrawTextLeft(*pixmap, pos, speedText, speedTextScale);
+            }
+        }
+#endif
     }
 
     TinyRect InputPad::GetPadBounds(TinyPoint center, int radius)

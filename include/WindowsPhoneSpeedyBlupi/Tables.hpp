@@ -63,6 +63,9 @@ namespace WindowsPhoneSpeedyBlupi
             Overcraft,             ///< Give Blupi the overcraft.
             Dynamite,              ///< Give Blupi extra dynamite.
             WeelKeys               ///< Give Blupi a set of keys.
+#ifndef LEGACY
+            ,Quick                 ///< The game speed can be switched to 2x, 4x or 8x
+#endif
         };
 
         /**

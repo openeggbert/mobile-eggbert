@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef MODERN
+#include <string>
+#include <vector>
+#endif
+
 #include "Microsoft/Devices/Sensors/Accelerometer.hpp"
 #include "Microsoft/Devices/Sensors/AccelerometerReading.hpp"
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
@@ -92,6 +97,17 @@ namespace WindowsPhoneSpeedyBlupi
 
         /** Index of the current mission (level). Used to configure the button layout. */
         int mission = 0;
+
+#ifndef LEGACY
+        /** Buffer accumulating typed characters to detect cheat code names. */
+        std::string typedCheatBuffer;
+
+        /** Names of currently active persistent cheats, displayed top-left during Play. */
+        std::vector<std::string> activePersistentCheats;
+
+        /** Debounce state for letter keys A-Z (index 0=A, 25=Z). */
+        bool letterPrev[26] = {};
+#endif
 
     public:
         DDATA(Def::Phase, Phase)
