@@ -292,16 +292,23 @@ namespace WindowsPhoneSpeedyBlupi
             if (newKeyboardState.IsKeyDown(keys)) touchesOrClicks.push_back(TinyPoint(-1, static_cast<int>(keys)));
         }
         static bool F11_pressed_previously = false;
+        static int fullscreen_timeout = 0;
         if (CNA::getCurrentPlatform() != CNA::Platform::Android && CNA::getCurrentPlatform() != CNA::Platform::Web &&
-            newKeyboardState.IsKeyDown(Keys::F11) && !F11_pressed_previously)
+            newKeyboardState.IsKeyDown(Keys::F11) && !F11_pressed_previously && fullscreen_timeout == 0)
         {
             F11_pressed_previously = true;
             game1->ToggleFullScreen();
             INPUT_DEBUG("F11 was pressed.");
+            static const constexpr int MAX_FULLSCREEN_TIMEOUT = static_cast<int>(Config::FPS) / 4; // 250 ms
+            fullscreen_timeout = MAX_FULLSCREEN_TIMEOUT;
         }
         else
         {
             F11_pressed_previously = false;
+        }
+        if (fullscreen_timeout > 0)
+        {
+            fullscreen_timeout--;
         }
 
         bool keyPressedUp = false;
