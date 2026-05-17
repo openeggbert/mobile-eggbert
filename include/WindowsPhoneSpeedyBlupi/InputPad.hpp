@@ -122,6 +122,28 @@ namespace WindowsPhoneSpeedyBlupi
         int cheats_display_timer = 0;  ///< Frames remaining for the cheats overlay. 0 = hidden.
 
         // --- Virtual on-screen keyboard (MODERN only) ---
+
+        /** Computed layout for the virtual keyboard; shared by Update() and Draw(). */
+        struct VirtualKeyboardLayout
+        {
+            int keyW   = 0;
+            int keyH   = 0;
+            int keyGap = 0;
+            int rowGap = 0;
+            int panelX = 0;
+            int panelY = 0;
+            int panelW = 0;
+            int panelH = 0;
+            int f12OffsetX   = 0;
+            TinyRect panelRect;
+            TinyRect closeRect;
+            TinyPoint origin;
+        };
+
+        /** Computes the virtual keyboard layout from current screen dimensions.
+         *  Both Update() and Draw() must call this and use the returned struct. */
+        [[nodiscard]] VirtualKeyboardLayout GetVirtualKeyboardLayout() const;
+
         /** True when the virtual keyboard overlay is visible. */
         bool virtualKeyboardVisible = false;
         /** Number of consecutive frames the activation area has been held. */
