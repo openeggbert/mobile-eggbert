@@ -110,7 +110,7 @@ namespace WindowsPhoneSpeedyBlupi
                      m_voyageIcon(0),
                      m_voyageChannel(PixmapChannel::PixmapChannel0), m_voyagePhase(0),
                      m_voyageTotal(0),
-                     m_decorAction(0),
+                     m_decorAction(DecorAction::None),
                      m_decorPhase(0),
                      m_hotSpotStepZoom(0),
                      m_hotSpotStepX(0),
@@ -180,7 +180,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_dimDecor.Y = 100;
         m_music = 1;
         m_region = 2;
-        m_decorAction = 0;
+        m_decorAction = DecorAction::None;
         for (int i = 0; i < 100; i++)
         {
             for (int j = 0; j < 100; j++)
@@ -1195,14 +1195,14 @@ namespace WindowsPhoneSpeedyBlupi
     TinyPoint Decor::DecorNextAction()
     {
         int i = 0;
-        if (m_decorAction == 0 || m_bPause)
+        if (m_decorAction == DecorAction::None || m_bPause)
         {
             return m_posDecor;
         }
         TinyPoint posDecor = m_posDecor;
         for (; Tables::table_decor_action[i] != 0; i += 2 + Tables::table_decor_action[i + 1] * 2)
         {
-            if (m_decorAction != Tables::table_decor_action[i])
+            if (ToRaw(m_decorAction) != Tables::table_decor_action[i])
             {
                 continue;
             }
@@ -1232,7 +1232,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             else
             {
-                m_decorAction = 0;
+                m_decorAction = DecorAction::None;
             }
             break;
         }
@@ -1617,7 +1617,7 @@ namespace WindowsPhoneSpeedyBlupi
                     m_moveObject[i].type == ObjectType::ObjectType32 ||
                     m_moveObject[i].type == ObjectType::ObjectType33)
                 {
-                    m_decorAction = 1;
+                    m_decorAction = DecorAction::SmallShake;
                     m_decorPhase = 0;
                     m_moveObject[i].type = ObjectType::ObjectType8;
                     m_moveObject[i].phase = 0;
@@ -2605,7 +2605,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = end.X - 34;
                 celSwitch.Y = end.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
-                m_decorAction = 1;
+                m_decorAction = DecorAction::SmallShake;
                 m_decorPhase = 0;
                 StopSound(SoundChannel::SoundChannel16);
                 StopSound(SoundChannel::SoundChannel18);
@@ -2619,7 +2619,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = end.X - 34;
                 celSwitch.Y = end.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
-                m_decorAction = 1;
+                m_decorAction = DecorAction::SmallShake;
                 m_decorPhase = 0;
                 StopSound(SoundChannel::SoundChannel16);
                 StopSound(SoundChannel::SoundChannel18);
@@ -2633,7 +2633,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = end.X - 34;
                 celSwitch.Y = end.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
-                m_decorAction = 1;
+                m_decorAction = DecorAction::SmallShake;
                 m_decorPhase = 0;
                 StopSound(SoundChannel::SoundChannel16);
                 StopSound(SoundChannel::SoundChannel18);
@@ -2647,7 +2647,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = end.X - 34;
                 celSwitch.Y = end.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
-                m_decorAction = 1;
+                m_decorAction = DecorAction::SmallShake;
                 m_decorPhase = 0;
                 StopSound(SoundChannel::SoundChannel16);
                 StopSound(SoundChannel::SoundChannel18);
@@ -5036,7 +5036,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
-                m_decorAction = 1;
+                m_decorAction = DecorAction::SmallShake;
                 m_decorPhase = 0;
                 StopSound(SoundChannel::SoundChannel16);
                 StopSound(SoundChannel::SoundChannel18);
@@ -5190,7 +5190,7 @@ namespace WindowsPhoneSpeedyBlupi
             celSwitch.X = m_blupiPos.X - 34;
             celSwitch.Y = m_blupiPos.Y - 34;
             ObjectStart(celSwitch, ObjectType::ObjectType9, 0);
-            m_decorAction = 1;
+            m_decorAction = DecorAction::SmallShake;
             m_decorPhase = 0;
             StopSound(SoundChannel::SoundChannel16);
             StopSound(SoundChannel::SoundChannel18);
@@ -5229,7 +5229,7 @@ namespace WindowsPhoneSpeedyBlupi
             celSwitch.X = m_blupiPos.X - 34;
             celSwitch.Y = m_blupiPos.Y - 34;
             ObjectStart(celSwitch, ObjectType::ObjectType11, 0);
-            m_decorAction = 2;
+            m_decorAction = DecorAction::BigShake;
             m_decorPhase = 0;
             StopSound(SoundChannel::SoundChannel16);
             StopSound(SoundChannel::SoundChannel18);
@@ -5351,7 +5351,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType90, 0);
-                m_decorAction = 2;
+                m_decorAction = DecorAction::BigShake;
                 m_decorPhase = 0;
             }
             if (IsTeleporte(m_blupiPos) != -1 && !m_blupiHelico && !m_blupiOver && !m_blupiBalloon && !m_blupiEcrase &&
@@ -5533,7 +5533,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAir = true;
                 m_blupiTimeShield = 0;
                 m_jauges[1].SetHide(true);
-                m_decorAction = 0;
+                m_decorAction = DecorAction::None;
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType91, 0);
@@ -5564,7 +5564,7 @@ namespace WindowsPhoneSpeedyBlupi
                     celSwitch.X -= 34;
                     celSwitch.Y -= 34;
                     ObjectStart(celSwitch, ObjectType::ObjectType10, 0);
-                    m_decorAction = 2;
+                    m_decorAction = DecorAction::BigShake;
                     m_decorPhase = 0;
                 }
                 else
@@ -5574,7 +5574,7 @@ namespace WindowsPhoneSpeedyBlupi
                     celSwitch.X -= 34;
                     celSwitch.Y -= 34;
                     ObjectStart(celSwitch, ObjectType::ObjectType8, 0);
-                    m_decorAction = 1;
+                    m_decorAction = DecorAction::SmallShake;
                     m_decorPhase = 0;
                 }
                 if (!m_blupiJeep && !m_blupiTank)
@@ -5624,7 +5624,7 @@ namespace WindowsPhoneSpeedyBlupi
                 celSwitch.X = m_blupiPos.X - 34;
                 celSwitch.Y = m_blupiPos.Y - 34;
                 ObjectStart(celSwitch, ObjectType::ObjectType90, 0);
-                m_decorAction = 5;
+                m_decorAction = DecorAction::ElectricShake;
                 m_decorPhase = 0;
             }
             if (m_moveObject[icon].type == ObjectType::ObjectType54 && m_moveObject[icon].step != 2 && m_moveObject[icon].step != 4 &&
@@ -5663,7 +5663,7 @@ namespace WindowsPhoneSpeedyBlupi
                     StopSound(SoundChannel::SoundChannel29);
                     StopSound(SoundChannel::SoundChannel31);
                     PlaySound(SoundChannel::SoundChannel10, m_moveObject[icon].posCurrent);
-                    m_decorAction = 1;
+                    m_decorAction = DecorAction::SmallShake;
                     m_decorPhase = 0;
                 }
                 else
@@ -5872,7 +5872,7 @@ namespace WindowsPhoneSpeedyBlupi
                     celSwitch.Y -= 34;
                     ObjectStart(celSwitch, ObjectType::ObjectType10, 0);
                     PlaySound(SoundChannel::SoundChannel10, m_moveObject[icon].posCurrent);
-                    m_decorAction = 1;
+                    m_decorAction = DecorAction::SmallShake;
                     m_decorPhase = 0;
                 }
             }
@@ -7576,7 +7576,7 @@ namespace WindowsPhoneSpeedyBlupi
                     posCurrent.Y -= 34;
                     ObjectStart(posCurrent, ObjectType::ObjectType8, 0);
                     PlaySound(SoundChannel::SoundChannel10, m_moveObject[i].posCurrent);
-                    m_decorAction = 1;
+                    m_decorAction = DecorAction::SmallShake;
                     m_decorPhase = 0;
                     posCurrent = m_moveObject[i].posCurrent;
                     posCurrent.X += 2;
@@ -7655,7 +7655,7 @@ namespace WindowsPhoneSpeedyBlupi
                 end.Y -= 34;
                 ObjectStart(end, ObjectType::ObjectType9, 0);
                 PlaySound(SoundChannel::SoundChannel10, end);
-                m_decorAction = 1;
+                m_decorAction = DecorAction::SmallShake;
                 m_decorPhase = 0;
             }
         }
@@ -8637,7 +8637,7 @@ namespace WindowsPhoneSpeedyBlupi
         if (dx == 0 && dy == 0)
         {
             PlaySound(SoundChannel::SoundChannel10, posStart);
-            m_decorAction = 1;
+            m_decorAction = DecorAction::SmallShake;
             m_decorPhase = 0;
         }
         TinyRect src = TinyRect();
@@ -10467,7 +10467,7 @@ namespace WindowsPhoneSpeedyBlupi
         Worlds::WriteIntField("_voyageTotal_", m_voyageTotal);
         Worlds::WritePointField("_voyageStart_", m_voyageStart);
         Worlds::WritePointField("_voyageEnd_", m_voyageEnd);
-        Worlds::WriteIntField("_decorAction_", m_decorAction);
+        Worlds::WriteIntField("_decorAction_", ToRaw(m_decorAction));
         Worlds::WriteIntField("_decorPhase_", m_decorPhase);
         Worlds::WriteIntField("_nbRankCaisse_", m_nbRankCaisse);
         Worlds::WriteIntField("_nbLinkCaisse_", m_nbLinkCaisse);
@@ -10622,7 +10622,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_voyageTotal = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_voyageTotal_");
         m_voyageStart = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_voyageStart_");
         m_voyageEnd = Worlds::GetPointField(lines, linesLength, "DescFile", 0, "_voyageEnd_");
-        m_decorAction = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_decorAction_");
+        m_decorAction = ToDecorAction(Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_decorAction_"));
         m_decorPhase = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_decorPhase_");
         m_nbRankCaisse = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_nbRankCaisse_");
         m_nbLinkCaisse = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_nbLinkCaisse_");

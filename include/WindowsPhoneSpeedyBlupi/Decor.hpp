@@ -7,6 +7,7 @@
 #include "Tables.hpp"
 #include "System/Random.hpp"
 #include "Jauge.hpp"
+#include "decor/DecorAction.hpp"
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 #include "decor/ObjectType.hpp"
@@ -511,7 +512,7 @@ namespace WindowsPhoneSpeedyBlupi
         TinyPoint m_voyageEnd;
 
         /** Current decor (level background) action state index (for animated tiles). */
-        intcs m_decorAction;
+        DecorAction m_decorAction;
 
         /** Animation phase counter for the current decor action. */
         intcs m_decorPhase;
