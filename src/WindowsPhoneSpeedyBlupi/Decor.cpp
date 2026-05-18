@@ -79,7 +79,7 @@ namespace WindowsPhoneSpeedyBlupi
                      m_blupiMotorSound(SoundChannel::SoundChannel0),
                      m_blupiRestart(false),
                      m_blupiFront(false),
-                     m_blupiBullet(0), m_blupiCle(0),
+                     m_blupiBullet(0), m_blupiCle(DoorKeyFlags::None),
                      m_blupiPerso(0),
                      m_blupiDynamite(0),
                      m_blupiNoBarre(0),
@@ -268,7 +268,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiValidPos = m_blupiStartPos;
         m_blupiFront = false;
         m_blupiBullet = 0;
-        m_blupiCle = 0;
+        m_blupiCle = DoorKeyFlags::None;
         m_blupiPerso = 0;
         m_blupiDynamite = 0;
         m_nbTresor = 0;
@@ -325,7 +325,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiTimeMockery = 0;
         m_blupiValidPos = m_blupiPos;
         m_blupiBullet = 0;
-        m_blupiCle = 0;
+        m_blupiCle = DoorKeyFlags::None;
         m_blupiPerso = 0;
         m_blupiDynamite = 0;
         m_nbTresor = 0;
@@ -1068,19 +1068,19 @@ namespace WindowsPhoneSpeedyBlupi
             pos.Y = 414;
             m_pixmap->HudIcon(PixmapChannel::Element, 252, pos);
         }
-        if (((unsigned int)m_blupiCle & (true ? 1u : 0u)) != 0)
+        if ((m_blupiCle & DoorKeyFlags::Key1) != DoorKeyFlags::None)
         {
             pos.X = 520;
             pos.Y = 418;
             m_pixmap->HudIcon(PixmapChannel::Element, 215, pos);
         }
-        if (((unsigned int)m_blupiCle & 2u) != 0)
+        if ((m_blupiCle & DoorKeyFlags::Key2) != DoorKeyFlags::None)
         {
             pos.X = 530;
             pos.Y = 418;
             m_pixmap->HudIcon(PixmapChannel::Element, 222, pos);
         }
-        if (((unsigned int)m_blupiCle & 4u) != 0)
+        if ((m_blupiCle & DoorKeyFlags::Key3) != DoorKeyFlags::None)
         {
             pos.X = 540;
             pos.Y = 418;
@@ -1847,7 +1847,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         if (cheat == Tables::CheatCodes::WeelKeys)
         {
-            m_blupiCle |= 7;
+            m_blupiCle = m_blupiCle | DoorKeyFlags::All;
         }
 #ifdef MODERN
         if (cheat == Tables::CheatCodes::Ghost)
@@ -5376,10 +5376,11 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(celBridge, ObjectType::ObjectType52, 0);
             }
             int num = IsDoor(m_blupiPos, celBridge);
-            if (num != -1 && (m_blupiCle & (1 << num - 334)) != 0)
+            const DoorKeyFlags doorKeyMask = ToDoorKeyFlags(1 << (num - 334));
+            if (num != -1 && (m_blupiCle & doorKeyMask) != DoorKeyFlags::None)
             {
                 OpenDoor(celBridge);
-                m_blupiCle &= ~(1 << num - 334);
+                m_blupiCle = ToDoorKeyFlags(ToRaw(m_blupiCle) & ~ToRaw(doorKeyMask));
                 celSwitch.X = 520;
                 celSwitch.Y = 418;
                 tinyPoint2.X = celBridge.X * 64 - m_posDecor.X;
@@ -5722,8 +5723,8 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -10);
             }
-            if (m_moveObject[icon].type == ObjectType::ObjectType49 && (m_voyageIcon != 215 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & 1) ==
-                0)
+            if (m_moveObject[icon].type == ObjectType::ObjectType49 && (m_voyageIcon != 215 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & DoorKeyFlags::Key1) ==
+                DoorKeyFlags::None)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                 celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
@@ -5737,8 +5738,8 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -10);
             }
-            if (m_moveObject[icon].type == ObjectType::ObjectType50 && (m_voyageIcon != 222 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & 2) ==
-                0)
+            if (m_moveObject[icon].type == ObjectType::ObjectType50 && (m_voyageIcon != 222 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & DoorKeyFlags::Key2) ==
+                DoorKeyFlags::None)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                 celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
@@ -5752,8 +5753,8 @@ namespace WindowsPhoneSpeedyBlupi
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, 10);
                 ObjectStart(m_moveObject[icon].posCurrent, ObjectType::ObjectType39, -10);
             }
-            if (m_moveObject[icon].type == ObjectType::ObjectType51 && (m_voyageIcon != 229 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & 4) ==
-                0)
+            if (m_moveObject[icon].type == ObjectType::ObjectType51 && (m_voyageIcon != 229 || m_voyageChannel != PixmapChannel::Element) && (m_blupiCle & DoorKeyFlags::Key3) ==
+                DoorKeyFlags::None)
             {
                 ObjectDelete(m_moveObject[icon].posCurrent, m_moveObject[icon].type);
                 celSwitch.X = m_moveObject[icon].posCurrent.X - m_posDecor.X;
@@ -9710,17 +9711,17 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (m_voyageIcon == 215 && m_voyageChannel == PixmapChannel::Element)
             {
-                m_blupiCle |= 1;
+                m_blupiCle = m_blupiCle | DoorKeyFlags::Key1;
                 m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 222 && m_voyageChannel == PixmapChannel::Element)
             {
-                m_blupiCle |= 2;
+                m_blupiCle = m_blupiCle | DoorKeyFlags::Key2;
                 m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 229 && m_voyageChannel == PixmapChannel::Element)
             {
-                m_blupiCle |= 4;
+                m_blupiCle = m_blupiCle | DoorKeyFlags::Key3;
                 m_sound->PlayImage(SoundChannel::SoundChannel3, m_voyageEnd, -1, false);
             }
             if (m_voyageIcon == 108 && m_voyageChannel == PixmapChannel::Button)
@@ -10436,7 +10437,7 @@ namespace WindowsPhoneSpeedyBlupi
         Worlds::WriteBoolField("_blupiRestart_", m_blupiRestart);
         Worlds::WriteBoolField("_blupiFront_", m_blupiFront);
         Worlds::WriteIntField("_blupiBullet_", m_blupiBullet);
-        Worlds::WriteIntField("_blupiCle_", m_blupiCle);
+        Worlds::WriteIntField("_blupiCle_", ToRaw(m_blupiCle));
         Worlds::WriteIntField("_blupiPerso_", m_blupiPerso);
         Worlds::WriteIntField("_blupiDynamite_", m_blupiDynamite);
         Worlds::WriteIntField("_blupiNoBarre_", m_blupiNoBarre);
@@ -10591,7 +10592,7 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiRestart = Worlds::GetBoolField(lines, linesLength, "DescFile", 0, "_blupiRestart_");
         m_blupiFront = Worlds::GetBoolField(lines, linesLength, "DescFile", 0, "_blupiFront_");
         m_blupiBullet = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiBullet_");
-        m_blupiCle = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiCle_");
+        m_blupiCle = ToDoorKeyFlags(Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiCle_"));
         m_blupiPerso = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiPerso_");
         m_blupiDynamite = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiDynamite_");
         m_blupiNoBarre = Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_blupiNoBarre_");

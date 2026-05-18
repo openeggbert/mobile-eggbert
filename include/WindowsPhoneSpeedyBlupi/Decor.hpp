@@ -8,6 +8,7 @@
 #include "System/Random.hpp"
 #include "Jauge.hpp"
 #include "decor/DecorAction.hpp"
+#include "decor/DoorKeyFlags.hpp"
 #include "SharpRuntime/Prop.hpp"
 #include "WindowsPhoneSpeedyBlupi/Helper.hpp"
 #include "decor/ObjectType.hpp"
@@ -364,7 +365,7 @@ namespace WindowsPhoneSpeedyBlupi
         intcs m_blupiBullet;
 
         /** Number of keys Blupi currently carries (used to open locked doors). */
-        intcs m_blupiCle;
+        DoorKeyFlags m_blupiCle;
 
         /** Index of the NPC/persona currently following Blupi, or -1 if none. */
         intcs m_blupiPerso;
