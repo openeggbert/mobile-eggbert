@@ -41,7 +41,8 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 if(ANDROID)
     set(_game_target main)
     add_library(${_game_target} SHARED ${SOURCES}
-            include/WindowsPhoneSpeedyBlupi/def/Direction.hpp)
+            include/WindowsPhoneSpeedyBlupi/def/Direction.hpp
+            ../cna/include/CNA/Misc.hpp)
 else()
     set(_game_target WindowsPhoneSpeedyBlupi)
     add_executable(${_game_target} ${SOURCES})
