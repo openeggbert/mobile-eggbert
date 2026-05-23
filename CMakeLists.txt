@@ -23,12 +23,12 @@ if(EMSCRIPTEN OR ANDROID)
     set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
     set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA"      FORCE)
 else()
-    set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA")
-    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA")
+    set(CNA_BACKEND_SDL_RENDERER OFF  CACHE BOOL "Enable SDL_Renderer backend in CNA")
+    set(CNA_BACKEND_EASY_GL      ON CACHE BOOL "Enable easy-gl backend in CNA")
 endif()
 set(CNA_BACKEND_BGFX   OFF CACHE BOOL "Enable bgfx backend in CNA")
 set(CNA_BACKEND_VULKAN OFF CACHE BOOL "Enable Vulkan backend in CNA")
-set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)")
+set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)")
 
 add_subdirectory(../cna CNA)
 include_directories(cna/include CNA)
@@ -130,6 +130,7 @@ elseif(EMSCRIPTEN)
 else()
     # Native desktop: copy Content directory next to the executable.
     set(MOBILE_EGGBERT_CONTENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Content")
+    set(MOBILE_EGGBERT_WORLDS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/worlds")
     if(EXISTS "${MOBILE_EGGBERT_CONTENT_DIR}")
         add_custom_command(TARGET ${_game_target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -137,6 +138,13 @@ else()
                 "$<TARGET_FILE_DIR:${_game_target}>/Content"
                 COMMENT "Copying game content next to executable")
     endif()
+#    if(EXISTS "${MOBILE_EGGBERT_WORLDS_DIR}")
+#        add_custom_command(TARGET ${_game_target} POST_BUILD
+#                COMMAND ${CMAKE_COMMAND} -E copy_directory
+#                "${CMAKE_CURRENT_WORLDS_DIR}"
+#                "$<TARGET_FILE_DIR:${_game_target}>/worlds"
+#                COMMENT "Copying game worlds next to executable")
+#    endif()
 endif() # ANDROID / EMSCRIPTEN / desktop
 
 if(WIN32)

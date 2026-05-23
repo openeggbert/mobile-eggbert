@@ -320,12 +320,24 @@ namespace WindowsPhoneSpeedyBlupi
         {
             decor.setButtonPressedProperty(buttonPressed);
 #ifndef LEGACY
-            for (int speedStep = 0; speedStep < ToRaw(gameSpeed); speedStep++)
+            if (gameSpeed == GameSpeed::Slow)
             {
-#endif
-            decor.MoveStep();
-#ifndef LEGACY
+                static bool slow_frame = false;
+                slow_frame = !slow_frame;
+                if (slow_frame)
+                {
+                    decor.MoveStep();
+                }
             }
+            else
+            {
+                for (int speedStep = 0; speedStep < ToRaw(gameSpeed); speedStep++)
+                {
+                    decor.MoveStep();
+                }
+            }
+#else
+            decor.MoveStep();
 #endif
             int num2 = decor.IsTerminated();
             if (num2 != 0)
@@ -989,6 +1001,7 @@ namespace WindowsPhoneSpeedyBlupi
     void Game1::SetGameSpeed(GameSpeed speed)
     {
         if (
+            speed == GameSpeed::Slow ||
             speed == GameSpeed::Normal ||
             speed == GameSpeed::Fast ||
             speed == GameSpeed::Faster ||

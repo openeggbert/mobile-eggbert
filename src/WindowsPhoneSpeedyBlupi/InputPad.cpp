@@ -499,7 +499,7 @@ namespace WindowsPhoneSpeedyBlupi
 
 #ifdef MODERN
         {
-            bool shift_active = IsKeyDownOrVirtual(Keys::LeftShift) || IsKeyDownOrVirtual(Keys::RightShift);
+            bool shift_active = IsKeyDownOrVirtual(Keys::LeftShift);
             if (!quick_cheat_enabled && !ghost_cheat_enabled && !shift_active && game1->getGameSpeed() > GameSpeed::Fast)
             {
                 game1->SetGameSpeed(GameSpeed::Normal);
@@ -553,7 +553,7 @@ namespace WindowsPhoneSpeedyBlupi
         // Shift pressed  -> 2x speed (or 8x if quick cheat is active).
         // Shift released -> restore the speed that was active before Shift.
         {
-            bool shift_held = IsKeyDownOrVirtual(Keys::LeftShift) || IsKeyDownOrVirtual(Keys::RightShift);
+            bool shift_held = IsKeyDownOrVirtual(Keys::LeftShift);
             if (shift_held && !shift_held_previously)
             {
                 // Shift just pressed: save current speed and apply boost.
@@ -569,6 +569,27 @@ namespace WindowsPhoneSpeedyBlupi
                 INPUT_DEBUG("Shift released: game speed restored.");
             }
             shift_held_previously = shift_held;
+        }
+#endif
+
+#ifdef MODERN
+        // Tab key: toggle game speed between Slow (0.5x) and Normal (1x).
+        {
+            bool tab_held = IsKeyDownOrVirtual(Keys::Tab);
+            if (tab_held && !tab_held_previously)
+            {
+                if (game1->getGameSpeed() == GameSpeed::Slow)
+                {
+                    game1->SetGameSpeed(GameSpeed::Normal);
+                    INPUT_DEBUG("Tab pressed: game speed set to Normal (1x).");
+                }
+                else
+                {
+                    game1->SetGameSpeed(GameSpeed::Slow);
+                    INPUT_DEBUG("Tab pressed: game speed set to Slow (0.5x).");
+                }
+            }
+            tab_held_previously = tab_held;
         }
 #endif
 
@@ -1280,10 +1301,10 @@ namespace WindowsPhoneSpeedyBlupi
         if (getPhaseProperty() == Def::Phase::Play && game1 != nullptr)
         {
             GameSpeed spd = game1->getGameSpeed();
-            if (spd > GameSpeed::Normal)
+            if (spd > GameSpeed::Normal || spd == GameSpeed::Slow)
             {
                 TinyRect drawBounds = pixmap->getDrawBoundsProperty();
-                std::string speedText = std::to_string(ToRaw(spd)) + "x";
+                std::string speedText = (spd == GameSpeed::Slow) ? "0.5x" : std::to_string(ToRaw(spd)) + "x";
                 constexpr double speedTextScale = 0.55;
                 constexpr int padding = 3;
                 int textW = Text::GetTextWidth(speedText, speedTextScale);

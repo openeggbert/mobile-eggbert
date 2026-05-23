@@ -124,6 +124,8 @@ namespace WindowsPhoneSpeedyBlupi
         bool shift_held_previously = false;
         /** Game speed saved before Shift was pressed, restored when Shift is released. */
         GameSpeed game_speed_before_shift = GameSpeed::Normal;
+        /** True when Tab was held in the previous frame (for edge detection). */
+        bool tab_held_previously = false;
 
         // --- Virtual on-screen keyboard (MODERN only) ---
 

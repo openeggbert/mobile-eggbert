@@ -9,6 +9,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     enum class GameSpeed : GameSpeedUnderlying
     {
+        Slow = 0,
         Normal = 1,
         Fast = 2,
         Faster = 4,
