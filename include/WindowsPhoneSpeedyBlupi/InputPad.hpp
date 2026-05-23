@@ -120,6 +120,10 @@ namespace WindowsPhoneSpeedyBlupi
         /** Current zoom cheat state. */
         ZoomCheat zoom_cheat_state = ZoomCheat::Zoom100;
         int cheats_display_timer = 0;  ///< Frames remaining for the cheats overlay. 0 = hidden.
+        /** True when Shift was held in the previous frame (for edge detection). */
+        bool shift_held_previously = false;
+        /** Game speed saved before Shift was pressed, restored when Shift is released. */
+        GameSpeed game_speed_before_shift = GameSpeed::Normal;
 
         // --- Virtual on-screen keyboard (MODERN only) ---
 

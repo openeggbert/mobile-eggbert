@@ -497,10 +497,20 @@ namespace WindowsPhoneSpeedyBlupi
         }
         static GameSpeed game_speed_before_quick_cheat{GameSpeed::Normal};
 
+#ifdef MODERN
+        {
+            bool shift_active = IsKeyDownOrVirtual(Keys::LeftShift) || IsKeyDownOrVirtual(Keys::RightShift);
+            if (!quick_cheat_enabled && !ghost_cheat_enabled && !shift_active && game1->getGameSpeed() > GameSpeed::Fast)
+            {
+                game1->SetGameSpeed(GameSpeed::Normal);
+            }
+        }
+#else
         if (!quick_cheat_enabled && !ghost_cheat_enabled && game1->getGameSpeed() > GameSpeed::Fast)
         {
             game1->SetGameSpeed(GameSpeed::Normal);
         }
+#endif
         static bool F5_pressed_previously = false;
         static bool F6_pressed_previously = false;
         static bool F7_pressed_previously = false;
@@ -537,6 +547,30 @@ namespace WindowsPhoneSpeedyBlupi
                 F8_pressed_previously = IsKeyDownOrVirtual(Keys::F8);
             }
         }
+
+#ifdef MODERN
+        // Shift key: temporarily boost movement speed while held.
+        // Shift pressed  -> 2x speed (or 8x if quick cheat is active).
+        // Shift released -> restore the speed that was active before Shift.
+        {
+            bool shift_held = IsKeyDownOrVirtual(Keys::LeftShift) || IsKeyDownOrVirtual(Keys::RightShift);
+            if (shift_held && !shift_held_previously)
+            {
+                // Shift just pressed: save current speed and apply boost.
+                game_speed_before_shift = game1->getGameSpeed();
+                GameSpeed shift_speed = quick_cheat_enabled ? GameSpeed::Fastest : GameSpeed::Fast;
+                game1->SetGameSpeed(shift_speed);
+                INPUT_DEBUG(std::string("Shift pressed: game speed set to ") + (quick_cheat_enabled ? "8x" : "2x") + ".");
+            }
+            else if (!shift_held && shift_held_previously)
+            {
+                // Shift just released: restore previous speed.
+                game1->SetGameSpeed(game_speed_before_shift);
+                INPUT_DEBUG("Shift released: game speed restored.");
+            }
+            shift_held_previously = shift_held;
+        }
+#endif
 
         static bool F12_pressed_previously = false;
         if (IsKeyDownOrVirtual(Keys::F12) && !F12_pressed_previously)
