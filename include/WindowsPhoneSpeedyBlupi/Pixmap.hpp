@@ -7,7 +7,7 @@
 #include "IPixmap.hpp"
 
 #include "Microsoft/Xna/Framework/Vector2.hpp"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "../../../cna/include/Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SpriteEffects.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
@@ -23,7 +23,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
         IGame1* game1;
 
-        Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics;
+        Microsoft::Xna::Framework::GraphicsDeviceManager& graphics;
 
         double zoom = 0.0;
 
@@ -73,7 +73,7 @@ namespace WindowsPhoneSpeedyBlupi
         [[nodiscard]] TinyRect getDrawBoundsProperty() override;
         [[nodiscard]] TinyPoint getOriginProperty() const override;
 
-        Pixmap(IGame1* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics);
+        Pixmap(IGame1* game1, Microsoft::Xna::Framework::GraphicsDeviceManager& graphics);
 
         Pixmap(const Pixmap&) = delete;
         Pixmap& operator=(const Pixmap&) = delete;

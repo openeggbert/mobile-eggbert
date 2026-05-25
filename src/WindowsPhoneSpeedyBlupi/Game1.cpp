@@ -1017,7 +1017,7 @@ namespace WindowsPhoneSpeedyBlupi
     }
 #endif
 
-    Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager Game1::getGraphics()
+    Microsoft::Xna::Framework::GraphicsDeviceManager Game1::getGraphics()
     {
         return graphics;
     }

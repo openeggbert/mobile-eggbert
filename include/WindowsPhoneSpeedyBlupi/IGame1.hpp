@@ -6,7 +6,7 @@
 #include "InputPad.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "Microsoft/Xna/Framework/GameTime.hpp"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "../../../cna/include/Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
 #include "System/EventArgs.hpp"
 #include "WindowsPhoneSpeedyBlupi/Config.hpp"
 
@@ -109,7 +109,7 @@ namespace WindowsPhoneSpeedyBlupi
         [[nodiscard]] virtual GameSpeed getGameSpeed() const = 0;
 #endif
 
-        virtual Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() = 0;
+        virtual Microsoft::Xna::Framework::GraphicsDeviceManager getGraphics() = 0;
         ////
 
         [[nodiscard]] virtual Microsoft::Xna::Framework::Content::ContentManager& getContentProperty() = 0;

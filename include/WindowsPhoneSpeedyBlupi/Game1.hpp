@@ -12,7 +12,7 @@
 #include "def/ContinueMission.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "Microsoft/Xna/Framework/GameTime.hpp"
-#include "Microsoft/Xna/Framework/Graphics/GraphicsDeviceManager.hpp"
+#include "Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
 #include "System/TimeSpan.hpp"
 #include "System/EventArgs.hpp"
 
@@ -86,7 +86,7 @@ namespace WindowsPhoneSpeedyBlupi
             Def::ButtonGlyph::Cheat32
         };
 
-        readonly Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager graphics; ///< Manages the graphics device and display window.
+        readonly Microsoft::Xna::Framework::GraphicsDeviceManager graphics; ///< Manages the graphics device and display window.
 
         readonly std::shared_ptr<IPixmap> pixmap; ///< Rendering subsystem (owned).
 
@@ -219,7 +219,7 @@ namespace WindowsPhoneSpeedyBlupi
         [[nodiscard]] GameSpeed getGameSpeed() const override;
 #endif
 
-        Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager getGraphics() override;
+        Microsoft::Xna::Framework::GraphicsDeviceManager getGraphics() override;
 
         [[nodiscard]] Microsoft::Xna::Framework::Content::ContentManager& getContentProperty() override;
 

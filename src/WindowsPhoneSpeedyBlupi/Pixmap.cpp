@@ -69,7 +69,7 @@ namespace WindowsPhoneSpeedyBlupi
         return {static_cast<intcs>(originX), static_cast<intcs>(originY)};
     }
 
-    Pixmap::Pixmap(IGame1* game1, Microsoft::Xna::Framework::Graphics::GraphicsDeviceManager& graphics) :
+    Pixmap::Pixmap(IGame1* game1, Microsoft::Xna::Framework::GraphicsDeviceManager& graphics) :
         game1(game1),
         graphics(graphics), spriteBatch(nullptr), bitmapText(Texture2D()), bitmapButton(Texture2D()),
         bitmapJauge(Texture2D()), bitmapBlupi(Texture2D()), bitmapBlupi1(Texture2D()),
@@ -292,7 +292,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     bool Pixmap::Start()
     {
-        graphics.getGraphicsDeviceProperty()->Clear(Microsoft::Xna::Framework::CornflowerBlue);
+        graphics.getGraphicsDeviceProperty()->Clear(Microsoft::Xna::Framework::Color::CornflowerBlue);
         return true;
     }
 
@@ -326,7 +326,7 @@ namespace WindowsPhoneSpeedyBlupi
             0, 0, static_cast<intcs>(screenWidth), static_cast<intcs>(screenHeight));
         spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-        spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::White);
+        spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::Color::White);
         spriteBatch->End();
         TinyPoint dest{
             static_cast<intcs>(originX),
@@ -418,7 +418,7 @@ namespace WindowsPhoneSpeedyBlupi
         );
         spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-        spriteBatch->Draw(*bitmap, destinationRectangle, value, Microsoft::Xna::Framework::White);
+        spriteBatch->Draw(*bitmap, destinationRectangle, value, Microsoft::Xna::Framework::Color::White);
         spriteBatch->End();
         return true;
     }
