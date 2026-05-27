@@ -11,7 +11,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "org.openeggbert.speedyblupi"
     compileSdkVersion 35
-    ndkVersion = "30.0.14904198"
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId "org.openeggbert.speedyblupi"
