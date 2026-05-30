@@ -19,6 +19,7 @@
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/Tables.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
+#define CNA_SPRITE_BATCHING_ENABLED
 
 namespace WindowsPhoneSpeedyBlupi
 {
