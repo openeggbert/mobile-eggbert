@@ -301,6 +301,25 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    void Pixmap::BeginBatch()
+    {
+#ifdef CNA_SPRITE_BATCHING_ENABLED
+        if (!spriteBatch || batch_started_) return;
+        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+                           Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        batch_started_ = true;
+#endif
+    }
+
+    void Pixmap::EndBatch()
+    {
+#ifdef CNA_SPRITE_BATCHING_ENABLED
+        if (!spriteBatch || !batch_started_) return;
+        spriteBatch->End();
+        batch_started_ = false;
+#endif
+    }
+
     void Pixmap::DrawBackground()
     {
         if (!spriteBatch)
@@ -324,10 +343,10 @@ namespace WindowsPhoneSpeedyBlupi
         Microsoft::Xna::Framework::Rectangle srcRectangle = GetSrcRectangle(bitmap, 10, 10, 10, 10, 0, 0);
         Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(
             0, 0, static_cast<intcs>(screenWidth), static_cast<intcs>(screenHeight));
-        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+        if (!batch_started_) spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::Color::White);
-        spriteBatch->End();
+        if (!batch_started_) spriteBatch->End();
         TinyPoint dest{
             static_cast<intcs>(originX),
             static_cast<intcs>(originY)
@@ -416,10 +435,10 @@ namespace WindowsPhoneSpeedyBlupi
             static_cast<intcs>(static_cast<double>(rect.getWidthProperty()) * zoom),
             static_cast<intcs>(static_cast<double>(rect.getHeightProperty()) * zoom)
         );
-        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+        if (!batch_started_) spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         spriteBatch->Draw(*bitmap, destinationRectangle, value, Microsoft::Xna::Framework::Color::White);
-        spriteBatch->End();
+        if (!batch_started_) spriteBatch->End();
         return true;
     }
 
@@ -597,13 +616,13 @@ namespace WindowsPhoneSpeedyBlupi
                 rotationRad = static_cast<float>(Misc::DegToRad(rotationDeg));
                 rectangle = Misc::RotateAdjust(rectangle, rotationRad);
             }
-            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+            if (!batch_started_) spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                                Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
             spriteBatch->Draw(*bitmap, rectangle, srcRectangle,
                               Microsoft::Xna::Framework::Color::FromNonPremultiplied(
                                   255, 255, 255, static_cast<intcs>(255.0 * opacity)), rotationRad, origin, effect,
                               0.0f);
-            spriteBatch->End();
+            if (!batch_started_) spriteBatch->End();
         }
     }
 

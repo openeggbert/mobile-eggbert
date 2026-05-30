@@ -201,7 +201,17 @@ namespace WindowsPhoneSpeedyBlupi
         void DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
                       bool useHotSpot) override;
 
+        // When CNA_SPRITE_BATCHING_ENABLED is defined, call BeginBatch() before
+        // any Pixmap draw calls and EndBatch() after the last one each frame.
+        // This opens a single SpriteBatch Begin/End pair that all DrawPart /
+        // DrawIcon calls share, cutting GL draw calls by ~50-100x.
+        // Without the define the behaviour is identical to before: each draw
+        // call opens its own Begin/End pair (original Daniel Roux design).
+        void BeginBatch();
+        void EndBatch();
+
     private:
+        bool batch_started_ = false;
         Microsoft::Xna::Framework::Rectangle GetSrcRectangle(const Texture2D& bitmap, intcs bitmapGridX,
                                                              intcs bitmapGridY,
                                                              intcs iconWidth, intcs iconHeight, intcs gap, intcs icon);

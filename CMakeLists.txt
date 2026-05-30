@@ -15,20 +15,27 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Enable sprite-batch grouping in Pixmap: all Draw calls between BeginBatch/
+# EndBatch in Game1::Draw share a single SpriteBatch Begin/End pair instead of
+# one per sprite.  Reduces GL draw calls by ~50-100x.  OFF by default so that
+# the original Daniel Roux per-sprite behaviour is preserved until the feature
+# has been thoroughly tested.
+option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch Begin/End per frame" OFF)
+
 # On Emscripten and Android SDL_RENDERER is the only supported backend
 # (no OpenGL extensions / desktop GL). For native Linux/Windows either
 # EASY_GL or SDL_RENDERER can be used; default to SDL_RENDERER so the
 # same backend works on all targets.
 if(EMSCRIPTEN OR ANDROID)
-    set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA"      FORCE)
+    set(CNA_BACKEND_SDL_RENDERER OFF  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
+    set(CNA_BACKEND_EASY_GL      ON CACHE BOOL "Enable easy-gl backend in CNA"      FORCE)
 else()
-    set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA")
-    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA")
+    set(CNA_BACKEND_SDL_RENDERER OFF  CACHE BOOL "Enable SDL_Renderer backend in CNA")
+    set(CNA_BACKEND_EASY_GL      ON CACHE BOOL "Enable easy-gl backend in CNA")
 endif()
 set(CNA_BACKEND_BGFX   OFF CACHE BOOL "Enable bgfx backend in CNA")
 set(CNA_BACKEND_VULKAN OFF CACHE BOOL "Enable Vulkan backend in CNA")
-set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)")
+set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)")
 
 add_subdirectory(../cna CNA)
 include_directories(cna/include CNA)
@@ -53,6 +60,10 @@ if(EMSCRIPTEN)
 endif()
 
 target_include_directories(${_game_target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if(CNA_SPRITE_BATCHING_ENABLED)
+    target_compile_definitions(${_game_target} PRIVATE CNA_SPRITE_BATCHING_ENABLED)
+endif()
 
 # SDL3 is provided by CNA via vendored submodules (or system SDL if CNA_USE_SYSTEM_SDL=ON).
 # No separate find_package(SDL3) call is needed here.
@@ -126,6 +137,8 @@ elseif(EMSCRIPTEN)
         "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/Content/icons@/Content/icons"
         "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/Content/sounds@/Content/sounds"
         "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/worlds@/worlds"
+        "-sMIN_WEBGL_VERSION=2"
+        "-sMAX_WEBGL_VERSION=2"
     )
 else()
     # Native desktop: copy Content directory next to the executable.
