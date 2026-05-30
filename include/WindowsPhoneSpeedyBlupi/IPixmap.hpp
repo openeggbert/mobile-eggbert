@@ -182,5 +182,22 @@ namespace WindowsPhoneSpeedyBlupi
          */
         virtual void DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
                               bool useHotSpot) = 0;
+
+        /**
+         * @brief Opens a shared SpriteBatch Begin/End pair for the current frame.
+         *
+         * When CNA_SPRITE_BATCHING_ENABLED is defined, all subsequent DrawPart /
+         * DrawIcon / DrawBackground calls skip their own Begin/End and accumulate
+         * into one batch that is flushed by EndBatch().  Without the define this
+         * is a no-op and each draw call manages its own Begin/End (original behaviour).
+         */
+        virtual void BeginBatch() = 0;
+
+        /**
+         * @brief Closes the shared SpriteBatch Begin/End pair opened by BeginBatch().
+         *
+         * No-op when CNA_SPRITE_BATCHING_ENABLED is not defined.
+         */
+        virtual void EndBatch() = 0;
     };
 }
