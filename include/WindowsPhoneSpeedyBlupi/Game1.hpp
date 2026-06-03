@@ -163,9 +163,9 @@ namespace WindowsPhoneSpeedyBlupi
 
         void UnloadContent() override;
 
-        void OnDeactivated(std::any sender, System::EventArgs args) override;
+        void OnDeactivated(System::Object* sender, const System::EventArgs& args) override;
 
-        void OnActivated(std::any sender, System::EventArgs args) override;
+        void OnActivated(System::Object* sender, const System::EventArgs& args) override;
 
         void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
 

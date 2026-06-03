@@ -52,9 +52,9 @@ namespace WindowsPhoneSpeedyBlupi
 
         virtual void UnloadContent() = 0;
 
-        virtual void OnDeactivated(std::any sender, System::EventArgs args) = 0;
+        virtual void OnDeactivated(System::Object* sender, const System::EventArgs& args) = 0;
 
-        virtual void OnActivated(std::any sender, System::EventArgs args) = 0;
+        virtual void OnActivated(System::Object* sender, const System::EventArgs& args) = 0;
 
         virtual void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) = 0;
 

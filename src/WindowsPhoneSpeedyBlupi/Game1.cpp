@@ -108,7 +108,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
     }
 
-    void Game1::OnDeactivated(std::any sender, System::EventArgs args)
+    void Game1::OnDeactivated(System::Object* sender, const System::EventArgs& args)
     {
         if (phase == Def::Phase::Play)
         {
@@ -122,7 +122,7 @@ namespace WindowsPhoneSpeedyBlupi
         Game::OnDeactivated(sender, args);
     }
 
-    void Game1::OnActivated(std::any sender, System::EventArgs args)
+    void Game1::OnActivated(System::Object* sender, const System::EventArgs& args)
     {
         continueMission = ContinueMissionType::Pending;
         Game::OnActivated(sender, args);
