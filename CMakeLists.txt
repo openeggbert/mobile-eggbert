@@ -22,20 +22,32 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # has been thoroughly tested.
 option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch Begin/End per frame" OFF)
 
-# On Emscripten and Android SDL_RENDERER is the only supported backend
-# (no OpenGL extensions / desktop GL). For native Linux/Windows either
-# EASY_GL or SDL_RENDERER can be used; default to SDL_RENDERER so the
-# same backend works on all targets.
+# Graphics backend selection for CNA.
+# Exactly one of the four options must be ON.
+# Available backends: SDL_RENDERER, EASYGL, BGFX, VULKAN
 if(EMSCRIPTEN OR ANDROID)
-    set(CNA_BACKEND_SDL_RENDERER OFF  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-    set(CNA_BACKEND_EASY_GL      ON CACHE BOOL "Enable easy-gl backend in CNA"      FORCE)
+    # On Emscripten/Android only SDL_RENDERER is supported (no desktop GL).
+    set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
+    set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA"      FORCE)
+    set(CNA_BACKEND_BGFX         OFF CACHE BOOL "Enable bgfx backend in CNA"         FORCE)
+    set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "Enable Vulkan backend in CNA"        FORCE)
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)" FORCE)
 else()
-    set(CNA_BACKEND_SDL_RENDERER OFF  CACHE BOOL "Enable SDL_Renderer backend in CNA")
-    set(CNA_BACKEND_EASY_GL      ON CACHE BOOL "Enable easy-gl backend in CNA")
+    # Desktop: choose one backend. Default is EASYGL.
+    # To switch, pass exactly one backend ON on the cmake command line, e.g.:
+    #   cmake -DCNA_BACKEND_VULKAN=ON -DCNA_BACKEND_EASY_GL=OFF ...
+    # or use the CNA_GRAPHICS_BACKEND string variable:
+    #   cmake -DCNA_GRAPHICS_BACKEND=VULKAN ...
+    option(CNA_BACKEND_SDL_RENDERER "Enable SDL_Renderer backend in CNA" OFF)
+    option(CNA_BACKEND_EASY_GL      "Enable easy-gl backend in CNA"      OFF)
+    option(CNA_BACKEND_BGFX         "Enable bgfx backend in CNA"         OFF)
+    option(CNA_BACKEND_VULKAN       "Enable Vulkan backend in CNA"        OFF)
+
+    # If none explicitly set, default to EASYGL
+    if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN)
+        set(CNA_BACKEND_EASY_GL ON CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
+    endif()
 endif()
-set(CNA_BACKEND_BGFX   OFF CACHE BOOL "Enable bgfx backend in CNA")
-set(CNA_BACKEND_VULKAN OFF CACHE BOOL "Enable Vulkan backend in CNA")
-set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)")
 
 add_subdirectory(../cna CNA)
 include_directories(cna/include CNA)
