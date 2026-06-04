@@ -77,8 +77,12 @@ if(CNA_SPRITE_BATCHING_ENABLED)
     target_compile_definitions(${_game_target} PRIVATE CNA_SPRITE_BATCHING_ENABLED)
 endif()
 
-# SDL3 is provided by CNA via vendored submodules (or system SDL if CNA_USE_SYSTEM_SDL=ON).
-# No separate find_package(SDL3) call is needed here.
+# CNA builds SDL3 once into its own prebuilt root and sets SDL3_DIR / SDL3_image_DIR /
+# SDL3_mixer_DIR in the CMake cache.  SDL IMPORTED targets are directory-scoped, so we
+# must call find_package() here to make SDL3::SDL3 visible in this project's scope.
+find_package(SDL3       REQUIRED CONFIG)
+find_package(SDL3_image REQUIRED CONFIG)
+find_package(SDL3_mixer REQUIRED CONFIG)
 
 # CNA and the selected graphics backend static library have circular
 # symbol references on Linux (backend uses Color/Rectangle/Matrix from CNA,
