@@ -1,3 +1,77 @@
+/**
+ * @file   Decor.cpp
+ * @brief  Implements the Speedy Blupi gameplay simulation declared in Decor.hpp.
+ * @details
+ *   This translation unit is the largest and most complex file in the project
+ *   (~11 000 lines). It contains the full per-frame gameplay simulation: tile
+ *   physics and collision, the Blupi player action state machine, every moving
+ *   object AI, lift (ascenseur) and teleporter mechanics, crate (caisse) pushing,
+ *   particle/effect spawning, sound triggering, viewport scrolling, and level I/O.
+ *
+ *   The public contract of every method is documented in Decor.hpp; the comments
+ *   in this file are strictly implementation-level (algorithm sketches, invariants,
+ *   side effects, and warnings) and intentionally do not repeat the header.
+ *
+ *   ## Per-frame tick: MoveStep()
+ *   MoveStep() is the single entry point that advances the whole simulation by one
+ *   frame. It runs its sub-systems in a fixed order so that later stages observe the
+ *   results of earlier ones:
+ *     1. m_time is incremented (it drives every animation phase counter).
+ *     2. MoveHotSpot() eases the camera zoom/pan toward its target.
+ *     3. BlupiStep() runs the player physics + action state machine. This reads the
+ *        latest input (m_keyPress, m_blupiSpeedX/Y), applies gravity/velocity,
+ *        resolves tile collision via BlupiAdjust()/BlupiBloque(), handles vehicle
+ *        and hazard transitions, and may attach Blupi to a lift or teleport him.
+ *     4. MoveObjectStep() advances every active moving object: linear motion
+ *        (MoveObjectStepLine), per-type AI and lifetime (MoveObjectStepIcon),
+ *        crate bookkeeping (UpdateCaisse), and pollution damage (MoveObjectPollution).
+ *     5. ByeByeStep() advances and expires destruction particles.
+ *     6. The scroll position (m_posDecor) is eased toward Blupi.
+ *     7. Win/loss conditions update m_term (read later by IsTerminated()).
+ *   Build() is a separate call made after MoveStep(); it only renders and never
+ *   mutates simulation state.
+ *
+ *   ## Tile-overlap collision resolution
+ *   Collision is tile-based, not swept. The moving entity (Blupi or an object) is
+ *   represented by an axis-aligned rectangle in game-space pixels. DecorDetect()
+ *   converts that rectangle to the range of tile cells it overlaps and tests each
+ *   cell's icon via IsBlocIcon()/IsPassIcon(); a single blocking cell makes the
+ *   rectangle "occupied". Movement is applied first, then BlupiAdjust() pushes Blupi
+ *   back out of any penetrated tile by nudging him along the minor axis until
+ *   DecorDetect() reports clear; BlupiBloque() answers the directional "can I move
+ *   here?" query used before committing a step. TestPath() does a stepwise march
+ *   from start toward end and returns the furthest clear position for objects that
+ *   must stop on contact rather than be pushed out.
+ *
+ *   ## Object AI state machines
+ *   Two styles coexist. Most enemies/effects are *table-driven*: a MoveObject moves
+ *   linearly between posStart and posEnd (advance/recede speeds + end-dwell timers in
+ *   MoveObjectStepLine) while its animation/lifetime is a phase counter indexed into
+ *   the Tables animation arrays by MoveObjectStepIcon(). A minority of behaviours are
+ *   *hand-coded* with bespoke logic keyed on ObjectType inside MoveObjectStepIcon()
+ *   and its helpers (dynamite, charging enemies, followers, cloud-nets, crates).
+ *
+ *   ## Teleporter pairing
+ *   Teleporters are not stored in a side table; they are discovered from the tile map
+ *   on demand. IsTeleporte() reports the teleporter index at a position, and
+ *   SearchTeleporte() scans the whole map for the *other* teleporter cell sharing the
+ *   same pairing and returns its position as the exit. Pairing is therefore implicit
+ *   in the tile icons rather than indexed.
+ *
+ *   ## Particle / effect objects
+ *   Two pools exist. Short-lived water/glue/bubble splashes and most one-shot effects
+ *   are ordinary MoveObjects spawned through ObjectStart() (e.g. MoveObjectPlouf,
+ *   MoveObjectBlup, StartSploutchGlu); they expire when their phase counter runs past
+ *   the end of their animation table and the slot is freed. Destruction debris from a
+ *   helicopter uses the separate float-based ByeByeObject pool (ByeByeHelico/ByeByeAdd
+ *   spawn, ByeByeStep advances and culls off-screen fragments, ByeByeDraw renders); it
+ *   is purely visual and never touches gameplay state.
+ *
+ * @note  This is a direct port of the original C# game. Every numeric constant is part
+ *        of the original game logic; do not tune them without understanding the 20 FPS
+ *        timing assumptions (see Config::ScaleTime()).
+ * @see   Decor.hpp, IPixmap, ISound, GameData, Tables
+ */
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
 
 #include <iomanip>
@@ -13,6 +87,12 @@
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 #include "WindowsPhoneSpeedyBlupi/def/SoundChannel.hpp"
 
+/**
+ * @brief Maximum number of egg collectibles considered in a single egg scan.
+ * @details File-local constant used by the egg-related gameplay paths in this
+ *          translation unit; it caps how many egg objects one scan inspects. Not
+ *          exposed in the header.
+ */
 static constexpr SharpRuntime::intcs MAX_EGG_COUNT = 10;
 
 namespace WindowsPhoneSpeedyBlupi
@@ -172,6 +252,14 @@ namespace WindowsPhoneSpeedyBlupi
     }
 
 
+    /**
+     * @note Resets the whole 100x100 map to icon -1 (empty), then stamps a small
+     *       built-in starter platform (cells (1..7,4)) and two demo moving objects in
+     *       slots 0/1. This baseline is overwritten by Read() when a real level loads;
+     *       it only matters when no level file is present.
+     * @note Also resets every Blupi flag, the scroll target, the bye-bye particle pool,
+     *       and clears the bullet/move trajectory occupancy arrays.
+     */
     void Decor::InitDecor()
     {
         m_posDecor.X = 0;
@@ -281,6 +369,15 @@ namespace WindowsPhoneSpeedyBlupi
         byeByeObjects.clear();
     }
 
+    /**
+     * @note Counts treasures by scanning the loaded object pool for ObjectType5 to
+     *       initialise m_totalTresor (the win-condition target). A set of decorative
+     *       object types is given a randomised starting phase so their animations are
+     *       not all in lock-step. Editor-only marker objects (ObjectType23) are demoted
+     *       to ObjectType0 (inactive) so they do not run during play.
+     * @note Ends by running one MoveStep() and then snapping the scroll target onto
+     *       Blupi so the first rendered frame is already centred (no initial pan).
+     */
     void Decor::PlayPrepare(bool bTest)
     {
         if (bTest)
@@ -398,6 +495,15 @@ namespace WindowsPhoneSpeedyBlupi
         return m_term;
     }
 
+    /**
+     * @note Fixed sub-system order: objects first (MoveObjectStep), then particles
+     *       (ByeByeStep), then the player (BlupiStep) so Blupi reacts to objects already
+     *       moved this frame, then camera (MoveHotSpot) and motor sound. The whole body
+     *       is wrapped in a catch-all so a single bad frame cannot crash the game loop;
+     *       the exception is intentionally swallowed (state may be left mid-update).
+     * @warning Swallowing the exception means a partially-updated frame can be rendered;
+     *          this matches the original behaviour and is not a place to add new logic.
+     */
     void Decor::MoveStep()
     {
         try
@@ -419,6 +525,16 @@ namespace WindowsPhoneSpeedyBlupi
                              getDrawBoundsProperty().getHeightProperty() / 2);
     }
 
+    /**
+     * @note Decides whether to zoom in (flag): true only while Blupi is walking
+     *       horizontally, focused, not in helicopter/power mode, and auto-zoom is enabled
+     *       in settings. m_hotSpotOutLag adds hysteresis so the camera lingers zoomed-in
+     *       for ScaleTime(30) frames after horizontal motion stops, avoiding zoom jitter.
+     * @note The final zoom/centre target is interpolated toward each frame using fixed
+     *       per-frame step sizes scaled by Config::SPEED_SCALE; the MODERN cheat zoom
+     *       factor is folded into the target zoom. The current values are clamped so they
+     *       never overshoot the target.
+     */
     void Decor::MoveHotSpot()
     {
         bool flag = false;
@@ -494,6 +610,13 @@ namespace WindowsPhoneSpeedyBlupi
         m_pixmap->SetHotSpot(m_hotSpotCurrentZoom, m_hotSpotCurrentX, m_hotSpotCurrentY);
     }
 
+    /**
+     * @note The lightning is on a 100-tick cycle (m_time / ScaleDiv(1) % 100): it is
+     *       "active" only on even ticks in the first half of the cycle (num < 50), giving
+     *       a flicker. When a blitz emitter (icon 304) sits in the cell above, the zap
+     *       sound is played on a fixed set of cycle ticks so the audio lines up with the
+     *       visible strikes.
+     */
     bool Decor::BlitzActif(intcs celx, intcs cely)
     {
         TinyPoint pos{celx * 64, cely * 64};
@@ -510,6 +633,19 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note Renders in strict back-to-front layers: (1) the tiled parallax background
+     *       blitted in a 3x2 grid of 640x480 panels, (2) the big-decor tile layer
+     *       (m_bigDecor) culled to the cells overlapping the visible draw bounds, (3) the
+     *       foreground decor/objects/Blupi, then (4) HUD and particle/voyage overlays.
+     *       Tiles are iterated by converting the scroll offset (posDecor) to a cell range
+     *       padded by a one-tile margin so partially-visible edge tiles are drawn.
+     * @note MODERN cheat-zoom widens the iterated cell range by zoomExtraX/Y tiles so the
+     *       enlarged (zoomed-out) viewport is filled with real tiles instead of empty space.
+     * @note Several icons get per-icon vertical nudges (e.g. animated water icon 203 is
+     *       resolved through Tables::table_marine for its current frame); these offsets are
+     *       cosmetic alignment carried over from the original game.
+     */
     void Decor::Build()
     {
         TinyPoint posDecor = DecorNextAction();
@@ -1035,6 +1171,17 @@ namespace WindowsPhoneSpeedyBlupi
         m_time++;
     }
 
+    /**
+     * @note Lays out HUD glyphs at fixed screen coordinates: a row of life icons, a row
+     *       of bullet pips, follower/dynamite/key indicators (keys gated by the m_blupiCle
+     *       bit flags), and the treasure counter (suppressed on the hub/world-select levels
+     *       where m_mission % 10 == 0). The two gauges are drawn only when not hidden.
+     * @note For the training missions (11-14) it picks the matching tutorial hint table and
+     *       walks its 6-field records {x0,x1,y0,y1,condition,stringId}: when Blupi's tile is
+     *       inside the box and IsDisplayInfo(condition) holds, the localized hint string is
+     *       shown, auto-scaled down to fit 640px and offset by 10000 when accelerometer
+     *       controls are active (to select the accelerometer-worded variant).
+     */
     void Decor::DrawInfo()
     {
         TinyPoint pos;
@@ -1192,6 +1339,17 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Drives the screen-shake / forced-pan effect. Tables::table_decor_action is a
+     *       flat record list: each record is {actionId, frameCount, (dx,dy) per frame...}.
+     *       It walks records by their variable stride until it finds the active
+     *       m_decorAction, then returns the base scroll offset displaced by 3x the current
+     *       frame's (dx,dy), advancing m_decorPhase. When the frames are exhausted the
+     *       action is cleared back to None. The returned offset is clamped to the level
+     *       bounds (6400 minus the draw width/height).
+     * @note Returns m_posDecor unchanged when no action is active or the game is paused;
+     *       this function does not mutate m_posDecor itself, only the returned copy.
+     */
     TinyPoint Decor::DecorNextAction()
     {
         int i = 0;
@@ -1266,6 +1424,13 @@ namespace WindowsPhoneSpeedyBlupi
         bNage = m_blupiNage | m_blupiSurf;
     }
 
+    /**
+     * @note Maps the two generic footstep channels (SoundChannel3/4) to a surface-specific
+     *       variant by classifying the obstacle (tile) icon into material ranges (grass,
+     *       stone, wood, metal, sand, etc.). Each material range routes to a dedicated pair
+     *       of footstep sounds. Any channel other than 3/4, or an icon outside every range,
+     *       is returned unchanged.
+     */
     SoundChannel Decor::SoundEnviron(SoundChannel sound, int obstacle)
     {
         if ((obstacle >= 32 && obstacle <= 34) || (obstacle >= 41 && obstacle <= 47) || (obstacle >= 139 && obstacle <=
@@ -1343,6 +1508,13 @@ namespace WindowsPhoneSpeedyBlupi
         return sound;
     }
 
+    /**
+     * @note When the Hide secret power is active, Blupi's own action/footstep/effect sounds
+     *       are suppressed: the large disjunction lists every "Blupi-produced" channel id
+     *       and the sound only plays if it is NOT one of them (so ambient/environment
+     *       sounds still play while hidden). Panning is computed by subtracting the scroll
+     *       origin so the position becomes screen-relative before forwarding to ISound.
+     */
     void Decor::PlaySound(SoundChannel sound, TinyPoint pos)
     {
         int ranSound = ToRaw(sound);
@@ -1415,6 +1587,15 @@ namespace WindowsPhoneSpeedyBlupi
         m_sound->Stop(sound);
     }
 
+    /**
+     * @note Selects the looping motor channel for the current vehicle (helicopter vs.
+     *       jeep/tank/overcraft) and pitch (m_blupiMotorHigh chooses the high/low variant).
+     *       When the desired loop differs from the one currently playing (m_blupiMotorSound)
+     *       it crossfades: plays a one-shot start sound when going from silence to a motor,
+     *       a one-shot stop sound when going from a motor to silence, stops the old loop,
+     *       then starts the new loop (PlayImage with loop flag) panned to Blupi's screen
+     *       position. No-ops when the desired loop already matches the active one.
+     */
     void Decor::AdaptMotorVehicleSound()
     {
         SoundChannel num = SoundChannel::SoundChannel0;
@@ -1580,6 +1761,16 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note One linear if-chain, one branch per cheat code (the codes are not mutually
+     *       exclusive in form but the player triggers one at a time). Toggle cheats flip a
+     *       bool and re-derive dependent state (e.g. OpenDoors flips m_bCheatDoors then calls
+     *       AdaptDoors). CleanAll converts every enemy/hazard object in the pool into an
+     *       explosion object (ObjectType8), kicks the small screen-shake, and plays the
+     *       explosion sound. The vehicle cheats (Skate, etc.) clear all other vehicle/mode
+     *       flags first so the modes stay mutually exclusive, then stop the now-irrelevant
+     *       looping motor sounds.
+     */
     void Decor::CheatAction(Tables::CheatCodes cheat)
     {
         if (cheat == Tables::CheatCodes::OpenDoors)
@@ -1909,6 +2100,26 @@ namespace WindowsPhoneSpeedyBlupi
         m_buildOfficialMissions = bMode;
     }
 
+    /**
+     * @note Resolves the sprite icon (m_blupiIcon) and channel (m_blupiChannel) for the
+     *       current frame in three stages:
+     *       1. Action remapping: the base m_blupiAction is rewritten into a mode-specific
+     *          variant for whichever vehicle/state flag is set (helico/over/jeep/tank/skate/
+     *          nage/surf/suspend/balloon/ecrase/vent). These blocks are hand-coded per mode
+     *          and also compute m_blupiLogicRotation/m_blupiRealRotation for the rotating
+     *          modes (swim direction, surf bob, helicopter tilt).
+     *       2. Table lookup: Tables::table_blupi is a record list {actionId, frameCount,
+     *          holdFrame, icon0..iconN}; it scans by stride to the matching action and picks
+     *          the frame from the phase counter (num6), clamping at holdFrame for one-shot
+     *          animations and wrapping by frameCount for looping ones. Slow-walk phases are
+     *          halved so the walk cycle looks right at low speed.
+     *       3. Direction/mirror fix-up: left-facing icons are mapped through Tables::table_mirror
+     *          (with a few suspend-pose special cases), and certain effect actions switch the
+     *          channel to Element instead of Blupi.
+     * @note Side effect: triggers ambient idle sounds (SoundChannel37/36) and surf splash
+     *       particles (MoveObjectTiplouf) at specific phase values, so this is not a pure
+     *       icon lookup.
+     */
     void Decor::BlupiSearchIcon()
     {
         int i = 0;
@@ -2240,6 +2451,11 @@ namespace WindowsPhoneSpeedyBlupi
         m_blupiPhase++;
     }
 
+    /**
+     * @note Probes a 1-pixel-tall strip just below Blupi's feet (Y+60-2..Y+60-1) for a
+     *       blocking tile. Returns false unconditionally while Blupi is being carried by a
+     *       transport (m_blupiTransport != -1) so a lift counts as airborne for ground tests.
+     */
     bool Decor::BlupiIsGround()
     {
         if (m_blupiTransport == -1)
@@ -2315,6 +2531,16 @@ namespace WindowsPhoneSpeedyBlupi
         return result;
     }
 
+    /**
+     * @note Penetration recovery. If Blupi's box is already clear it returns immediately.
+     *       Otherwise it nudges him out of the overlap in fixed phases, each a bounded loop
+     *       of up to 50 two-pixel steps (so worst case ~100px of correction): first push
+     *       down (test a thin top edge), then push right, then push left, then two further
+     *       horizontal passes using only the leading vertical edge. Each phase stops as soon
+     *       as the probed edge is clear of any blocking tile.
+     * @warning The 50-iteration cap means very deep penetration may not fully resolve; the
+     *          caps are part of the original tuning and should not be raised casually.
+     */
     void Decor::BlupiAdjust()
     {
         TinyRect tinyRect = BlupiRect(m_blupiPos);
@@ -2481,20 +2707,30 @@ namespace WindowsPhoneSpeedyBlupi
     }
 #endif
 
-    // Core Blupi physics and action state-machine update. Called once per frame from MoveStep().
-    // Order of operations:
-    //   1. BlupiAdjust() — resolves stuck-in-wall situations from the previous frame.
-    //   2. Compute the proposed movement vector (end = current pos + m_blupiVector).
-    //   3. Apply wind/ventilator tile effects if Blupi is on an air-vent tile.
-    //   4. Check if Blupi is standing on ground (flag2) and test ceiling (flag3).
-    //   5. Detect airborne state transitions, spring/ressort bounces, teleporters, etc.
-    //   6. Execute the current BlupiAction state machine branch (march, jump, helico, ...),
-    //      which computes the next m_blupiVector from m_blupiSpeedX/Y and current state.
-    //   7. Snap Blupi to the grid after movement via BlupiAdjust().
-    //
-    // All positions are in game-space pixel coordinates.
-    // m_blupiVector is consumed and reset here each frame.
-    // Do not call this method directly; use MoveStep().
+    /**
+     * @note Core Blupi physics + action state machine; the single largest hand-coded state
+     *       machine in the file. Per-frame order of operations:
+     *         1. BlupiAdjust() resolves any stuck-in-wall situation left by the previous frame.
+     *         2. The proposed move is end = m_blupiPos + m_blupiVector.
+     *         3. Wind/ventilator tile effects are applied when Blupi is on an air-vent tile.
+     *         4. Ground contact (flag2) and ceiling (flag3) are probed via DecorDetect().
+     *         5. Hazard/feature detection runs: lava, traps, drips, saws, springs, switches,
+     *            bridges, doors, teleporters, lifts, water entry/exit, etc. Each can force an
+     *            action change, death (BlupiDead), a bounce, or a teleport (SearchTeleporte).
+     *         6. A large switch on m_blupiAction executes the branch for the current action
+     *            (march / jump / air / helico / jeep / tank / skate / swim / surf / suspend /
+     *            balloon / death / clear / ...). Each branch reads m_blupiSpeedX/Y plus state
+     *            and produces the next m_blupiVector, possibly transitioning to another action.
+     *         7. BlupiAdjust() snaps Blupi back out of geometry after the move is committed.
+     *       BlupiSearchIcon() is invoked to refresh the sprite, and the scroll target is eased
+     *       toward Blupi at the end.
+     * @note m_blupiVector is both the input (this frame's intended displacement) and is
+     *       recomputed here for the next frame. m_blupiValidPos is updated only while Blupi is
+     *       in a non-lethal position so death can respawn him at the last safe spot.
+     * @warning This method mutates a large amount of member state and has many early-exit and
+     *          fall-through paths between actions; the action transitions are interdependent
+     *          and ordering-sensitive. Treat it as ported game logic, not free-form code.
+     */
     void Decor::BlupiStep()
     {
 #ifdef MODERN
@@ -6299,6 +6535,15 @@ namespace WindowsPhoneSpeedyBlupi
         m_lastKeyPress = m_keyPress;
     }
 
+    /**
+     * @note Clears every vehicle/mode/bonus flag so death always returns Blupi to a plain
+     *       state, hides the gauges, and stops the looping motor sounds. When action2 is
+     *       supplied, the played death animation is chosen randomly between the two. Certain
+     *       "clear" death variants additionally launch a Voyage arc (Clear2/Clear3, e.g. the
+     *       angel/balloon ascent) or spawn debris objects (Clear4) and play a matching sound.
+     * @note Spawns helicopter debris up front via ByeByeHelico() regardless of cause, which is
+     *       a no-op when Blupi was not in helicopter mode.
+     */
     void Decor::BlupiDead(BlupiAction action1, std::optional<BlupiAction> action2)
     {
         ByeByeHelico();
@@ -6368,6 +6613,12 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Centres the viewport on @p pos by subtracting half the draw width/height, then
+     *       clamps to the level extents [0, 6400 - drawSize]. A zero m_dimDecor.X/Y axis
+     *       means that axis is not scrollable, so the corresponding result is pinned to 0
+     *       (single-screen levels).
+     */
     TinyPoint Decor::GetPosDecor(TinyPoint pos)
     {
         TinyPoint result;
@@ -6394,6 +6645,12 @@ namespace WindowsPhoneSpeedyBlupi
         return result;
     }
 
+    /**
+     * @note Appends to the rope-trail FIFO but de-duplicates: a position equal to the most
+     *       recent entry is ignored so the trail only records actual movement. Once the
+     *       10-slot buffer is full it shifts everything down by one and writes the newest
+     *       sample at the end (oldest sample discarded).
+     */
     void Decor::BlupiAddFifo(TinyPoint pos)
     {
         if (m_blupiFifoNb < 10)
@@ -6415,15 +6672,26 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
-    // Collision test: checks whether rect intersects any solid tile or (if bCaisse=true) any crate.
-    // Uses game-space pixel coordinates. The tile map is tested at 16x16 pixel granularity using
-    // table_decor_quart to look up which quarter-cells within a 64x64 tile are solid.
-    // Sets m_detectIcon to the last intersected tile icon on collision.
+    /**
+     * @note One-argument overload: forwards with bCaisse = true so crates count as solid.
+     */
     bool Decor::DecorDetect(TinyRect rect)
     {
         return DecorDetect(rect, true);
     }
 
+    /**
+     * @note Sub-tile collision. Each 64x64 tile is divided into a 4x4 grid of 16px
+     *       "quart" cells; Tables::table_decor_quart[icon*16 + ...] is a per-icon bitmap
+     *       saying which of those 16 sub-cells are solid. The query rectangle is converted
+     *       to a 16px sub-cell range and every overlapped sub-cell is tested; the first solid
+     *       sub-cell that actually intersects @p rect (Misc::IntersectRect) returns true and
+     *       records its tile icon in m_detectIcon (which callers read to identify the surface).
+     * @note Out-of-bounds left/top and the right wall are treated as solid. The bottom wall is
+     *       solid only for free-floating modes (helico/over/balloon/ecrase/nage/surf). A few
+     *       icons are conditionally passable: icon 214 is non-solid in helico/over modes, and
+     *       icon 324 (a timed platform) is non-solid during part of its blink cycle.
+     */
     bool Decor::DecorDetect(TinyRect rect, bool bCaisse)
     {
         m_detectIcon = -1;
@@ -6503,6 +6771,14 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note Bresenham-style march. It steps one pixel at a time along the dominant axis
+     *       (whichever of |dx|,|dy| is larger) and derives the minor-axis offset by linear
+     *       interpolation, calling DecorDetect() on @p rect translated to each step. On the
+     *       first collision it rewinds @p end to the last clear position and returns false;
+     *       if the whole path is clear @p end is unchanged and it returns true. The four inner
+     *       loops are the four sign combinations of the dominant direction.
+     */
     bool Decor::TestPath(const TinyRect& rect, const TinyPoint& start, TinyPoint& end)
     {
         int num = std::abs(end.X - start.X);
@@ -6590,6 +6866,14 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Despite the name, this emits the vehicle exhaust/smoke (pollution) puff effect
+     *       behind whichever vehicle Blupi is driving (helico/over/jeep/tank). The dense
+     *       m_time%N / m_blupiPhase%N tests are hand-tuned emission schedules so puffs appear
+     *       at irregular, organic intervals that differ between idling and moving. tinyPoint
+     *       is the per-vehicle nozzle offset and @c num the puff lifetime; when @c flag is set
+     *       a smoke object is spawned at the computed offset behind Blupi.
+     */
     void Decor::MoveObjectPollution()
     {
         bool flag = false;
@@ -6740,6 +7024,13 @@ namespace WindowsPhoneSpeedyBlupi
         ObjectStart(pos, ObjectType::ObjectType35, 0);
     }
 
+    /**
+     * @note Spawns a bubble that rises through the water column. It first walks upward tile by
+     *       tile counting consecutive water tiles (icons 91/92) to find how far the bubble can
+     *       float (num), then creates an ObjectType15 whose posEnd is that many tiles above the
+     *       start, with a rise speed scaled to the distance. No bubble is spawned if there is
+     *       no clear water column above (num <= 0).
+     */
     void Decor::MoveObjectBlup(TinyPoint pos)
     {
         PlaySound(SoundChannel::SoundChannel24, pos);
@@ -6778,6 +7069,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Samples the tile under the centre of @p pos (offset by +30,+30) and maps its icon
+     *       to a 1-based world number via several contiguous icon ranges (the hub level uses
+     *       different icon banks for the world-entry signs). Special icons map to the bonus
+     *       world 9 and world 199. Returns -1 when the tile is not a world marker or @p pos is
+     *       outside the map.
+     */
     int Decor::IsWorld(TinyPoint pos)
     {
         pos.X += 30;
@@ -6823,6 +7121,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Flips the switch tile itself (open icon 384 vs closed 385) and plays the matching
+     *       click sound, then scans a horizontal window of 41 cells centred on the switch
+     *       (cel.X-20 .. cel.X+20) and toggles every linked saw/blade tile it finds between its
+     *       active (379) and inactive (378) icon. This is how a single switch enables or
+     *       disables a whole row of linked hazards.
+     */
     void Decor::ActiveSwitch(bool bState, TinyPoint cel)
     {
         TinyPoint pos;
@@ -6843,6 +7148,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Returns 0 unless Blupi's grab point (offset +30,+22) sits in the upper band of a
+     *       bar/rail tile (icon 138 or 202) — the band check (pos.Y % 64 > 44) rejects the
+     *       lower part of the tile so he only catches the bar near the top. The return value
+     *       distinguishes a "hangable" bar (1) from one that is effectively floor because the
+     *       cell below is solid or Blupi already has ground contact (2).
+     */
     int Decor::GetTypeBarre(TinyPoint pos)
     {
         TinyPoint pos2 = pos;
@@ -7039,6 +7351,12 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note Probes two cells: Blupi's own column and one tile ahead in his facing direction
+     *       (step sign chosen from m_blupiDir), so he can open a door he is walking into. A
+     *       door is recognised by an icon in the 334..336 range; the icon value (which encodes
+     *       the door colour/lock) is returned, or -1 if neither probe hits a door.
+     */
     int Decor::IsDoor(TinyPoint pos, TinyPoint& celPorte)
     {
         int num = ((m_blupiDir != Direction::Left) ? 60 : (-60));
@@ -7076,6 +7394,15 @@ namespace WindowsPhoneSpeedyBlupi
         return -1;
     }
 
+    /**
+     * @note Pairing is implicit in the tile icon: the entry teleporter's icon (330..333,
+     *       returned by IsTeleporte) IS the pair id. This linearly scans the whole 100x100 map
+     *       for the first cell sharing that same icon and far enough from @p pos (>40px in any
+     *       axis, to skip the entry cell itself), and returns its position as the exit. There
+     *       is no separate teleporter index table.
+     * @warning If a third tile shares the same teleporter icon, the first match in row-major
+     *          order wins; level data must keep teleporter icons in matched pairs.
+     */
     bool Decor::SearchTeleporte(TinyPoint pos, TinyPoint& newpos)
     {
         int num = IsTeleporte(pos);
@@ -7220,6 +7547,14 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note The 100x100 tile occupancy grid is bit-packed into the flat m_balleTraj array:
+     *       each row of 100 tiles uses 13 ints (8 bits each => 104 bit-slots), so the word
+     *       index is y*13 + x/8 and the bit within the word is x&7. One set bit means "a bullet
+     *       passes through this tile".
+     * @warning @p pos here is in TILE coordinates already; IsBalleTraj() takes PIXEL
+     *          coordinates and converts. Do not pass pixel coordinates to this setter.
+     */
     void Decor::SetBalleTraj(TinyPoint pos)
     {
         if (pos.X >= 0 && pos.X < 100 && pos.Y >= 0 && pos.Y < 100)
@@ -7253,6 +7588,10 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Same bit-packed layout as SetBalleTraj() (word = y*13 + x/8, bit = x&7), but for
+     *       the moving-object occupancy grid. @p pos is in TILE coordinates.
+     */
     void Decor::SetMoveTraj(TinyPoint pos)
     {
         if (pos.X >= 0 && pos.X < 100 && pos.Y >= 0 && pos.Y < 100)
@@ -7278,6 +7617,14 @@ namespace WindowsPhoneSpeedyBlupi
         return (m_moveTraj[num] & (1 << num2)) != 0;
     }
 
+    /**
+     * @note Marches in tile steps along @p dir from @p pos until it leaves the map or hits a
+     *       blocking tile, accumulating 64 pixels per clear tile. Projectile types (36/39/41/
+     *       42/93) short-circuit to a fixed 500px range. While scanning a bullet path
+     *       (ObjectType23) it also records each traversed tile into the balle-trajectory grid
+     *       via SetBalleTraj(). A few types get a small trailing adjustment (one tile or 10px)
+     *       so the object stops just short of the wall.
+     */
     int Decor::SearchDistRight(TinyPoint pos, TinyPoint dir, ObjectType type)
     {
         int num = 0;
@@ -7308,6 +7655,15 @@ namespace WindowsPhoneSpeedyBlupi
         return num;
     }
 
+    /**
+     * @note Detects a fan tile (icons 126..137) under Blupi and, for the directional fan
+     *       heads (126 left, 129 right, 132 up, 135 down), decides whether Blupi is in the
+     *       fan's active band (flag) based on his sub-tile position. When triggered it
+     *       additionally CONSUMES the fan: it walks the fan's air-column tile by tile in the
+     *       blow direction and clears every matching air tile (ModifDecor(..,-1)). So calling
+     *       this for an active fan permanently removes that fan's visual column from the map.
+     * @warning Side-effecting: a true return mutates the tile map. This is not a pure query.
+     */
     bool Decor::IsVentillo(TinyPoint pos)
     {
         int num = 0;
@@ -7395,6 +7751,11 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Intentionally empty in this port. The original cloud-net stop behaviour was
+     *       elided; the function is kept so its call sites need not be conditionalised. @p rank
+     *       is unused.
+     */
     void Decor::NetStopCloud(int rank)
     {
     }
@@ -7430,6 +7791,17 @@ namespace WindowsPhoneSpeedyBlupi
         PlaySound(SoundChannel::SoundChannel51, pos);
     }
 
+    /**
+     * @note The @p speed argument encodes both direction and magnitude with a +/-50 bias:
+     *       |speed|>50 means vertical motion (down if >50, up if <-50, magnitude = |speed|-50);
+     *       otherwise horizontal (right if >0, left if <0). The travel distance is found by
+     *       ray-casting to the next wall via SearchDistRight(), which sets posEnd and a
+     *       step-advance proportional to speed*distance so the object reaches the wall in a
+     *       consistent time. A bullet (ObjectType23) with zero clear distance is immediately
+     *       cancelled (slot returned to ObjectType0).
+     * @note Stationary effects (speed == 0) skip all the ray-cast logic and just sit at @p pos.
+     *       MoveObjectPriority() is called so the new object gets a sensible draw order.
+     */
     int Decor::ObjectStart(TinyPoint pos, ObjectType type, int speed)
     {
         int num = MoveObjectFree();
@@ -7500,6 +7872,12 @@ namespace WindowsPhoneSpeedyBlupi
         return num;
     }
 
+    /**
+     * @note For "physical" object types (enemies/crates in the listed set) the deletion also
+     *       spawns a spinning ByeByeObject debris fragment from the object's current sprite, with
+     *       a per-type spin/animation speed, so destruction is visible. Freeing the slot is just
+     *       setting its type back to ObjectType0; the pool slot is reused later by MoveObjectFree().
+     */
     bool Decor::ObjectDelete(TinyPoint pos, ObjectType type)
     {
         int num = MoveObjectSearch(pos, type);
@@ -7538,6 +7916,12 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Writes @p icon (game-space @p pos is divided by 64 to a tile index). As a special
+     *       case, clearing a fan tile (icons 126..137 -> -1) spawns a spinning debris fragment
+     *       so the fan visibly breaks apart rather than simply vanishing.
+     * @warning Does not bounds-check the tile index; @p pos must lie within the 100x100 map.
+     */
     void Decor::ModifDecor(TinyPoint pos, int icon)
     {
         int icon2 = m_decor[pos.X / 64][pos.Y / 64].icon;
@@ -7548,12 +7932,15 @@ namespace WindowsPhoneSpeedyBlupi
         m_decor[pos.X / 64][pos.Y / 64].icon = icon;
     }
 
-    // Advances all active moving objects by one frame.
-    // Resets Blupi's transport link and movement vector at the start of each frame so that
-    // lift (ascenseur) objects can re-establish them if Blupi is standing on one.
-    // MoveObjectStepLine() moves the object along its linear path.
-    // MoveObjectStepIcon() advances the animation phase and resolves object-specific behavior
-    // (collecting items, enemy AI, enemy-player collision, etc.).
+    /**
+     * @note Per-frame driver over the whole object pool. It first clears m_blupiVector and
+     *       m_blupiTransport so lift objects can re-assert Blupi's carry link this frame, then
+     *       for each active slot calls MoveObjectStepLine() (linear motion) followed by
+     *       MoveObjectStepIcon() (animation + per-type AI/collision). After stepping certain
+     *       enemy types (4/32/33) it runs the contact reactions inline: if the enemy reaches a
+     *       follower NPC or electrocutes Blupi it spawns an explosion (ObjectType8/38), kicks
+     *       the screen shake, plays a sound and deletes the participants.
+     */
     void Decor::MoveObjectStep()
     {
         m_blupiVector.X = 0;
@@ -7599,6 +7986,22 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Implements the table-driven linear path as a 4-phase cycle stored in step:
+     *       1 = dwell at start for timeStopStart frames, 2 = interpolate posStart->posEnd over
+     *       stepAdvance frames, 3 = dwell at end for timeStopEnd frames, 4 = interpolate back
+     *       posEnd->posStart over stepRecede frames, then loop to 1. Position is computed by
+     *       linear interpolation on the frame counter (time), not by per-frame accumulation,
+     *       so it cannot drift. One-shot objects (bubbles 15, bullets 23) self-destruct when
+     *       they reach posEnd instead of receding.
+     * @note Lift objects (1/47/48) special-case Blupi: if his feet strip overlaps the lift top
+     *       (flag), this records the lift's displacement into m_blupiVector and sets
+     *       m_blupiTransport = i so BlupiStep() carries him; types 47/48 add a constant sideways
+     *       conveyor nudge. The homing type 97 instead walks one pixel/frame toward Blupi and
+     *       explodes (spawns ObjectType9) when its path is blocked.
+     * @note Every object also stamps its tile into the move-trajectory occupancy grid
+     *       (SetMoveTraj) so other systems can test for object presence.
+     */
     void Decor::MoveObjectStepLine(int i)
     {
         TinyPoint tinyPoint;
@@ -7770,6 +8173,22 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note The per-type animation + AI dispatcher and the heart of object behaviour. It is a
+     *       long flat if-chain keyed on ObjectType. Two patterns appear:
+     *       - Table-driven animation: icon = baseIcon + phase/ScaleDiv(N) % frameCount (or an
+     *         indirection through a Tables::table_* array), simply cycling the sprite. The phase
+     *         counter is advanced at the end of the function.
+     *       - Hand-coded AI/lifetime: bespoke logic for specific types, e.g. dynamite
+     *         (ObjectType56) fires a scripted sequence of DynamiteStart() blasts at fixed phase
+     *         ticks and self-destructs after phase 70; collectibles award score and despawn on
+     *         Blupi contact; enemies test collision and kill/explode. These branches mutate
+     *         game state (score, doors, m_decorAction shake, sounds) and may convert the object
+     *         to ObjectType0 (free) or to an explosion type.
+     * @note Channel is reassigned per branch because one pool slot can show sprites from
+     *       different sheets depending on type. ScaleDiv/ScaleTime keep the original 20 FPS
+     *       cadence at higher frame rates.
+     */
     void Decor::MoveObjectStepIcon(int i)
     {
         if (m_moveObject[i].type == ObjectType::ObjectType47)
@@ -8627,6 +9046,15 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note One blast of a dynamite chain. It spawns an explosion sprite (ObjectType8) at the
+     *       (dx,dy) offset, and only the central blast (dx==dy==0) also plays the boom sound and
+     *       triggers the screen shake. It then clears destructible hazard tiles (saws 378/379,
+     *       drips 404/410) in the 2x2-tile blast area, destroys every enemy/crate/object whose
+     *       box overlaps the 128x128 blast rect (crates are exploded as a linked group via
+     *       SearchLinkCaisse so a whole stack goes at once), and finally kills Blupi
+     *       (BlupiAction::Clear1) if he is inside the blast and not shielded/super/hidden.
+     */
     void Decor::DynamiteStart(int i, int dx, int dy)
     {
         TinyPoint posStart = m_moveObject[i].posStart;
@@ -8746,6 +9174,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Returns -1 immediately during the no-lift cooldown (m_blupiTimeNoAsc). It tests
+     *       only the thin top strip of each lift object (1/47/48) against Blupi's box. To avoid
+     *       tunnelling when Blupi falls fast, the query box is swept in 30px increments along
+     *       his vertical movement (oldpos->newpos) and each intermediate position is tested, so
+     *       a high-speed descent still lands on the lift instead of passing through it.
+     */
     int Decor::AscenseurDetect(TinyRect rect, TinyPoint oldpos, TinyPoint newpos)
     {
         if (m_blupiTimeNoAsc != 0)
@@ -8794,6 +9229,12 @@ namespace WindowsPhoneSpeedyBlupi
         return -1;
     }
 
+    /**
+     * @note Reports vertigo when Blupi's box hangs off the left or right edge of lift @p i so
+     *       the appropriate teetering animation can play. For the wide multi-segment lifts
+     *       (AscenseurShift true) it swaps the side and starts a short no-lift cooldown
+     *       (m_blupiTimeNoAsc = 10) so Blupi slides off the edge rather than balancing forever.
+     */
     void Decor::AscenseurVertigo(int i, bool& bVertigoLeft, bool& bVertigoRight)
     {
         bVertigoLeft = false;
@@ -8823,6 +9264,10 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note "Shiftable" simply means the lift sprite is one of the wide horizontal-platform
+     *       icons (311..316); those lifts let Blupi slide off the ends, narrow lifts do not.
+     */
     bool Decor::AscenseurShift(int i)
     {
         if (i == -1)
@@ -8836,6 +9281,13 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note The loop counter reuses (and immediately overwrites) the @p i parameter, so the
+     *       passed index is ignored and EVERY object in the pool is rewound to its start state
+     *       (posCurrent=posStart, step=1, time=0, phase=0). In practice this re-synchronises all
+     *       lifts to a common cycle origin by resetting the whole pool's motion timers.
+     * @warning @p i is not used as a selector despite its name; do not assume per-object scope.
+     */
     void Decor::AscenseurSynchro(int i)
     {
         for (i = 0; i < MAXMOVEOBJECT; i++)
@@ -8859,6 +9311,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Two-pass group push. It first collects the linked crate group (SearchLinkCaisse),
+     *       then tests every member with TestPushOneCaisse against the desired horizontal move;
+     *       if any member is obstructed the whole push fails and nothing moves. Only when all
+     *       members are clear does the second pass commit the move to each crate's
+     *       posCurrent/posStart/posEnd, so a crate stack always moves atomically.
+     */
     bool Decor::TestPushCaisse(int i, TinyPoint pos, bool bPop)
     {
         TinyPoint move;
@@ -8884,6 +9343,14 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Tests one crate's destination. It first rejects the move if the shifted crate box
+     *       would collide with solid geometry (DecorDetect with bCaisse=false, so other crates
+     *       are ignored — they are handled as a group elsewhere). For a crate on the floor row
+     *       (@p b is the reference Y), it additionally requires support under BOTH its lower
+     *       corners so a pushed ground crate cannot be shoved out over a gap; crates above the
+     *       floor row skip the support test.
+     */
     bool Decor::TestPushOneCaisse(int i, TinyPoint move, int b)
     {
         TinyRect rect = TinyRect();
@@ -8918,6 +9385,15 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Flood-fills the set of crates that must move together starting from @p rank. It
+     *       repeatedly scans the crate list, growing m_linkCaisse with any crate whose
+     *       (1px-inflated) box touches an already-linked crate, until a full pass adds nothing
+     *       (the @c flag fixed-point). Only crates at or above the seed's row are considered, so
+     *       you push a stack but not the floor it rests on. @p bPop additionally restricts the
+     *       link to crates within +/-32px horizontally of the seed (used when a stack pops/falls
+     *       rather than being pushed sideways).
+     */
     void Decor::SearchLinkCaisse(int rank, bool bPop)
     {
         m_nbLinkCaisse = 0;
@@ -9002,6 +9478,12 @@ namespace WindowsPhoneSpeedyBlupi
         return -1;
     }
 
+    /**
+     * @note Scales the allowed push distance by load and state: heavier stacks (more linked
+     *       crates) move slower, the Power bonus doubles the distance, and during the first
+     *       ScaleTime(20) frames of the push the speed ramps up from near zero so pushing
+     *       starts gently. The result is clamped to at least 1px so a push always makes progress.
+     */
     int Decor::CaisseGetMove(int max)
     {
         max -= (m_nbLinkCaisse - 1) / 2;
@@ -9024,6 +9506,15 @@ namespace WindowsPhoneSpeedyBlupi
         return max;
     }
 
+    /**
+     * @note Decides whether a nearby enemy should taunt Blupi (and which taunt icon to use).
+     *       It returns 0 (no taunt) while a taunt is on cooldown. When Blupi is airborne over
+     *       lava/spikes (icons 68/317 in the two cells below) it returns icon 64. Otherwise it
+     *       looks for a taunting enemy type overlapping Blupi's box (extended downward when he is
+     *       in the air) and returns a taunt icon (63/64/83) chosen from the enemy's side relative
+     *       to Blupi's facing direction; a thrown-object enemy (type 2) approaching head-on
+     *       returns 0 so no taunt plays.
+     */
     int Decor::MockeryDetect(TinyPoint pos)
     {
         if (m_blupiTimeMockery > 0)
@@ -9110,6 +9601,12 @@ namespace WindowsPhoneSpeedyBlupi
         return 0;
     }
 
+    /**
+     * @note Only meaningful while the Cloud bonus is active (returns false otherwise, and
+     *       always false in ghost mode): the cloud's lightning arcs to a nearby enemy. It tests
+     *       the enemy box at @p pos against Blupi's box inflated by 40px on all sides, i.e. the
+     *       arc reach. A true result tells the caller to electrocute/destroy that enemy.
+     */
     bool Decor::BlupiElectro(TinyPoint pos)
     {
 #ifdef MODERN
@@ -9140,6 +9637,12 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note Wakes dormant follower objects. Any idle follower (ObjectType96) whose 100px-padded
+     *       detection box overlaps Blupi is promoted to the active homing follower (ObjectType97,
+     *       handled by MoveObjectStepLine) and plays its alert sound. Hiding (or ghost mode)
+     *       suppresses detection so followers stay asleep.
+     */
     void Decor::MoveObjectFollow(TinyPoint pos)
     {
 #ifdef MODERN
@@ -9174,6 +9677,15 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note The general "what is Blupi touching?" scan used for damage/pickup. It skips a set
+     *       of non-interactive/effect types (and skips crates while pushing). The contact box of
+     *       each candidate is type-tuned (e.g. type 3 hazards only hit from above unless Blupi is
+     *       ducking, crates 12 widen the box on the approach side, bullets 23 use a tight core).
+     *       It returns the first object overlapping Blupi's tight box with bNear=true; a thrown
+     *       enemy (type 2) within the larger anticipation box (src2) returns with bNear=false so
+     *       the caller can react before contact.
+     */
     int Decor::MoveObjectDetect(TinyPoint pos, bool& bNear)
     {
 #ifdef MODERN
@@ -9380,6 +9892,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_moveObject[i].type == ObjectType::ObjectType0)
             {
+                // The self-assignment is a harmless no-op carried over from the original port.
                 m_moveObject[i].type = ObjectType::ObjectType0;
                 return i;
             }
@@ -9387,6 +9900,11 @@ namespace WindowsPhoneSpeedyBlupi
         return -1;
     }
 
+    /**
+     * @note Returns the layer bucket, not a fine-grained order: small enemies/effects (2/3/96/97)
+     *       draw behind (1), crates (12) in the middle (2), everything else in front (3).
+     *       MoveObjectSort() uses this as the sort key.
+     */
     int Decor::SortGetType(ObjectType type)
     {
         switch (type)
@@ -9403,6 +9921,15 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Two stages: first it compacts the pool so all active objects occupy the leading
+     *       slots (free slots pushed to the tail), then it bubble-sorts the active prefix by
+     *       SortGetType() so draw order matches layer priority. Finally it rebuilds the crate
+     *       index (UpdateCaisse) and clears the link set, because the compaction/sort has
+     *       invalidated the old pool indices stored in m_rankCaisse/m_linkCaisse.
+     * @warning Reorders the pool, so any index into m_moveObject[] held across a call to this
+     *          function becomes stale.
+     */
     void Decor::MoveObjectSort()
     {
         MoveObject dst;
@@ -9442,6 +9969,12 @@ namespace WindowsPhoneSpeedyBlupi
         m_nbLinkCaisse = 0;
     }
 
+    /**
+     * @note Only acts on bullets (ObjectType23): it swaps the bullet at @p i with the first
+     *       non-bullet slot at or before it, pulling bullets toward the front of the pool so
+     *       they are stepped/drawn ahead of the objects they may hit. No-op for non-bullets or
+     *       the slot 0 case. Rebuilds the crate index if a crate was involved in the swap.
+     */
     void Decor::MoveObjectPriority(int i)
     {
         MoveObject dst;
@@ -9474,6 +10007,12 @@ namespace WindowsPhoneSpeedyBlupi
         return MoveObjectSearch(pos, std::nullopt);
     }
 
+    /**
+     * @note Exact-position lookup (not box overlap). For most objects it matches posCurrent
+     *       exactly against @p pos. Moving bullets (ObjectType23 with a non-degenerate path) are
+     *       special-cased: they match anywhere within +/-100px along their travel axis (with the
+     *       cross axis exact), so a bullet in flight can still be found at its origin cell.
+     */
     int Decor::MoveObjectSearch(TinyPoint pos, std::optional<ObjectType> type)
     {
         for (int i = 0; i < MAXMOVEOBJECT; i++)
@@ -9538,6 +10077,13 @@ namespace WindowsPhoneSpeedyBlupi
         byeByeObjects.push_back(byeByeObject2);
     }
 
+    /**
+     * @note Advances each debris fragment with a ballistic arc: phase ramps 0..10 as a rising
+     *       impulse (posY decreases by (10-phase)^1.5) then beyond 10 it falls (posY increases),
+     *       giving a pop-up-then-drop motion. Horizontal speed decays toward zero each frame and
+     *       rotation accumulates. Fragments are culled once phase exceeds ScaleTime(30). All
+     *       deltas are multiplied by Config::SPEED_SCALE to preserve the 20 FPS feel.
+     */
     void Decor::ByeByeStep()
     {
         int num = 0;
@@ -9600,6 +10146,15 @@ namespace WindowsPhoneSpeedyBlupi
         return result;
     }
 
+    /**
+     * @note A "voyage" is the little fly-to-HUD animation a collected item plays. Only one runs
+     *       at a time, so if one is already active it is force-completed first (set phase=total
+     *       and VoyageStep()) which applies its reward before the new one starts. The travel
+     *       duration is proportional to the Manhattan distance, with several (icon,channel)
+     *       cases overriding the duration and/or playing a pickup sound up front. The actual
+     *       reward (life, treasure, key, dynamite, follower) is granted at completion in
+     *       VoyageStep(), not here.
+     */
     void Decor::VoyageInit(TinyPoint start, TinyPoint end, int icon, PixmapChannel channel)
     {
         if (m_voyageIcon != -1)
@@ -9670,6 +10225,15 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note While the arc is in flight it only animates (cycling icon 230..241). On the frame it
+     *       completes it APPLIES the reward keyed on (icon,channel): grant a life (capped at
+     *       MAX_EGG_COUNT), increment treasure (and re-evaluate treasure-gated doors), set a key
+     *       bit, add a follower or dynamite, or hand control back to Blupi after the angel ascent;
+     *       a pickup confirmation sound is played, and the voyage is cleared (icon = -1).
+     * @note This is where collectible pickups actually mutate game state, so the reward fires
+     *       exactly once, at arc end.
+     */
     void Decor::VoyageStep()
     {
         if (m_voyageIcon == -1)
@@ -9792,6 +10356,14 @@ namespace WindowsPhoneSpeedyBlupi
         return IsPassIcon(icon);
     }
 
+    /**
+     * @note Auto-tiling neighbour predicate: answers "does the cell at (x+dx, y+dy) form a
+     *       border edge for the block at (x,y) coming from direction (dx,dy)?" Off-map cells
+     *       count as a border (true). The large nested switch classifies hundreds of tile icons
+     *       into "same material" / "different" decisions, with several icons (water 92, lava 68,
+     *       spikes 317, slopes, etc.) treated as a border only from specific directions so edges
+     *       and slopes connect correctly. Used by AdaptMidBorder() to build its neighbour mask.
+     */
     bool Decor::IsRightBorder(int x, int y, int dx, int dy)
     {
         int num = ((m_dimDecor.X != 0) ? 100 : 10);
@@ -10138,6 +10710,14 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Auto-tiling for the generic terrain blocks. It builds a 4-bit neighbour mask (bit0
+     *       below, bit1 above, bit2 right, bit3 left) by clearing a bit for each side that is NOT
+     *       a matching border (IsRightBorder), then collapses the current icon to its block's
+     *       base variant, finds that base in Tables::table_adapt_decor and reads the icon for the
+     *       computed mask from the same 16-wide table row. A few result icons are randomly
+     *       swapped for cosmetic variants so identical terrain does not look perfectly uniform.
+     */
     void Decor::AdaptMidBorder(int x, int y)
     {
         if (x < 0 || x >= 100 || y < 0 || y >= 100)
@@ -10334,6 +10914,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Re-runs the auto-tiler on the edited cell and its four orthogonal neighbours so all
+     *       borders stay consistent after a tile change. It then maintains two side effects: any
+     *       moving object on a newly-solid cell is removed (MoveObjectDelete), and the blitz
+     *       emitter column (icon 304) is extended/retracted by writing/clearing up to 4 cells of
+     *       lightning body (icon 305) below it depending on whether the emitter is present.
+     */
     void Decor::AdaptBorder(TinyPoint cel)
     {
         AdaptMidBorder(cel.X, cel.Y);
@@ -10389,6 +10976,13 @@ namespace WindowsPhoneSpeedyBlupi
         Worlds::DeleteCurrentGame();
     }
 
+    /**
+     * @note Serialises the entire live simulation field-by-field into the Worlds key/value
+     *       writer (a "DescFile" section plus per-object/per-gauge sections), then flushes the
+     *       built string to the current-game slot. It is the exact inverse of CurrentRead();
+     *       any field added here must be read back there. Active moving objects are written as
+     *       sparse records carrying their own pool index.
+     */
     bool Decor::CurrentWrite()
     {
         Worlds::WriteClear();
@@ -10537,6 +11131,15 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Field-by-field deserialisation of the quick-save into live state. Two non-obvious
+     *       points: (1) it starts from a clean InitDecor() then overwrites every field, so any
+     *       state not persisted falls back to the InitDecor default; (2) moving objects are
+     *       stored sparsely as records carrying their own "index" into m_moveObject[], and the
+     *       loop stops at the first record with type 0. All time-based MoveObject fields are run
+     *       through Config::ScaleTime() on load so a save made at one FPS replays correctly at
+     *       another.
+     */
     bool Decor::CurrentRead()
     {
         const std::optional<string>& text = Worlds::ReadCurrentGame();
@@ -10689,6 +11292,15 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Loads a designed level (as opposed to a quick-save). Tile icon 0 from the file is
+     *       normalised to -1 (empty) since the editor uses 0 for "no tile". Moving objects are
+     *       packed densely (slot n = record n) and the loop stops at the first type-0 record.
+     *       Time-based object fields are run through Config::ScaleTime(); some types get fixed
+     *       overrides on load (e.g. ObjectType54 gets a fixed 152-frame dwell at both ends).
+     * @note Only Blupi's START position/direction are read here (blupiPos field), not a live
+     *       position — PlayPrepare() later places Blupi at the start.
+     */
     bool Decor::Read(int gamer, int rank, bool bUser)
     {
         InitDecor();
@@ -10760,16 +11372,29 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
+    /**
+     * @note Stub in this port: level deletion is handled elsewhere, so this always reports
+     *       success without touching storage. Parameters are unused.
+     */
     bool Decor::Delete(int gamer, int rank, bool bUser)
     {
         return true;
     }
 
+    /**
+     * @note Stub in this port: always reports "no file". Parameters are unused.
+     */
     bool Decor::FileExist(int gamer, int rank, bool bUser)
     {
         return false;
     }
 
+    /**
+     * @note Scans the map for the world's terminal marker icon (looked up in
+     *       Tables::world_terminal) and places Blupi on whichever adjacent cell is passable,
+     *       facing toward the marker. Used to drop Blupi next to the world he last completed
+     *       when entering the hub.
+     */
     bool Decor::SearchWorld(int world, TinyPoint& blupi, Direction& dir)
     {
         if (world < 0 || world > 12)
@@ -10805,6 +11430,12 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note Finds world-door number @p n (door sign icons 174..181 map to door 1..8) and locates
+     *       the actual door tile (icon 182) within two cells to either side, returning both the
+     *       door cell and the cell just beyond it where Blupi should stand. The search prefers
+     *       the nearer cell on each side.
+     */
     bool Decor::SearchDoor(int n, TinyPoint& cel, TinyPoint& blupi)
     {
         for (int i = 0; i < 100; i++)
@@ -10869,6 +11500,11 @@ namespace WindowsPhoneSpeedyBlupi
         return false;
     }
 
+    /**
+     * @note Only acts on the hub level (mission 1): it moves Blupi's start position to stand
+     *       beside the world he most recently completed (SearchWorld(@p lastWorld)) so re-entering
+     *       the hub places him where he left off. No effect on regular gameplay levels.
+     */
     void Decor::MainSwitchInitialize(int lastWorld)
     {
         if (m_mission == 1)
@@ -10883,6 +11519,17 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Two distinct behaviours selected by mission. Private (user) levels return early —
+     *       all gates are treated as open. On the hub (mission 1) it reveals progress: collected
+     *       golds animate up (ObjectType22), and world-entry/bonus tiles are swapped to their
+     *       "unlocked" icon variant when the matching door flag (or the open-doors cheat) is set.
+     *       On a world's entry screen (mission % 10 == 0) it opens the doors to sub-levels the
+     *       player has reached and snaps Blupi's start position/direction beside the last open
+     *       door.
+     * @note Door indexing is by convention: m_doors[180 + worldOffset] holds gold/world flags on
+     *       the hub, while m_doors[mission + i] holds the per-sublevel door flags on world screens.
+     */
     void Decor::AdaptDoors(bool bPrivate)
     {
         TinyPoint cel;
@@ -10986,6 +11633,12 @@ namespace WindowsPhoneSpeedyBlupi
     }
 #endif
 
+    /**
+     * @note Treasure-gated doors use consecutive icons starting at 421 (door requiring 1
+     *       treasure = 421, 2 = 422, ...). This opens every such door whose treasure requirement
+     *       is now met (icon in 421 .. 421 + m_nbTresor - 1). Called whenever a treasure is
+     *       collected.
+     */
     void Decor::OpenDoorsTresor()
     {
         TinyPoint cel;
@@ -11004,6 +11657,13 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @note Opening is animated, not instant: the door tile is cleared from the map and a
+     *       transient ObjectType22 is spawned that slides the old door sprite one tile upward
+     *       (posStart -> posEnd one cell up) over ~50 frames before it self-destructs, with the
+     *       door-open sound. So after this call the cell is already passable while the visual
+     *       lift-away plays out.
+     */
     void Decor::OpenDoor(TinyPoint cel)
     {
         int icon = m_decor[cel.X][cel.Y].icon;
@@ -11027,6 +11687,11 @@ namespace WindowsPhoneSpeedyBlupi
         PlaySound(SoundChannel::SoundChannel33, m_moveObject[num].posStart);
     }
 
+    /**
+     * @note Records the win by setting the door flag for the NEXT sublevel (m_doors[mission+1]),
+     *       which is what AdaptDoors() later reads to unlock progression. This only flips the
+     *       persistent flag; it does not animate any door in the current level.
+     */
     void Decor::OpenDoorsWin()
     {
         m_doors[m_mission + 1] = 1;
@@ -11034,11 +11699,20 @@ namespace WindowsPhoneSpeedyBlupi
             + " unlockedDoor=" + std::to_string(m_mission + 1));
     }
 
+    /**
+     * @note Marks the whole world (index mission/10) as cleared by setting its gold flag at the
+     *       conventional offset m_doors[180 + worldIndex]; AdaptDoors() reads this on the hub to
+     *       reveal the world's collected gold.
+     */
     void Decor::OpenGoldsWin()
     {
         m_doors[180 + m_mission / 10] = 1;
     }
 
+    /**
+     * @note Despite the name it does not touch m_doors: losing simply restores the life count to
+     *       the default 3 (the original game's reset-on-fail behaviour for this code path).
+     */
     void Decor::DoorsLost()
     {
         m_nbVies = 3;
