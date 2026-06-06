@@ -1,3 +1,12 @@
+/**
+ * @file SoundChannel.hpp
+ * @brief Defines the SoundChannel enumeration identifying sound effect slots in the audio subsystem.
+ *
+ * @details Each SoundChannel value maps directly to a sound asset index loaded by
+ * Sound::LoadContent(). Values 1-92 correspond to game sound effects; value 0 is reserved.
+ * Do not renumber these values as they must match the original game's sound table indices.
+ */
+
 #pragma once
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 
@@ -25,8 +34,8 @@ namespace WindowsPhoneSpeedyBlupi
      */
     enum class SoundChannel : SoundChannelUnderlying
     {
-        SoundChannel0  = 0,
-        SoundChannel1  = 1,
+        SoundChannel0  = 0,  ///< @brief Reserved channel (index 0, not used for playback).
+        SoundChannel1  = 1,  ///< @brief Sound effect slot 1.
         SoundChannel2  = 2,
         SoundChannel3  = 3,
         SoundChannel4  = 4,
@@ -122,7 +131,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     /**
      * @brief Returns the raw underlying byte value of a SoundChannel.
-     * @param type The channel to convert.
+     * @param[in] type The channel to convert.
      * @return Underlying unsigned byte value.
      */
     static constexpr auto ToRaw(SoundChannel type) -> SoundChannelUnderlying
@@ -136,7 +145,7 @@ namespace WindowsPhoneSpeedyBlupi
      * Used when looking up sound channel indices from gameplay tables.
      * The caller is responsible for ensuring @p value is in the range 0..92.
      *
-     * @param value Raw integer channel index.
+     * @param[in] value Raw integer channel index (must be in range 0..92).
      * @return Corresponding SoundChannel enum value.
      */
     static constexpr auto ToSoundChannel(const int value) -> SoundChannel

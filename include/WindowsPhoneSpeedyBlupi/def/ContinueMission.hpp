@@ -1,3 +1,11 @@
+/**
+ * @file ContinueMission.hpp
+ * @brief Defines the ContinueMissionType enumeration tracking the lifecycle of a continue-mission request.
+ *
+ * @details Used by Game1 to determine whether a "continue from checkpoint" transition is
+ * absent, queued, or actively executing, without replaying the full level-start sequence.
+ */
+
 #pragma once
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 
@@ -20,24 +28,24 @@ namespace WindowsPhoneSpeedyBlupi
      */
     enum class ContinueMissionType : SharpRuntime::ushortcs
     {
-        None    = 0,   ///< No continue-mission request is pending.
-        Pending = 1,   ///< A continue request has been issued but not yet acted on.
-        Active  = 2    ///< The continue sequence is currently executing.
+        None    = 0,   ///< @brief No continue-mission request is pending.
+        Pending = 1,   ///< @brief A continue request has been issued but not yet acted on.
+        Active  = 2    ///< @brief The continue sequence is currently executing.
     };
 
     /**
      * @brief Returns the raw underlying byte value of a ContinueMissionType.
-     * @param ContinueMissionType The value to convert.
+     * @param[in] value The ContinueMissionType value to convert.
      * @return Underlying unsigned byte value.
      */
-    static constexpr auto ToRaw(ContinueMissionType ContinueMissionType) -> ContinueMissionTypeUnderlying
+    static constexpr auto ToRaw(ContinueMissionType value) -> ContinueMissionTypeUnderlying
     {
-        return static_cast<ContinueMissionTypeUnderlying>(ContinueMissionType);
+        return static_cast<ContinueMissionTypeUnderlying>(value);
     }
 
     /**
      * @brief Converts an integer to a ContinueMissionType enum value.
-     * @param value Raw integer.
+     * @param[in] value Raw integer (must be 0, 1, or 2).
      * @return Corresponding ContinueMissionType enum value.
      */
     static constexpr auto ToContinueMissionType(const int value) -> ContinueMissionType

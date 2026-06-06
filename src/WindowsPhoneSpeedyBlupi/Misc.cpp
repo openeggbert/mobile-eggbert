@@ -1,3 +1,11 @@
+/**
+ * @file Misc.cpp
+ * @brief Implementations of the Misc static utility methods.
+ * @details All methods are pure geometric computations; see Misc.hpp for the
+ *          full API contract.  The rotation implementation uses the standard
+ *          2D rotation matrix with floating-point sin/cos and integer truncation.
+ */
+
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 
 #include "System/Math.hpp"

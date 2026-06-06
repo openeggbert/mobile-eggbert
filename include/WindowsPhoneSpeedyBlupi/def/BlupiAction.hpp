@@ -1,3 +1,12 @@
+/**
+ * @file BlupiAction.hpp
+ * @brief Defines the BlupiAction enumeration describing every animation/movement state of the player character.
+ *
+ * @details Each BlupiAction value identifies one distinct state in the gameplay state
+ * machine (idle, walking, jumping, vehicle modes, hazard contacts, etc.). The mapping
+ * from action values to sprite frames is resolved by the animation tables in Tables.hpp.
+ */
+
 #pragma once
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 
@@ -25,8 +34,8 @@ namespace WindowsPhoneSpeedyBlupi
      */
     enum class BlupiAction : BlupiActionUnderlying
     {
-        None = 0,
-        Stop = 1,              ///< Standing still (ACTION_STOP).
+        None = 0,              ///< @brief No action / uninitialised state.
+        Stop = 1,              ///< @brief Standing still (ACTION_STOP).
         March = 2,             ///< Walking (ACTION_MARCH).
         Turn = 3,              ///< Turning around (ACTION_TURN).
         Jump = 4,              ///< Jumping (ACTION_JUMP).
@@ -117,7 +126,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     /**
      * @brief Returns the raw underlying byte value of a BlupiAction.
-     * @param action The action to convert.
+     * @param[in] action The action to convert.
      * @return Underlying unsigned byte value.
      */
     static constexpr auto ToRaw(BlupiAction action) -> BlupiActionUnderlying
@@ -131,7 +140,7 @@ namespace WindowsPhoneSpeedyBlupi
      * Used when loading action indices from data tables or save files.
      * The caller is responsible for ensuring @p value is a valid BlupiAction.
      *
-     * @param value Raw integer from original game data.
+     * @param[in] value Raw integer from original game data.
      * @return Corresponding BlupiAction enum value.
      */
     static constexpr auto ToBlupiAction(const int value) -> BlupiAction

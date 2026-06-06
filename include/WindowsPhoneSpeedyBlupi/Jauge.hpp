@@ -1,3 +1,11 @@
+/**
+ * @file Jauge.hpp
+ * @brief Declarations for the JaugeMode enumeration and the Jauge HUD widget.
+ * @details The Jauge class renders a 124 × 22-pixel gauge bar used as energy,
+ *          time, and key indicators in the game HUD.  Four visual modes are
+ *          supported via the JaugeMode enum.
+ */
+
 #pragma once
 
 #include "IPixmap.hpp"
@@ -5,159 +13,187 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    /**
+     * @brief Selects the colour/style of the filled portion of a Jauge widget.
+     *
+     * @details Each enumerator maps to a 22-pixel-high row in the Jauge sprite sheet
+     *          (PixmapChannel::Jauge).  The row index equals the raw integer value.
+     */
     enum class JaugeMode : intcs
     {
-        Empty = 0,
-        Red = 1, // danger
-        Blue = 2, // water
-        Yellow = 3 // charge
+        Empty  = 0, ///< @brief No fill drawn (gauge is empty).
+        Red    = 1, ///< @brief Red fill — used for danger / energy indicators.
+        Blue   = 2, ///< @brief Blue fill — used for water level indicators.
+        Yellow = 3  ///< @brief Yellow fill — used for charge / key indicators.
     };
 
+    /**
+     * @brief Converts a JaugeMode to its underlying integer value.
+     * @param[in] mode Mode to convert.
+     * @return Raw @c intcs value of @p mode.
+     */
     inline intcs ToRaw(JaugeMode mode)
     {
         return static_cast<intcs>(mode);
     }
 
+    /**
+     * @brief Converts a raw integer to a JaugeMode.
+     * @param[in] mode Raw integer value (0–3).
+     * @return Corresponding JaugeMode enumerator.
+     * @warning Passing a value outside 0–3 produces an undefined enumerator.
+     */
     inline JaugeMode ToJaugeMode(intcs mode)
     {
         return static_cast<JaugeMode>(mode);
     }
 
     /**
- * @brief Draws and manages a small HUD gauge/progress bar.
- *
- * Jauge is used for a 124x22 pixel gauge sprite. It draws the empty gauge
- * background and, depending on the current level, draws the filled part from
- * the selected gauge mode row.
- *
- * The gauge level is clamped to the range 0..100. The filled part has a maximum
- * width of 114 pixels and starts after a 6 pixel left border.
- *
- * @note Status: IMPLEMENTED
- */
+     * @class Jauge
+     * @brief HUD gauge widget that renders a 124 × 22-pixel progress bar.
+     *
+     * @details Jauge draws a two-layer sprite: first the empty gauge background
+     *          (full 124 × 22 region from PixmapChannel::Jauge), then, if the
+     *          current level is greater than zero, a filled sub-region whose width
+     *          is proportional to the level (0–100 mapped to 0–114 pixels).  The
+     *          filled region starts after a fixed 6-pixel left border.
+     *
+     *          A redraw-dirty flag (@c m_bRedraw) avoids redundant GPU work: when
+     *          @c bMinimizeRedraw is enabled in Create(), Draw() returns immediately
+     *          unless the flag has been set by a state-changing method (SetLevel(),
+     *          SetMode(), SetHide(), Redraw(), or SetRedraw()).
+     *
+     * @note Gauge level is always clamped to [0, 100].
+     * @note The @c ISound pointer is stored for API compatibility with the original
+     *       C# code but is not used by any current implementation.
+     * @note Status: IMPLEMENTED
+     *
+     * @see JaugeMode
+     */
     class Jauge
     {
-        IPixmap* m_pixmap;
-
-        ISound* m_sound;
-
-        bool m_bHide;
-
-        TinyPoint m_pos;
-
-        TinyPoint m_dim;
-
-        JaugeMode m_mode;
-
-        int m_level;
-
-        bool m_bMinimizeRedraw;
-
-        bool m_bRedraw;
-
-        double m_zoom;
+        IPixmap* m_pixmap;          ///< @brief Pixmap renderer used to draw the gauge (not owned).
+        ISound*  m_sound;           ///< @brief Sound interface — stored for compatibility, currently unused.
+        bool     m_bHide;           ///< @brief When @c true the gauge is not rendered even if Draw() is called.
+        TinyPoint m_pos;            ///< @brief Top-left position of the gauge in HUD-space.
+        TinyPoint m_dim;            ///< @brief Fixed sprite dimensions: always 124 × 22 pixels.
+        JaugeMode m_mode;           ///< @brief Current colour mode; selects the sprite-sheet row for the fill.
+        int       m_level;          ///< @brief Current fill level clamped to [0, 100].
+        bool      m_bMinimizeRedraw;///< @brief When @c true, Draw() skips unless @c m_bRedraw is set.
+        bool      m_bRedraw;        ///< @brief Dirty flag — set when state changes, cleared after each Draw().
+        double    m_zoom;           ///< @brief Zoom factor applied when calling IPixmap::DrawPart().
 
     public:
         /**
- * @brief Gets the drawing zoom used for this gauge.
- *
- * @return Current gauge zoom factor.
- *
- * @note Status: IMPLEMENTED
- */
+         * @brief Returns the current drawing zoom factor.
+         * @return Current zoom value.
+         * @note Status: IMPLEMENTED
+         */
         [[nodiscard]] double getZoomProperty() const;
+
         /**
-         * @brief Sets the drawing zoom used for this gauge.
-         *
-         * @param v New gauge zoom factor.
-         *
+         * @brief Sets the drawing zoom factor.
+         * @param[in] v New zoom value.
          * @note Status: IMPLEMENTED
          */
         void setZoomProperty(double v);
 
-        Jauge();
         /**
-         * @brief Creates a gauge with its pixmap, sound object, position, mode, and redraw behavior.
+         * @brief Default constructor — creates an uninitialised gauge.
          *
-         * Stores the rendering and sound interfaces, sets the gauge position and mode,
-         * initializes its fixed sprite dimensions to 124x22 pixels, hides the gauge,
-         * resets the level to 0, and marks it for redraw.
+         * @details Initialises all pointers to @c nullptr, hides the gauge, resets
+         *          the level to 0, and sets the zoom to 1.0.  Call Create() before
+         *          using the gauge.
          *
-         * @param pixmap Pixmap renderer used to draw the gauge.
-         * @param sound Sound interface kept for compatibility with the original game. Currently unused.
-         * @param pos Top-left position of the gauge.
-         * @param mode Gauge sprite row/mode to use for the filled part.
-         * @param bMinimizeRedraw If true, drawing is skipped unless the gauge was marked dirty.
-         * @return Always true.
+         * @note Status: IMPLEMENTED
+         */
+        Jauge();
+
+        /**
+         * @brief Initialises the gauge with rendering dependencies and display settings.
+         *
+         * @details Stores the pixmap and sound interfaces, records the position and
+         *          mode, sets fixed sprite dimensions to 124 × 22, hides the gauge,
+         *          resets the level to 0, and sets the dirty flag so the first Draw()
+         *          always renders.
+         *
+         * @param[in] pixmap         Pixmap renderer used to draw the gauge.
+         * @param[in] sound          Sound interface (stored for API compatibility; not used).
+         * @param[in] pos            Top-left position of the gauge in HUD-space.
+         * @param[in] mode           Sprite row / colour mode for the filled portion.
+         * @param[in] bMinimizeRedraw If @c true, Draw() is a no-op unless @c m_bRedraw is set.
+         * @return Always @c true.
          *
          * @note Status: IMPLEMENTED
          */
         bool Create(IPixmap* pixmap, ISound* sound, TinyPoint pos, JaugeMode mode, bool bMinimizeRedraw);
+
         /**
-         * @brief Draws the gauge if it is visible and needs redraw.
+         * @brief Draws the gauge to the screen if visible and the dirty flag is set.
          *
-         * Draws the 124x22 empty gauge background from channel 5. If the current level
-         * is greater than zero, it also draws the filled part using the selected mode
-         * row. When minimized redraw is enabled, drawing is skipped unless the gauge
-         * was marked for redraw.
+         * @details When @c m_bMinimizeRedraw is @c true and @c m_bRedraw is @c false,
+         *          the method returns immediately without issuing any draw calls
+         *          (redraw-dirty optimisation).  Otherwise it clears the dirty flag
+         *          and, if the gauge is visible, draws:
+         *          1. The full 124 × 22 empty gauge background.
+         *          2. If level > 0: the filled sub-region @c [0, 6 + filledWidth] ×
+         *             [mode*22, (mode+1)*22], where @c filledWidth = level * 114 / 100.
          *
          * @note Status: IMPLEMENTED
          */
         void Draw();
+
         /**
-         * @brief Marks the gauge as needing redraw.
-         *
+         * @brief Sets the dirty flag so the next Draw() call redraws the gauge.
          * @note Status: IMPLEMENTED
          */
         void Redraw();
+
         /**
-         * @brief Gets the current gauge level.
-         *
-         * @return Level in the range 0..100.
-         *
+         * @brief Returns the current fill level.
+         * @return Level in [0, 100].
          * @note Status: IMPLEMENTED
          */
         int GetLevel();
+
         /**
-         * @brief Sets the current gauge level.
+         * @brief Sets the fill level, clamping to [0, 100].
          *
-         * The value is clamped to the range 0..100. If the value changes, the gauge is
-         * marked for redraw.
+         * @details If the new value differs from the current level, sets the dirty flag.
          *
-         * @param level New gauge level.
-         *
+         * @param[in] level Desired fill level (clamped to [0, 100]).
          * @note Status: IMPLEMENTED
          */
         void SetLevel(int level);
+
         /**
-         * @brief Gets the current gauge mode.
+         * @brief Returns the current colour mode.
          *
-         * The mode selects which 22 pixel high row of the gauge texture is used for the
-         * filled portion.
+         * @details The mode selects the 22-pixel-high sprite-sheet row used for
+         *          the filled portion of the gauge.
          *
-         * @return Current gauge mode.
-         *
+         * @return Current JaugeMode.
          * @note Status: IMPLEMENTED
          */
         JaugeMode GetMode();
 
         /**
-         * @brief Sets the current gauge mode.
+         * @brief Sets the colour mode.
          *
-         * If the mode changes, the gauge is marked for redraw.
+         * @details If the mode changes, sets the dirty flag.
          *
-         * @param mode New gauge mode.
-         *
+         * @param[in] mode New JaugeMode.
          * @note Status: IMPLEMENTED
          */
         void SetMode(JaugeMode mode);
+
         /**
-         * @brief Sets the current gauge mode.
+         * @brief Sets the colour mode from a raw integer.
          *
-         * If the mode changes, the gauge is marked for redraw.
+         * @details Converts @p mode via ToJaugeMode() and delegates to
+         *          SetMode(JaugeMode).  If the mode changes, sets the dirty flag.
          *
-         * @param mode New gauge mode.
-         *
+         * @param[in] mode Raw integer mode value (0–3).
          * @note Status: IMPLEMENTED
          */
         void SetMode(int mode)
@@ -166,35 +202,34 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
         /**
-         * @brief Returns whether the gauge is hidden.
-         *
-         * @return True if the gauge is hidden; false if it should be drawn.
-         *
+         * @brief Returns whether the gauge is currently hidden.
+         * @return @c true if hidden; @c false if visible.
          * @note Status: IMPLEMENTED
          */
         bool GetHide();
+
         /**
          * @brief Shows or hides the gauge.
          *
-         * If the visibility changes, the gauge is marked for redraw.
+         * @details If the visibility state changes, sets the dirty flag.
          *
-         * @param bHide True to hide the gauge; false to show it.
-         *
+         * @param[in] bHide @c true to hide; @c false to show.
          * @note Status: IMPLEMENTED
          */
         void SetHide(bool bHide);
+
         /**
-         * @brief Gets the gauge position.
-         *
-         * @return Top-left gauge position.
-         *
+         * @brief Returns the top-left position of the gauge in HUD-space.
+         * @return Current position.
          * @note Status: IMPLEMENTED
          */
         [[nodiscard]] TinyPoint GetPos() const;
+
         /**
-         * @brief Marks the gauge as needing redraw.
+         * @brief Sets the dirty flag so the next Draw() call redraws the gauge.
          *
-         * This is equivalent to Redraw().
+         * @details Equivalent to Redraw().  Provided for symmetry with other
+         *          property-style setters.
          *
          * @note Status: IMPLEMENTED
          */

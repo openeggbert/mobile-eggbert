@@ -1,3 +1,31 @@
+/**
+ * @file Text.cpp
+ * @brief Implementations of bitmap text rendering and glyph data tables.
+ * @details Contains three static data tables and the method bodies for the
+ *          Text class.  See Text.hpp for the full API contract.
+ *
+ * ### Glyph coordinate table structure (table_char)
+ * The array holds 256 records of 6 @c shortcs values each (total: 1536
+ * elements).  For input character code @c c, the record starts at index
+ * @c GetOffset(c) * 6:
+ *   - [0] Primary glyph index in the font sprite sheet.
+ *   - [1] X pixel offset of the primary glyph relative to the pen position.
+ *   - [2] Y pixel offset of the primary glyph relative to the pen position.
+ *   - [3] Secondary glyph index, or @c -1 if this character needs only one draw.
+ *         A non-(-1) value is used to compose precomposed accented characters
+ *         by overlaying a diacritic glyph on top of the base letter.
+ *   - [4] X pixel offset of the secondary glyph.
+ *   - [5] Y pixel offset of the secondary glyph.
+ *
+ * ### Proportional-width override table (table_width)
+ * Contains 128 entries mapping glyph index to advance width in pixels at
+ * scale 1.0.  Entries with value 32 are fixed-pitch placeholders for
+ * control-code slots (0–13) that are not used as visible glyphs.
+ * Entries with value 0 (indices 30–31 and 127) are non-printing.
+ * All other entries carry the measured advance width of the corresponding
+ * glyph from the original font artwork.
+ */
+
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
 
 #include "System/String.hpp"

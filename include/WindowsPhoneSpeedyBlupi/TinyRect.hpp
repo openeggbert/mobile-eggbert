@@ -1,3 +1,15 @@
+/**
+ * @file TinyRect.hpp
+ * @brief Declaration of the TinyRect lightweight integer rectangle structure.
+ *
+ * @warning NON-STANDARD FIELD ORDER.
+ *          TinyRect stores its edges as @b Left, @b Right, @b Top, @b Bottom —
+ *          NOT the more common Left, Top, Right, Bottom order used by Win32
+ *          RECT, SDL_Rect, or most other rectangle types.  This order is
+ *          preserved from the original C# WindowsPhoneSpeedyBlupi codebase.
+ *          Always verify argument order when constructing a TinyRect by value.
+ */
+
 #pragma once
 
 #include <string>
@@ -11,50 +23,38 @@ namespace WindowsPhoneSpeedyBlupi
     using SharpRuntime::intcs;
 
     /**
-     * @brief Represents a tiny rectangle using integer boundaries.
+     * @struct TinyRect
+     * @brief Lightweight integer rectangle defined by four edge coordinates.
      *
-     * This structure is a C++ port of the original C# TinyRect struct
-     * from WindowsPhoneSpeedyBlupi.
+     * @details This structure is a C++ port of the original C# @c TinyRect
+     *          struct from WindowsPhoneSpeedyBlupi.  It is the primary
+     *          screen-region type used by sprite-draw and hit-test code.
      *
-     * The rectangle is defined by its left, right, top, and bottom edges.
+     *          Width  = Right  - Left  (may be zero or negative for degenerate rects).
+     *          Height = Bottom - Top   (may be zero or negative for degenerate rects).
+     *
+     * @warning NON-STANDARD FIELD ORDER: the four fields are declared (and the
+     *          four-argument constructor accepts them) in the order
+     *          @b Left, @b Right, @b Top, @b Bottom.  This differs from the
+     *          conventional Left, Top, Right, Bottom order.  Passing arguments
+     *          in the wrong order produces silent geometry bugs.
      *
      * @note Status: Ported
+     *
+     * @see TinyPoint
      */
     struct TinyRect
     {
-        /**
-         * @brief Left edge of the rectangle.
-         *
-         * @note Status: Ported
-         */
-        intcs Left;
+        intcs Left;   ///< @brief Left edge (minimum X) of the rectangle in pixels.
+        intcs Right;  ///< @brief Right edge (maximum X) of the rectangle in pixels.
+        intcs Top;    ///< @brief Top edge (minimum Y) of the rectangle in pixels.
+        intcs Bottom; ///< @brief Bottom edge (maximum Y) of the rectangle in pixels.
 
         /**
-         * @brief Right edge of the rectangle.
+         * @brief Constructs a zero-sized rectangle at the origin.
          *
-         * @note Status: Ported
-         */
-        intcs Right;
-
-        /**
-         * @brief Top edge of the rectangle.
-         *
-         * @note Status: Ported
-         */
-        intcs Top;
-
-        /**
-         * @brief Bottom edge of the rectangle.
-         *
-         * @note Status: Ported
-         */
-        intcs Bottom;
-
-        /**
-         * @brief Creates a rectangle with all edges set to zero.
-         *
-         * This constructor is useful in C++ for default/value initialization,
-         * for example when porting C# expressions such as default(TinyRect).
+         * @details Value-initialises all four edges to zero.  Equivalent to
+         *          the C# expression @c default(TinyRect).
          *
          * @note Status: Ported
          */
@@ -64,16 +64,16 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
         /**
-         * @brief Creates a rectangle with the specified edge coordinates.
+         * @brief Constructs a rectangle from explicit edge coordinates.
          *
-         * @warning The parameter order intentionally follows the original
-         * WindowsPhoneSpeedyBlupi TinyRect layout: left, right, top, bottom.
-         * This is different from the more common left, top, right, bottom order.
+         * @warning Parameter order is @b Left, @b Right, @b Top, @b Bottom —
+         *          NOT the conventional Left, Top, Right, Bottom order.
+         *          This unusual order replicates the original C# struct layout.
          *
-         * @param left Left edge.
-         * @param right Right edge.
-         * @param top Top edge.
-         * @param bottom Bottom edge.
+         * @param[in] left   Left edge (minimum X).
+         * @param[in] right  Right edge (maximum X).
+         * @param[in] top    Top edge (minimum Y).
+         * @param[in] bottom Bottom edge (maximum Y).
          *
          * @note Status: IMPLEMENTED
          */
@@ -83,45 +83,50 @@ namespace WindowsPhoneSpeedyBlupi
         }
 
         /**
- * @brief Creates a zero-size rectangle at the specified point.
- *
- * The point is used as both the left/right and top/bottom edge.
- * This is useful for icon drawing methods where a TinyRect with zero width
- * and height means "use the icon's default size".
- *
- * @param point Position of the zero-size rectangle.
- *
- * @note Status: IMPLEMENTED
- */
+         * @brief Constructs a zero-sized rectangle located at @p point.
+         *
+         * @details Sets Left = Right = point.X and Top = Bottom = point.Y,
+         *          producing a degenerate (zero-area) rectangle anchored at the
+         *          given position.  Used by icon-drawing APIs where a zero-area
+         *          TinyRect signals "use the icon's default dimensions".
+         *
+         * @param[in] point Position of the zero-sized rectangle.
+         *
+         * @note Status: IMPLEMENTED
+         */
         explicit TinyRect(TinyPoint point);
 
         /**
-         * @brief Gets the width of the rectangle.
+         * @brief Returns the width of the rectangle.
          *
-         * The width is computed as Right - Left.
+         * @details Computed as @c Right - Left.  Returns zero or a negative
+         *          value for degenerate rectangles.
          *
-         * @return Rectangle width.
+         * @return Rectangle width in pixels.
          *
          * @note Status: Ported
          */
         [[nodiscard]] intcs getWidthProperty() const;
 
         /**
-         * @brief Gets the height of the rectangle.
+         * @brief Returns the height of the rectangle.
          *
-         * The height is computed as Bottom - Top.
+         * @details Computed as @c Bottom - Top.  Returns zero or a negative
+         *          value for degenerate rectangles.
          *
-         * @return Rectangle height.
+         * @return Rectangle height in pixels.
          *
          * @note Status: Ported
          */
         [[nodiscard]] intcs getHeightProperty() const;
 
         /**
-         * @brief Returns the rectangle as a string in the format
-         * "Left;Top;Right;Bottom".
+         * @brief Returns a human-readable representation of the rectangle.
          *
-         * @return String representation of the rectangle.
+         * @details Produces the string @c "Left;Top;Right;Bottom", e.g.
+         *          @c "0;0;100;50".  Useful for logging and debugging.
+         *
+         * @return String in the format @c "Left;Top;Right;Bottom".
          *
          * @note Status: Ported
          */

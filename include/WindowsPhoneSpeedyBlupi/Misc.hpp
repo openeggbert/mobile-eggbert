@@ -1,3 +1,12 @@
+/**
+ * @file Misc.hpp
+ * @brief Declarations for the Misc static utility class.
+ * @details Provides 2D geometry helpers: rectangle intersection/union,
+ *          point rotation using the standard rotation matrix, and
+ *          angle/direction conversion utilities.  All methods are pure
+ *          functions with no side effects.
+ */
+
 #pragma once
 
 #include "TinyPoint.hpp"
@@ -11,43 +20,47 @@ namespace WindowsPhoneSpeedyBlupi
     using WindowsPhoneSpeedyBlupi::TinyPoint;
 
     /**
-     * @brief Provides miscellaneous helper methods used by the game.
+     * @class Misc
+     * @brief Static utility class for 2D geometry operations used throughout the game.
      *
-     * This class is a C++ port of the original C# static class Misc from
-     * WindowsPhoneSpeedyBlupi.
+     * @details This class is a C++ port of the original C# static class @c Misc from
+     *          WindowsPhoneSpeedyBlupi.  It provides:
+     *          - Point rotation around an arbitrary centre via the standard sin/cos matrix.
+     *          - Degree-to-radian conversion.
+     *          - Integer approach (smooth step toward a target value).
+     *          - Normalised-speed-to-integer conversion with guaranteed non-zero result.
+     *          - Rectangle inflation, inside test, intersection, and union.
      *
-     * It contains utility methods for point rotation, angle conversion,
-     * rectangle operations, and small numeric helpers.
-     *
+     * @note All methods are static; the class cannot be instantiated or destroyed.
      * @note Status: Ported
      */
     class Misc
     {
     public:
         /**
-         * @brief Deleted constructor because this is a static utility class.
-         *
+         * @brief Deleted default constructor — this is a static utility class.
          * @note Status: Ported
          */
         Misc() = delete;
 
         /**
-         * @brief Deleted destructor because this is a static utility class.
-         *
+         * @brief Deleted destructor — this is a static utility class.
          * @note Status: Ported
          */
         ~Misc() = delete;
 
         /**
-         * @brief Adjusts a rectangle position after rotation around its center.
+         * @brief Adjusts a rectangle's top-left position after rotation around its centre.
          *
-         * The returned rectangle keeps the same width and height as the input
-         * rectangle, but its top-left position is adjusted according to the
-         * rotation of the rectangle center.
+         * @details Computes the half-size centre of @p rect, rotates that point by
+         *          @p angle radians around the origin, and shifts the rectangle's
+         *          top-left corner by the resulting offset so that the visual centre
+         *          remains correct after the rotation.  Width and height are unchanged.
          *
-         * @param rect Rectangle to adjust.
-         * @param angle Rotation angle in radians.
-         * @return Adjusted rectangle.
+         * @param[in] rect  Rectangle whose position should be adjusted.
+         * @param[in] angle Rotation angle in radians (counter-clockwise positive).
+         * @return A new rectangle with the same dimensions as @p rect but a
+         *         corrected top-left position.
          *
          * @note Status: Ported
          */
@@ -56,25 +69,33 @@ namespace WindowsPhoneSpeedyBlupi
             double angle);
 
         /**
-         * @brief Rotates a point around the origin using an angle in radians.
+         * @brief Rotates a point around the origin (0, 0).
          *
-         * This overload rotates the point around (0, 0).
+         * @details Convenience overload that delegates to the three-argument form
+         *          with a zero-initialised centre point.
          *
-         * @param angle Rotation angle in radians.
-         * @param p Point to rotate.
-         * @return Rotated point.
+         * @param[in] angle Rotation angle in radians (counter-clockwise positive).
+         * @param[in] p     Point to rotate.
+         * @return Rotated point (fractional values truncated toward zero).
          *
+         * @see RotatePointRad(const TinyPoint&, double, const TinyPoint&)
          * @note Status: Ported
          */
         [[nodiscard]] static TinyPoint RotatePointRad(double angle, const TinyPoint& p);
 
         /**
-         * @brief Rotates a point around a specified center using an angle in radians.
+         * @brief Rotates a point around an arbitrary centre using the standard 2D
+         *        rotation matrix.
          *
-         * @param center Center of rotation.
-         * @param angle Rotation angle in radians.
-         * @param point Point to rotate.
-         * @return Rotated point.
+         * @details Translates @p point by -@p center, applies the rotation matrix
+         *          @f$\begin{pmatrix}\cos\theta & -\sin\theta \\ \sin\theta & \cos\theta\end{pmatrix}@f$,
+         *          then translates back by +@p center.  Fractional pixel values are
+         *          truncated toward zero via static_cast<int>.
+         *
+         * @param[in] center Centre of rotation.
+         * @param[in] angle  Rotation angle in radians (counter-clockwise positive).
+         * @param[in] point  Point to rotate.
+         * @return Rotated point (fractional values truncated toward zero).
          *
          * @note Status: Ported
          */
@@ -86,48 +107,56 @@ namespace WindowsPhoneSpeedyBlupi
         /**
          * @brief Converts an angle from degrees to radians.
          *
-         * @param angle Angle in degrees.
-         * @return Angle in radians.
+         * @details Computes @p angle * PI / 180.
+         *
+         * @param[in] angle Angle in degrees.
+         * @return Equivalent angle in radians.
          *
          * @note Status: Ported
          */
         [[nodiscard]] static double DegToRad(double angle);
 
         /**
-         * @brief Moves an integer value toward a target value by a given step.
+         * @brief Moves an integer value toward a target value by a fixed step.
          *
-         * If @p actual is smaller than @p final, it is increased by @p step
-         * but not beyond @p final. If @p actual is greater than @p final,
-         * it is decreased by @p step but not below @p final.
+         * @details If @p actual < @p final, increases @p actual by @p step, clamped
+         *          to @p final.  If @p actual > @p final, decreases @p actual by
+         *          @p step, clamped to @p final.  If already equal, returns unchanged.
          *
-         * @param actual Current value.
-         * @param final Target value.
-         * @param step Step size.
-         * @return Adjusted value.
+         * @param[in] actual Current value.
+         * @param[in] final  Target value.
+         * @param[in] step   Step size (should be positive for correct behaviour).
+         * @return Value after one approach step toward @p final.
          *
          * @note Status: Ported
          */
         [[nodiscard]] static intcs Approach(intcs actual, intcs final, intcs step);
 
         /**
-         * @brief Converts a normalized speed factor into an integer speed.
+         * @brief Converts a floating-point speed factor to a guaranteed non-zero
+         *        integer speed (unless the input is exactly zero).
          *
-         * Positive speeds return at least 1, negative speeds return at most -1,
-         * and zero returns 0.
+         * @details Multiplies @p speed by @p max and truncates to integer.  Ensures
+         *          the result is at least 1 for positive inputs and at most -1 for
+         *          negative inputs, preventing a zero-movement stall caused by
+         *          truncation of small floating-point values.
          *
-         * @param speed Speed factor.
-         * @param max Maximum magnitude scaling factor.
-         * @return Integer speed.
+         * @param[in] speed Normalised speed factor (positive or negative).
+         * @param[in] max   Maximum magnitude scale factor.
+         * @return Integer speed with the same sign as @p speed, or 0 if @p speed is 0.
          *
          * @note Status: Ported
          */
         [[nodiscard]] static intcs Speed(double speed, intcs max);
 
         /**
-         * @brief Inflates a TinyRect by the specified value in all directions.
+         * @brief Returns a copy of @p rect enlarged by @p value in every direction.
          *
-         * @param rect Rectangle to inflate.
-         * @param value Amount to subtract from left/top and add to right/bottom.
+         * @details Subtracts @p value from Left and Top; adds @p value to Right and
+         *          Bottom.  Pass a negative @p value to shrink the rectangle.
+         *
+         * @param[in] rect  Source rectangle.
+         * @param[in] value Inflation amount in pixels (negative to deflate).
          * @return Inflated rectangle.
          *
          * @note Status: Ported
@@ -135,11 +164,14 @@ namespace WindowsPhoneSpeedyBlupi
         [[nodiscard]] static TinyRect Inflate(const TinyRect& rect, intcs value);
 
         /**
-         * @brief Returns true if a point lies inside or on the border of a rectangle.
+         * @brief Tests whether a point lies inside or on the border of a rectangle.
          *
-         * @param rect Rectangle to test.
-         * @param p Point to test.
-         * @return True if the point is inside the rectangle; otherwise false.
+         * @details All boundary comparisons are inclusive (>= and <=).
+         *
+         * @param[in] rect Rectangle to test against.
+         * @param[in] p    Point to test.
+         * @return @c true if @p p is within the inclusive bounds of @p rect;
+         *         @c false otherwise.
          *
          * @note Status: Ported
          */
@@ -148,28 +180,30 @@ namespace WindowsPhoneSpeedyBlupi
         /**
          * @brief Computes the intersection of two rectangles.
          *
-         * The destination rectangle is filled with the overlapping area of
-         * @p src1 and @p src2.
+         * @details Fills @p dst with the overlapping area (max of lefts/tops,
+         *          min of rights/bottoms).  If the rectangles do not overlap,
+         *          @p dst is set to a zero-sized rectangle.
          *
-         * @param dst Output rectangle receiving the intersection.
-         * @param src1 First source rectangle.
-         * @param src2 Second source rectangle.
-         * @return True if the resulting rectangle is non-empty; otherwise false.
+         * @param[out] dst  Receives the intersection rectangle.
+         * @param[in]  src1 First source rectangle.
+         * @param[in]  src2 Second source rectangle.
+         * @return @c true if the resulting rectangle is non-empty; @c false otherwise.
          *
          * @note Status: Ported
          */
         static bool IntersectRect(TinyRect& dst, const TinyRect& src1, const TinyRect& src2);
 
         /**
-         * @brief Computes the union of two rectangles.
+         * @brief Computes the bounding rectangle that covers both source rectangles.
          *
-         * The destination rectangle is filled with the bounding rectangle
-         * covering both @p src1 and @p src2.
+         * @details Fills @p dst with the smallest axis-aligned rectangle that
+         *          contains both @p src1 and @p src2 (min of lefts/tops, max of
+         *          rights/bottoms).
          *
-         * @param dst Output rectangle receiving the union.
-         * @param src1 First source rectangle.
-         * @param src2 Second source rectangle.
-         * @return True if the resulting rectangle is non-empty; otherwise false.
+         * @param[out] dst  Receives the union rectangle.
+         * @param[in]  src1 First source rectangle.
+         * @param[in]  src2 Second source rectangle.
+         * @return @c true if the resulting rectangle is non-empty; @c false otherwise.
          *
          * @note Status: Ported
          */
@@ -177,13 +211,13 @@ namespace WindowsPhoneSpeedyBlupi
 
     private:
         /**
-         * @brief Returns true if the specified rectangle is empty.
+         * @brief Tests whether a rectangle has zero or negative area.
          *
-         * A rectangle is considered empty if its width is less than or equal to zero
-         * or its height is less than or equal to zero.
+         * @details A rectangle is considered empty when its width (Right - Left) or
+         *          height (Bottom - Top) is less than or equal to zero.
          *
-         * @param rect Rectangle to test.
-         * @return True if the rectangle is empty; otherwise false.
+         * @param[in] rect Rectangle to test.
+         * @return @c true if the rectangle is empty; @c false otherwise.
          *
          * @note Status: Ported
          */

@@ -1,3 +1,20 @@
+/**
+ * @file Jauge.cpp
+ * @brief Implementations of the Jauge HUD gauge widget.
+ * @details See Jauge.hpp for the full API contract.
+ *
+ * ### Redraw-dirty optimisation
+ * Jauge avoids unnecessary GPU draw calls through a two-flag scheme:
+ * - @c m_bMinimizeRedraw (set once in Create()) — enables the optimisation.
+ * - @c m_bRedraw (dirty flag) — set by any method that changes visible state
+ *   (SetLevel(), SetMode(), SetHide(), Redraw(), SetRedraw()); cleared at the
+ *   start of each Draw() call.
+ *
+ * When @c m_bMinimizeRedraw is @c true and @c m_bRedraw is @c false, Draw()
+ * returns immediately without touching the pixmap, saving fill-rate on frames
+ * where the gauge state has not changed.
+ */
+
 #include "WindowsPhoneSpeedyBlupi/TinyPoint.hpp"
 
 #include "WindowsPhoneSpeedyBlupi/Jauge.hpp"

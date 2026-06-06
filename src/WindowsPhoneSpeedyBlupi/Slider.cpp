@@ -1,3 +1,23 @@
+/**
+ * @file Slider.cpp
+ * @brief Implementations of the Slider horizontal UI widget.
+ * @details See Slider.hpp for the full API contract.
+ *
+ * ### Drag-to-value mapping (Move)
+ * The usable track runs from @c getPosLeftProperty() to @c getPosRightProperty()
+ * (a span of 248 - 44 = 204 pixels).  Move() converts an input X coordinate
+ * to a normalised value with the formula:
+ * @code
+ *   val = (pos.X - posLeft) / (posRight - posLeft)
+ * @endcode
+ * The result is then clamped to [0.0, 1.0] via Math::Max / Math::Min, so
+ * touches outside the track extent are still accepted (within the 50-pixel
+ * margin of the hit rectangle) but map to the nearest extreme (0 or 1).
+ * The method returns @c false without updating the value when the touch falls
+ * entirely outside the hit rectangle, or when the computed value is identical
+ * to the current value (floating-point equality).
+ */
+
 #include "WindowsPhoneSpeedyBlupi/Slider.hpp"
 
 #include "System/Math.hpp"
