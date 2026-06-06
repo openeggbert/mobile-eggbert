@@ -1,3 +1,52 @@
+/**
+ * @file Sound.cpp
+ * @brief Implementation of the Sound audio subsystem.
+ *
+ * @details
+ * This file contains the complete implementation of the Sound class declared
+ * in Sound.hpp.  Key implementation details that supplement the header
+ * documentation are noted below.
+ *
+ * ### SOUND_DISABLED guard
+ * Unlike the header, this file defines @c SOUND_ENABLED (if it is not already
+ * defined externally) and tests for @c SOUND_DISABLED at the top of most
+ * methods.  When @c SOUND_DISABLED is active every method returns a safe stub
+ * value or does nothing; the XAudio2/SDL3 audio backend is never touched.
+ * This mode is useful for headless unit-test builds.
+ *
+ * ### LoadContent asset naming
+ * Assets are loaded with a zero-padded three-digit counter:
+ * @code
+ *   sounds/sound000.wav, sounds/sound001.wav, ..., sounds/sound092.wav
+ * @endcode
+ * The padding is generated with @c std::setw(3) / @c std::setfill('0') so
+ * the filenames are portable across all target platforms.
+ *
+ * ### Volume attenuation formula (GetVolume)
+ * Two independent 1-D attenuation values (one per axis) are computed and the
+ * minimum is used as the final scalar:
+ * - Horizontal axis (full-volume range 0..640 px):
+ *   @code val_x = clamp(1 + (X / 640) * 2,  0, 1)  for X < 0
+ *         val_x = clamp(1 - ((X-640)/640)*2, 0, 1)  for X > 640 @endcode
+ * - Vertical axis (full-volume range 0..480 px, steeper falloff factor 3):
+ *   @code val_y = clamp(1 + (Y / 480) * 3,  0, 1)  for Y < 0
+ *         val_y = clamp(1 - ((Y-480)/480)*3, 0, 1)  for Y > 480 @endcode
+ * The steeper vertical factor ensures off-screen sounds above or below the
+ * play area fade out more quickly than side-exit sounds, matching the
+ * original Windows Phone game's audio feel.
+ *
+ * ### Panning formula (GetBalance)
+ * A simple linear map from HUD X coordinate to the XAudio2 pan range:
+ * @code
+ *   balance = clamp(X * 2.0 / 640.0 - 1.0,  -1.0, 1.0)
+ * @endcode
+ * X = 0 → -1.0 (full left), X = 320 → 0.0 (centre), X = 640 → +1.0 (full right).
+ *
+ * @note All methods in this file that manipulate the @c plays list do so
+ *       on the main game thread. The Play constructor (which calls sei.Play())
+ *       is also on the main thread, so no synchronisation is needed for the
+ *       list itself.
+ */
 #include "WindowsPhoneSpeedyBlupi/Sound.hpp"
 
 #include <algorithm>

@@ -1,3 +1,42 @@
+/**
+ * @file Worlds.cpp
+ * @brief Implements the Worlds static-helper class: file I/O for world and
+ *        save-game data, and field-level serialisation/deserialisation.
+ *
+ * @details
+ * ### File format grammar (detailed)
+ * Every save document produced by the Write* methods (and consumed by the Get*
+ * methods) follows this structure:
+ *
+ * ```
+ * <document>   ::= <section-line>* <decor-block>*
+ * <section-line>::= <name> ": " <field>* "\n"
+ * <field>      ::= <id> "=" <value> " "
+ * <value>      ::= <int> | <double> | <bool> | <point> | <int-array>
+ *
+ * <int>        ::= [-]?[0-9]+
+ * <double>     ::= [-]?[0-9]+("."[0-9]+)?([eE][-+]?[0-9]+)?   (C locale)
+ * <bool>       ::= "True" | "False"    (case-insensitive on read)
+ * <point>      ::= <int> ";" <int>
+ * <int-array>  ::= (<int>? ",")* <int>?   (empty slot = 0 for normal arrays,
+ *                                           1 for doors arrays)
+ *
+ * <decor-block>::= <section-line-decor> <decor-row>*
+ * <decor-row>  ::= (<int>? ",")* <int>? "\n"   (empty slot = -1 tile)
+ * ```
+ *
+ * ### Error and fallback behaviour
+ * - TryGetFieldValueText() (file-local helper) returns std::nullopt when a
+ *   section+rank+name combination is not found; all Get* methods propagate this
+ *   as their documented default value.
+ * - Doors parsing treats an empty comma slot as 1 (default open state).
+ * - Decor parsing treats an empty comma slot as -1 (no tile).
+ * - ReadWorld() returns std::nullopt (not an empty vector) when the file cannot
+ *   be opened; the caller must check for nullopt before iterating.
+ * - ReadGameData() returns false but does not throw when the save file is absent
+ *   or an IsolatedStorageException is raised.
+ */
+
 #include "WindowsPhoneSpeedyBlupi/Worlds.hpp"
 
 #include <algorithm>

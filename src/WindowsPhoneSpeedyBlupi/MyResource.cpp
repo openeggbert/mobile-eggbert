@@ -1,3 +1,58 @@
+/**
+ * @file MyResource.cpp
+ * @brief Implements MyResource: locale detection, static constants, and
+ *        per-language string-table initialisers.
+ *
+ * @details
+ * This file defines the static members of MyResource and provides three
+ * complete string-table population functions — one per supported locale.
+ *
+ * ## Supported locales
+ *
+ * | Locale prefix | Initialiser called | Notes                                   |
+ * |---------------|--------------------|-----------------------------------------|
+ * | "fr"          | InitializeFR()     | Full French translation.                |
+ * | (any other)   | InitializeEN()     | English is the default fallback.        |
+ * | "de"*         | (InitializeDE())   | Defined but not yet wired; falls to EN. |
+ *
+ * *German (InitializeDE()) provides translated button labels and trial strings
+ * but reuses French text for the training hints.  It is defined for future use
+ * but Init() currently routes all non-French locales to InitializeEN().
+ *
+ * ## Locale detection
+ *
+ * Init() calls @c std::locale("") to obtain the platform default locale.  The
+ * locale name string (e.g. "fr_FR.UTF-8") is lower-cased and the first two
+ * characters compared to "fr".  If @c std::locale("") throws (e.g. on a
+ * minimal embedded system with no locale support), the code defaults to "en".
+ *
+ * ## Resource ID layout
+ *
+ * Resource IDs are partitioned by range:
+ *  - 100-113  : UI button / menu labels.
+ *  - 200-203  : Gamer / ranking screen labels.
+ *  - 300-305  : Trial-mode upsell bullet points.
+ *  - 1000-1022: Training world 1 hints (d-pad variant).
+ *  - 2000-2009: Training world 2 hints (d-pad variant).
+ *  - 3000-3010: Training world 3 hints (d-pad variant).
+ *  - 4000-4009: Training world 4 hints (d-pad variant).
+ *  - 11000-11022: Training world 1 hints (accelerometer variant).
+ *  - 12000-12009: Training world 2 hints (accelerometer variant).
+ *  - 13000-13010: Training world 3 hints (accelerometer variant).
+ *  - 14000-14009: Training world 4 hints (accelerometer variant).
+ *
+ * ## Embedded control characters in strings
+ *
+ * Several tutorial strings contain embedded nul bytes and other control bytes
+ * (such as \\u000e, \\u0003, \\u0006) that serve as button-glyph placeholders
+ * for the rendering layer.  Strings containing a nul byte are constructed with
+ * MakeResourceString() to preserve the full byte sequence, since a plain
+ * std::string constructor would stop at the first nul byte.
+ *
+ * @see MyResource
+ * @see MyResource::LoadString()
+ */
+
 //using WindowsPhoneSpeedyBlupi;
 
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
@@ -35,29 +90,48 @@ namespace WindowsPhoneSpeedyBlupi
         return DEFAULT_VALUE;
     }
 
-    const intcs MyResource::TX_BUTTON_PLAY = 100;
-    const intcs MyResource::TX_BUTTON_MENU = 101;
-    const intcs MyResource::TX_BUTTON_BACK = 102;
-    const intcs MyResource::TX_BUTTON_RESTART = 103;
-    const intcs MyResource::TX_BUTTON_CONTINUE = 104;
-    const intcs MyResource::TX_BUTTON_BUY = 105;
-    const intcs MyResource::TX_BUTTON_SETUP = 107;
-    const intcs MyResource::TX_BUTTON_SETUP_SOUNDS = 108;
-    const intcs MyResource::TX_BUTTON_SETUP_JUMP = 109;
-    const intcs MyResource::TX_BUTTON_SETUP_ZOOM = 110;
-    const intcs MyResource::TX_BUTTON_SETUP_ACCEL = 111;
-    const intcs MyResource::TX_BUTTON_SETUP_RESET = 112;
-    const intcs MyResource::TX_BUTTON_RANKING = 113;
-    const intcs MyResource::TX_GAMER_TITLE = 200;
-    const intcs MyResource::TX_GAMER_MDOORS = 201;
-    const intcs MyResource::TX_GAMER_SDOORS = 202;
-    const intcs MyResource::TX_GAMER_LIFES = 203;
-    const intcs MyResource::TX_TRIAL1 = 300;
-    const intcs MyResource::TX_TRIAL2 = 301;
-    const intcs MyResource::TX_TRIAL3 = 302;
-    const intcs MyResource::TX_TRIAL4 = 303;
-    const intcs MyResource::TX_TRIAL5 = 304;
-    const intcs MyResource::TX_TRIAL6 = 305;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — UI button / menu labels (IDs 100-113)
+    // ID 106 is intentionally absent from the original game resource table.
+    // -----------------------------------------------------------------------
+
+    const intcs MyResource::TX_BUTTON_PLAY         = 100; ///< @brief "Play" / "Jouer" button.
+    const intcs MyResource::TX_BUTTON_MENU         = 101; ///< @brief "Home" / "Menu" button.
+    const intcs MyResource::TX_BUTTON_BACK         = 102; ///< @brief "Back" / "Retour" button.
+    const intcs MyResource::TX_BUTTON_RESTART      = 103; ///< @brief "Restart" / "Recommencer" button.
+    const intcs MyResource::TX_BUTTON_CONTINUE     = 104; ///< @brief "Continue" / "Continuer" button.
+    const intcs MyResource::TX_BUTTON_BUY          = 105; ///< @brief "Buy" / "Acheter" button.
+    const intcs MyResource::TX_BUTTON_SETUP        = 107; ///< @brief "Setup" / "Reglages" button (ID 106 skipped).
+    const intcs MyResource::TX_BUTTON_SETUP_SOUNDS = 108; ///< @brief Sound-effects toggle label.
+    const intcs MyResource::TX_BUTTON_SETUP_JUMP   = 109; ///< @brief Jump-button position preference label.
+    const intcs MyResource::TX_BUTTON_SETUP_ZOOM   = 110; ///< @brief Auto-zoom preference label.
+    const intcs MyResource::TX_BUTTON_SETUP_ACCEL  = 111; ///< @brief Accelerometer-control preference label.
+    const intcs MyResource::TX_BUTTON_SETUP_RESET  = 112; ///< @brief "Erase progress" reset label; {0} is the player number.
+    const intcs MyResource::TX_BUTTON_RANKING      = 113; ///< @brief "Ranking" / "Classement" button.
+
+    // -----------------------------------------------------------------------
+    // Static constant definitions — gamer / ranking screen (IDs 200-203)
+    // -----------------------------------------------------------------------
+
+    const intcs MyResource::TX_GAMER_TITLE  = 200; ///< @brief Player title; {0} is the player number.
+    const intcs MyResource::TX_GAMER_MDOORS = 201; ///< @brief Main-gate counter; {0}/12 placeholders.
+    const intcs MyResource::TX_GAMER_SDOORS = 202; ///< @brief Secondary-gate counter; {0}/52 placeholders.
+    const intcs MyResource::TX_GAMER_LIFES  = 203; ///< @brief Lives counter; {0} is the life count.
+
+    // -----------------------------------------------------------------------
+    // Static constant definitions — trial-mode upsell (IDs 300-305)
+    // -----------------------------------------------------------------------
+
+    const intcs MyResource::TX_TRIAL1 = 300; ///< @brief "Buy the full version" headline.
+    const intcs MyResource::TX_TRIAL2 = 301; ///< @brief Bullet point 1.
+    const intcs MyResource::TX_TRIAL3 = 302; ///< @brief Bullet point 2.
+    const intcs MyResource::TX_TRIAL4 = 303; ///< @brief Bullet point 3.
+    const intcs MyResource::TX_TRIAL5 = 304; ///< @brief Bullet point 4.
+    const intcs MyResource::TX_TRIAL6 = 305; ///< @brief Bullet point 5.
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 1 d-pad hints (IDs 1000-1022)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING101 = 1000;
     const intcs MyResource::TX_TRAINING102 = 1001;
     const intcs MyResource::TX_TRAINING103 = 1002;
@@ -81,6 +155,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING121 = 1020;
     const intcs MyResource::TX_TRAINING122 = 1021;
     const intcs MyResource::TX_TRAINING123 = 1022;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 2 d-pad hints (IDs 2000-2009)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING201 = 2000;
     const intcs MyResource::TX_TRAINING202 = 2001;
     const intcs MyResource::TX_TRAINING203 = 2002;
@@ -91,6 +169,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING208 = 2007;
     const intcs MyResource::TX_TRAINING209 = 2008;
     const intcs MyResource::TX_TRAINING210 = 2009;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 3 d-pad hints (IDs 3000-3010)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING301 = 3000;
     const intcs MyResource::TX_TRAINING302 = 3001;
     const intcs MyResource::TX_TRAINING303 = 3002;
@@ -102,6 +184,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING309 = 3008;
     const intcs MyResource::TX_TRAINING310 = 3009;
     const intcs MyResource::TX_TRAINING311 = 3010;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 4 d-pad hints (IDs 4000-4009)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING401 = 4000;
     const intcs MyResource::TX_TRAINING402 = 4001;
     const intcs MyResource::TX_TRAINING403 = 4002;
@@ -112,6 +198,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING408 = 4007;
     const intcs MyResource::TX_TRAINING409 = 4008;
     const intcs MyResource::TX_TRAINING410 = 4009;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 1 accelerometer hints (IDs 11000-11022)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING101a = 11000;
     const intcs MyResource::TX_TRAINING102a = 11001;
     const intcs MyResource::TX_TRAINING103a = 11002;
@@ -135,6 +225,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING121a = 11020;
     const intcs MyResource::TX_TRAINING122a = 11021;
     const intcs MyResource::TX_TRAINING123a = 11022;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 2 accelerometer hints (IDs 12000-12009)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING201a = 12000;
     const intcs MyResource::TX_TRAINING202a = 12001;
     const intcs MyResource::TX_TRAINING203a = 12002;
@@ -145,6 +239,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING208a = 12007;
     const intcs MyResource::TX_TRAINING209a = 12008;
     const intcs MyResource::TX_TRAINING210a = 12009;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 3 accelerometer hints (IDs 13000-13010)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING301a = 13000;
     const intcs MyResource::TX_TRAINING302a = 13001;
     const intcs MyResource::TX_TRAINING303a = 13002;
@@ -156,6 +254,10 @@ namespace WindowsPhoneSpeedyBlupi
     const intcs MyResource::TX_TRAINING309a = 13008;
     const intcs MyResource::TX_TRAINING310a = 13009;
     const intcs MyResource::TX_TRAINING311a = 13010;
+    // -----------------------------------------------------------------------
+    // Static constant definitions — training world 4 accelerometer hints (IDs 14000-14009)
+    // -----------------------------------------------------------------------
+
     const intcs MyResource::TX_TRAINING401a = 14000;
     const intcs MyResource::TX_TRAINING402a = 14001;
     const intcs MyResource::TX_TRAINING403a = 14002;

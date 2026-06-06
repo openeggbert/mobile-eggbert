@@ -1,6 +1,47 @@
-//
-// Created by robertvokac on 5/24/25.
-//
+/**
+ * @file Pixmap.cpp
+ * @brief Implements the Pixmap class: viewport geometry, texture loading, and all
+ *        SpriteBatch draw calls for the Speedy Blupi rendering back-end.
+ *
+ * @details
+ * ### Zoom / origin transform
+ * All draw methods operate in logical 640x480 game-space.  Before any sprite is
+ * submitted to SpriteBatch, game-space coordinates are converted to physical
+ * screen pixels through two transforms:
+ *
+ * 1. **Viewport zoom** (`zoom`, computed once per geometry change):
+ *    @code
+ *      zoom    = min(screenWidth / 640.0, screenHeight / 480.0)
+ *      originX = (screenWidth  - 640.0 * zoom) / 2.0
+ *      originY = (screenHeight - 480.0 * zoom) / 2.0
+ *    @endcode
+ *    This letterboxes / pillarboxes the 4:3 canvas inside any viewport.
+ *
+ * 2. **Hotspot zoom** (`hotSpotZoom`, set per-frame via SetHotSpot()):
+ *    Applied only when `useHotSpot = true`.  Scales sprite destination corners
+ *    around the hotspot pivot to implement the in-game camera zoom:
+ *    @code
+ *      scaledX = (x - hotSpotX) * hotSpotZoom + hotSpotX
+ *      scaledY = (y - hotSpotY) * hotSpotZoom + hotSpotY
+ *    @endcode
+ *
+ * ### Resolution scaling
+ * Textures may be loaded at 1x, 2x, or 4x resolution (controlled by
+ * Config::RESOLUTION_SCALE).  Source rectangles passed to SpriteBatch are
+ * multiplied by RESOLUTION_SCALE via ScaleSourceRect() / Config::ScaleAsset() so
+ * they address the correct pixels in the higher-resolution atlas.  Destination
+ * rectangles always remain in 1x logical coordinates.
+ *
+ * ### Batching invariant
+ * When `CNA_SPRITE_BATCHING_ENABLED` is defined (hard-coded `#define` near the
+ * top of this file), every draw method checks `batch_started_`:
+ * - If **true**: the caller opened a batch via BeginBatch(); the method skips its
+ *   own SpriteBatch::Begin/End and contributes to the outer batch.
+ * - If **false**: the method opens and closes its own SpriteBatch::Begin/End pair
+ *   (original one-draw-call-per-sprite behaviour).
+ *
+ * @note Created by robertvokac on 5/24/25.
+ */
 
 #include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
 

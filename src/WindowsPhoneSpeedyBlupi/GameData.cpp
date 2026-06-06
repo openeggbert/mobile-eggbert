@@ -1,3 +1,42 @@
+/**
+ * @file GameData.cpp
+ * @brief Implements the GameData class: flat byte-array accessors and
+ *        initialisation logic for the Speedy Blupi persistent save format.
+ *
+ * @note Byte-array layout schema
+ *
+ * The entire save state fits in a single array of TotalLength = 640 bytes.
+ * The schema below is the canonical reference; every accessor must stay in sync
+ * with it.  Silently changing an offset without updating all accessors will
+ * corrupt save files for all platforms.
+ *
+ * ```
+ * Global header  (bytes 0-9, SaveHeaderLength = 10)
+ *   [0]  byte  reserved / version tag          default: 1
+ *   [1]  byte  reserved                        default: 1
+ *   [2]  byte  selectedGamer  (0..2)           default: 0
+ *   [3]  byte  sounds         (0=off, 1=on)    default: 1
+ *   [4]  byte  jumpRight      (0=left, 1=right)default: 1
+ *   [5]  byte  autoZoom       (0=off, 1=on)    default: 1
+ *   [6]  byte  accelActive    (0=off, 1=on)    default: 0
+ *   [7]  byte  accelSensitivity [0..100]       default: 50  (= 0.50 in [0,1])
+ *   [8]  byte  reserved                        default: 0
+ *   [9]  byte  reserved                        default: 0
+ *
+ * Per-gamer block  (repeated 3x, GamerLength = 210 bytes each)
+ *   Offset = SaveHeaderLength + gamer * GamerLength
+ *   [+0]  byte  nbVies     (lives)             default: 3
+ *   [+1]  byte  lastWorld  (1-based)           default: 1
+ *   [+2]..[+9]  8 bytes reserved               default: 0
+ *   [+10]..[+209]  200 bytes  doors[0..199]    default: all 0
+ *                  doors[0..179]   = secondary door states
+ *                  doors[180..199] = main door states
+ *                  0 = locked, 1 = opened
+ * ```
+ *
+ * TotalLength = 10 + 3 * 210 = 640 bytes.
+ */
+
 #include "WindowsPhoneSpeedyBlupi/GameData.hpp"
 
 #include <string>

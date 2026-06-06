@@ -1,3 +1,85 @@
+/**
+ * @file InputPad.cpp
+ * @brief Implementation of the InputPad player-input subsystem.
+ *
+ * @details
+ * This translation unit implements all player-input processing for
+ * mobile-eggbert. It polls touch panels, the mouse, the keyboard, and the
+ * accelerometer sensor each frame, then converts the raw input data into the
+ * logical button and directional movement signals consumed by the game logic.
+ *
+ * ### Accelerometer dead-zone and sensitivity curve
+ * The hardware accelerometer delivers a raw Y-axis reading (@c y) in the range
+ * roughly -1 g ... +1 g.  A user-configurable @c accelSensitivity value (0-1,
+ * stored in GameData) controls the base threshold:
+ * @code
+ *   sensitivityThreshold = (1.0 - accelSensitivity) * 0.06 + 0.04
+ * @endcode
+ * This maps sensitivity 0 (minimum) to a threshold of ~0.10 g and sensitivity 1
+ * (maximum) to a threshold of 0.04 g, giving a comfortable dead-zone even on
+ * noisy hardware.
+ *
+ * Hysteresis is applied to avoid rapid on/off oscillation: once movement is
+ * detected (@c accelLastState == true) the effective threshold is reduced to
+ * @code
+ *   adjustedThreshold = sensitivityThreshold * 0.6
+ * @endcode
+ * so the input stays active until the tilt clearly returns toward zero.
+ *
+ * Speed is mapped from the raw reading with a linear ramp:
+ * @code
+ *   speed = clamp(|y| * 0.25 / sensitivityThreshold + 0.25, 0.0, 1.0)
+ * @endcode
+ * The minimum non-zero output speed is 0.25, which prevents the character from
+ * barely creeping at the edge of the dead-zone.
+ *
+ * On mission start (StartMission()) @c accelWaitZero is set to @c true; the
+ * first non-zero accelerometer reading is discarded and movement only begins
+ * once the device has returned to near-zero tilt. This prevents an initial
+ * lurch if the player picks up the device while it is already tilted.
+ *
+ * ### Touch-coordinate remapping on wide Android screens
+ * When running on Android with a screen aspect ratio wider than 4:3 (i.e.
+ * screenWidth/screenHeight > 1.333), raw touch coordinates are scaled by
+ * the height ratio (480 / screenHeight) so that all hit-test arithmetic can
+ * remain in the fixed 640x480 HUD space.
+ *
+ * ### Virtual on-screen keyboard (MODERN only)
+ * The virtual keyboard is activated by holding the top-left corner of the
+ * screen (20% wide x 10% tall of the larger screen dimension) for exactly one
+ * second (Config::CURRENT_FPS frames). While it is visible, all touch events
+ * are consumed by the keyboard and do not reach the game buttons. The keyboard
+ * injects synthetic key-press events into @c virtualKeysPressedThisFrame,
+ * which are then treated identically to physical key presses by the
+ * IsKeyDownOrVirtual() lambda defined inside Update().
+ *
+ * ### Typed cheat-code detection (non-LEGACY only)
+ * During the Play phase every rising edge on a letter key (A-Z) appends the
+ * corresponding lower-case letter to @c typedCheatBuffer (capped at 32 chars).
+ * After each append the buffer tail is compared against every known cheat-code
+ * name.  On a match the cheat is activated, the buffer is cleared, and (if
+ * @c persistent == true) the name is toggled in @c activePersistentCheats for
+ * the top-left HUD label.
+ *
+ * ### Button-rectangle coordinate system
+ * GetButtonRect() computes all rectangles at runtime from two scale factors
+ * derived from the current draw-bounds:
+ * - @c buttonSizeFactor1 = drawBoundsHeight / 5.0
+ * - @c buttonSizeFactor2 = drawBoundsHeight * 140.0 / 480.0
+ *
+ * Cheat overlay buttons (Cheat1-Cheat9) use a fixed 80-pixel grid independent
+ * of screen size.  The six in-game cheat trigger zones (Cheat11-Cheat32) use
+ * @c cheatButtonSizeFactor = drawBoundsHeight / 3.5, placing three 2x2 grids
+ * in the top-left corner of the play area.
+ *
+ * @note The accelerometer callback (HandleAccelSensorCurrentValueChanged)
+ *       runs on a sensor-thread. The only shared mutable state it touches is
+ *       @c accelSpeedX and @c accelLastState; both are doubles written without
+ *       explicit locking. On platforms where double-width stores are not
+ *       atomic this could theoretically produce a torn read in Update(). In
+ *       practice the game runs on ARM/x86 where aligned double access is
+ *       atomic at the hardware level.
+ */
 #include "WindowsPhoneSpeedyBlupi/InputPad.hpp"
 
 #ifndef LEGACY
@@ -1746,6 +1828,18 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @brief Starts the hardware accelerometer sensor.
+     *
+     * @details Calls accelSensor.Start() and sets accelStarted to @c true on
+     * success. If the sensor is unavailable or the application lacks the
+     * required OS permission, accelStarted is left @c false and the exception
+     * is silently swallowed so gameplay continues without tilt control.
+     *
+     * @post accelStarted == true iff the sensor started without error.
+     * @warning Must be called from the game-update thread; the sensor may
+     *          deliver callbacks on a separate thread immediately after Start().
+     */
     void InputPad::StartAccel()
     {
 #ifdef INPUT_DISABLED
@@ -1766,6 +1860,16 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
+    /**
+     * @brief Stops the hardware accelerometer sensor.
+     *
+     * @details Calls accelSensor.Stop() only if @c accelStarted is @c true,
+     * then unconditionally sets @c accelStarted to @c false.
+     * AccelerometerFailedException from Stop() is silently discarded because
+     * the sensor may have already become unavailable.
+     *
+     * @post accelStarted == false.
+     */
     void InputPad::StopAccel()
     {
 #ifdef INPUT_DISABLED
@@ -1784,7 +1888,47 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
-
+    /**
+     * @brief Sensor callback: converts a raw accelerometer reading into a
+     *        lateral movement speed and stores it in accelSpeedX.
+     *
+     * @details
+     * This method is invoked by the platform sensor framework on each new
+     * accelerometer sample (typically 50 Hz).  It is the sole writer of
+     * @c accelSpeedX and @c accelLastState.
+     *
+     * #### Dead-zone calculation
+     * Only the Y component of the acceleration vector is used (device held in
+     * portrait/landscape, Y == lateral tilt).  The base dead-zone threshold is:
+     * @code
+     *   sensitivityThreshold = (1 - accelSensitivity) * 0.06 + 0.04
+     * @endcode
+     * Hysteresis: when the previous sample was non-zero (@c accelLastState ==
+     * @c true) the threshold is reduced to @c sensitivityThreshold * 0.6 so
+     * the movement does not flicker at the edge.
+     *
+     * #### Speed ramp
+     * When @c |y| > adjustedThreshold:
+     * @code
+     *   speed = clamp(|y| * 0.25 / sensitivityThreshold + 0.25, 0.0, 1.0)
+     * @endcode
+     * The factor 0.25 ensures a minimum non-zero speed so the character does
+     * not barely creep just past the dead-zone boundary.  Negative Y tilts the
+     * device toward the player, mapping to rightward movement (positive speed);
+     * positive Y maps to leftward movement (negative speed).
+     *
+     * #### Wait-for-zero guard
+     * If @c accelWaitZero is @c true (set at mission start), the computed speed
+     * is forced to 0.0 until the tilt returns inside the dead-zone, at which
+     * point @c accelWaitZero is cleared.  This prevents an unintended lurch
+     * when a mission loads while the device is already tilted.
+     *
+     * @param[in] e Sensor reading event carrying the new AccelerometerReading.
+     *
+     * @note This callback may run on a platform sensor thread concurrently with
+     *       Update(). The only shared state modified here is @c accelSpeedX
+     *       and @c accelLastState (both are platform-atomic-sized on ARM/x86).
+     */
     void InputPad::HandleAccelSensorCurrentValueChanged(
         Microsoft::Devices::Sensors::SensorReadingEventArgs<Microsoft::Devices::Sensors::AccelerometerReading> e)
     {
