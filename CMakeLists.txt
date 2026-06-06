@@ -45,7 +45,7 @@ else()
 
     # If none explicitly set, default to EASYGL
     if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN)
-        set(CNA_BACKEND_EASY_GL ON CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
+        set(CNA_BACKEND_VULKAN ON CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
     endif()
 endif()
 
