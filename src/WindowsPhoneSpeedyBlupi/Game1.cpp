@@ -1,3 +1,74 @@
+/**
+ * @file Game1.cpp
+ * @brief Implementation of the Game1 top-level game class.
+ *
+ * @details This file provides the method bodies for Game1, which drives the
+ * XNA-style game loop (Initialize / LoadContent / Update / Draw) and the
+ * Def::Phase state machine that governs every high-level game screen.
+ *
+ * ---
+ * **Phase transition graph**
+ *
+ * The following transitions are the only legal paths between phases.
+ * All transitions pass through SetPhase(); phases marked with "(animated)"
+ * trigger a Config::ScaleTime(20)-frame fade-out before the target becomes active.
+ *
+ * @code
+ * [Boot sequence]
+ *   None  ──constructor──>  First
+ *   First ──Update──>       Wait          (LoadContent called here)
+ *   Wait  ──resume ok──>    Resume        (app reactivated with saved game)
+ *   Wait  ──progress≥1──>   Init          (loading complete, no saved game)
+ *
+ * [Main menu – Init is the hub]
+ *   Init (animated) ──InitPlay button──>        Play(mission=1)
+ *   Init (animated) ──InitSetup button──>       MainSetup
+ *   Init            ──InitBuy button──>         Guide::Show  then  Init
+ *   Init            ──InitRanking button──>     Ranking
+ *   Init            ──Back hardware button──>   Exit()
+ *
+ * [Gameplay]
+ *   Play ──PlayPause button / Back hardware──>  Pause    (animated from Pause side)
+ *   Play ──Decor::IsTerminated == -1──>         Lost     (MemorizeGamerProgress first)
+ *   Play ──Decor::IsTerminated == -2──>         Win      (MemorizeGamerProgress first)
+ *   Play ──Decor::IsTerminated >= 1──>          Play(next mission)  (StartMission)
+ *         [trial guard: if mission>20 && units>1  →  Trial instead of Play]
+ *
+ * [Pause / Resume]
+ *   Pause (animated) ──PauseMenu / WinLostReturn / ResumeMenu button──>  Init
+ *   Pause (animated) ──PauseContinue button──>  Play(-1)    (resume same level)
+ *   Pause (animated) ──PauseRestart button──>   Play(mission)
+ *   Pause (animated) ──PauseBack button──>      MissionBack() → Play(prev) or Init
+ *   Pause (animated) ──PauseSetup button──>     PlaySetup
+ *   Pause            ──Back hardware──>         Init
+ *   Resume           ──ResumeContinue button──> ContinueMission() → Play(-2)
+ *   Resume           ──ResumeMenu button──>     Init
+ *   Resume           ──Back hardware──>         Init
+ *
+ * [Settings]
+ *   MainSetup (animated) ──SetupReturn button──>  Init
+ *   PlaySetup (animated) ──SetupReturn button──>  Play(-1)
+ *   MainSetup / PlaySetup ──Back hardware──>      Init
+ *   (Settings buttons toggle GameData flags in place; no phase change.)
+ *
+ * [Terminal screens]
+ *   Lost  ──WinLostReturn button──>  Init
+ *   Win   ──WinLostReturn button──>  Init
+ *   Trial ──TrialBuy button──>       Guide::Show  then  Init
+ *   Trial ──TrialCancel button──>    Init
+ *   Ranking ──RankingContinue──>     Init
+ * @endcode
+ *
+ * Notes on the two-stage mission-loading pipeline:
+ * - When SetPhase(Play, m) is called from an animated source phase, the mission
+ *   number is stored in missionToStart1.  On the next Draw(), once the background
+ *   texture has been swapped, it is promoted to missionToStart2.  Update() then
+ *   consumes missionToStart2 and issues the final SetPhase(Play, m) call, which
+ *   calls StartMission(m).
+ * - Passing mission = -1 continues the current level without reloading.
+ * - Passing mission = -2 (ContinueMission path) restores from the serialised save.
+ */
+
 #include "WindowsPhoneSpeedyBlupi/Game1.hpp"
 
 #include <string>

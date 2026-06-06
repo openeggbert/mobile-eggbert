@@ -1,9 +1,118 @@
+/**
+ * @file Tables.cpp
+ * @brief Definitions of all static game data tables for the Speedy Blupi C++ port.
+ *
+ * @details This translation unit provides the storage for every @c const (and the
+ * four mutable) arrays declared in Tables.hpp, plus the implementation of
+ * Tables::Init().
+ *
+ * All numeric values are ported verbatim from the original XNA / Windows Phone
+ * C# source.  They must not be altered without a full audit of every index site
+ * in the engine.
+ *
+ * ### Column / record layouts by table group
+ *
+ * #### table_blupi (2911 entries)
+ * The array is a self-describing sequence of variable-length animation blocks.
+ * Each block starts with a 3-value header:
+ *   - [0] action ID (shortcs)
+ *   - [1] number of icon frames that follow (N)
+ *   - [2] reserved / always 0
+ *
+ * Immediately after the header come N icon indices.  The engine pre-scans the
+ * array to build an offset table so that a given action can be jumped to in O(1).
+ * A sentinel value of 0 at position 0 marks the end of the whole stream.
+ *
+ * #### table_mirror (335 entries)
+ * A one-dimensional lookup array: index = right-facing icon ID,
+ * value = horizontally mirrored icon ID.  Covers icons 0–334.
+ *
+ * #### table_vitesse_march / _nage / _surf
+ * One-dimensional arrays of pixel-per-tick values indexed by @c (phase % length).
+ * Each entry is the signed horizontal displacement applied to the actor that tick.
+ *
+ * #### table_decor_quart (7056 entries)
+ * Flat two-dimensional lookup.  Logically shaped as [tile_type_group][neighbour_mask].
+ * The number of entries per group and the bitmask encoding are defined in the
+ * original C# tile-adaptation code.  Values are replacement tile icon IDs; the
+ * engine overwrites the base tile with the value returned here.
+ *
+ * #### NPC movement tables (bulldozer, poisson, oiseau, guepe, creature, blupih, blupit)
+ * Each family has:
+ *   - @c _left[N]   — N icon IDs cycled while moving left.
+ *   - @c _right[N]  — N icon IDs cycled while moving right.
+ *   - @c _turn2l[M] — M icon IDs played once during a left turn transition.
+ *   - @c _turn2r[M] — M icon IDs played once during a right turn transition.
+ * All are indexed by @c (phase % N) or run linearly for transition tables.
+ *
+ * #### Explosion tables (table_explo1..8)
+ * Each table is a flat sequence of sprite icon IDs indexed by the explosion
+ * frame counter.  A value of -1 suppresses drawing for that frame (blank tick).
+ * The channel number (1–8) maps to a specific visual layer in the explosion
+ * renderer.
+ *
+ * #### table_sploutch1..3 (10 / 13 / 18 entries)
+ * Icon sequences for water splash.  Leading -1 entries delay the start of the
+ * splash sprite relative to the moment of water entry:
+ *   - sploutch1: 0-frame delay (immediate)
+ *   - sploutch2: 3-frame delay
+ *   - sploutch3: 8-frame delay
+ *
+ * #### table_decor_action (519 entries)
+ * The array encodes multiple independent motion scripts concatenated together.
+ * Each script begins with a 2-value header:
+ *   - [0] script ID (used as a key by Decor)
+ *   - [1] total number of (dx, dy) pairs that follow
+ *
+ * After the header, pairs of (dx, dy) values specify sub-pixel displacements
+ * applied to the animated tile sprite each tick.  A -1 in the dx position of
+ * the next potential header marks the end of all scripts.
+ *
+ * #### table_explo_size (100 entries)
+ * One-dimensional array indexed by explosion channel (0–99).  Each value is the
+ * half-width (and half-height) in pixels of the axis-aligned bounding box used
+ * for that channel's explosion sprite clipping.
+ * Typical values: 128 (standard), 64 (fragment), 144 (oversized mega-blast for
+ * channels 66–68).
+ *
+ * #### table_adapt_decor (144 entries)
+ * One-dimensional lookup indexed by a 4-bit neighbour bitmask combined with a
+ * tile-type selector.  The returned value is the tile icon ID that replaces the
+ * current tile to produce smooth corner blending.
+ *
+ * #### table_adapt_fromage (32 entries)
+ * Same format as @c table_adapt_decor but limited to the cheese tile type.
+ * Entries -1 mean "no replacement" (keep the base tile unchanged).
+ *
+ * #### table_training1..4
+ * Each table is an array of 6-element records terminated by a record whose
+ * first element is -1:
+ *   - [0] start column (tile X min)
+ *   - [1] end column   (tile X max)
+ *   - [2] start row    (tile Y min, 0 = top)
+ *   - [3] end row      (tile Y max)
+ *   - [4] action / category flag
+ *          (-1 = generic, -2..-5 = special placement codes)
+ *   - [5] localised text-resource ID
+ *          (initialised to a placeholder; overwritten by Tables::Init())
+ *
+ * #### world_terminal (30 entries)
+ * Array of 15 (tile_icon, tile_index) pairs that specify the tile type and
+ * position index for each decorative element on the end-of-game terminal screen.
+ * Entry [0] = (0, 0) is the anchor / origin marker.
+ */
 #include "WindowsPhoneSpeedyBlupi/Tables.hpp"
 
 #include "WindowsPhoneSpeedyBlupi/MyResource.hpp"
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    /**
+     * @details Layout: self-describing variable-length blocks.
+     * Each block: [actionId, frameCount, 0, icon_0, icon_1, ..., icon_{N-1}].
+     * The terminal record begins with a 0 action ID.
+     * @see Tables::table_blupi declaration in Tables.hpp for full documentation.
+     */
     const shortcs Tables::table_blupi[2911] =
     {
         35, 9, 0, 276, 277, 278, 279, 280, 281, 282,
@@ -300,6 +409,7 @@ namespace WindowsPhoneSpeedyBlupi
         0
     };
 
+    /** @details Index = right-facing icon ID; value = horizontally mirrored icon ID. */
     const shortcs Tables::table_mirror[335] =
     {
         4, 3, 2, 1, 0, 11, 12, 13, 14, 15,
@@ -338,12 +448,24 @@ namespace WindowsPhoneSpeedyBlupi
         330, 331, 332, 333, 334
     };
 
+    /** @details Index = phase % 4; value = pixels moved per tick during walking. */
     const shortcs Tables::table_vitesse_march[4] = {2, 4, 6, 8};
 
+    /** @details Index = phase % 7; value = pixels moved per tick during swimming. */
     const shortcs Tables::table_vitesse_nage[7] = {2, 1, 5, 10, 8, 6, 4};
 
+    /** @details Index = phase % 6; value = pixels moved per tick while surfing.
+     *           Values 0 at both ends produce a momentary pause at stroke extremes. */
     const shortcs Tables::table_vitesse_surf[6] = {0, 2, 5, 8, 3, 0};
 
+    /**
+     * @details Flat two-dimensional lookup shaped as [tile_type_group][neighbour_mask].
+     * Each group occupies a contiguous block within the 7056-entry array.
+     * The index into the group is computed from the 8-neighbour bitmask of the
+     * current tile.  The returned value is the replacement tile icon ID.
+     * Values of 0 mean "use the base tile unchanged"; values of 1 mean "apply
+     * the alternative corner tile".  Non-zero/one values are explicit icon IDs.
+     */
     const shortcs Tables::table_decor_quart[7056] =
     {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -1054,10 +1176,19 @@ namespace WindowsPhoneSpeedyBlupi
         1, 0, 0, 1, 1, 0
     };
 
+    // ------------------------------------------------------------------
+    // Bulldozer NPC animation tables
+    // Each _left/_right table: index = phase % length; value = icon ID.
+    // Each _turn2* table: played linearly once per direction change.
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for bulldozer moving left; index = phase % 8. */
     const shortcs Tables::table_bulldozer_left[8] = {66, 66, 67, 67, 66, 66, 65, 65};
 
+    /** @details icon IDs for bulldozer moving right; index = phase % 8. */
     const shortcs Tables::table_bulldozer_right[8] = {58, 58, 57, 57, 58, 58, 59, 59};
 
+    /** @details 22-frame one-shot turn transition from right to left. */
     const shortcs Tables::table_bulldozer_turn2l[22] =
     {
         58, 59, 59, 59, 60, 60, 60, 61, 61, 62,
@@ -1065,6 +1196,7 @@ namespace WindowsPhoneSpeedyBlupi
         66, 66
     };
 
+    /** @details 22-frame one-shot turn transition from left to right. */
     const shortcs Tables::table_bulldozer_turn2r[22] =
     {
         66, 65, 65, 65, 64, 64, 64, 63, 63, 62,
@@ -1072,10 +1204,18 @@ namespace WindowsPhoneSpeedyBlupi
         58, 58
     };
 
+    // ------------------------------------------------------------------
+    // Fish (poisson) NPC animation tables
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for fish swimming left; index = phase % 8. */
     const shortcs Tables::table_poisson_left[8] = {82, 82, 81, 81, 82, 82, 83, 83};
 
+    /** @details icon IDs for fish swimming right; index = phase % 8. */
     const shortcs Tables::table_poisson_right[8] = {79, 79, 78, 78, 79, 79, 80, 80};
 
+    /** @details 48-frame one-shot turn transition from right to left.
+     *           The fish performs two full wobble cycles before reversing. */
     const shortcs Tables::table_poisson_turn2l[48] =
     {
         79, 79, 80, 80, 84, 84, 85, 85, 86, 86,
@@ -1085,6 +1225,7 @@ namespace WindowsPhoneSpeedyBlupi
         86, 86, 87, 87, 88, 88, 83, 83
     };
 
+    /** @details 48-frame one-shot turn transition from left to right. */
     const shortcs Tables::table_poisson_turn2r[48] =
     {
         82, 82, 83, 83, 88, 88, 87, 87, 86, 86,
@@ -1094,26 +1235,57 @@ namespace WindowsPhoneSpeedyBlupi
         86, 86, 85, 85, 84, 84, 79, 79
     };
 
+    // ------------------------------------------------------------------
+    // Bird (oiseau) NPC animation tables
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for bird flying left; index = phase % 8. */
     const shortcs Tables::table_oiseau_left[8] = {98, 99, 100, 101, 102, 103, 104, 105};
 
+    /** @details icon IDs for bird flying right; index = phase % 8. */
     const shortcs Tables::table_oiseau_right[8] = {90, 91, 92, 93, 94, 95, 96, 97};
 
+    /** @details 10-frame one-shot banking-left transition; last two frames hold
+     *           the settled left-flying pose (icon 105) for a smooth blend. */
     const shortcs Tables::table_oiseau_turn2l[10] = {106, 107, 108, 109, 110, 111, 112, 113, 105, 105};
 
+    /** @details 10-frame one-shot banking-right transition; last two frames hold
+     *           the settled right-flying pose (icon 97). */
     const shortcs Tables::table_oiseau_turn2r[10] = {114, 115, 116, 117, 118, 119, 120, 121, 97, 97};
 
+    // ------------------------------------------------------------------
+    // Wasp (guepe) NPC animation tables
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for wasp flying left; index = phase % 6. */
     const shortcs Tables::table_guepe_left[6] = {195, 196, 197, 198, 197, 196};
 
+    /** @details icon IDs for wasp flying right; index = phase % 6. */
     const shortcs Tables::table_guepe_right[6] = {199, 200, 201, 202, 201, 200};
 
+    /** @details 5-frame one-shot turn from right to left (descending icon order). */
     const shortcs Tables::table_guepe_turn2l[5] = {207, 206, 205, 204, 203};
 
+    /** @details 5-frame one-shot turn from left to right (ascending icon order). */
     const shortcs Tables::table_guepe_turn2r[5] = {203, 204, 205, 206, 207};
 
+    // ------------------------------------------------------------------
+    // Creature NPC animation tables
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for creature moving left; index = phase % 8.
+     *           Left and right use the same icons — direction is implied by context. */
     const shortcs Tables::table_creature_left[8] = {247, 248, 249, 250, 251, 250, 249, 248};
 
+    /** @details icon IDs for creature moving right; index = phase % 8.
+     *           Identical to table_creature_left. */
     const shortcs Tables::table_creature_right[8] = {247, 248, 249, 250, 251, 250, 249, 248};
 
+    /**
+     * @details 152-frame one-shot turn animation.  The sequence pulses through a
+     * stretch/contract cycle (icons 242–246) multiple times before settling,
+     * producing the creature's distinctive ponderous turning motion.
+     */
     const shortcs Tables::table_creature_turn2[152] =
     {
         244, 244, 244, 244, 244, 244, 244, 244, 243, 243,
@@ -1134,10 +1306,17 @@ namespace WindowsPhoneSpeedyBlupi
         244, 244
     };
 
+    // ------------------------------------------------------------------
+    // Mini-Blupi helicopter (blupih) NPC animation tables
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for helicopter Blupi flying left; index = phase % 8. */
     const shortcs Tables::table_blupih_left[8] = {66, 67, 68, 67, 66, 69, 70, 69};
 
+    /** @details icon IDs for helicopter Blupi flying right; index = phase % 8. */
     const shortcs Tables::table_blupih_right[8] = {61, 62, 63, 62, 61, 64, 65, 64};
 
+    /** @details 26-frame one-shot banked left turn including rotor-blur transition. */
     const shortcs Tables::table_blupih_turn2l[26] =
     {
         71, 71, 72, 72, 73, 73, 74, 74, 75, 75,
@@ -1145,6 +1324,7 @@ namespace WindowsPhoneSpeedyBlupi
         273, 273, 273, 273, 275, 275
     };
 
+    /** @details 26-frame one-shot banked right turn including rotor-blur transition. */
     const shortcs Tables::table_blupih_turn2r[26] =
     {
         75, 75, 74, 74, 73, 73, 72, 72, 71, 71,
@@ -1152,10 +1332,18 @@ namespace WindowsPhoneSpeedyBlupi
         273, 273, 273, 273, 274, 274
     };
 
+    // ------------------------------------------------------------------
+    // Mini-Blupi tank (blupit) NPC animation tables
+    // ------------------------------------------------------------------
+
+    /** @details icon IDs for tank Blupi moving left; index = phase % 8. */
     const shortcs Tables::table_blupit_left[8] = {249, 249, 250, 250, 249, 249, 248, 248};
 
+    /** @details icon IDs for tank Blupi moving right; index = phase % 8. */
     const shortcs Tables::table_blupit_right[8] = {238, 238, 237, 237, 238, 238, 239, 239};
 
+    /** @details 24-frame one-shot turn from right to left including a 180-degree
+     *           spin-through sequence (icons 238–252). */
     const shortcs Tables::table_blupit_turn2l[24] =
     {
         238, 238, 251, 251, 238, 238, 238, 239, 240, 241,
@@ -1163,6 +1351,7 @@ namespace WindowsPhoneSpeedyBlupi
         252, 252, 249, 249
     };
 
+    /** @details 24-frame one-shot turn from left to right; reverse of table_blupit_turn2l. */
     const shortcs Tables::table_blupit_turn2r[24] =
     {
         249, 249, 252, 252, 249, 249, 249, 248, 247, 246,
@@ -1170,6 +1359,12 @@ namespace WindowsPhoneSpeedyBlupi
         251, 251, 238, 238
     };
 
+    // ------------------------------------------------------------------
+    // Explosion animation tables
+    // Each table is a flat icon-ID sequence; -1 = blank frame (no sprite).
+    // ------------------------------------------------------------------
+
+    /** @details Channel 0: primary blast sequence, 39 frames, no blank entries. */
     const shortcs Tables::table_explo1[table_explo1Length] =
     {
         0, 0, 1, 1, 2, 2, 3, 3, 4, 3,
@@ -1178,28 +1373,37 @@ namespace WindowsPhoneSpeedyBlupi
         7, 8, 8, 9, 9, 10, 10, 11, 11
     };
 
+    /** @details Channel 1: scattered debris, 20 frames; -1 entries suppress sprite on that tick. */
     const shortcs Tables::table_explo2[20] =
     {
         12, -1, 13, 14, -1, 15, 13, -1, 14, 15,
         12, -1, 13, 15, 14, 14, -1, 14, 15, 13
     };
 
+    /** @details Channel 2: smoke puff, 20 frames; no blank entries. */
     const shortcs Tables::table_explo3[20] =
     {
         32, 32, 34, 34, 32, 32, 34, 34, 32, 32,
         34, 34, 32, 32, 35, 35, 32, 32, 35, 35
     };
 
+    /** @details Channel 3: short impact flash, 9 frames; no blank entries. */
     const shortcs Tables::table_explo4[9] = {12, 13, 14, 15, 7, 8, 9, 10, 11};
 
+    /** @details Channel 4: strobing fragments, 12 frames; every odd entry is -1
+     *           producing an alternating visible/invisible strobe effect. */
     const shortcs Tables::table_explo5[12] =
     {
         54, -1, 55, -1, 56, -1, 57, -1, 58, -1,
         59, -1
     };
 
+    /** @details Channel 5: dense burst, 6 frames; no blank entries. */
     const shortcs Tables::table_explo6[6] = {54, 55, 56, 57, 58, 59};
 
+    /** @details Channel 6: large multi-particle scatter, 128 frames.
+     *           -1 entries suppress individual particles for a staggered look;
+     *           the trailing all-(-1) run fades the effect out gracefully. */
     const shortcs Tables::table_explo7[128] =
     {
         60, 61, -1, 63, 64, 65, 62, 64, 62, 60,
@@ -1217,22 +1421,39 @@ namespace WindowsPhoneSpeedyBlupi
         -1, 61, -1, -1, -1, 60, -1, -1
     };
 
+    /** @details Channel 7: dying-ember tail, 5 frames; no blank entries. */
     const shortcs Tables::table_explo8[5] = {7, 8, 9, 10, 11};
 
+    // ------------------------------------------------------------------
+    // Splash (sploutch) animation tables
+    // All three share icon IDs 90–99; the -1 prefix adds a delay.
+    // ------------------------------------------------------------------
+
+    /** @details 10 frames; 0-frame delay — splash begins immediately. */
     const shortcs Tables::table_sploutch1[10] = {90, 91, 92, 93, 94, 95, 96, 97, 98, 99};
 
+    /** @details 13 frames; 3-frame delay before splash icons begin (entries 0–2 are -1). */
     const shortcs Tables::table_sploutch2[13] =
     {
         -1, -1, -1, 90, 91, 92, 93, 94, 95, 96,
         97, 98, 99
     };
 
+    /** @details 18 frames; 8-frame delay before splash icons begin (entries 0–7 are -1),
+     *           used for objects falling from a greater height. */
     const shortcs Tables::table_sploutch3[18] =
     {
         -1, -1, -1, -1, -1, -1, -1, -1, 90, 91,
         92, 93, 94, 95, 96, 97, 98, 99
     };
 
+    /**
+     * @details 45-frame tentacle animation.  Layout:
+     *   Frames 0–6:  tentacle rises (icons descending 86→83→86).
+     *   Frame 7:     -1 blank — momentary disappearance at peak.
+     *   Frames 8–43: tentacle descends through full extension (icons 86→70→70...).
+     *   Frame 44:    -1 blank — fully retracted / hidden.
+     */
     const shortcs Tables::table_tentacule[45] =
     {
         86, 85, 84, 83, 84, 85, 86, -1, 86, 85,
@@ -1242,6 +1463,13 @@ namespace WindowsPhoneSpeedyBlupi
         83, 84, 85, 86, -1
     };
 
+    /**
+     * @details 157-frame bridge animation.  Layout:
+     *   Frames 0–15:   bridge panels extend (icons 365–372 ascending pairs).
+     *   Frames 16–139: hold — all -1; bridge is fully extended and passable.
+     *   Frames 140–156: bridge retracts (icons 372–364 descending pairs + icon 364).
+     * Frame 156 (icon 364) is the fully folded / stowed state.
+     */
     const shortcs Tables::table_bridge[157] =
     {
         365, 366, 365, 366, 365, 366, 365, 366, 365, 366,
@@ -1262,24 +1490,43 @@ namespace WindowsPhoneSpeedyBlupi
         367, 367, 366, 366, 365, 365, 364
     };
 
+    /** @details 8-frame looping smog/pollution cloud; icons 179–186. */
     const shortcs Tables::table_pollution[8] = {179, 180, 181, 182, 183, 184, 185, 186};
 
+    /** @details 8-frame one-shot inversion-field startup; icons 179–186 ascending.
+     *           Identical data to table_pollution — context of use differs. */
     const shortcs Tables::table_invertstart[8] = {179, 180, 181, 182, 183, 184, 185, 186};
 
+    /** @details 8-frame one-shot inversion-field shutdown; icons 186–179 descending
+     *           (exact reverse of table_invertstart). */
     const shortcs Tables::table_invertstop[8] = {186, 185, 184, 183, 182, 181, 180, 179};
 
+    /** @details 8-frame looping inversion-panel idle animation; icons 187–194. */
     const shortcs Tables::table_invertpanel[8] = {187, 188, 189, 190, 191, 192, 193, 194};
 
+    /** @details 7-frame water-entry ripple; oscillates 99→102→99. */
     const shortcs Tables::table_plouf[7] = {99, 100, 101, 102, 101, 100, 99};
 
+    /** @details 3-frame tiny droplet effect; icon 244 is the ambient background,
+     *           icon 99 is the visible droplet on frame 1. */
     const shortcs Tables::table_tiplouf[3] = {244, 99, 244};
 
+    /** @details 20-frame looping underwater bubble animation.
+     *           Uses icons 103–106 in pseudo-random order to vary bubble positions. */
     const shortcs Tables::table_blup[20] =
     {
         103, 104, 105, 106, 104, 103, 106, 105, 103, 104,
         103, 105, 106, 103, 105, 106, 103, 104, 106, 105
     };
 
+    /**
+     * @details 26-frame enemy-follow indicator animation.  Layout:
+     *   Frames 0–2:   approach build-up (icon 256).
+     *   Frames 3–4:   brief flicker (icon 257).
+     *   Frames 5–11:  approach intensifies (icons 258–264).
+     *   Frames 12–14: hold (icon 264, 265).
+     *   Frames 15–25: mirror retreat back to icon 257.
+     */
     const shortcs Tables::table_follow1[26] =
     {
         256, 256, 256, 257, 257, 258, 259, 260, 261, 262,
@@ -1287,32 +1534,47 @@ namespace WindowsPhoneSpeedyBlupi
         261, 260, 259, 258, 257, 257
     };
 
+    /** @details 5-frame abbreviated follow indicator; every other icon from the
+     *           full table_follow1 sequence (256, 258, 260, 262, 264). */
     const shortcs Tables::table_follow2[5] = {256, 258, 260, 262, 264};
 
+    // ------------------------------------------------------------------
+    // Key spin animation tables — all 12-frame looping, index = phase % 12.
+    // ------------------------------------------------------------------
+
+    /** @details Generic key; icons 122–128 bouncing back and forth. */
     const shortcs Tables::table_cle[12] =
     {
         122, 123, 124, 125, 126, 127, 128, 127, 126, 125,
         124, 123
     };
 
+    /** @details Red key; icons 209–215 bouncing back and forth. */
     const shortcs Tables::table_cle1[12] =
     {
         209, 210, 211, 212, 213, 214, 215, 214, 213, 212,
         211, 210
     };
 
+    /** @details Green key; icons 216–222 bouncing back and forth. */
     const shortcs Tables::table_cle2[12] =
     {
         220, 221, 222, 221, 220, 219, 218, 217, 216, 217,
         218, 219
     };
 
+    /** @details Blue key; icons 223–229 bouncing back and forth. */
     const shortcs Tables::table_cle3[12] =
     {
         229, 228, 227, 226, 225, 224, 223, 224, 225, 226,
         227, 228
     };
 
+    /**
+     * @details 100-frame fuse-flicker icon sequence.  Uses icons 252–255 in a
+     * baked pseudo-random order to simulate an unpredictable sparking fuse without
+     * runtime RNG.  Indexed by @c (countdown_tick % 100).
+     */
     const shortcs Tables::table_dynamitef[100] =
     {
         253, 252, 254, 252, 252, 255, 252, 254, 253, 252,
@@ -1327,6 +1589,14 @@ namespace WindowsPhoneSpeedyBlupi
         255, 253, 253, 254, 255, 254, 252, 253, 254, 255
     };
 
+    /**
+     * @details 34-frame skateboard wheel-spin sequence.  Layout:
+     *   Frames 0–3:   slow spin (icon 129 held).
+     *   Frames 4–6:   ease-in (icons 130).
+     *   Frames 7–14:  acceleration (icons 131–135 ascending).
+     *   Frames 15–18: peak speed (icon 135 held).
+     *   Frames 19–33: ease-out mirroring the ramp-up in reverse.
+     */
     const shortcs Tables::table_skate[34] =
     {
         129, 129, 129, 129, 130, 130, 130, 131, 131, 132,
@@ -1335,6 +1605,8 @@ namespace WindowsPhoneSpeedyBlupi
         130, 130, 130, 130
     };
 
+    /** @details 25-frame bird-lime glue splash; icons 168–171 in a looping
+     *           pattern.  Played once on deployment; index = tick % 25 for idle loop. */
     const shortcs Tables::table_glu[25] =
     {
         168, 168, 169, 169, 170, 170, 171, 171, 170, 170,
@@ -1342,6 +1614,12 @@ namespace WindowsPhoneSpeedyBlupi
         169, 170, 170, 169, 168
     };
 
+    /**
+     * @details 70-frame transparency / clear-mode effect.  Layout:
+     *   Frames 0–29:  slow shimmer phase (icons 40–41 repeating with pauses).
+     *   Frames 30–69: accelerating blur using icons 42–47.
+     * Indexed by @c (tick % 70) for continuous cycling.
+     */
     const shortcs Tables::table_clear[70] =
     {
         40, 40, 40, 40, 41, 41, 41, 41, 40, 40,
@@ -1353,6 +1631,12 @@ namespace WindowsPhoneSpeedyBlupi
         47, 47, 46, 46, 47, 47, 46, 46, 47, 47
     };
 
+    /**
+     * @details 90-frame electric-shock animation.  Layout:
+     *   Frames 0–29:  rapid spark strobe — icons 266 and 267 alternating every tick.
+     *   Frames 30–89: after-shock body vibration — same icon set as table_clear
+     *                 (icons 40–47), representing Blupi shaking from the shock.
+     */
     const shortcs Tables::table_electro[90] =
     {
         266, 267, 266, 267, 266, 267, 266, 267, 266, 267,
@@ -1366,10 +1650,21 @@ namespace WindowsPhoneSpeedyBlupi
         46, 46, 47, 47, 46, 46, 47, 47, 46, 46
     };
 
+    /** @details 6-frame forward caterpillar crawl; icons 311–316 ascending, index = phase % 6. */
     const shortcs Tables::table_chenille[6] = {311, 312, 313, 314, 315, 316};
 
+    /** @details 6-frame reverse caterpillar crawl; icons 316–311 descending, index = phase % 6. */
     const shortcs Tables::table_chenillei[6] = {316, 315, 314, 313, 312, 311};
 
+    /**
+     * @details 144-entry tile-adaptation replacement table.
+     * Logically grouped as 9 rows of 16 entries (one row per tile-type group).
+     * Within each row, the 16 entries correspond to the 16 possible combinations
+     * of the 4-bit cardinal-neighbour bitmask (N, E, S, W).
+     * The returned icon ID replaces the current tile to produce smooth corner
+     * blending.  Groups correspond to different decor material types (stone,
+     * earth, ice, lava, etc.) as defined by the original C# Decor code.
+     */
     const shortcs Tables::table_adapt_decor[144] =
     {
         153, 147, 148, 146, 40, 151, 150, 144, 39, 152,
@@ -1389,6 +1684,14 @@ namespace WindowsPhoneSpeedyBlupi
         251, 250, 256, 250
     };
 
+    /**
+     * @details 32-entry cheese-tile adaptation table.
+     * Two groups of 16: first group (indices 0–15) for the base cheese type,
+     * second group (indices 16–31) for the variant cheese type.
+     * Index 0 and index 16 are -1, meaning "no replacement" for the fully
+     * surrounded case (all four cardinal neighbours present).
+     * All other entries are icon IDs for the appropriate corner/edge variant.
+     */
     const shortcs Tables::table_adapt_fromage[32] =
     {
         -1, 265, 264, 268, 267, 273, 271, 275, 266, 272,
@@ -1397,30 +1700,57 @@ namespace WindowsPhoneSpeedyBlupi
         297, 299
     };
 
+    /**
+     * @details 16-frame shield orb rotation; split into two 8-icon halves:
+     *   Indices 0–7:  the orb on the front half of the orbit (icons 144–151).
+     *   Indices 8–15: the orb on the back half of the orbit (icons 266–273).
+     * Indexed by @c (tick % 16).
+     */
     const shortcs Tables::table_shield[16] =
     {
         144, 145, 146, 147, 148, 149, 150, 151, 266, 267,
         268, 269, 270, 271, 272, 273
     };
 
+    /** @details Same icon-ID data as table_shield; drawn as an overlay on
+     *           Blupi's sprite rather than as a separate orb object. */
     const shortcs Tables::table_shield_blupi[16] =
     {
         144, 145, 146, 147, 148, 149, 150, 151, 266, 267,
         268, 269, 270, 271, 272, 273
     };
 
+    /** @details 8-frame power-charge spinning energy ball; icons 136–143,
+     *           indexed by @c (tick % 8). */
     const shortcs Tables::table_power[8] = {136, 137, 138, 139, 140, 141, 142, 143};
 
+    /**
+     * @details 20-frame inversion colour-wash animation.  Layout:
+     *   Frames 0–2:   hold on neutral (icon 187).
+     *   Frames 3–9:   ramp up wash intensity (icons 188–194).
+     *   Frames 10–12: hold on neutral again (icon 187).
+     *   Frames 13–19: ramp back down (icons 194→188).
+     */
     const shortcs Tables::table_invert[20] =
     {
         187, 187, 187, 188, 189, 190, 191, 192, 193, 194,
         187, 187, 187, 194, 193, 192, 191, 190, 189, 188
     };
 
+    /** @details 6-frame energy-charge bar fill; icons 238–243, one per charge level.
+     *           Indexed directly by the current charge level (0–5). */
     const shortcs Tables::table_charge[6] = {238, 239, 240, 241, 242, 243};
 
+    /** @details 5-frame magic-loop idle shimmer; icons 152–156, looping. */
     const shortcs Tables::table_magicloop[5] = {152, 153, 154, 155, 156};
 
+    /**
+     * @details 24-frame magic-loop full travel animation.  Layout:
+     *   Frames 0–9:   loop departs Blupi (icons 152–156 twice).
+     *   Frames 10–13: mid-flight (icons 157–160).
+     *   Frames 14–17: mid-flight return (icons 157–160).
+     *   Frames 18–23: loop strikes target and dissipates (icons 161–166).
+     */
     const shortcs Tables::table_magictrack[24] =
     {
         152, 153, 154, 155, 156, 152, 153, 154, 155, 156,
@@ -1428,34 +1758,80 @@ namespace WindowsPhoneSpeedyBlupi
         163, 164, 165, 166
     };
 
+    /** @details 5-frame lollipop-shield idle shimmer; icons 274–278, looping. */
     const shortcs Tables::table_shieldloop[5] = {274, 275, 276, 277, 278};
 
+    /**
+     * @details 20-frame lollipop-shield full travel animation.  Layout:
+     *   Frames 0–9:   shield departs (icons 274–278 twice).
+     *   Frames 10–19: shield expands and wraps (icons 279–288).
+     */
     const shortcs Tables::table_shieldtrack[20] =
     {
         274, 275, 276, 277, 278, 274, 275, 276, 277, 278,
         279, 280, 281, 282, 283, 284, 285, 286, 287, 288
     };
 
+    /** @details 5-frame drink visual effect; same icon set as table_shieldloop
+     *           (icons 274–278). */
     const shortcs Tables::table_drinkeffect[5] = {274, 275, 276, 277, 278};
 
+    /**
+     * @details Three byte offsets into table_blupi for the drink action's icon
+     * sub-sequences:
+     *   [0] = 0  — start of the normal drink phase.
+     *   [1] = 7  — start of the mid drink phase.
+     *   [2] = 22 — start of the advanced drink phase.
+     */
     const shortcs Tables::table_drinkoffset[table_drinkoffsetLength] = {0, 7, 22};
 
+    /**
+     * @details 11-frame treasure shimmer animation; oscillates from icon 166
+     * down to icon 161 and back.  Indexed by @c (tick % 11).
+     */
     const shortcs Tables::table_tresortrack[11] =
     {
         166, 165, 164, 163, 162, 161, 162, 163, 164, 165,
         166
     };
 
+    // ------------------------------------------------------------------
+    // Decor hazard animation tables
+    // ------------------------------------------------------------------
+
+    /** @details 8-frame looping lava bubble; icons 68–72 oscillate up and back.
+     *           Indexed by @c (tick % 8). */
     const shortcs Tables::table_decor_lave[8] = {68, 69, 70, 71, 72, 71, 70, 69};
 
+    /**
+     * @details 16-frame armed spike-trap cycle.  Uses icons 347, 373, and 374:
+     *   374 = spikes fully up (threatening).
+     *   373 = spikes mid-extension.
+     *   347 = spikes retracted / flat.
+     * The irregular pattern produces an unpredictable-looking bounce.
+     */
     const shortcs Tables::table_decor_piege1[16] =
     {
         374, 374, 373, 347, 373, 374, 374, 374, 373, 347,
         347, 373, 374, 374, 374, 374
     };
 
+    /** @details 4-frame spike-trap reset cycle: extend (374), mid (373), flat (347),
+     *           mid-return (373). */
     const shortcs Tables::table_decor_piege2[4] = {374, 373, 347, 373};
 
+    /**
+     * @details 48-frame dripping water animation.  Encodes multiple drip cycles;
+     * -1 entries represent blank frames between drops.  Layout (approx.):
+     *   Frames 0–2:   drip 1 forms (icons 409–410).
+     *   Frames 3–8:   gap (-1) — water reforms.
+     *   Frames 9–13:  drip 2 extends (icons 408–410).
+     *   Frames 14–23: longer gap.
+     *   Frames 24–36: drip 3 full descent (icons 404–410).
+     *   Frames 37–40: gap.
+     *   Frames 41–43: drip 4 (icons 409–410).
+     *   Frames 44–47: gap.
+     */
     const shortcs Tables::table_decor_goutte[48] =
     {
         410, 409, 410, -1, -1, -1, -1, -1, -1, 410,
@@ -1465,45 +1841,107 @@ namespace WindowsPhoneSpeedyBlupi
         -1, 410, 409, 410, -1, -1, -1, -1
     };
 
+    /**
+     * @details 10-frame crusher descent animation.
+     *   Indices 0–1:   crusher fully raised (icon 317, held for 2 ticks).
+     *   Indices 2–6:   crusher descends (icons 318→322 ascending).
+     *   Indices 7–9:   crusher fully lowered / crushing (icon 323, held for 3 ticks).
+     * After frame 9 the engine typically reverses or resets via separate logic.
+     */
     const shortcs Tables::table_decor_ecraseur[10] = {317, 317, 318, 319, 320, 321, 322, 323, 323, 323};
 
+    /** @details 6-frame saw-blade rotation; icons 378–383, looping.
+     *           Index = @c (tick % 6). */
     const shortcs Tables::table_decor_scie[6] = {378, 379, 380, 381, 382, 383};
 
+    /**
+     * @details 20-frame temperature-control animation.  Layout:
+     *   Frames 0–9:   ramp down from icon 328 to 324 then back to 329.
+     *   Frames 10–15: ramp up again (icons 325→329).
+     *   Frames 16–17: hold icon 328.
+     *   Frames 18–19: -1 (blank) — brief pause before the next cycle.
+     */
     const shortcs Tables::table_decor_temp[20] =
     {
         328, 328, 327, 327, 326, 326, 325, 325, 324, 324,
         325, 325, 326, 326, 327, 329, 328, 328, -1, -1
     };
 
+    /** @details 6-frame primary water ripple; icons 92–95 oscillate and return.
+     *           Indexed by @c (tick % 6). */
     const shortcs Tables::table_decor_eau1[6] = {92, 93, 94, 95, 94, 93};
 
+    /** @details 6-frame secondary water ripple; icons 91, 96–98 oscillate and return.
+     *           Indexed by @c (tick % 6). */
     const shortcs Tables::table_decor_eau2[6] = {91, 96, 97, 98, 97, 96};
 
+    // ------------------------------------------------------------------
+    // Fan blade and wind-vent animation tables
+    // All looping; index = tick % length.
+    // ------------------------------------------------------------------
+
+    /** @details 3-frame left-blowing fan blade; icons 126–128. */
     const shortcs Tables::table_decor_ventillog[3] = {126, 127, 128};
 
+    /** @details 3-frame right-blowing fan blade; icons 129–131. */
     const shortcs Tables::table_decor_ventillod[3] = {129, 130, 131};
 
+    /** @details 3-frame upward-blowing fan blade; icons 132–134. */
     const shortcs Tables::table_decor_ventilloh[3] = {132, 133, 134};
 
+    /** @details 3-frame downward-blowing fan blade; icons 135–137. */
     const shortcs Tables::table_decor_ventillob[3] = {135, 136, 137};
 
+    /** @details 4-frame left wind-vent particle stream; icons 110–113. */
     const shortcs Tables::table_decor_ventg[4] = {110, 111, 112, 113};
 
+    /** @details 4-frame right wind-vent particle stream; icons 114–117. */
     const shortcs Tables::table_decor_ventd[4] = {114, 115, 116, 117};
 
+    /** @details 4-frame upward wind-vent particle stream; icons 118–121. */
     const shortcs Tables::table_decor_venth[4] = {118, 119, 120, 121};
 
+    /** @details 4-frame downward wind-vent particle stream; icons 122–125. */
     const shortcs Tables::table_decor_ventb[4] = {122, 123, 124, 125};
 
+    /**
+     * @details 11-frame nautical mine spin; icons 203–208 ascending then descending,
+     * ending on the starting frame (icon 203).  Indexed by @c (tick % 11).
+     */
     const shortcs Tables::table_marine[11] =
     {
         203, 204, 205, 206, 207, 208, 207, 206, 205, 204,
         203
     };
 
+    /**
+     * @details 8-frame spring / coil animation.  Layout:
+     *   Frames 0–4:   spring compresses (icons 209→213 ascending).
+     *   Frames 5–7:   spring releases (icons 212→210 descending).
+     * The spring launch itself is triggered by gameplay logic, not the table end.
+     */
     const shortcs Tables::table_ressort[8] = {209, 210, 211, 212, 213, 212, 211, 210};
 
 
+    // ------------------------------------------------------------------
+    // Training / tutorial level tables (mutable)
+    //
+    // Record format (6 elements each):
+    //   [0] start tile X  (column index, inclusive)
+    //   [1] end tile X    (column index, inclusive; same as [0] for single column)
+    //   [2] start tile Y  (row index, 0 = top)
+    //   [3] end tile Y    (row index; 50 or 100 = full height sentinel)
+    //   [4] action flag   (-1 = no restriction; -2..-5 = special placement codes)
+    //   [5] text-resource ID  (patched from 0/placeholder to TX_TRAININGxxx by Init())
+    //
+    // Terminator: a record whose first element is -1.
+    // ------------------------------------------------------------------
+
+    /**
+     * @details Tutorial level 1 — 22 hint records + terminator.
+     * Text-resource IDs at slots [5], [11], ..., [131] are set by Tables::Init()
+     * to TX_TRAINING101 through TX_TRAINING122 respectively.
+     */
     shortcs Tables::table_training1[133] =
     {
         1, 3, 0, 50, -1, 0, 4, 4, 0, 50,
@@ -1521,6 +1959,11 @@ namespace WindowsPhoneSpeedyBlupi
         80, 85, 0, 50, 1, 0, 87, 93, 0, 50,
         -1, 0, -1
     };
+    /**
+     * @details Tutorial level 2 — 5 hint records + terminator.
+     * Text-resource IDs at slots [5], [11], [17], [23], [29] are set by
+     * Tables::Init() to TX_TRAINING201 through TX_TRAINING205.
+     */
     shortcs Tables::table_training2[31] =
     {
         9, 15, 0, 100, -1, 0, 16, 16, 0, 100,
@@ -1529,6 +1972,12 @@ namespace WindowsPhoneSpeedyBlupi
         -1
     };
 
+    /**
+     * @details Tutorial level 3 — 11 hint records + terminator.
+     * Uses action codes -2 and -3 in field [4] for placement variants.
+     * Text-resource IDs at slots [5], [11], ..., [65] are set by Tables::Init()
+     * to TX_TRAINING301 through TX_TRAINING311.
+     */
     shortcs Tables::table_training3[67] =
     {
         16, 24, 36, 40, -2, 0, 16, 24, 36, 40,
@@ -1540,6 +1989,12 @@ namespace WindowsPhoneSpeedyBlupi
         77, 81, 20, 22, -3, 0, -1
     };
 
+    /**
+     * @details Tutorial level 4 — 5 hint records + terminator.
+     * Uses action codes -4 and -5 in field [4] for vehicle-specific placement.
+     * Text-resource IDs at slots [5], [11], [17], [23], [29] are set by
+     * Tables::Init() to TX_TRAINING401 through TX_TRAINING405.
+     */
     shortcs Tables::table_training4[31] =
     {
         7, 14, 0, 100, -4, 0, 7, 19, 0, 100,
@@ -1548,6 +2003,27 @@ namespace WindowsPhoneSpeedyBlupi
         -1
     };
 
+    /**
+     * @details 519-entry scripted tile-motion table.  The array concatenates
+     * multiple independent motion scripts.  Each script begins with a 2-value
+     * header followed by N (dx, dy) pairs:
+     *
+     *   Header [0]: script ID (used as a lookup key by Decor::RunAction()).
+     *   Header [1]: N — total number of (dx, dy) displacement pairs that follow.
+     *   Data [2..2+2N-1]: alternating dx, dy values, one pair per game tick.
+     *
+     * After all data pairs the next script's header immediately follows.
+     * The sequence ends when a -1 appears in the dx position of what would be
+     * the next header.
+     *
+     * Known scripts embedded in the array:
+     *   Script ID 1 (N=32):  explosion-smoke drift pattern.
+     *   Script ID 2 (N=32):  vertical bounce (alternating ±4, ±3, ±2, ±1).
+     *   Script ID 5 (N=192): pendulum / oscillation (long sinusoidal x-motion,
+     *                         y always 0).
+     *
+     * @note All displacement values are in sub-pixel Decor units, not screen pixels.
+     */
     const shortcs Tables::table_decor_action[519] =
     {
         1, 32, -4, 4, 4, -3, -4, 2, 4, 5,
@@ -1603,6 +2079,19 @@ namespace WindowsPhoneSpeedyBlupi
         -5, 0, -6, 0, -7, 0, -7, 0, -6, 0,
         -5, 0, -4, 0, -2, 0, -1, 0, 0
     };
+    /**
+     * @details 100-entry explosion bounding-box table.  Indexed by explosion
+     * channel number (0–99); the stored value is the half-side-length (in pixels)
+     * of the axis-aligned square bounding box used for sprite clipping and
+     * collision detection during that channel's explosion rendering.
+     *
+     * Observed values and their channel ranges:
+     *   128 — channels 0–65, 87–89:  standard blast / debris.
+     *   64  — channels 60–65, 70–86, 90–99: small fragment / spark.
+     *   144 — channels 66–68:        oversized mega-blast (e.g. TNT crate).
+     *
+     * @note Channel numbers match those used by the Explo and Decor subsystems.
+     */
     const shortcs Tables::table_explo_size[100] =
     {
         128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
@@ -1616,6 +2105,17 @@ namespace WindowsPhoneSpeedyBlupi
         64, 64, 64, 64, 64, 64, 64, 128, 128, 128,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64
     };
+    /**
+     * @details 30-entry end-of-game world descriptor.  The array is a sequence
+     * of 15 (tile_icon, tile_index) pairs:
+     *
+     *   Entry [0,1]   = (0, 0) — anchor / origin marker for the terminal world.
+     *   Entries [2..29] = 14 pairs of (icon_id, position_index) that place
+     *                     trophy and portal tiles on the victory screen.
+     *
+     * The icon IDs (158–173, 309–310, 411–420) correspond to the decorative
+     * tiles used exclusively in the end-of-game terminal level.
+     */
     const shortcs Tables::world_terminal[30] =
     {
         0, 0, 158, 166, 159, 167, 160, 168, 161, 169,
@@ -1623,15 +2123,38 @@ namespace WindowsPhoneSpeedyBlupi
         411, 416, 412, 417, 413, 418, 414, 419, 415, 420
     };
 
+    /**
+     * @brief Initialises all mutable data tables.
+     *
+     * @details Protected by a static flag so it is safe to call multiple times;
+     * only the first call performs any work.
+     *
+     * The function patches localised text-resource IDs into the [5] slot of
+     * every 6-element hint record in table_training1..4.  The static default
+     * value of those slots is 0 (a placeholder); after Init() they hold
+     * TX_TRAININGxxx enum values from MyResource, which map to the correct
+     * localised strings at runtime.
+     *
+     * Patch layout (example for table_training1, 22 records):
+     *   table_training1[5]   = TX_TRAINING101
+     *   table_training1[11]  = TX_TRAINING102
+     *   ...
+     *   table_training1[131] = TX_TRAINING122
+     *
+     * @pre MyResource enumeration values are valid (set up before Init() call).
+     * @post table_training1..4 contain correct text-resource IDs at every
+     *       record offset +5.  The static @c initialized flag is set to true.
+     */
     void Tables::Init()
     {
-        static bool initialized = false;
+        static bool initialized = false; ///< Guards against repeated initialisation.
         if (initialized)
         {
             return;
         }
         initialized = true;
 
+        // Patch tutorial level 1 hint text-resource IDs (22 records).
         Tables::table_training1[5] = MyResource::TX_TRAINING101;
         Tables::table_training1[11] = MyResource::TX_TRAINING102;
         Tables::table_training1[17] = MyResource::TX_TRAINING103;
@@ -1655,14 +2178,14 @@ namespace WindowsPhoneSpeedyBlupi
         Tables::table_training1[125] = MyResource::TX_TRAINING121;
         Tables::table_training1[131] = MyResource::TX_TRAINING122;
 
-
+        // Patch tutorial level 2 hint text-resource IDs (5 records).
         Tables::table_training2[5] = MyResource::TX_TRAINING201;
         Tables::table_training2[11] = MyResource::TX_TRAINING202;
         Tables::table_training2[17] = MyResource::TX_TRAINING203;
         Tables::table_training2[23] = MyResource::TX_TRAINING204;
         Tables::table_training2[29] = MyResource::TX_TRAINING205;
 
-
+        // Patch tutorial level 3 hint text-resource IDs (11 records).
         Tables::table_training3[5] = MyResource::TX_TRAINING301;
         Tables::table_training3[11] = MyResource::TX_TRAINING302;
         Tables::table_training3[17] = MyResource::TX_TRAINING303;
@@ -1675,7 +2198,7 @@ namespace WindowsPhoneSpeedyBlupi
         Tables::table_training3[59] = MyResource::TX_TRAINING310;
         Tables::table_training3[65] = MyResource::TX_TRAINING311;
 
-
+        // Patch tutorial level 4 hint text-resource IDs (5 records).
         Tables::table_training4[5] = MyResource::TX_TRAINING401;
         Tables::table_training4[11] = MyResource::TX_TRAINING402;
         Tables::table_training4[17] = MyResource::TX_TRAINING403;
