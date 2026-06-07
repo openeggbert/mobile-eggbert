@@ -19,5 +19,4 @@ android/app/.cxx/RelWithDebInfo
 Content/backgrounds4x/*
 Content/icons4x/*
 build/*
-
-
+.claude/*
