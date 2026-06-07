@@ -119,7 +119,7 @@ namespace WindowsPhoneSpeedyBlupi
          *
          * @param[in] args Exit event arguments provided by the framework.
          */
-        virtual void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) = 0;
+        virtual void OnExiting(System::Object* sender, const System::EventArgs& args) = 0;
 
         /**
          * @brief Advances the game simulation by one frame.

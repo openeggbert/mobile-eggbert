@@ -453,7 +453,7 @@ namespace WindowsPhoneSpeedyBlupi
          * @see Game1()
          * @see OnDeactivated()
          */
-        void OnExiting(Microsoft::Xna::Framework::ExitingEventArgs args) override;
+        void OnExiting(System::Object* sender, const System::EventArgs& args) override;
 
         /**
          * @brief Advances the game state by one logical frame.

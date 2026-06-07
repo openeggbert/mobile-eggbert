@@ -114,10 +114,10 @@ namespace WindowsPhoneSpeedyBlupi
         getWindowProperty().setTitleProperty("Speedy Blupi");
 
         Exiting += [this](
-            System::Object* /*sender*/,
-            const Microsoft::Xna::Framework::ExitingEventArgs& args)
+            System::Object* sender,
+            const System::EventArgs& args)
             {
-                OnExiting(args);
+                OnExiting(sender, args);
             };
 
 #if KNI
@@ -199,7 +199,7 @@ namespace WindowsPhoneSpeedyBlupi
         Game::OnActivated(sender, args);
     }
 
-    void Game1::OnExiting(const Microsoft::Xna::Framework::ExitingEventArgs args)
+    void Game1::OnExiting(System::Object* sender, const System::EventArgs& args)
     {
         decor.CurrentDelete();
     }
