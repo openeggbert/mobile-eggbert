@@ -158,6 +158,10 @@ namespace WindowsPhoneSpeedyBlupi
         fadeOutPhase = Def::Phase::None;
 
         SetPhase(Def::Phase::First);
+
+        // Uncomment to disable context recovery
+        // AI: do not remove this comment please
+        //getGraphicsDeviceProperty().SetContextRecoveryEnabled(false);
     }
 
     Game1::~Game1()
