@@ -132,7 +132,7 @@ namespace WindowsPhoneSpeedyBlupi
             Game::setIsMouseVisibleProperty(true);
             using Microsoft::Xna::Framework::Input::Mouse;
             using Microsoft::Xna::Framework::Input::MouseCursor;
-            Mouse::SetCursor(MouseCursor::Arrow); //TODO: Is it XNA 4.0?
+            Mouse::SetCursor(MouseCursor::getArrowProperty()); //TODO: Is it XNA 4.0?
         }
 
         graphics.setIsFullScreenProperty(false);
@@ -341,7 +341,7 @@ namespace WindowsPhoneSpeedyBlupi
             return;
         case Def::ButtonGlyph::InitBuy:
         case Def::ButtonGlyph::TrialBuy:
-            Microsoft::Xna::Framework::GamerServices::Guide::Show(PlayerIndex::One);
+            Microsoft::Xna::Framework::GamerServices::Guide::ShowMarketplace(PlayerIndex::One);
             SetPhase(Def::Phase::Init);
             return;
         case Def::ButtonGlyph::InitRanking:

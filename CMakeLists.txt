@@ -43,9 +43,10 @@ else()
     option(CNA_BACKEND_BGFX         "Enable bgfx backend in CNA"         OFF)
     option(CNA_BACKEND_VULKAN       "Enable Vulkan backend in CNA"        OFF)
 
-    # If none explicitly set, default to EASYGL
+    # If none explicitly set, default to SDL_RENDERER
     if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN)
-        set(CNA_BACKEND_EASY_GL ON CACHE BOOL "Enable easy-gl backend in CNA" FORCE)
+        set(CNA_BACKEND_SDL_RENDERER ON CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
+        set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)" FORCE)
     endif()
 endif()
 
@@ -110,13 +111,13 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
     endif()
     if(_cna_backend_target)
         target_link_libraries(${_game_target} PRIVATE
-            -Wl,--start-group CNA ${_cna_backend_target} -Wl,--end-group
+            -Wl,--start-group CNA CNA_GamerServices ${_cna_backend_target} -Wl,--end-group
             SDL3::SDL3)
     else()
-        target_link_libraries(${_game_target} PRIVATE CNA SDL3::SDL3)
+        target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL3::SDL3)
     endif()
 else()
-    target_link_libraries(${_game_target} PRIVATE CNA SDL3::SDL3)
+    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL3::SDL3)
 endif()
 
 if(TARGET SDL3::SDL3main)
