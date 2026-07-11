@@ -7,7 +7,7 @@ User comment (YouTube, channel presumably showcasing a Mobile Eggbert build):
 > "Will you be able to fix the high pitched sound effects and missing audio files in a near
 > future update?"
 
-Follow-up from the same commenter (`@Cyberbrickmaniac`):
+Follow-up from the same commenter:
 
 > "I'm talking about the audio that's playing in the video. Unless you purposely sped it up,
 > which may be why it sounds like that."
