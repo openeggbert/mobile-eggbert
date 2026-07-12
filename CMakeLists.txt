@@ -23,35 +23,72 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch Begin/End per frame" OFF)
 
 # Graphics backend selection for CNA.
-# Exactly one of the four options must be ON.
-# Available backends: SDL_RENDERER, EASYGL, BGFX, VULKAN
+# Exactly one backend must be ON.
+# Available desktop backends: SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU
 if(EMSCRIPTEN OR ANDROID)
     # On Emscripten/Android only SDL_RENDERER is supported (no desktop GL).
     set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
     set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "Enable easy-gl backend in CNA"      FORCE)
     set(CNA_BACKEND_BGFX         OFF CACHE BOOL "Enable bgfx backend in CNA"         FORCE)
     set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "Enable Vulkan backend in CNA"        FORCE)
-    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)" FORCE)
+    set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "Enable WebGPU backend in CNA"        FORCE)
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU)" FORCE)
 else()
-    # Desktop: choose one backend. Default is EASYGL.
+    # Desktop: choose one backend. Default is SDL_RENDERER.
     # To switch, pass exactly one backend ON on the cmake command line, e.g.:
     #   cmake -DCNA_BACKEND_VULKAN=ON -DCNA_BACKEND_EASY_GL=OFF ...
     # or use the CNA_GRAPHICS_BACKEND string variable:
     #   cmake -DCNA_GRAPHICS_BACKEND=VULKAN ...
+    # WEBGPU is experimental (see cna_graphics/plan_webgpu.md) and must be selected explicitly.
     option(CNA_BACKEND_SDL_RENDERER "Enable SDL_Renderer backend in CNA" OFF)
     option(CNA_BACKEND_EASY_GL      "Enable easy-gl backend in CNA"      OFF)
     option(CNA_BACKEND_BGFX         "Enable bgfx backend in CNA"         OFF)
     option(CNA_BACKEND_VULKAN       "Enable Vulkan backend in CNA"        OFF)
+    option(CNA_BACKEND_WEBGPU       "Enable WebGPU backend in CNA"        OFF)
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU)")
+
+    if(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
+        set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL")
+        set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_EASY_GL      ON  CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "BGFX")
+        set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_BGFX         ON  CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "VULKAN")
+        set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_VULKAN       ON  CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "WEBGPU")
+        set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_WEBGPU       ON  CACHE BOOL "" FORCE)
+    endif()
 
     # If none explicitly set, default to SDL_RENDERER
-    if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN)
+    if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN AND NOT CNA_BACKEND_WEBGPU)
         set(CNA_BACKEND_SDL_RENDERER ON CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-        set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN)" FORCE)
+        set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU)" FORCE)
     endif()
 endif()
 
-add_subdirectory(../cna CNA)
-include_directories(cna/include CNA)
+set(CNA_GRAPHICS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cna_graphics")
+add_subdirectory("${CNA_GRAPHICS_SOURCE_DIR}" CNA)
+include_directories("${CNA_GRAPHICS_SOURCE_DIR}/include" CNA)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -62,7 +99,7 @@ if(ANDROID)
     set(_game_target main)
     add_library(${_game_target} SHARED ${SOURCES}
             include/WindowsPhoneSpeedyBlupi/def/Direction.hpp
-            ../cna/include/CNA/Misc.hpp)
+            "${CNA_GRAPHICS_SOURCE_DIR}/include/CNA/Misc.hpp")
 else()
     set(_game_target WindowsPhoneSpeedyBlupi)
     add_executable(${_game_target} ${SOURCES})
@@ -108,6 +145,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
         set(_cna_backend_target cna_backend_graphics_bgfx)
     elseif(TARGET cna_backend_graphics_vulkan)
         set(_cna_backend_target cna_backend_graphics_vulkan)
+    elseif(TARGET cna_backend_graphics_webgpu)
+        set(_cna_backend_target cna_backend_graphics_webgpu)
     endif()
     if(_cna_backend_target)
         target_link_libraries(${_game_target} PRIVATE
@@ -168,13 +207,22 @@ else()
                 "$<TARGET_FILE_DIR:${_game_target}>/Content"
                 COMMENT "Copying game content next to executable")
     endif()
-#    if(EXISTS "${MOBILE_EGGBERT_WORLDS_DIR}")
-#        add_custom_command(TARGET ${_game_target} POST_BUILD
-#                COMMAND ${CMAKE_COMMAND} -E copy_directory
-#                "${CMAKE_CURRENT_WORLDS_DIR}"
-#                "$<TARGET_FILE_DIR:${_game_target}>/worlds"
-#                COMMENT "Copying game worlds next to executable")
-#    endif()
+    if(CNA_GRAPHICS_BACKEND STREQUAL "WEBGPU" AND CNA_WEBGPU_RUNTIME_LIBRARY)
+        add_custom_command(TARGET ${_game_target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CNA_WEBGPU_RUNTIME_LIBRARY}" "$<TARGET_FILE_DIR:${_game_target}>"
+                COMMENT "Copying wgpu-native runtime next to game executable")
+        if(UNIX AND NOT APPLE)
+            set_property(TARGET ${_game_target} APPEND PROPERTY BUILD_RPATH "$ORIGIN")
+        endif()
+    endif()
+    if(EXISTS "${MOBILE_EGGBERT_WORLDS_DIR}")
+        add_custom_command(TARGET ${_game_target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${MOBILE_EGGBERT_WORLDS_DIR}"
+                "$<TARGET_FILE_DIR:${_game_target}>/worlds"
+                COMMENT "Copying game worlds next to executable")
+    endif()
 endif() # ANDROID / EMSCRIPTEN / desktop
 
 if(WIN32)
