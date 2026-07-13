@@ -24,7 +24,7 @@ option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch 
 
 # Graphics backend selection for CNA.
 # Exactly one backend must be ON.
-# Available desktop backends: SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU
+# Available desktop backends: SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU, HEADLESS
 if(EMSCRIPTEN OR ANDROID)
     # On Emscripten/Android only SDL_RENDERER is supported (no desktop GL).
     set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
@@ -32,7 +32,8 @@ if(EMSCRIPTEN OR ANDROID)
     set(CNA_BACKEND_BGFX         OFF CACHE BOOL "Enable bgfx backend in CNA"         FORCE)
     set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "Enable Vulkan backend in CNA"        FORCE)
     set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "Enable WebGPU backend in CNA"        FORCE)
-    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU)" FORCE)
+    set(CNA_BACKEND_HEADLESS     OFF CACHE BOOL "Enable Headless backend in CNA"      FORCE)
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU, HEADLESS)" FORCE)
 else()
     # Desktop: choose one backend. Default is SDL_RENDERER.
     # To switch, pass exactly one backend ON on the cmake command line, e.g.:
@@ -40,12 +41,15 @@ else()
     # or use the CNA_GRAPHICS_BACKEND string variable:
     #   cmake -DCNA_GRAPHICS_BACKEND=VULKAN ...
     # WEBGPU is experimental (see cna_graphics/plan_webgpu.md) and must be selected explicitly.
+    # HEADLESS touches no GPU/window at all (see cna_graphics/plan_headless.md) -- for driving
+    # this game's own logic under CI without a display server, not for visible rendering.
     option(CNA_BACKEND_SDL_RENDERER "Enable SDL_Renderer backend in CNA" OFF)
     option(CNA_BACKEND_EASY_GL      "Enable easy-gl backend in CNA"      OFF)
     option(CNA_BACKEND_BGFX         "Enable bgfx backend in CNA"         OFF)
     option(CNA_BACKEND_VULKAN       "Enable Vulkan backend in CNA"        OFF)
     option(CNA_BACKEND_WEBGPU       "Enable WebGPU backend in CNA"        OFF)
-    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU)")
+    option(CNA_BACKEND_HEADLESS     "Enable Headless backend in CNA"      OFF)
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU, HEADLESS)")
 
     if(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
         set(CNA_BACKEND_SDL_RENDERER ON  CACHE BOOL "" FORCE)
@@ -53,36 +57,48 @@ else()
         set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_HEADLESS     OFF CACHE BOOL "" FORCE)
     elseif(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL")
         set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_EASY_GL      ON  CACHE BOOL "" FORCE)
         set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_HEADLESS     OFF CACHE BOOL "" FORCE)
     elseif(CNA_GRAPHICS_BACKEND STREQUAL "BGFX")
         set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_BGFX         ON  CACHE BOOL "" FORCE)
         set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_HEADLESS     OFF CACHE BOOL "" FORCE)
     elseif(CNA_GRAPHICS_BACKEND STREQUAL "VULKAN")
         set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_VULKAN       ON  CACHE BOOL "" FORCE)
         set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_HEADLESS     OFF CACHE BOOL "" FORCE)
     elseif(CNA_GRAPHICS_BACKEND STREQUAL "WEBGPU")
         set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
         set(CNA_BACKEND_WEBGPU       ON  CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_HEADLESS     OFF CACHE BOOL "" FORCE)
+    elseif(CNA_GRAPHICS_BACKEND STREQUAL "HEADLESS")
+        set(CNA_BACKEND_SDL_RENDERER OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_EASY_GL      OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_BGFX         OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_VULKAN       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_WEBGPU       OFF CACHE BOOL "" FORCE)
+        set(CNA_BACKEND_HEADLESS     ON  CACHE BOOL "" FORCE)
     endif()
 
     # If none explicitly set, default to SDL_RENDERER
-    if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN AND NOT CNA_BACKEND_WEBGPU)
+    if(NOT CNA_BACKEND_SDL_RENDERER AND NOT CNA_BACKEND_EASY_GL AND NOT CNA_BACKEND_BGFX AND NOT CNA_BACKEND_VULKAN AND NOT CNA_BACKEND_WEBGPU AND NOT CNA_BACKEND_HEADLESS)
         set(CNA_BACKEND_SDL_RENDERER ON CACHE BOOL "Enable SDL_Renderer backend in CNA" FORCE)
-        set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU)" FORCE)
+        set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend (SDL_RENDERER, EASYGL, BGFX, VULKAN, WEBGPU, HEADLESS)" FORCE)
     endif()
 endif()
 
