@@ -52,12 +52,76 @@ cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-  -DCNA_BACKEND_SDL_RENDERER=ON \
+  -DCNA_GRAPHICS_BACKEND=SDL_RENDERER \
   -DCNA_WINDOWS_DEPENDENCIES_ROOT=/path/to/windows/sdl3/libs
 cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 ```
 
 *Note: You must provide Windows-target SDL3 package configs (`SDL3`, `SDL3_image`, etc.) through `CNA_WINDOWS_DEPENDENCIES_ROOT` or `CMAKE_PREFIX_PATH`.*
+
+### Direct3D 11 / Direct3D 12 (Windows backends, runnable on Linux via Wine/Proton)
+
+CNA has full Direct3D 11 and Direct3D 12 backends. They are Windows-only, but you can build **and
+run** them from Linux — the D3D11 build even runs under plain Wine. Both were verified end to end
+(the game builds, starts, creates a real GPU device and swapchain, and presents frames).
+
+Build either one exactly like the cross-build above, just swapping the backend:
+
+```bash
+# Direct3D 11
+cmake -S . -B build-d3d11 -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE=../cna_graphics/cmake/toolchains/mingw-w64.cmake \
+  -DCNA_GRAPHICS_BACKEND=D3D11 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
+cmake --build build-d3d11 --target WindowsPhoneSpeedyBlupi
+
+# Direct3D 12 (same, with D3D12)
+cmake -S . -B build-d3d12 -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE=../cna_graphics/cmake/toolchains/mingw-w64.cmake \
+  -DCNA_GRAPHICS_BACKEND=D3D12 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
+cmake --build build-d3d12 --target WindowsPhoneSpeedyBlupi
+```
+
+`-DCNA_BUILD_TESTS=OFF` is needed because CNA's own GTest suite does not currently compile under
+MinGW (a known, unrelated POSIX-portability gap — see `cna_graphics/plan_dx.md` `DX-15`). It has no
+effect on the game itself.
+
+#### Running D3D11 on Linux — plain Wine + DXVK
+
+D3D11 needs nothing special beyond a Wine prefix with DXVK installed:
+
+```bash
+cd build-d3d11
+WINEPREFIX=~/.wine-cna-d3d11 wine ./WindowsPhoneSpeedyBlupi.exe
+```
+
+#### Running D3D12 on Linux — **must** go through Proton, not plain Wine
+
+Under plain system Wine, a D3D12 game **crashes on startup** with a null-pointer page fault:
+
+```
+vkd3d_instance_get_vk_instance(instance=0000000000000000)
+  ← inside Wine's OWN dxgi.dll (dlls/dxgi/swapchain.c)
+```
+
+**This is not a bug in the game or in CNA.** It is a DLL-pairing mismatch in the environment: a
+distro's system `dxgi.dll` cannot hand a D3D12 command queue to vkd3d-proton's separately-installed
+`d3d12.dll` — those two only work as a matched pair, which is what Proton ships. (Full analysis:
+`cna_graphics/plan_dx.md`, tasks `DX-100`/`DX-102`.) **On real Windows this does not happen at all**,
+since there is only one DXGI, Microsoft's own.
+
+So run D3D12 through a properly Proton-managed launch, using the helper script in cna_graphics:
+
+```bash
+cd build-d3d12
+bash ../../cna_graphics/scripts/run-proton-vkd3d.sh "$(pwd)/WindowsPhoneSpeedyBlupi.exe"
+```
+
+It needs a local Steam install with "Proton - Experimental"; it bootstraps its own dedicated prefix
+on first use and never touches your personal `~/.wine`.
+
+Verified working: a real vkd3d-proton D3D12 device initialises against the GPU and
+`dxgi_vk_swap_chain_init` creates a real 800x480 swapchain (the game's own resolution), which then
+presents frames — zero crashes, zero exceptions.
 
 ### Web / Emscripten build
 
@@ -133,10 +197,15 @@ emrun cmake-build-web/WindowsPhoneSpeedyBlupi.html
 
 ### Backend status
 
-- Windows: SDL_Renderer is the supported backend.
-- Linux: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed.
-- Web (Emscripten): SDL_Renderer backend, experimental.
-- Android: planned.
+Pick one with `-DCNA_GRAPHICS_BACKEND=<name>`; the full list CNA accepts is `SDL_RENDERER`,
+`EASYGL`, `BGFX`, `VULKAN`, `WEBGPU`, `HEADLESS`, `SOFTWARE`, `D3D11`, `D3D12`.
+
+- **Windows**: SDL_Renderer is the default. **Direct3D 11** and **Direct3D 12** both work (verified:
+  the game builds, runs, and presents frames on each). See the D3D section above for building them
+  from Linux, and for the one real caveat — D3D12 needs Proton, not plain Wine.
+- **Linux**: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed.
+- **Web (Emscripten)**: SDL_Renderer backend, experimental.
+- **Android**: planned.
 
 ## Progress
 
