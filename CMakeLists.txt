@@ -43,7 +43,7 @@ option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch 
 # exception; SOFTWARE and D3D11, which cna_graphics also defines, were never
 # added at all). Replaced with: set the string, validate it against a live
 # list, done.
-set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11)
+set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12)
 
 if(EMSCRIPTEN OR ANDROID)
     # Only SDL_RENDERER is supported on these two platforms (no desktop GL
