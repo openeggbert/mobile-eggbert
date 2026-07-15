@@ -43,7 +43,7 @@ option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch 
 # exception; SOFTWARE and D3D11, which cna also defines, were never
 # added at all). Replaced with: set the string, validate it against a live
 # list, done.
-set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12 CANVAS ASCII)
+set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12 CANVAS ASCII DX3)
 
 if(ANDROID)
     # Only SDL_RENDERER is supported (no desktop GL context the same way;
@@ -61,8 +61,11 @@ else()
     # touches no GPU/window at all (see cna/plan_headless.md) -- for
     # driving this game's own logic under CI without a display server, not
     # for visible rendering. ASCII is an SDL-windowed glyph-grid decorator,
-    # not a real terminal/TTY backend (see cna/plan_ascii.md).
-    set(CNA_GRAPHICS_BACKEND "ASCII" CACHE STRING "Selected CNA backend")
+    # not a real terminal/TTY backend (see cna/plan_ascii.md). DX3 reimplements
+    # a narrow DirectX 3 (DirectDraw) subset on top of SDL3 via the sibling
+    # ../free-direct repo -- portable, not Windows/Wine-only like D3D11/D3D12
+    # (see cna/plan_dx3.md).
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
 endif()
 set_property(CACHE CNA_GRAPHICS_BACKEND PROPERTY STRINGS ${MOBILE_EGGBERT_BACKENDS})
 
@@ -115,7 +118,7 @@ find_package(SDL3_mixer REQUIRED CONFIG)
 # Note: --start-group/--end-group are not available on Emscripten's linker
 # or on Android (lld does not need it and warns).
 if(EMSCRIPTEN)
-    target_link_libraries(${_game_target} PRIVATE CNA SDL3::SDL3-static)
+    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL3::SDL3-static)
 elseif(ANDROID)
     # Android uses lld which resolves circular static-lib references without
     # --start-group. On Android the executable is actually a shared library

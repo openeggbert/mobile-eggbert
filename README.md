@@ -198,14 +198,17 @@ emrun cmake-build-web/WindowsPhoneSpeedyBlupi.html
 ### Backend status
 
 Pick one with `-DCNA_GRAPHICS_BACKEND=<name>`; the full list CNA accepts is `SDL_RENDERER`,
-`EASYGL`, `BGFX`, `VULKAN`, `WEBGPU`, `HEADLESS`, `SOFTWARE`, `D3D11`, `D3D12`, `CANVAS`, `ASCII`.
+`EASYGL`, `BGFX`, `VULKAN`, `WEBGPU`, `HEADLESS`, `SOFTWARE`, `D3D11`, `D3D12`, `CANVAS`, `ASCII`,
+`DX3`.
 
 - **Windows**: SDL_Renderer is the default. **Direct3D 11** and **Direct3D 12** both work (verified:
   the game builds, runs, and presents frames on each). See the D3D section above for building them
   from Linux, and for the one real caveat — D3D12 needs Proton, not plain Wine.
 - **Linux**: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed. **ASCII**
   (an SDL-windowed glyph-grid decorator around SDL_Renderer, not a real terminal/TTY backend) can
-  also be selected with `-DCNA_GRAPHICS_BACKEND=ASCII`.
+  also be selected with `-DCNA_GRAPHICS_BACKEND=ASCII`. **DX3** (a narrow DirectX 3/DirectDraw
+  subset reimplemented on SDL3 via the sibling `../free-direct` repo — portable, no Wine/Proton
+  needed, unlike D3D11/D3D12) can be selected with `-DCNA_GRAPHICS_BACKEND=DX3`.
 - **Web (Emscripten)**: SDL_Renderer backend, experimental. **CANVAS** (browser HTML5 Canvas 2D,
   no GPU) is also available with `-DCNA_GRAPHICS_BACKEND=CANVAS`.
 - **Android**: planned.
