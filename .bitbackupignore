@@ -1,0 +1,8 @@
+# cmake build dirs
+cmake-build-debug/*
+cmake-build-release/*
+
+# android build dirs
+android/build/*
+android/app/build/*
+android/.gradle/*
