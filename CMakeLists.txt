@@ -26,37 +26,43 @@ option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch 
 # Graphics backend selection.
 # -----------------------------------------------------------------------------
 # CNA_GRAPHICS_BACKEND is the only thing that needs setting -- it's a single
-# string, and cna_graphics's own CMakeLists.txt keys every downstream decision
+# string, and cna's own CMakeLists.txt keys every downstream decision
 # (which backend sources to compile, which target to create, which sibling
 # deps to pull in) off it directly.
 #
-# cna_graphics also exposes a parallel set of CNA_BACKEND_* boolean options,
+# cna also exposes a parallel set of CNA_BACKEND_* boolean options,
 # but those are an *optional, alternative* input path: they all default to
-# OFF, and cna_graphics only consults them if one is explicitly switched ON,
+# OFF, and cna only consults them if one is explicitly switched ON,
 # in which case it derives CNA_GRAPHICS_BACKEND from the boolean instead. A
 # consumer that just sets the string never needs to touch them.
 #
 # This file used to force all of CNA_BACKEND_*'s 5-and-growing flags itself
 # (~75 lines of if/elseif) -- pure redundancy with the string above, and it
 # hardcoded a fixed backend list that silently fell out of sync every time
-# cna_graphics added one (HEADLESS had already been bolted on as a partial
-# exception; SOFTWARE and D3D11, which cna_graphics also defines, were never
+# cna added one (HEADLESS had already been bolted on as a partial
+# exception; SOFTWARE and D3D11, which cna also defines, were never
 # added at all). Replaced with: set the string, validate it against a live
 # list, done.
-set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12)
+set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12 CANVAS ASCII)
 
-if(EMSCRIPTEN OR ANDROID)
-    # Only SDL_RENDERER is supported on these two platforms (no desktop GL
-    # context the same way; SDL_RENDERER runs on WebGL/GLES under the hood).
+if(ANDROID)
+    # Only SDL_RENDERER is supported (no desktop GL context the same way;
+    # SDL_RENDERER runs on GLES under the hood).
     set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend" FORCE)
+elseif(EMSCRIPTEN)
+    # SDL_RENDERER (runs on WebGL under the hood) is the default and most
+    # tested; CANVAS (browser HTML5 Canvas 2D, GPU-free) can be selected
+    # explicitly with -DCNA_GRAPHICS_BACKEND=CANVAS -- see cna/plan_canvas.md.
+    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
 else()
     # Desktop: choose one backend, default SDL_RENDERER. Override with
     # -DCNA_GRAPHICS_BACKEND=<backend>, e.g. -DCNA_GRAPHICS_BACKEND=VULKAN.
-    # WEBGPU is experimental (see cna_graphics/plan_webgpu.md). HEADLESS
-    # touches no GPU/window at all (see cna_graphics/plan_headless.md) -- for
+    # WEBGPU is experimental (see cna/plan_webgpu.md). HEADLESS
+    # touches no GPU/window at all (see cna/plan_headless.md) -- for
     # driving this game's own logic under CI without a display server, not
-    # for visible rendering.
-    set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
+    # for visible rendering. ASCII is an SDL-windowed glyph-grid decorator,
+    # not a real terminal/TTY backend (see cna/plan_ascii.md).
+    set(CNA_GRAPHICS_BACKEND "ASCII" CACHE STRING "Selected CNA backend")
 endif()
 set_property(CACHE CNA_GRAPHICS_BACKEND PROPERTY STRINGS ${MOBILE_EGGBERT_BACKENDS})
 
@@ -66,7 +72,7 @@ if(NOT CNA_GRAPHICS_BACKEND IN_LIST MOBILE_EGGBERT_BACKENDS)
         "Choose one of: ${MOBILE_EGGBERT_BACKENDS}.")
 endif()
 
-set(CNA_GRAPHICS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cna_graphics")
+set(CNA_GRAPHICS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cna")
 add_subdirectory("${CNA_GRAPHICS_SOURCE_DIR}" CNA)
 include_directories("${CNA_GRAPHICS_SOURCE_DIR}/include" CNA)
 
@@ -116,10 +122,10 @@ elseif(ANDROID)
     # (libmain.so) loaded by SDLActivity; SDL3 is linked statically.
     target_link_libraries(${_game_target} PRIVATE CNA SDL3::SDL3 android log)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
-    # cna_graphics names every backend target
+    # cna names every backend target
     # cna_backend_graphics_<backend, lowercased> -- this used to be a
     # hardcoded if/elseif chain of 5 backend names (in existence-check order,
-    # not selection order) that had silently fallen behind cna_graphics's own
+    # not selection order) that had silently fallen behind cna's own
     # backend list: HEADLESS was missing from it entirely, so selecting
     # HEADLESS here fell through to the plain (non-grouped) link below,
     # skipping the --start-group/--end-group circular-symbol workaround this

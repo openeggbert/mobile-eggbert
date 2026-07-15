@@ -70,19 +70,19 @@ Build either one exactly like the cross-build above, just swapping the backend:
 ```bash
 # Direct3D 11
 cmake -S . -B build-d3d11 -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=../cna_graphics/cmake/toolchains/mingw-w64.cmake \
+  -DCMAKE_TOOLCHAIN_FILE=../cna/cmake/toolchains/mingw-w64.cmake \
   -DCNA_GRAPHICS_BACKEND=D3D11 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
 cmake --build build-d3d11 --target WindowsPhoneSpeedyBlupi
 
 # Direct3D 12 (same, with D3D12)
 cmake -S . -B build-d3d12 -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=../cna_graphics/cmake/toolchains/mingw-w64.cmake \
+  -DCMAKE_TOOLCHAIN_FILE=../cna/cmake/toolchains/mingw-w64.cmake \
   -DCNA_GRAPHICS_BACKEND=D3D12 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
 cmake --build build-d3d12 --target WindowsPhoneSpeedyBlupi
 ```
 
 `-DCNA_BUILD_TESTS=OFF` is needed because CNA's own GTest suite does not currently compile under
-MinGW (a known, unrelated POSIX-portability gap — see `cna_graphics/plan_dx.md` `DX-15`). It has no
+MinGW (a known, unrelated POSIX-portability gap — see `cna/plan_dx.md` `DX-15`). It has no
 effect on the game itself.
 
 #### Running D3D11 on Linux — plain Wine + DXVK
@@ -106,14 +106,14 @@ vkd3d_instance_get_vk_instance(instance=0000000000000000)
 **This is not a bug in the game or in CNA.** It is a DLL-pairing mismatch in the environment: a
 distro's system `dxgi.dll` cannot hand a D3D12 command queue to vkd3d-proton's separately-installed
 `d3d12.dll` — those two only work as a matched pair, which is what Proton ships. (Full analysis:
-`cna_graphics/plan_dx.md`, tasks `DX-100`/`DX-102`.) **On real Windows this does not happen at all**,
+`cna/plan_dx.md`, tasks `DX-100`/`DX-102`.) **On real Windows this does not happen at all**,
 since there is only one DXGI, Microsoft's own.
 
-So run D3D12 through a properly Proton-managed launch, using the helper script in cna_graphics:
+So run D3D12 through a properly Proton-managed launch, using the helper script in cna:
 
 ```bash
 cd build-d3d12
-bash ../../cna_graphics/scripts/run-proton-vkd3d.sh "$(pwd)/WindowsPhoneSpeedyBlupi.exe"
+bash ../../cna/scripts/run-proton-vkd3d.sh "$(pwd)/WindowsPhoneSpeedyBlupi.exe"
 ```
 
 It needs a local Steam install with "Proton - Experimental"; it bootstraps its own dedicated prefix
@@ -198,14 +198,21 @@ emrun cmake-build-web/WindowsPhoneSpeedyBlupi.html
 ### Backend status
 
 Pick one with `-DCNA_GRAPHICS_BACKEND=<name>`; the full list CNA accepts is `SDL_RENDERER`,
-`EASYGL`, `BGFX`, `VULKAN`, `WEBGPU`, `HEADLESS`, `SOFTWARE`, `D3D11`, `D3D12`.
+`EASYGL`, `BGFX`, `VULKAN`, `WEBGPU`, `HEADLESS`, `SOFTWARE`, `D3D11`, `D3D12`, `CANVAS`, `ASCII`.
 
 - **Windows**: SDL_Renderer is the default. **Direct3D 11** and **Direct3D 12** both work (verified:
   the game builds, runs, and presents frames on each). See the D3D section above for building them
   from Linux, and for the one real caveat — D3D12 needs Proton, not plain Wine.
-- **Linux**: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed.
-- **Web (Emscripten)**: SDL_Renderer backend, experimental.
+- **Linux**: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed. **ASCII**
+  (an SDL-windowed glyph-grid decorator around SDL_Renderer, not a real terminal/TTY backend) can
+  also be selected with `-DCNA_GRAPHICS_BACKEND=ASCII`.
+- **Web (Emscripten)**: SDL_Renderer backend, experimental. **CANVAS** (browser HTML5 Canvas 2D,
+  no GPU) is also available with `-DCNA_GRAPHICS_BACKEND=CANVAS`.
 - **Android**: planned.
+
+Note: mobile-eggbert's `CNA_GRAPHICS_SOURCE_DIR` points at the sibling `../cna` checkout, currently
+on its `develop` branch. `SDL_GPU` exists on `cna`'s in-progress `feature/sdlgpu` branch but isn't
+merged into `develop` yet, so it isn't in the list above until that lands.
 
 ## Progress
 
