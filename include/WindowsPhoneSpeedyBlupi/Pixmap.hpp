@@ -35,7 +35,7 @@
 #include "IPixmap.hpp"
 
 #include "Microsoft/Xna/Framework/Vector2.hpp"
-#include "../../../cna/include/Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
+#include "Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp"
 #include "Microsoft/Xna/Framework/Graphics/SpriteEffects.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"

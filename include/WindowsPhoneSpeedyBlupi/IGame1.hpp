@@ -15,7 +15,7 @@
 #include "InputPad.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
 #include "Microsoft/Xna/Framework/GameTime.hpp"
-#include "../../../cna/include/Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
+#include "Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
 #include "System/EventArgs.hpp"
 #include "WindowsPhoneSpeedyBlupi/Config.hpp"
 

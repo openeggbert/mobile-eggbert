@@ -43,7 +43,12 @@ option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch 
 # exception; SOFTWARE and D3D11, which cna also defines, were never
 # added at all). Replaced with: set the string, validate it against a live
 # list, done.
-set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12 CANVAS ASCII DX3)
+#
+# D3D9 (Windows-only, same as D3D11/D3D12) and SDL_GPU (portable, needs
+# libshaderc for its runtime ShaderEffect GLSL->SPIR-V compile -- see
+# cna/plan_sdlgpu.md SDLGPU-42/43) are cna's two newest backends and were
+# missing from this list.
+set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12 CANVAS ASCII DX3 D3D9 SDL_GPU)
 
 if(ANDROID)
     # Only SDL_RENDERER is supported (no desktop GL context the same way;
@@ -64,7 +69,10 @@ else()
     # not a real terminal/TTY backend (see cna/plan_ascii.md). DX3 reimplements
     # a narrow DirectX 3 (DirectDraw) subset on top of SDL3 via the sibling
     # ../free-direct repo -- portable, not Windows/Wine-only like D3D11/D3D12
-    # (see cna/plan_dx3.md).
+    # (see cna/plan_dx3.md). D3D9 is Windows/Wine-only like D3D11/D3D12 (see
+    # cna/plan_dx9.md). SDL_GPU is portable but needs libshaderc installed
+    # (libshaderc1 or libshaderc-dev) for its runtime ShaderEffect GLSL compile
+    # (see cna/plan_sdlgpu.md).
     set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
 endif()
 set_property(CACHE CNA_GRAPHICS_BACKEND PROPERTY STRINGS ${MOBILE_EGGBERT_BACKENDS})

@@ -345,6 +345,18 @@ namespace WindowsPhoneSpeedyBlupi
 
     void Pixmap::BeginBatch()
     {
+        // UpdateGeometry() was previously only ever called once, from LoadContent() at startup --
+        // its own doc comment already said "re-call whenever the window is resized", but nothing
+        // did. zoom/originX/originY then stayed frozen at the startup viewport size forever, so
+        // any later resize (most visibly: toggling fullscreen) left every sprite drawn at the
+        // stale scale/offset while DrawBackground()'s own full-screen stretch (which re-queries
+        // the live viewport every call already) correctly filled the new size -- the game content
+        // pinned to a small stale corner against an otherwise-blank background. BeginBatch(), not
+        // Start(), is the real once-per-frame hook: Game1::Draw() calls pixmap->BeginBatch() every
+        // frame unconditionally, but nothing anywhere ever calls IPixmap::Start() despite its own
+        // doc comment claiming it's part of the per-frame contract. Placed outside the
+        // CNA_SPRITE_BATCHING_ENABLED guard below so it runs regardless of that flag.
+        UpdateGeometry();
 #ifdef CNA_SPRITE_BATCHING_ENABLED
         if (!spriteBatch || batch_started_) return;
         spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
