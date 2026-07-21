@@ -16,10 +16,8 @@ https://github.com/openeggbert/mobile-eggbert-core/commit/1cbc13415b768085b7f5c9
 
 ## Development
 
-### Init submodules
-
-git submodule init --recursive
-git submodule update --recursive
+`cna` and `sharp-runtime` are vendored directly under `mobile-eggbert/cna` and
+`mobile-eggbert/sharp-runtime` (plain in-repo copies, no submodules, no sibling checkout needed).
 
 ### Linux native build
 
@@ -213,9 +211,10 @@ Pick one with `-DCNA_GRAPHICS_BACKEND=<name>`; the full list CNA accepts is `SDL
   no GPU) is also available with `-DCNA_GRAPHICS_BACKEND=CANVAS`.
 - **Android**: planned.
 
-Note: mobile-eggbert's `CNA_GRAPHICS_SOURCE_DIR` points at the sibling `../cna` checkout, currently
-on its `develop` branch. `SDL_GPU` exists on `cna`'s in-progress `feature/sdlgpu` branch but isn't
-merged into `develop` yet, so it isn't in the list above until that lands.
+Note: mobile-eggbert's `CNA_GRAPHICS_SOURCE_DIR` points at the vendored `cna/` copy inside this
+repo (originally taken from `cna`'s `develop` branch). `SDL_GPU` existed on `cna`'s in-progress
+`feature/sdlgpu` branch, not merged into `develop` at vendoring time, so it was never in the list
+above.
 
 ## Progress
 

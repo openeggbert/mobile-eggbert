@@ -43,7 +43,7 @@ target_link_options(${_game_target} PRIVATE -static-libgcc -static-libstdc++)
 ```
 
 **Copying `libwinpthread-1.dll`** — the helper function `cna_copy_mingw_runtime()`
-defined in `../../cna/cmake/ThirdPartySDL.cmake`:
+defined in `cna/cmake/ThirdPartySDL.cmake`:
 1. Calls `gcc -print-file-name=libwinpthread-1.dll` at configure time to locate
    the DLL inside the active MinGW installation.
 2. Falls back to the directory that contains the compiler binary.

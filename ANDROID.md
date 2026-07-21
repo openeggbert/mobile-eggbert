@@ -25,16 +25,16 @@ Android APK using SDL3, the Android NDK, and CMake.
 
 ---
 
-## Clone and initialise submodules
+## Clone
 
 ```bash
 git clone <repository-url> speedy-blupi-2013
-cd speedy-blupi-2013
-git submodule update --init --recursive
+cd speedy-blupi-2013/mobile-eggbert
 ```
 
-The vendored SDL3 / SDL_image / SDL_mixer sources are required.  They live under
-`mobile-eggbert/../cna/third_party/`.
+`cna` and `sharp-runtime` are vendored directly inside `mobile-eggbert/` (no submodules, no
+sibling checkout needed). The vendored SDL3 / SDL_image / SDL_mixer sources are required and
+live under `mobile-eggbert/cna/third_party/`.
 
 ---
 
@@ -237,8 +237,7 @@ matches what you installed in the SDK Manager.
 Check `adb logcat` for native crash details.  Common causes:
 
 - Missing `libmain.so` — rebuild with `./gradlew assembleDebug`.
-- Asset not found — verify `git submodule update --init --recursive` completed
-  successfully and `Content/` exists under `mobile-eggbert/`.
+- Asset not found — verify `Content/` exists under `mobile-eggbert/`.
 
 ### Audio is silent
 

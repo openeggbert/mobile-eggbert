@@ -16,6 +16,8 @@ android/app/.cxx/Debug
 android/app/.cxx/RelWithDebInfo
 
 .sdl-prebuilt/*
+.sdl-prebuilt-*/
+cna/.sdl-prebuilt-*/
 Content/backgrounds4x/*
 Content/icons4x/*
 build/*

@@ -127,6 +127,47 @@ are read from their own GitHub repos as source, but no changes are pushed back t
    Phase 4** (SDL 1.2 migration) and check in before starting it — Phase 5 (C++98) follows the
    same stop, revisited once Phase 4's scope/approach is agreed.
 
+## Phase 1 status: done (this commit)
+
+- `cna` (develop `ac3aaaeb`) and `sharp-runtime` (develop `d0aeecf3`) copied into `mobile-eggbert/cna/`
+  and `mobile-eggbert/sharp-runtime/` as plain files, no `.git`. Nested submodules
+  `third_party/{SDL,SDL_image,SDL_mixer}` (pinned commits `cbe3fbe9`/`fcb9d0b1`/`3075d3ed`) were
+  populated with real source too, same flat-copy treatment — `vendor/googletest` in both repos was
+  left as an empty placeholder since it's test-only and neither repo's `CMakeLists.txt` wires it
+  into the main build.
+- `CMakeLists.txt:86` (`CNA_GRAPHICS_SOURCE_DIR`) now points at the in-repo `cna/` instead of
+  `../cna`. `cna/CMakeLists.txt`'s own `add_subdirectory(../sharp-runtime ...)` needed **no
+  change** — `cna` and `sharp-runtime` are still siblings, just both now one level inside
+  `mobile-eggbert/` instead of one level above it, so the relative path still resolves correctly.
+- Fixed `android/app/build.gradle`'s `../../../cna/...` → `../../cna/...` (one less `..`, since
+  `cna` moved from a mobile-eggbert sibling to a mobile-eggbert child).
+- Updated `ANDROID.md`, `README.md`, `WINDOWS.md` path/submodule instructions that were pointing
+  at the old sibling-checkout model (some of this text was already stale before this change — no
+  `.gitmodules` exists in this repo, so the "init submodules" instructions in those docs predate
+  even the sibling-checkout setup).
+- `.gitignore`: added `.sdl-prebuilt-*/` (cna builds SDL3 once into
+  `cna/.sdl-prebuilt-<platform>/`, a local build cache, not meant to be committed).
+- **Baseline build result**: configured and built successfully — 522 of 526 translation units
+  compile clean, including all 50 of mobile-eggbert's own files and the `SDL_RENDERER` backend.
+  The remaining 4 failures are confined entirely to `cna`'s `Internal/Xnb/*` content-pipeline
+  subsystem (`PrimitiveContentTypeReaders.cpp`, `DecimalDateTimeContentTypeReaders.cpp`,
+  `SpriteFontContentTypeReader.cpp`, `XnbBuiltInReaders.cpp`) — `ContentReader` is missing
+  `ReadDecimal()`/`ReadChar()` methods that `include/CNA/Internal/Xnb/*.hpp` call. Verified this
+  is a **pre-existing bug already on `cna`'s own `develop` HEAD**, not something the copy/path
+  rewiring introduced (grepped `ContentReader.hpp` in the vendored copy — those methods are
+  genuinely absent). Left as-is rather than patched here, since `Xnb` is exactly the kind of
+  subsystem Phase 2's reachability analysis is expected to delete outright (mobile-eggbert's
+  `Worlds`/`GameData` load raw level/save files, not compiled XNB content) — if Phase 2 confirms
+  that, the broken subsystem is removed rather than fixed. If Phase 2 finds `Xnb` **is** reachable
+  after all, this bug will need fixing at that point instead.
+- Container build dependencies needed and not preinstalled: `libxcursor-dev libxi-dev
+  libxinerama-dev libxrandr-dev libxss-dev libxfixes-dev libwayland-dev libdecor-0-dev
+  libxtst-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libgbm-dev libudev-dev
+  libasound2-dev libpipewire-0.3-dev libavcodec-dev libavformat-dev libavutil-dev
+  libswresample-dev` (the last four are `cna`'s own documented `VideoPlayer`/FFmpeg requirement
+  from `cna/CLAUDE.md`, also a Phase 2 pruning candidate if mobile-eggbert never uses
+  `VideoPlayer`).
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan is to keep `cna`'s `LICENSE` (Ms-PL)

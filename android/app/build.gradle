@@ -97,7 +97,7 @@ android {
             assets.srcDirs = ['src/main/assets']
             java.srcDirs = [
                 // SDL3 Java glue (SDLActivity, SDLAudioManager, etc.)
-                '../../../cna/third_party/SDL/android-project/app/src/main/java',
+                '../../cna/third_party/SDL/android-project/app/src/main/java',
                 // Game-specific Java (just the minimal stub subclassing SDLActivity)
                 'src/main/java'
             ]

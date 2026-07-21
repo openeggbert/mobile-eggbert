@@ -1,0 +1,349 @@
+// SPDX-License-Identifier: MS-PL
+#include "Microsoft/Xna/Framework/Graphics/TextureCube.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture.hpp"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
+#include "CNA/Internal/Backends/Common/IGraphicsBackend.hpp"
+#include "CNA/Internal/Graphics/DxtUtil.hpp"
+#include "System/IO/Stream.hpp"
+#include "System/FormatException.hpp"
+#include "System/NotSupportedException.hpp"
+
+#include <algorithm>
+#include <cstdint>
+#include <stdexcept>
+#include <vector>
+
+// plan_dx9.md Phase D9-10 (D9-103 follow-up): GraphicsProfile.Reach/HiDef cube-texture-size
+// ceilings, real on this backend only -- matches Texture2D.cpp's own #ifdef CNA_BACKEND_D3D9
+// convention exactly.
+#ifdef CNA_BACKEND_D3D9
+#include "CNA/Internal/Backends/D3D9/D3D9ProfileCapabilities.hpp"
+#endif
+
+namespace Microsoft::Xna::Framework::Graphics
+{
+    // Mirrors FNA's Texture.CalculateMipLevels(size) — TextureCube faces are square, so both
+    // dimensions are the same and neither halves faster than the other.
+    static int CalculateMipLevels(int w, int h)
+    {
+        int levels = 1;
+        while (w > 1 || h > 1) { w = std::max(1, w / 2); h = std::max(1, h / 2); ++levels; }
+        return levels;
+    }
+
+    static int mipDim(int base, int level)
+    {
+        return std::max(1, base >> level);
+    }
+
+#ifdef CNA_BACKEND_D3D9
+    // D9-103 follow-up: same profile-CEILING enforcement Texture2D.cpp already established
+    // (D9-100's own table: Reach=512, HiDef=4096), checked BEFORE the backend is created.
+    static void ValidateCubeSizeForProfileEXT(const GraphicsDevice& device, int size)
+    {
+        const int profile = static_cast<int>(device.getGraphicsProfileProperty());
+        const int maxSize = CNA::Internal::Backends::D3D9::MaxCubeSizeForProfileEXT(profile);
+        if (size > maxSize)
+        {
+            throw System::NotSupportedException(
+                "TextureCube: size " + std::to_string(size) + " exceeds GraphicsProfile." +
+                (profile == 1 ? std::string("HiDef") : std::string("Reach")) +
+                "'s own maximum cube size of " + std::to_string(maxSize));
+        }
+    }
+#endif
+
+    TextureCube::~TextureCube() = default;
+
+    TextureCube::TextureCube(GraphicsDevice& device, int size, bool mipMap, SurfaceFormat format)
+        : Texture(&device)
+        , size_(size)
+        , backend_(nullptr)
+    {
+#ifdef CNA_BACKEND_D3D9
+        ValidateCubeSizeForProfileEXT(device, size);
+#endif
+        Texture::ValidateFormat(format);
+        format_     = format;
+        levelCount_ = mipMap ? CalculateMipLevels(size, size) : 1;
+        backend_ = device.GetBackend().CreateTextureCube(size, mipMap, static_cast<int>(format));
+    }
+
+    TextureCube::TextureCube(GraphicsDevice& device, int size, SurfaceFormat format,
+                             std::unique_ptr<CNA::Internal::Backends::ITextureCubeBackend> backend,
+                             int levelCount)
+        : Texture(&device)
+        , size_(size)
+        , backend_(std::move(backend))
+    {
+        // Task 774 finding: this constructor (used exclusively by RenderTargetCube) previously
+        // skipped ValidateFormat entirely, silently accepting any SurfaceFormat even though
+        // CreateTextureCube's own backend call never actually forwards it -- a RenderTargetCube
+        // could report a non-Color Format() while its real GPU resource was always Color.
+        Texture::ValidateFormat(format);
+        format_     = format;
+        levelCount_ = levelCount;
+    }
+
+    void TextureCube::Dispose(bool disposing)
+    {
+        backend_.reset();
+        Texture::Dispose(disposing);
+    }
+
+    int TextureCube::getSizeProperty() const { return size_; }
+
+    const std::string& TextureCube::GetTypeName() const
+    {
+        static const std::string name = "Microsoft.Xna.Framework.Graphics.TextureCube";
+        return name;
+    }
+
+    // Color has a vtable pointer (sizeof(Color) == 24), so we must never pass
+    // Color* directly to GL. Always unpack to plain uint8_t RGBA and repack on readback.
+
+    static std::vector<uint8_t> colorsToRgba(const Color* data, int startIndex, int count)
+    {
+        std::vector<uint8_t> rgba(static_cast<std::size_t>(count) * 4);
+        for (int i = 0; i < count; ++i)
+        {
+            rgba[i * 4 + 0] = data[startIndex + i].getRProperty();
+            rgba[i * 4 + 1] = data[startIndex + i].getGProperty();
+            rgba[i * 4 + 2] = data[startIndex + i].getBProperty();
+            rgba[i * 4 + 3] = data[startIndex + i].getAProperty();
+        }
+        return rgba;
+    }
+
+    static void rgbaToColors(const std::vector<uint8_t>& rgba, Color* data, int startIndex, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            data[startIndex + i] = Color(rgba[i * 4 + 0], rgba[i * 4 + 1],
+                                         rgba[i * 4 + 2], rgba[i * 4 + 3]);
+    }
+
+    void TextureCube::SetData(CubeMapFace face, const Color* data, int elementCount)
+    {
+        SetData(face, data, 0, elementCount);
+    }
+
+    void TextureCube::SetData(CubeMapFace face, const Color* data, int startIndex, int elementCount)
+    {
+        // Matches FNA's TextureCube.SetData<T>(face,data,startIndex,elementCount), which
+        // delegates to the 6-arg overload covering the full face at level 0.
+        SetData(face, 0, nullptr, data, startIndex, elementCount);
+    }
+
+    static bool IsValidCubeMapFace(CubeMapFace face)
+    {
+        const int f = static_cast<int>(face);
+        return f >= static_cast<int>(CubeMapFace::PositiveX)
+            && f <= static_cast<int>(CubeMapFace::NegativeZ);
+    }
+
+    void TextureCube::SetData(CubeMapFace face, int level, const Microsoft::Xna::Framework::Rectangle* rect,
+                              const Color* data, int startIndex, int elementCount)
+    {
+        if (!IsValidCubeMapFace(face))
+            throw std::out_of_range("TextureCube::SetData: face is not a valid CubeMapFace value");
+        if (!data)
+            throw std::invalid_argument("TextureCube::SetData: data must not be null");
+        if (elementCount <= 0)
+            throw std::out_of_range("TextureCube::SetData: elementCount must be > 0");
+        if (startIndex < 0)
+            throw std::out_of_range("TextureCube::SetData: startIndex must be >= 0");
+        if (level < 0)
+            throw std::out_of_range("TextureCube::SetData: level must be >= 0");
+
+        const int levelSize = mipDim(size_, level);
+        int x = 0, y = 0, w = levelSize, h = levelSize;
+        if (rect) { x = rect->X; y = rect->Y; w = rect->Width; h = rect->Height; }
+        if (x < 0 || y < 0 || x + w > levelSize || y + h > levelSize)
+            throw std::out_of_range("TextureCube::SetData: rectangle out of texture bounds");
+        if (elementCount < w * h)
+            throw std::out_of_range("TextureCube::SetData: elementCount is less than the number of pixels in the requested region");
+
+        const auto rgba = colorsToRgba(data, startIndex, elementCount);
+        if (backend_)
+            backend_->SetData(static_cast<int>(face), level, x, y, w, h,
+                              rgba.data(), static_cast<int>(rgba.size()));
+    }
+
+    void TextureCube::GetData(CubeMapFace face, Color* data, int elementCount) const
+    {
+        GetData(face, data, 0, elementCount);
+    }
+
+    void TextureCube::GetData(CubeMapFace face, Color* data, int startIndex, int elementCount) const
+    {
+        // Matches FNA's TextureCube.GetData<T>(face,data,startIndex,elementCount), which
+        // delegates to the 6-arg overload covering the full face at level 0.
+        GetData(face, 0, nullptr, data, startIndex, elementCount);
+    }
+
+    void TextureCube::GetData(CubeMapFace face, int level, const Microsoft::Xna::Framework::Rectangle* rect,
+                              Color* data, int startIndex, int elementCount) const
+    {
+        if (!IsValidCubeMapFace(face))
+            throw std::out_of_range("TextureCube::GetData: face is not a valid CubeMapFace value");
+        if (!data)
+            throw std::invalid_argument("TextureCube::GetData: data must not be null");
+        if (elementCount <= 0)
+            throw std::out_of_range("TextureCube::GetData: elementCount must be > 0");
+        if (startIndex < 0)
+            throw std::out_of_range("TextureCube::GetData: startIndex must be >= 0");
+        if (level < 0)
+            throw std::out_of_range("TextureCube::GetData: level must be >= 0");
+
+        const int levelSize = mipDim(size_, level);
+        int x = 0, y = 0, w = levelSize, h = levelSize;
+        if (rect) { x = rect->X; y = rect->Y; w = rect->Width; h = rect->Height; }
+        if (x < 0 || y < 0 || x + w > levelSize || y + h > levelSize)
+            throw std::out_of_range("TextureCube::GetData: rectangle out of texture bounds");
+        if (elementCount < w * h)
+            throw std::out_of_range("TextureCube::GetData: elementCount is less than the number of pixels in the requested region");
+        Texture::ValidateGetDataFormat(format_, 4);
+
+        if (!backend_) return;
+        std::vector<uint8_t> rgba(static_cast<std::size_t>(elementCount) * 4);
+        backend_->GetData(static_cast<int>(face), level, x, y, w, h,
+                          rgba.data(), static_cast<int>(rgba.size()));
+        rgbaToColors(rgba, data, startIndex, elementCount);
+    }
+
+    namespace
+    {
+        // DDS constants — mirrors FNA's Texture.ParseDDS magic numbers (Task 663).
+        constexpr uint32_t kDdsMagic        = 0x20534444;
+        constexpr uint32_t kDdsHeaderSize   = 124;
+        constexpr uint32_t kDdsPixfmtSize   = 32;
+        constexpr uint32_t kDdsdHeight      = 0x2;
+        constexpr uint32_t kDdsdWidth       = 0x4;
+        constexpr uint32_t kDdscapsMipmap   = 0x400000;
+        constexpr uint32_t kDdscapsTexture  = 0x1000;
+        constexpr uint32_t kDdscaps2Cubemap = 0x200;
+        constexpr uint32_t kDdpfFourCC      = 0x4;
+        constexpr uint32_t kFourCcDxt1      = 0x31545844;
+        constexpr uint32_t kFourCcDxt3      = 0x33545844;
+        constexpr uint32_t kFourCcDxt5      = 0x35545844;
+
+        uint32_t ReadU32LE(const uint8_t* p)
+        {
+            return static_cast<uint32_t>(p[0])
+                 | (static_cast<uint32_t>(p[1]) << 8)
+                 | (static_cast<uint32_t>(p[2]) << 16)
+                 | (static_cast<uint32_t>(p[3]) << 24);
+        }
+
+        // Compressed block size in bytes for one mip level — mirrors FNA's
+        // Texture.CalculateDDSLevelSize (Dxt1/3/5-only subset; CNA doesn't support the
+        // uncompressed/HDR DDS variants FNA also handles, matching Texture2D::FromStream's own
+        // established DXT1/3/5-only scope for this exact class of problem).
+        int CalculateDDSLevelSize(int width, int height, uint32_t fourCC)
+        {
+            const int blockSize = (fourCC == kFourCcDxt1) ? 8 : 16;
+            width  = std::max(width, 1);
+            height = std::max(height, 1);
+            return ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+        }
+    }
+
+    TextureCube TextureCube::DDSFromStreamEXT(GraphicsDevice& device, System::IO::Stream& stream)
+    {
+        using System::IO::intcs;
+        using System::IO::bytecs;
+
+        const intcs len = stream.getLengthProperty();
+        if (len <= 0)
+            throw std::runtime_error("TextureCube::DDSFromStreamEXT: stream is empty or length unknown");
+
+        std::vector<bytecs> buf(static_cast<std::size_t>(len));
+        stream.Read(buf.data(), 0, len);
+        const auto* raw = reinterpret_cast<const uint8_t*>(buf.data());
+        const auto rawLen = static_cast<std::size_t>(len);
+
+        // --- Parse the DDS header (mirrors FNA's Texture.ParseDDS) ---
+        if (rawLen < 128 || ReadU32LE(raw) != kDdsMagic)
+            throw System::NotSupportedException("TextureCube::DDSFromStreamEXT: not a DDS stream");
+        if (ReadU32LE(raw + 4) != kDdsHeaderSize)
+            throw System::NotSupportedException("TextureCube::DDSFromStreamEXT: invalid DDS header");
+
+        const uint32_t flags = ReadU32LE(raw + 8);
+        if ((flags & (kDdsdHeight | kDdsdWidth)) != (kDdsdHeight | kDdsdWidth))
+            throw System::NotSupportedException("TextureCube::DDSFromStreamEXT: invalid DDS flags");
+
+        const int height = static_cast<int>(ReadU32LE(raw + 12));
+        const int width  = static_cast<int>(ReadU32LE(raw + 16));
+        int levels        = static_cast<int>(ReadU32LE(raw + 28));
+
+        const uint32_t formatSize = ReadU32LE(raw + 76);
+        if (formatSize != kDdsPixfmtSize)
+            throw System::NotSupportedException("TextureCube::DDSFromStreamEXT: bogus DDS pixel format size");
+        const uint32_t formatFlags  = ReadU32LE(raw + 80);
+        const uint32_t formatFourCC = ReadU32LE(raw + 84);
+
+        const uint32_t caps = ReadU32LE(raw + 108);
+        if ((caps & kDdscapsTexture) == 0)
+            throw System::NotSupportedException("TextureCube::DDSFromStreamEXT: not a texture");
+        const uint32_t caps2 = ReadU32LE(raw + 112);
+        const bool isCube = (caps2 & kDdscaps2Cubemap) == kDdscaps2Cubemap;
+        if (caps2 != 0 && !isCube)
+            throw System::NotSupportedException("TextureCube::DDSFromStreamEXT: invalid DDS caps2");
+        if (!isCube)
+            throw System::FormatException("This file does not contain cube data!");
+
+        if ((caps & kDdscapsMipmap) != kDdscapsMipmap)
+            levels = 1;
+        if (levels < 1)
+            levels = 1;
+
+        if ((formatFlags & kDdpfFourCC) == 0
+            || (formatFourCC != kFourCcDxt1 && formatFourCC != kFourCcDxt3 && formatFourCC != kFourCcDxt5))
+        {
+            throw System::NotSupportedException(
+                "TextureCube::DDSFromStreamEXT: unsupported DDS pixel format "
+                "(only DXT1/DXT3/DXT5-compressed cube maps are supported)");
+        }
+        if (width != height)
+            throw System::FormatException("TextureCube::DDSFromStreamEXT: cube map faces must be square");
+
+        // CNA deviation from FNA (documented, matches Texture2D::FromStream's own established
+        // precedent for the identical DDS/DXT problem): every face/level is fully decompressed to
+        // RGBA8 on the CPU via DxtUtil and uploaded as SurfaceFormat::Color, rather than uploading
+        // the compressed blocks directly to a real compressed GPU format — CNA doesn't implement
+        // compressed GPU texture formats end-to-end on any backend (NEXT.md's documented
+        // "SurfaceFormat support is Color-only for real GPU formats" limitation).
+        TextureCube result(device, width, levels > 1, SurfaceFormat::Color);
+
+        std::size_t offset = 128;
+        for (int face = 0; face < 6; ++face)
+        {
+            int levelSize = width;
+            for (int level = 0; level < levels; ++level)
+            {
+                const int blockBytes = CalculateDDSLevelSize(levelSize, levelSize, formatFourCC);
+                if (offset + static_cast<std::size_t>(blockBytes) > rawLen)
+                    throw System::FormatException("TextureCube::DDSFromStreamEXT: truncated DDS stream");
+
+                std::vector<uint8_t> rgba;
+                using CNA::Internal::Graphics::DxtUtil;
+                if (formatFourCC == kFourCcDxt1)
+                    rgba = DxtUtil::DecompressDxt1(raw + offset, static_cast<std::size_t>(blockBytes), levelSize, levelSize);
+                else if (formatFourCC == kFourCcDxt3)
+                    rgba = DxtUtil::DecompressDxt3(raw + offset, static_cast<std::size_t>(blockBytes), levelSize, levelSize);
+                else
+                    rgba = DxtUtil::DecompressDxt5(raw + offset, static_cast<std::size_t>(blockBytes), levelSize, levelSize);
+
+                std::vector<Color> colors(static_cast<std::size_t>(levelSize) * static_cast<std::size_t>(levelSize),
+                                          Color(0, 0, 0, 0));
+                rgbaToColors(rgba, colors.data(), 0, static_cast<int>(colors.size()));
+                result.SetData(static_cast<CubeMapFace>(face), level, nullptr,
+                               colors.data(), 0, static_cast<int>(colors.size()));
+
+                offset += static_cast<std::size_t>(blockBytes);
+                levelSize = std::max(1, levelSize / 2);
+            }
+        }
+        return result;
+    }
+}

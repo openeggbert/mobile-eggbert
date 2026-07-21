@@ -1,0 +1,1085 @@
+// SPDX-License-Identifier: MS-PL
+
+#include <gtest/gtest.h>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <stdexcept>
+#include <vector>
+
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
+#include "Microsoft/Xna/Framework/Graphics/SurfaceFormat.hpp"
+#include "Microsoft/Xna/Framework/Color.hpp"
+#include "Microsoft/Xna/Framework/Rectangle.hpp"
+#include "System/Environment.hpp"
+#include "System/IO/MemoryStream.hpp"
+#include "System/Environment.hpp"
+
+using Microsoft::Xna::Framework::Color;
+using Microsoft::Xna::Framework::Rectangle;
+using Microsoft::Xna::Framework::Graphics::GraphicsDevice;
+using Microsoft::Xna::Framework::Graphics::SurfaceFormat;
+using Microsoft::Xna::Framework::Graphics::Texture2D;
+using System::IO::MemoryStream;
+
+// -----------------------------------------------------------------------
+// Default constructor — dimensions and base-class properties
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, DefaultConstructorWidthIsZero)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getWidthProperty(), 0);
+}
+
+TEST(Texture2DTest, DefaultConstructorHeightIsZero)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getHeightProperty(), 0);
+}
+
+TEST(Texture2DTest, DefaultConstructorFormatIsColor)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getFormatProperty(), SurfaceFormat::Color);
+}
+
+TEST(Texture2DTest, DefaultConstructorLevelCountIsOne)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getLevelCountProperty(), 1);
+}
+
+// -----------------------------------------------------------------------
+// LevelCount — mipmapped vs non-mipmapped construction (Task 267)
+//
+// FNA's Texture.CalculateMipLevels formula: levels = 1 + the number of times
+// max(width, height) can be halved (integer division) before reaching 1.
+// Expected values below are computed by hand-tracing that formula.
+// -----------------------------------------------------------------------
+
+class LevelCountTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+};
+
+TEST_F(LevelCountTest, SimpleTwoArgConstructorIsAlwaysOne)
+{
+    // Texture2D(device, w, h) always matches FNA's mipMap=false delegating overload.
+    EXPECT_EQ(Texture2D(gd, 8, 8).getLevelCountProperty(), 1);
+    EXPECT_EQ(Texture2D(gd, 3, 5).getLevelCountProperty(), 1);
+    EXPECT_EQ(Texture2D(gd, 1, 1).getLevelCountProperty(), 1);
+}
+
+TEST_F(LevelCountTest, MipMapFalseIsAlwaysOneRegardlessOfSize)
+{
+    EXPECT_EQ(Texture2D(gd, 8, 8, false, SurfaceFormat::Color).getLevelCountProperty(), 1);
+    EXPECT_EQ(Texture2D(gd, 100, 37, false, SurfaceFormat::Color).getLevelCountProperty(), 1);
+    EXPECT_EQ(Texture2D(gd, 1, 1, false, SurfaceFormat::Color).getLevelCountProperty(), 1);
+}
+
+TEST_F(LevelCountTest, MipMapTrueSquarePowerOfTwo)
+{
+    EXPECT_EQ(Texture2D(gd, 1, 1, true, SurfaceFormat::Color).getLevelCountProperty(), 1);
+    EXPECT_EQ(Texture2D(gd, 2, 2, true, SurfaceFormat::Color).getLevelCountProperty(), 2);
+    EXPECT_EQ(Texture2D(gd, 4, 4, true, SurfaceFormat::Color).getLevelCountProperty(), 3);
+    EXPECT_EQ(Texture2D(gd, 16, 16, true, SurfaceFormat::Color).getLevelCountProperty(), 5);
+}
+
+TEST_F(LevelCountTest, MipMapTrueNonSquarePowerOfTwo)
+{
+    EXPECT_EQ(Texture2D(gd, 8, 4, true, SurfaceFormat::Color).getLevelCountProperty(), 4);
+    EXPECT_EQ(Texture2D(gd, 1, 8, true, SurfaceFormat::Color).getLevelCountProperty(), 4);
+}
+
+TEST_F(LevelCountTest, MipMapTrueNonPowerOfTwo)
+{
+    EXPECT_EQ(Texture2D(gd, 3, 5, true, SurfaceFormat::Color).getLevelCountProperty(), 3);
+    EXPECT_EQ(Texture2D(gd, 7, 11, true, SurfaceFormat::Color).getLevelCountProperty(), 4);
+}
+
+// -----------------------------------------------------------------------
+// Unsupported SurfaceFormat construction — must throw clearly, never
+// silently fall back to RGBA8 (Task 176 established the pattern; Task 286
+// closes the gap for the two bump-map formats it left uncovered).
+// -----------------------------------------------------------------------
+
+class UnsupportedFormatConstructionTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+};
+
+TEST_F(UnsupportedFormatConstructionTest, NormalizedByte2Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::NormalizedByte2), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, NormalizedByte4Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::NormalizedByte4), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, SingleThrows)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::Single), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, Vector2Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::Vector2), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, Vector4Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::Vector4), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, HalfSingleThrows)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::HalfSingle), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, HalfVector2Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::HalfVector2), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, HalfVector4Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::HalfVector4), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, HdrBlendableThrows)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::HdrBlendable), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, Rgba1010102Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::Rgba1010102), std::runtime_error);
+}
+
+TEST_F(UnsupportedFormatConstructionTest, Rgba64Throws)
+{
+    EXPECT_THROW(Texture2D(gd, 2, 2, false, SurfaceFormat::Rgba64), std::runtime_error);
+}
+
+// Task 290: exhaustive sweep over every SurfaceFormat value. The individual tests above already
+// cover 20 of the 27 values one at a time (added incrementally across Tasks 176/286-289); this
+// test guarantees the remaining 7 (Bgra5551/Bgra4444/Dxt3/Dxt5/Rg32/ByteEXT/UShortEXT) are covered
+// too and stays correct automatically if SurfaceFormat ever grows a 28th value, since every entry
+// is listed here explicitly rather than assumed.
+TEST_F(UnsupportedFormatConstructionTest, EverySurfaceFormatEitherWorksOrThrowsClearly)
+{
+    static const SurfaceFormat kAllFormats[] = {
+        SurfaceFormat::Color,
+        SurfaceFormat::Bgr565,
+        SurfaceFormat::Bgra5551,
+        SurfaceFormat::Bgra4444,
+        SurfaceFormat::Dxt1,
+        SurfaceFormat::Dxt3,
+        SurfaceFormat::Dxt5,
+        SurfaceFormat::NormalizedByte2,
+        SurfaceFormat::NormalizedByte4,
+        SurfaceFormat::Rgba1010102,
+        SurfaceFormat::Rg32,
+        SurfaceFormat::Rgba64,
+        SurfaceFormat::Alpha8,
+        SurfaceFormat::Single,
+        SurfaceFormat::Vector2,
+        SurfaceFormat::Vector4,
+        SurfaceFormat::HalfSingle,
+        SurfaceFormat::HalfVector2,
+        SurfaceFormat::HalfVector4,
+        SurfaceFormat::HdrBlendable,
+        SurfaceFormat::ColorBgraEXT,
+        SurfaceFormat::ColorSrgbEXT,
+        SurfaceFormat::Dxt5SrgbEXT,
+        SurfaceFormat::Bc7EXT,
+        SurfaceFormat::Bc7SrgbEXT,
+        SurfaceFormat::ByteEXT,
+        SurfaceFormat::UShortEXT,
+    };
+
+    for (SurfaceFormat format : kAllFormats)
+    {
+        if (format == SurfaceFormat::Color)
+        {
+            EXPECT_NO_THROW(Texture2D(gd, 4, 4, false, format))
+                << "SurfaceFormat::Color ordinal " << static_cast<int>(format);
+        }
+        else
+        {
+            EXPECT_THROW(Texture2D(gd, 4, 4, false, format), std::runtime_error)
+                << "SurfaceFormat ordinal " << static_cast<int>(format)
+                << " must throw std::runtime_error, not silently succeed with the wrong GPU format";
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+// getBoundsProperty
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, DefaultBoundsXIsZero)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getBoundsProperty().X, 0);
+}
+
+TEST(Texture2DTest, DefaultBoundsYIsZero)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getBoundsProperty().Y, 0);
+}
+
+TEST(Texture2DTest, DefaultBoundsWidthIsZero)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getBoundsProperty().Width, 0);
+}
+
+TEST(Texture2DTest, DefaultBoundsHeightIsZero)
+{
+    Texture2D tex;
+    EXPECT_EQ(tex.getBoundsProperty().Height, 0);
+}
+
+// -----------------------------------------------------------------------
+// Copy / move semantics
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, CopyConstructorPreservesWidth)
+{
+    Texture2D src;
+    Texture2D dst(src);
+    EXPECT_EQ(dst.getWidthProperty(), src.getWidthProperty());
+}
+
+TEST(Texture2DTest, CopyConstructorPreservesHeight)
+{
+    Texture2D src;
+    Texture2D dst(src);
+    EXPECT_EQ(dst.getHeightProperty(), src.getHeightProperty());
+}
+
+TEST(Texture2DTest, MoveConstructorPreservesWidth)
+{
+    Texture2D src;
+    Texture2D dst(std::move(src));
+    EXPECT_EQ(dst.getWidthProperty(), 0);
+}
+
+TEST(Texture2DTest, CopyAssignmentPreservesFormat)
+{
+    Texture2D src;
+    Texture2D dst;
+    dst = src;
+    EXPECT_EQ(dst.getFormatProperty(), SurfaceFormat::Color);
+}
+
+// -----------------------------------------------------------------------
+// GetData(Color*, int startIndex, int elementCount) — error guards
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, GetDataNullPtrThrowsInvalidArgument)
+{
+    Texture2D tex;
+    EXPECT_THROW(tex.GetData(nullptr, 0, 1), std::invalid_argument);
+}
+
+TEST(Texture2DTest, GetDataZeroElementCountThrowsInvalidArgument)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(buf, 0, 0), std::invalid_argument);
+}
+
+TEST(Texture2DTest, GetDataNoCpuPixelsThrowsRuntimeError)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(buf, 0, 1), std::runtime_error);
+}
+
+// Task 265: negative startIndex is rejected before it can compute a negative
+// array index (px[(startIndex+i)*4]) and read out of bounds before the start
+// of the internal cpuPixels_ buffer — mirrors the equivalent SetData guard.
+TEST(Texture2DTest, GetDataNegativeStartIndexThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(buf, -1, 1), std::out_of_range);
+}
+
+// 2-param overload delegates to 3-param; same guards apply
+TEST(Texture2DTest, GetData2ParamNullPtrThrowsInvalidArgument)
+{
+    Texture2D tex;
+    EXPECT_THROW(tex.GetData(nullptr, 1), std::invalid_argument);
+}
+
+TEST(Texture2DTest, GetData2ParamNoCpuPixelsThrowsRuntimeError)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(buf, 1), std::runtime_error);
+}
+
+// -----------------------------------------------------------------------
+// GetData(int level, const Rectangle*, Color*, int, int) — error guards
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, GetDataLevelNullDataThrowsInvalidArgument)
+{
+    Texture2D tex;
+    EXPECT_THROW(tex.GetData(0, nullptr, nullptr, 0, 1), std::invalid_argument);
+}
+
+TEST(Texture2DTest, GetDataLevelZeroElementCountThrowsInvalidArgument)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(0, nullptr, buf, 0, 0), std::invalid_argument);
+}
+
+TEST(Texture2DTest, GetDataNegativeLevelThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(-1, nullptr, buf, 0, 1), std::out_of_range);
+}
+
+// Task 265: negative startIndex is rejected before it can compute a negative
+// destination index (data[startIndex+row*w+col]) and write out of bounds
+// before the start of the caller-supplied data array — mirrors the equivalent
+// SetData(level,rect,...) guard (SetDataLevelNegativeStartIndexThrowsOutOfRange).
+TEST(Texture2DTest, GetDataLevelNegativeStartIndexThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(0, nullptr, buf, -1, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, GetDataLevelNoCpuPixelsThrowsRuntimeError)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    // getMipBufferConst(0) returns nullptr when cpuPixels_ is empty
+    EXPECT_THROW(tex.GetData(0, nullptr, buf, 0, 1), std::runtime_error);
+}
+
+// -----------------------------------------------------------------------
+// SetData(const Color*, int) — no backend, returns early (no throw)
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, SetDataSimpleWithNullDataDoesNotThrow)
+{
+    // graphicsDevice_ is null → early return, null data check skipped
+    Texture2D tex;
+    EXPECT_NO_THROW(tex.SetData(nullptr, 0));
+}
+
+TEST(Texture2DTest, SetDataSimpleWithZeroCountDoesNotThrow)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    EXPECT_NO_THROW(tex.SetData(buf, 0));
+}
+
+// -----------------------------------------------------------------------
+// SetData(int level, const Rectangle*, const Color*, int, int) — error guards
+//
+// These validations fire before touching the CPU pixel buffer, so they are
+// safe to test even on a default-constructed (zero-sized) Texture2D.
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, SetDataLevelNullDataThrowsInvalidArgument)
+{
+    Texture2D tex;
+    EXPECT_THROW(tex.SetData(0, nullptr, nullptr, 0, 1), std::invalid_argument);
+}
+
+TEST(Texture2DTest, SetDataLevelZeroElementCountThrowsInvalidArgument)
+{
+    Texture2D tex;
+    Color buf[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_THROW(tex.SetData(0, nullptr, buf, 0, 0), std::invalid_argument);
+}
+
+TEST(Texture2DTest, SetDataLevelNegativeStartIndexThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_THROW(tex.SetData(0, nullptr, buf, -1, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, SetDataNegativeLevelThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_THROW(tex.SetData(-1, nullptr, buf, 0, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, SetDataLevelExtraElementsDoesNotThrow)
+{
+    // Default texture: mipDim(0,0)=1, effective region is 1×1 = 1 pixel.
+    // Providing elementCount=2 (> region size) is allowed — XNA ignores extras.
+    Texture2D tex;
+    Color buf[2] = { Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_NO_THROW(tex.SetData(0, nullptr, buf, 0, 2));
+}
+
+TEST(Texture2DTest, SetDataLevelInsufficientElementsThrowsOutOfRange)
+{
+    // Default texture: mipDim(0,0)=1, effective region is 1×1 = 1 pixel.
+    // Providing elementCount=0 is rejected by the elementCount <= 0 guard above,
+    // but that already throws invalid_argument. Rectangle(0,0,2,1) also exceeds
+    // levelW=1 (x+w=2>1), so the rect-bounds guard fires first here — both guards
+    // throw std::out_of_range, so this still exercises the same failure mode.
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    const Rectangle wide(0, 0, 2, 1);
+    EXPECT_THROW(tex.SetData(0, &wide, buf, 0, 1), std::out_of_range);
+}
+
+// -----------------------------------------------------------------------
+// SetData(int level, const Rectangle*, ...) — rect-bounds guard (Task 266)
+//
+// Mirrors the equivalent GetData bounds check (rectangle out of texture bounds).
+// Fixes a heap buffer overflow write: prior to this guard, a caller-supplied
+// rect that exceeded the mip level's dimensions would write past the end of
+// the CPU-side mip buffer (found in the Task 261 Texture2D audit).
+// -----------------------------------------------------------------------
+
+TEST(Texture2DTest, SetDataLevelRectXOutOfBoundsThrowsOutOfRange)
+{
+    // Default texture: levelW=levelH=1 (mipDim clamp). x+w=1+1=2 > levelW=1.
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    const Rectangle rect(1, 0, 1, 1);
+    EXPECT_THROW(tex.SetData(0, &rect, buf, 0, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, SetDataLevelRectYOutOfBoundsThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    const Rectangle rect(0, 1, 1, 1);
+    EXPECT_THROW(tex.SetData(0, &rect, buf, 0, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, SetDataLevelRectNegativeXThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    const Rectangle rect(-1, 0, 1, 1);
+    EXPECT_THROW(tex.SetData(0, &rect, buf, 0, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, SetDataLevelRectNegativeYThrowsOutOfRange)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    const Rectangle rect(0, -1, 1, 1);
+    EXPECT_THROW(tex.SetData(0, &rect, buf, 0, 1), std::out_of_range);
+}
+
+TEST(Texture2DTest, SetDataLevelRectWithinBoundsDoesNotThrow)
+{
+    Texture2D tex;
+    Color buf[1] = { Color(0,0,0,0) };
+    const Rectangle rect(0, 0, 1, 1);
+    EXPECT_NO_THROW(tex.SetData(0, &rect, buf, 0, 1));
+}
+
+// -----------------------------------------------------------------------
+// SetData(const Color*, int elementCount) — undersized-buffer guard (Task 266)
+//
+// Fixes a heap buffer overflow read: prior to this guard, calling SetData
+// with fewer elements than width*height built an ImageData that claimed the
+// full texture dimensions over an undersized pixel buffer, which the EasyGL
+// backend's set_image_2d then over-read (found in the Task 261 audit).
+// Requires a real GraphicsDevice + backend, since the guard only runs when
+// graphicsDevice_ is non-null.
+// -----------------------------------------------------------------------
+
+class SetDataSimpleGuardTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+};
+
+TEST_F(SetDataSimpleGuardTest, InsufficientElementCountThrowsOutOfRange)
+{
+    Texture2D tex(gd, 4, 4);
+    Color buf[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_THROW(tex.SetData(buf, 4), std::out_of_range);
+}
+
+TEST_F(SetDataSimpleGuardTest, ExactElementCountDoesNotThrow)
+{
+    Texture2D tex(gd, 2, 2);
+    Color buf[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_NO_THROW(tex.SetData(buf, 4));
+}
+
+// -----------------------------------------------------------------------
+// Context-recovery interaction with the CPU pixel shadow (Task 270)
+//
+// GraphicsDevice::SetContextRecoveryEnabled(false) is a NOXNA optimization:
+// Texture2D::MaybeFreeCpuPixels() frees the CPU-side pixel shadow
+// (cpuPixels_) after every full upload to save ~1x texture RAM. CNA has no
+// GPU pixel-readback path, so GetData() depends entirely on that shadow —
+// once freed, GetData() throws instead of falling back to a GPU read
+// (FNA's real GetData always reads back from the GPU). See AUDIT.md,
+// "Texture2D CPU shadow storage" for the full write-up.
+// -----------------------------------------------------------------------
+
+class ContextRecoveryTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+};
+
+TEST_F(ContextRecoveryTest, GetDataWorksAfterFullUploadWithRecoveryEnabledByDefault)
+{
+    Texture2D tex(gd, 2, 2);
+    Color in[4] = { Color(1,2,3,4), Color(5,6,7,8), Color(9,10,11,12), Color(13,14,15,16) };
+    tex.SetData(in, 4);
+
+    Color out[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_NO_THROW(tex.GetData(out, 4));
+    EXPECT_EQ(out[0], in[0]);
+    EXPECT_EQ(out[3], in[3]);
+}
+
+TEST_F(ContextRecoveryTest, GetDataThrowsAfterFullUploadWithRecoveryDisabled)
+{
+    gd.SetContextRecoveryEnabled(false);
+    Texture2D tex(gd, 2, 2);
+    Color in[4] = { Color(1,2,3,4), Color(5,6,7,8), Color(9,10,11,12), Color(13,14,15,16) };
+    tex.SetData(in, 4);
+
+    Color out[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    EXPECT_THROW(tex.GetData(out, 4), std::runtime_error);
+}
+
+TEST_F(ContextRecoveryTest, PartialUpdateAfterShadowFreedThrowsInsteadOfCorruptingTexture)
+{
+    // Regression test: before the Task 270 fix, this sequence silently zeroed
+    // out the 3 untouched pixels on the GPU, because getMipBuffer(0)
+    // resurrected a fresh zero-filled shadow and SetData re-uploaded the
+    // whole level over the real (5,5,5,5) GPU content. Now it fails loudly.
+    gd.SetContextRecoveryEnabled(false);
+    Texture2D tex(gd, 2, 2);
+    Color in[4] = { Color(5,5,5,5), Color(5,5,5,5), Color(5,5,5,5), Color(5,5,5,5) };
+    tex.SetData(in, 4); // shadow freed again immediately after this upload
+
+    const Rectangle onePixel(0, 0, 1, 1);
+    Color patch(9, 9, 9, 9);
+    EXPECT_THROW(tex.SetData(0, &onePixel, &patch, 0, 1), std::runtime_error);
+}
+
+TEST_F(ContextRecoveryTest, PartialUpdateCoveringFullLevelDoesNotThrowEvenWithRecoveryDisabled)
+{
+    // A partial-update rect that happens to cover the whole level is safe:
+    // every pixel gets overwritten, so the resurrected zero-filled shadow
+    // never leaks stale content to the GPU.
+    gd.SetContextRecoveryEnabled(false);
+    Texture2D tex(gd, 2, 2);
+    Color in[4] = { Color(5,5,5,5), Color(5,5,5,5), Color(5,5,5,5), Color(5,5,5,5) };
+    tex.SetData(in, 4);
+
+    const Rectangle fullLevel(0, 0, 2, 2);
+    Color patch[4] = { Color(9,9,9,9), Color(9,9,9,9), Color(9,9,9,9), Color(9,9,9,9) };
+    EXPECT_NO_THROW(tex.SetData(0, &fullLevel, patch, 0, 4));
+}
+
+TEST_F(ContextRecoveryTest, PartialUpdateNeverThrowsWithRecoveryEnabledByDefault)
+{
+    Texture2D tex(gd, 2, 2);
+    Color in[4] = { Color(5,5,5,5), Color(5,5,5,5), Color(5,5,5,5), Color(5,5,5,5) };
+    tex.SetData(in, 4);
+
+    const Rectangle onePixel(0, 0, 1, 1);
+    Color patch(9, 9, 9, 9);
+    EXPECT_NO_THROW(tex.SetData(0, &onePixel, &patch, 0, 1));
+}
+
+// -----------------------------------------------------------------------
+// FromStream — format support verification (Task 262)
+//
+// Round-trips through Texture2D::SaveAsPng/SaveAsJpeg (PNG/JPEG) and a
+// hand-built minimal file (BMP) to empirically confirm which encoded
+// formats Texture2D::FromStream can decode via the linked SDL3_image build.
+// -----------------------------------------------------------------------
+
+namespace
+{
+    // Minimal uncompressed 24bpp BMP, solid colour, no padding beyond the
+    // mandatory 4-byte row alignment. width/height must keep row bytes a
+    // multiple of 4 for this helper's simplicity (e.g. 2x2 uses 2-byte padding).
+    std::vector<std::uint8_t> BuildSolidColorBmp(int w, int h, std::uint8_t r, std::uint8_t g, std::uint8_t b)
+    {
+        const int rowBytes = w * 3;
+        const int rowPad = (4 - (rowBytes % 4)) % 4;
+        const int rowStride = rowBytes + rowPad;
+        const int pixelDataSize = rowStride * h;
+        const int pixelDataOffset = 14 + 40;
+        const int fileSize = pixelDataOffset + pixelDataSize;
+
+        std::vector<std::uint8_t> buf(static_cast<std::size_t>(fileSize), 0);
+
+        auto w32 = [&](int off, std::uint32_t v) {
+            buf[off + 0] = static_cast<std::uint8_t>(v & 0xFF);
+            buf[off + 1] = static_cast<std::uint8_t>((v >> 8) & 0xFF);
+            buf[off + 2] = static_cast<std::uint8_t>((v >> 16) & 0xFF);
+            buf[off + 3] = static_cast<std::uint8_t>((v >> 24) & 0xFF);
+        };
+        auto w16 = [&](int off, std::uint16_t v) {
+            buf[off + 0] = static_cast<std::uint8_t>(v & 0xFF);
+            buf[off + 1] = static_cast<std::uint8_t>((v >> 8) & 0xFF);
+        };
+
+        // BITMAPFILEHEADER (14 bytes)
+        buf[0] = 'B'; buf[1] = 'M';
+        w32(2, static_cast<std::uint32_t>(fileSize));
+        w32(10, static_cast<std::uint32_t>(pixelDataOffset));
+
+        // BITMAPINFOHEADER (40 bytes)
+        w32(14, 40);
+        w32(18, static_cast<std::uint32_t>(w));
+        w32(22, static_cast<std::uint32_t>(h)); // positive height => bottom-up rows
+        w16(26, 1);   // planes
+        w16(28, 24);  // bitCount
+        w32(30, 0);   // compression = BI_RGB
+
+        for (int row = 0; row < h; ++row)
+        {
+            const int base = pixelDataOffset + row * rowStride;
+            for (int col = 0; col < w; ++col)
+            {
+                buf[base + col * 3 + 0] = b;
+                buf[base + col * 3 + 1] = g;
+                buf[base + col * 3 + 2] = r;
+            }
+        }
+        return buf;
+    }
+}
+
+class Texture2DFromStreamFormatTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+
+    static bool IsCloseTo(Color c, std::uint8_t r, std::uint8_t g, std::uint8_t b, int tolerance)
+    {
+        return std::abs(c.getRProperty() - r) <= tolerance &&
+               std::abs(c.getGProperty() - g) <= tolerance &&
+               std::abs(c.getBProperty() - b) <= tolerance;
+    }
+};
+
+TEST_F(Texture2DFromStreamFormatTest, PngRoundTripDecodesCorrectSizeAndColor)
+{
+    Texture2D src(gd, 4, 4);
+    std::vector<Color> red(16, Color(255, 0, 0, 255));
+    src.SetData(red.data(), 16);
+
+    MemoryStream writeStream;
+    src.SaveAsPng(&writeStream, 4, 4);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 4);
+    EXPECT_EQ(loaded.getHeightProperty(), 4);
+    Color px[1] = { Color(0, 0, 0, 0) };
+    loaded.GetData(px, 0, 1);
+    EXPECT_TRUE(IsCloseTo(px[0], 255, 0, 0, 5)); // PNG is lossless
+}
+
+TEST_F(Texture2DFromStreamFormatTest, JpegRoundTripDecodesCorrectSizeAndColor)
+{
+    Texture2D src(gd, 4, 4);
+    std::vector<Color> green(16, Color(0, 255, 0, 255));
+    src.SetData(green.data(), 16);
+
+    MemoryStream writeStream;
+    src.SaveAsJpeg(&writeStream, 4, 4);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 4);
+    EXPECT_EQ(loaded.getHeightProperty(), 4);
+    Color px[1] = { Color(0, 0, 0, 0) };
+    loaded.GetData(px, 0, 1);
+    EXPECT_TRUE(IsCloseTo(px[0], 0, 255, 0, 40)); // JPEG is lossy — wider tolerance
+}
+
+TEST_F(Texture2DFromStreamFormatTest, BmpDecodesCorrectSizeAndColor)
+{
+    auto bytes = BuildSolidColorBmp(2, 2, 0, 0, 255); // solid blue
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 2);
+    EXPECT_EQ(loaded.getHeightProperty(), 2);
+    Color px[1] = { Color(0, 0, 0, 0) };
+    loaded.GetData(px, 0, 1);
+    EXPECT_TRUE(IsCloseTo(px[0], 0, 0, 255, 0)); // BMP is uncompressed — exact
+}
+
+// -----------------------------------------------------------------------
+// FromStream(device, stream, width, height, zoom) — resize/crop overload (Task 262)
+//
+// Source is an 8x4 (landscape) solid-colour PNG so the fit-vs-cover branch in
+// the width/height computation is exercised (matches FNA3D_Image_Load's
+// forceW/forceH/zoom logic — see Texture2D.cpp).
+// -----------------------------------------------------------------------
+
+class Texture2DFromStreamResizeTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+    std::vector<std::uint8_t> pngBytes;
+
+    void SetUp() override
+    {
+        Texture2D src(gd, 8, 4);
+        std::vector<Color> yellow(32, Color(255, 255, 0, 255));
+        src.SetData(yellow.data(), 32);
+
+        MemoryStream writeStream;
+        src.SaveAsPng(&writeStream, 8, 4);
+        pngBytes = writeStream.GetBuffer();
+    }
+};
+
+TEST_F(Texture2DFromStreamResizeTest, FitPreservesAspectRatio)
+{
+    // scaleWidth = (8>4) = true; scale = 4/8 = 0.5 -> finalW=4, finalH=2.
+    MemoryStream readStream(pngBytes.data(), static_cast<System::IO::intcs>(pngBytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream, 4, 4, false);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 4);
+    EXPECT_EQ(loaded.getHeightProperty(), 2);
+}
+
+TEST_F(Texture2DFromStreamResizeTest, ZoomFillsExactRequestedSize)
+{
+    MemoryStream readStream(pngBytes.data(), static_cast<System::IO::intcs>(pngBytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream, 4, 4, true);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 4);
+    EXPECT_EQ(loaded.getHeightProperty(), 4);
+}
+
+// -----------------------------------------------------------------------
+// SaveAsPng — round-trip verification (Task 263)
+//
+// Task 262's format tests already prove FromStream can decode a PNG produced
+// by SaveAsPng, using a single solid colour. These tests go further: error
+// guards, multi-pixel spatial correctness (catches row/column transposition
+// bugs a solid-colour test can't), alpha preservation, non-square sizes, the
+// save-time resize path, and the filename-based NOXNA overload.
+// -----------------------------------------------------------------------
+
+class SaveAsPngTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+};
+
+TEST_F(SaveAsPngTest, NullStreamThrowsInvalidArgument)
+{
+    Texture2D tex; // default-constructed; null-stream guard fires before the CPU-pixels guard
+    EXPECT_THROW(tex.SaveAsPng(nullptr, 0, 0), std::invalid_argument);
+}
+
+TEST_F(SaveAsPngTest, NoCpuPixelDataThrowsRuntimeError)
+{
+    Texture2D tex; // no SetData / backend -> cpuPixels_ is empty
+    MemoryStream stream;
+    EXPECT_THROW(tex.SaveAsPng(&stream, 0, 0), std::runtime_error);
+}
+
+TEST_F(SaveAsPngTest, RoundTripPreservesDistinctPixelsAndAlpha)
+{
+    // 2x2, four distinct colours (including a semi-transparent one) in row-major order:
+    // (0,0)=red, (1,0)=green, (0,1)=blue, (1,1)=translucent yellow.
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> pixels = {
+        Color(255, 0, 0, 255),
+        Color(0, 255, 0, 255),
+        Color(0, 0, 255, 255),
+        Color(255, 255, 0, 128),
+    };
+    src.SetData(pixels.data(), 4);
+
+    MemoryStream writeStream;
+    src.SaveAsPng(&writeStream, 2, 2);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    ASSERT_EQ(loaded.getWidthProperty(), 2);
+    ASSERT_EQ(loaded.getHeightProperty(), 2);
+
+    Color out[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    loaded.GetData(out, 0, 4);
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_EQ(out[i].getRProperty(), pixels[i].getRProperty()) << "pixel " << i;
+        EXPECT_EQ(out[i].getGProperty(), pixels[i].getGProperty()) << "pixel " << i;
+        EXPECT_EQ(out[i].getBProperty(), pixels[i].getBProperty()) << "pixel " << i;
+        EXPECT_EQ(out[i].getAProperty(), pixels[i].getAProperty()) << "pixel " << i;
+    }
+}
+
+TEST_F(SaveAsPngTest, RoundTripNonSquareSizePreservesDimensions)
+{
+    Texture2D src(gd, 3, 5);
+    std::vector<Color> magenta(15, Color(255, 0, 255, 255));
+    src.SetData(magenta.data(), 15);
+
+    MemoryStream writeStream;
+    src.SaveAsPng(&writeStream, 3, 5);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 3);
+    EXPECT_EQ(loaded.getHeightProperty(), 5);
+}
+
+TEST_F(SaveAsPngTest, SaveWithDifferentTargetSizeResizesOutput)
+{
+    // Source is 2x2; ask SaveAsPng to encode it at 6x4 — the encoded PNG should be 6x4.
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> cyan(4, Color(0, 255, 255, 255));
+    src.SetData(cyan.data(), 4);
+
+    MemoryStream writeStream;
+    src.SaveAsPng(&writeStream, 6, 4);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 6);
+    EXPECT_EQ(loaded.getHeightProperty(), 4);
+}
+
+TEST_F(SaveAsPngTest, FilenameOverloadWritesReadableFile)
+{
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> orange(4, Color(255, 128, 0, 255));
+    src.SetData(orange.data(), 4);
+
+    auto tmpDir = std::filesystem::temp_directory_path() / "cna_saveaspng_test";
+    std::filesystem::create_directories(tmpDir);
+    const std::string path = (tmpDir / "out.png").string();
+
+    src.SaveAsPng(path);
+
+    std::ifstream in(path, std::ios::binary);
+    ASSERT_TRUE(in.good());
+    std::vector<System::IO::bytecs> bytes(
+        (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    ASSERT_FALSE(bytes.empty());
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 2);
+    EXPECT_EQ(loaded.getHeightProperty(), 2);
+    Color px[1] = { Color(0, 0, 0, 0) };
+    loaded.GetData(px, 0, 1);
+    EXPECT_EQ(px[0].getRProperty(), 255);
+    EXPECT_EQ(px[0].getGProperty(), 128);
+    EXPECT_EQ(px[0].getBProperty(), 0);
+}
+
+// -----------------------------------------------------------------------
+// SaveAsJpeg — round-trip verification (Task 264)
+//
+// Mirrors the SaveAsPngTest coverage above, adapted for JPEG: lossy colour
+// tolerance instead of exact match, and no alpha preservation (JPEG has no
+// alpha channel — FNA/SDL_image round-trips it back as fully opaque).
+// Also verifies FNA_GRAPHICS_JPEG_SAVE_QUALITY is honoured (Task 261 audit
+// found CNA previously hardcoded quality=100, ignoring FNA's env var).
+// -----------------------------------------------------------------------
+
+class SaveAsJpegTest : public ::testing::Test
+{
+protected:
+    GraphicsDevice gd;
+
+    static bool IsCloseTo(Color c, std::uint8_t r, std::uint8_t g, std::uint8_t b, int tolerance)
+    {
+        return std::abs(c.getRProperty() - r) <= tolerance &&
+               std::abs(c.getGProperty() - g) <= tolerance &&
+               std::abs(c.getBProperty() - b) <= tolerance;
+    }
+};
+
+TEST_F(SaveAsJpegTest, NullStreamThrowsInvalidArgument)
+{
+    Texture2D tex;
+    EXPECT_THROW(tex.SaveAsJpeg(nullptr, 0, 0), std::invalid_argument);
+}
+
+TEST_F(SaveAsJpegTest, NoCpuPixelDataThrowsRuntimeError)
+{
+    Texture2D tex;
+    MemoryStream stream;
+    EXPECT_THROW(tex.SaveAsJpeg(&stream, 0, 0), std::runtime_error);
+}
+
+TEST_F(SaveAsJpegTest, RoundTripPreservesDistinctPixelsWithinTolerance)
+{
+    // 2x2, four distinct opaque colours in row-major order.
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> pixels = {
+        Color(255, 0, 0, 255),
+        Color(0, 255, 0, 255),
+        Color(0, 0, 255, 255),
+        Color(255, 255, 0, 255),
+    };
+    src.SetData(pixels.data(), 4);
+
+    MemoryStream writeStream;
+    src.SaveAsJpeg(&writeStream, 2, 2);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    ASSERT_EQ(loaded.getWidthProperty(), 2);
+    ASSERT_EQ(loaded.getHeightProperty(), 2);
+
+    Color out[4] = { Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0), Color(0,0,0,0) };
+    loaded.GetData(out, 0, 4);
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_TRUE(IsCloseTo(out[i], pixels[i].getRProperty(), pixels[i].getGProperty(),
+                              pixels[i].getBProperty(), 40)) << "pixel " << i;
+    }
+}
+
+TEST_F(SaveAsJpegTest, RoundTripDropsAlphaChannel)
+{
+    // JPEG has no alpha channel; a semi-transparent source must decode back fully opaque.
+    Texture2D src(gd, 1, 1);
+    Color translucent[1] = { Color(200, 100, 50, 100) };
+    src.SetData(translucent, 1);
+
+    MemoryStream writeStream;
+    src.SaveAsJpeg(&writeStream, 1, 1);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    Color px[1] = { Color(0, 0, 0, 0) };
+    loaded.GetData(px, 0, 1);
+    EXPECT_EQ(px[0].getAProperty(), 255);
+}
+
+TEST_F(SaveAsJpegTest, RoundTripNonSquareSizePreservesDimensions)
+{
+    Texture2D src(gd, 3, 5);
+    std::vector<Color> magenta(15, Color(255, 0, 255, 255));
+    src.SetData(magenta.data(), 15);
+
+    MemoryStream writeStream;
+    src.SaveAsJpeg(&writeStream, 3, 5);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 3);
+    EXPECT_EQ(loaded.getHeightProperty(), 5);
+}
+
+TEST_F(SaveAsJpegTest, SaveWithDifferentTargetSizeResizesOutput)
+{
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> cyan(4, Color(0, 255, 255, 255));
+    src.SetData(cyan.data(), 4);
+
+    MemoryStream writeStream;
+    src.SaveAsJpeg(&writeStream, 6, 4);
+    auto bytes = writeStream.GetBuffer();
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 6);
+    EXPECT_EQ(loaded.getHeightProperty(), 4);
+}
+
+TEST_F(SaveAsJpegTest, FilenameOverloadWritesReadableFile)
+{
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> orange(4, Color(255, 128, 0, 255));
+    src.SetData(orange.data(), 4);
+
+    auto tmpDir = std::filesystem::temp_directory_path() / "cna_saveasjpeg_test";
+    std::filesystem::create_directories(tmpDir);
+    const std::string path = (tmpDir / "out.jpg").string();
+
+    src.SaveAsJpeg(path);
+
+    std::ifstream in(path, std::ios::binary);
+    ASSERT_TRUE(in.good());
+    std::vector<System::IO::bytecs> bytes(
+        (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    ASSERT_FALSE(bytes.empty());
+
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+
+    EXPECT_EQ(loaded.getWidthProperty(), 2);
+    EXPECT_EQ(loaded.getHeightProperty(), 2);
+    Color px[1] = { Color(0, 0, 0, 0) };
+    loaded.GetData(px, 0, 1);
+    EXPECT_TRUE(IsCloseTo(px[0], 255, 128, 0, 40));
+}
+
+TEST_F(SaveAsJpegTest, QualityEnvVarIsHonoredWithoutThrowing)
+{
+    // FNA_GRAPHICS_JPEG_SAVE_QUALITY: verify the env-var path (Task 264 fix for the Task 261
+    // audit finding that quality was hardcoded to 100) parses and applies without throwing.
+    System::Environment::SetEnvironmentVariable("FNA_GRAPHICS_JPEG_SAVE_QUALITY", "50");
+
+    Texture2D src(gd, 2, 2);
+    std::vector<Color> red(4, Color(255, 0, 0, 255));
+    src.SetData(red.data(), 4);
+
+    MemoryStream writeStream;
+    EXPECT_NO_THROW(src.SaveAsJpeg(&writeStream, 2, 2));
+    auto bytes = writeStream.GetBuffer();
+
+    System::Environment::SetEnvironmentVariable("FNA_GRAPHICS_JPEG_SAVE_QUALITY", ""); // empty value deletes it
+
+    ASSERT_FALSE(bytes.empty());
+    MemoryStream readStream(bytes.data(), static_cast<System::IO::intcs>(bytes.size()));
+    Texture2D loaded = Texture2D::FromStream(gd, readStream);
+    EXPECT_EQ(loaded.getWidthProperty(), 2);
+    EXPECT_EQ(loaded.getHeightProperty(), 2);
+}

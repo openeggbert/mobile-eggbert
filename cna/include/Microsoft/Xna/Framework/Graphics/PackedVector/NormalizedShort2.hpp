@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: MS-PL
+#pragma once
+#include <cstdint>
+#include <algorithm>
+#include <cmath>
+#include "Microsoft/Xna/Framework/Vector2.hpp"
+#include "Microsoft/Xna/Framework/Vector4.hpp"
+#include "Microsoft/Xna/Framework/Graphics/PackedVector/IPackedVector.hpp"
+
+namespace Microsoft::Xna::Framework::Graphics::PackedVector
+{
+    /**
+     * @brief Packed vector type storing two signed normalized 16-bit integers (XY) in a 32-bit value.
+     */
+    struct NormalizedShort2 : public IPackedVectorT<uint32_t>
+    {
+        /** @brief Constructs a NormalizedShort2 with a packed value of zero. */
+        NormalizedShort2() : packedValue_(0) {}
+
+        /**
+         * @brief Constructs a NormalizedShort2 from normalized X and Y floats in [-1, 1].
+         * @param x The x component in [-1, 1].
+         * @param y The y component in [-1, 1].
+         */
+        NormalizedShort2(float x, float y) : packedValue_(Pack(x, y)) {}
+
+        /**
+         * @brief Constructs a NormalizedShort2 from a Vector2 with components in [-1, 1].
+         * @param vector Vector containing the XY components.
+         */
+        NormalizedShort2(Vector2 vector) : packedValue_(Pack(vector.X, vector.Y)) {}
+
+        /**
+         * @brief Gets the packed 32-bit value.
+         * @return The packed 32-bit value.
+         */
+        [[nodiscard]] uint32_t getPackedValueProperty() const override { return packedValue_; }
+
+        /**
+         * @brief Sets the packed 32-bit value.
+         * @param v The new packed 32-bit value.
+         */
+        void setPackedValueProperty(uint32_t v) override { packedValue_ = v; }
+
+        /**
+         * @brief Packs the XY components of a Vector4 as signed normalized 16-bit integers.
+         * @param v Vector whose XY components are packed.
+         */
+        void PackFromVector4(const Vector4& v) override { packedValue_ = Pack(v.X, v.Y); }
+
+        /**
+         * @brief Expands the packed value to a Vector4 with Z = 0, W = 1.
+         * @return The unpacked Vector4.
+         */
+        [[nodiscard]] Vector4 ToVector4() const
+        {
+            return {
+                static_cast<int16_t>( packedValue_        & 0xFFFF) / 32767.0f,
+                static_cast<int16_t>((packedValue_ >> 16) & 0xFFFF) / 32767.0f,
+                0.0f, 1.0f
+            };
+        }
+
+        /**
+         * @brief Returns true if both NormalizedShort2 values are equal.
+         * @param o The other NormalizedShort2 to compare.
+         * @return True if equal.
+         */
+        bool operator==(const NormalizedShort2& o) const { return packedValue_ == o.packedValue_; }
+
+        /**
+         * @brief Returns true if both NormalizedShort2 values are not equal.
+         * @param o The other NormalizedShort2 to compare.
+         * @return True if not equal.
+         */
+        bool operator!=(const NormalizedShort2& o) const { return !(*this == o); }
+
+    private:
+        uint32_t packedValue_;
+        static uint32_t Pack(float x, float y) {
+            auto xi = static_cast<uint16_t>(static_cast<int16_t>(std::lroundf(std::clamp(x,-1.f,1.f)*32767.f)));
+            auto yi = static_cast<uint16_t>(static_cast<int16_t>(std::lroundf(std::clamp(y,-1.f,1.f)*32767.f)));
+            return static_cast<uint32_t>(xi) | (static_cast<uint32_t>(yi) << 16);
+        }
+    };
+}

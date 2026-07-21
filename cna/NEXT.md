@@ -1,0 +1,2066 @@
+# NEXT.md — `feature/graphics` session handoff (2026-07-18)
+
+> **This section is current for `feature/graphics` (this checkout).** Everything below the
+> `---` divider that follows is stale, D3D9-branch-scoped content (`feature/dx9`) that ended up
+> merged into this file's history via `develop` — it is NOT about this branch and should not be
+> read as current status here. Left in place rather than deleted since it may still be a useful
+> historical record for the D3D9 work itself; just don't confuse it with the section below.
+>
+> ## Session summary (2026-07-17 → 2026-07-18) — read this first on a clean context
+>
+> Three large, sequential efforts landed this session, each fully merged into both
+> `feature/graphics` and `develop`, pushed to `origin`:
+>
+> 1. **`plan_cnj.md` Phase 14 completed in full** — glTF import gaps (multi-UV-set diagnostics,
+>    morph target CLI/.cnj serialization, CUBICSPLINE interpolation, DualTextureEffect occlusion
+>    fix, Draco mesh compression, angle-weighted tangent generation, `KHR_texture_transform`/
+>    `KHR_lights_punctual`/`KHR_materials_emissive_strength`), then **PBR (`PbrEffect`/
+>    `SkinnedPbrEffect`) + `SkinnedEffect.VertexColorEnabled` ported to all 7 remaining graphics
+>    backends** (Vulkan, Bgfx, SdlGpu, WebGPU unskinned-only, D3D9/D3D11/D3D12 compile-verified
+>    only). See `plan_cnj.md`'s own top banner and Phases 14A–14J for full detail — this file does
+>    not duplicate it.
+> 2. **`plan_webgpu.md` grew substantially** — render state (blend/rasterizer/cull/wireframe/
+>    scissor/viewport/sampler/depth-stencil), `RenderTarget2D`/`RenderTargetCube`, MSAA,
+>    `EnvironmentMapEffect`, real instancing, `Texture3D`, `Texture2D`/`TextureCube` `GetData()`
+>    readback, and real linear-filtered mip generation. **`plan_webgpu.md`'s own top banner has a
+>    full, current "Remaining work" summary — read it directly, don't re-derive it here.** Only
+>    genuinely open item found requiring cross-backend design work: compressed (DXT/BC) texture
+>    upload needs a shared `ImageData`/`Texture2D.cpp` change, not a backend-local fix (no CNA
+>    backend anywhere does real native compressed upload today).
+> 3. **`plan_graphics.md` Task 863 closed** — `Texture3D`/`TextureCube` now inherit `Texture`
+>    (matching FNA), closing the "cannot be sampled by any shader" architectural gap. EasyGL-only
+>    implementation (`BindTexture3D`, mirroring the existing `BindTextureCube`/Task 1081 path);
+>    Vulkan/Bgfx/WebGPU/SDL_Renderer/D3D9-12 are explicitly deferred follow-ups, not started.
+>    **Found and logged a genuine, unrelated pre-existing bug while independently re-verifying
+>    this task**: see Task 1115 below.
+>
+> **Operational notes worth knowing before continuing on this machine:**
+> - Run test/graphics-window commands with `DISPLAY=:99` (a dedicated Xvfb display), never `:0` —
+>   check `CNA_TEST_DISPLAY` in each build dir's `CMakeCache.txt` isn't stale before trusting a
+>   `ctest` run; `ctest --test-dir <dir>` also changes each test's CWD, breaking fixture-relative
+>   paths — run `CnaTests` directly from the repo root instead when in doubt.
+> - This machine is shared with other concurrent Claude Code agents — cap build parallelism at
+>   `-j4`, never `-j$(nproc)`; pause starting new heavy work at CPU Tctl ≥85°C (resume at ≤75°C,
+>   but always finish in-flight work regardless of temperature); low free RAM alone isn't urgent
+>   if swap still has headroom.
+>
+> **Remaining open items in `plan_graphics.md`** (35 `⬜` + 1 `🟨`, as of 2026-07-18 — re-grep
+> `plan_graphics.md` for `⬜|🟨` to confirm this hasn't drifted before trusting it blindly):
+>
+> **New, found this session, no architecture decision needed:**
+> - **Task 1115** — `EasyGL_AvatarRenderer_TintRouting`/`cna_test_avatar_tint_routing` fails with
+>   an almost-exact "2x expected brightness, then clamped to 255" pixel pattern — a real, specific,
+>   currently-unexplained defect (probably some tint/color value applied twice in
+>   `AvatarRenderer`'s real tint path), NOT the same bug Task 908 already fixed (that one was "no
+>   rendered content at all" from CCW culling). Confirmed pre-existing and unrelated to anything
+>   from this session (reproduces byte-identically before/after Task 863's merge). Not
+>   investigated further — needs its own dedicated task to trace where the doubling happens.
+>
+> **Real bugs on specific backends (each independently scoped, no architecture decision needed):**
+> - **869** — `GraphicsDevice` state properties (`BlendState`/`DepthStencilState`/`RasterizerState`)
+>   use value semantics instead of FNA's reference semantics.
+> - **872** — `GraphicsDevice.ReferenceStencil` isn't a real, independent, backend-connected
+>   override (Task 319 finding).
+> - **890** — `EnvironmentMapEffect` doesn't forward `DirectionalLight1`/`DirectionalLight2` on any
+>   of the 3 backends.
+> - **893** — `SkinnedEffect` doesn't forward `DirectionalLight1`/`DirectionalLight2` either.
+> - **894** — `SkinnedEffect` has no real specular highlights.
+> - **895** — `SkinnedEffect.WeightsPerVertex` is a complete GPU no-op on all 3 backends.
+> - **933** — EasyGL: a full-backbuffer `SpriteBatch` draw before any 3D draw in the same frame
+>   breaks that frame's 3D rendering entirely (see `DEFERRED.md`).
+> - **952** — Bgfx: `RenderTargetCube`'s depth buffer doesn't gate face draws (surfaced fixing
+>   Task 951's `Bgfx_RenderTargetCube_DepthFormat` crash).
+> - **917** — Bgfx occlusion queries can't measure true scene-depth visibility (shares a view/depth
+>   buffer with other submitted geometry).
+> - **1113** — `GraphicsDevice::Clear(ClearOptions, ...)` masks `DepthBuffer`/`Stencil` out of the
+>   request incorrectly depending on the active target's depth-stencil support.
+> - **1114** — Bgfx: `SetDepthTestEnabled`/`SetBlendEnabled`/`SetDepthWriteEnabled` unconditionally
+>   throw via `ThrowNo3DState()` in cases where they shouldn't.
+>
+> **Large, standalone sub-project (10 tasks, not a quick pick-up):**
+> - **10200–10209** — MojoShader: vendor `third_party/mojoshader`, a C++ wrapper around
+>   `mojoshader_effects.c`'s parser (compiled `.fxb` → technique/pass/parameter reflection), then
+>   wire it through EasyGL (GLSL)/Vulkan (needs a vendored GLSL→SPIR-V compiler, `10203`
+>   feasibility not yet decided)/Bgfx (needs its own `shaderc` investigation, `10205`), plus
+>   `Effect::Clone()` (folds in Task 883's `EffectPass::owner_` re-binding hazard), real compiled
+>   test fixtures, and docs. This is a full compiled-XNA-effect-bytecode feature, comparable in
+>   scope to a phase of its own.
+>
+> **Verification/content tasks (need real test assets, not just code):**
+> - **938/943/944** — skinned-model verification via `Content.Load<Model>` (SplitScreen,
+>   SkinningSample) and a real FBX/X skeletal-animation → CNA-schema conversion tool.
+> - **474/475/477/478** — DEFERRED, generate reference values for `BasicEffect` defaults/lighting
+>   constants and `SpriteFont.MeasureString`, plus reference screenshots for SpriteBatch/BasicEffect
+>   — all share the same documented prerequisite blocker (see each row for detail).
+>
+> **Infrastructure / lower-priority:**
+> - **919** — wire the `GraphicsSmoke` CTest label into real CI (e.g. a
+>   `.github/workflows/graphics-smoke-ci.yml`).
+> - **920** — 2 Android-NDK build regressions in the sibling `sharp-runtime` repo blocking the
+>   entire CNA/Android cross-compile.
+> - **1108** — Software backend: real per-vertex-lit CPU rasterizer path.
+> - **1109** (🟨) — regenerate/update every existing lit-scene pixel-test baseline across all
+>   touched backends once their own dispatch honors the real default.
+> - **1110** — decide scope: which `SurfaceFormat` values justify oracle coverage, and whether
+>   `Texture2D` needs new construction/`SetData` paths for them.
+>
+> ---
+
+# NEXT.md — CNA Project Handoff (`feature/dx9` branch — Direct3D 9 backend only)
+
+> **This `NEXT.md` is scoped to the D3D9 backend only, per explicit project-owner instruction
+> (2026-07-14).** This branch (`feature/dx9`, worktree `cnadx9`) is a parallel effort to the
+> established EasyGL/Vulkan/Bgfx/SDL_Renderer/WebGPU/Headless/Software/D3D11/D3D12 backends, all of
+> which are developed on other branches (`develop` and friends) and are **not tracked here**. For
+> their status, see `plan_graphics.md`, `plan_dx.md`, `plan_webgpu.md`, `plan_software.md`,
+> `plan_headless.md`, and `git log` on those branches — this file will not duplicate it, and will
+> not be updated for non-D3D9 work. Full D3D9 task-by-task detail and history lives in
+> **`plan_dx9.md`** (`D9-0`–`D9-140`); this file is a short current-state index, the same relationship
+> `plan_dx.md`/`NEXT.md` had for D3D11/D3D12 before this branch existed.
+>
+> **Status (2026-07-14): implementation authorized, Phase D9-0 spikes closed, no backend code written
+> yet.** The project owner has authorized implementation through Phase D9-13 (`plan_dx9.md`'s own
+> "Boundaries" still require asking before Phase D9-11 "custom `ShaderEffect`"; Phase D9-14 needs real
+> Windows hardware and is `needs_human`). The plan's one architectural blocker — the
+> `IGraphicsBackend`/`GraphicsBackendCreateArgs` boundary problem — is also resolved: an additive
+> extension (new optional presentation-parameter fields + a narrow device-event notification channel)
+> is approved, unblocking `D9-30`/`D9-32`/`D9-33`/`D9-34`. See `plan_dx9.md`'s top banner and "The
+> `IGraphicsBackend` boundary problem" section for the full record.
+
+---
+
+> **Separate, unrelated track — `plan_graphics.md` Phase 78 (DEFERRED.md item #11, HLSL→GLSL sample
+> shader conversion) is now FULLY COMPLETE, as of 2026-07-16 (EasyGL only).** This is completely
+> independent of the D3D work above — it unblocks samples catalogued in `plan_samples.md`
+> (`../cna-samples`' own 153-sample re-audit), not `plan_dx.md`. **Task 945 decided** (project
+> owner, 2026-07-16): manual line-by-line HLSL→GLSL porting, no `SPIRV-Cross`/`dxc` pipeline — every
+> HLSL construct hit across every shader ported turned out to be a mechanical 1:1 substitution.
+> **Task 947 is now 13/13 — every sample originally blocked purely by DEFERRED.md #11 has its
+> shader(s) ported and pixel-verified**: `NetRumble`, `PerPixelLighting`, `VertexLighting`,
+> `DistortionSample`, `NonPhotoRealistic`, `ShadowMapping`, `NormalMapping`, `BillboardSample`,
+> `ShatterEffect`, `Particles3D`, `XmlParticles`, `ShipGame`, `InstancedModel` (`BloomSample`, the
+> 14th sample under the same DEFERRED.md #11 umbrella, was already closed earlier via Task 946).
+> Along the way, 4 new backend capabilities were added and closed, all EasyGL-only, all additive
+> (Vulkan/Bgfx/SDL_Renderer untouched): **Task 1079** (wires `ShaderEffect` into `GraphicsDevice`'s
+> 3D draw path, not just `SpriteBatch`), **Task 1080** (genuinely custom vertex layouts for that
+> path, not just the 5 fixed byte-strides), **Task 1081** (`TextureCube` sampling for custom
+> shaders), **Task 1082** (real GPU hardware instancing — `glVertexAttribDivisor`-driven per-instance
+> vertex streams). **What remains is explicitly NOT `cna_graphics` scope**: the actual sample ports
+> (`.cpp`/`.hpp`/`Content/` under `../cna-samples/samples/<Name>/`) for these 13 (now-unblocked)
+> samples still need to be written in the sibling `../cna-samples` repo, tracked in that repo's own
+> plan file, not here or in `plan_graphics.md`/`plan_samples.md`. `plan_samples.md` also still has
+> ~88 other `⬜` rows unrelated to this shader-conversion track (re-verification passes, other
+> DEFERRED.md items, etc.) — untouched by this work, standing backlog. Full detail: `plan_graphics.md`
+> Task 947's own row (chronological per-shader history, discriminating-power mutation testing for
+> every one) and Tasks 1079–1082's own rows; `plan_samples.md` for the per-sample CNA-gap tracking.
+
+> **Separate, unrelated track — `feature/input` branch, `audit_input.md` remediation + full
+> phase-by-phase FNA-parity audit, in progress as of 2026-07-17.** Completely independent of the D3D9
+> work below (this `NEXT.md`/`plan_dx9.md` pair is D3D9-only) — tracked in full in `plan_input.md`,
+> not duplicated here. **Status: this plan is now CLOSED as of 2026-07-17** — Phases 0-10, 12, and 13
+> are fully closed and pushed (`P0-001..020`, `P1-001..045`, `P2-001..060`, `P3-001..045`,
+> `P4-001..070`, `P5-001..045`, `P6-001..045`, `P7-001..040`, `P8-001..040`, `P9-001..035`,
+> `P10-001..025`, `P12-001..015`, `P13-001..006` — 490/505 tasks total, 15/505 correctly `[!]`
+> Blocked (all of Phase 11, hardware-gated, never marked done speculatively), 0 remaining `[ ]`;
+> latest pushed commit `1746df1e` on `feature/input`). **Merge recommendation (P12-014): merge the
+> audit work itself; do not yet declare "Input stable"** per `docs/input-pre-merge-checklist.md`'s
+> own release gate, which requires real-hardware validation (0/15 Phase 11 checks performed) —
+> final decision is the user's. If further work on this track is wanted: Phase 11's 15 tasks need an
+> actual human at a real keyboard/mouse/controller/touchscreen (see
+> `docs/input-manual-verification-results.md`'s recording template); everything else is done. Phases
+> 8/9 left 4 persistent verification build directories in place — `cmake-build-input-easygl/`,
+> `cmake-build-input-vulkan/`, `cmake-build-input-bgfx/`, `cmake-build-input-asan/`
+> (`-DCNA_SANITIZE=address,undefined`), plus Phase 12 added `cmake-build-input-sdlrenderer/` — all
+> already anticipated in `.gitignore`, alongside the pre-existing default `cmake-build-debug/`
+> (`SDL_RENDERER`); reuse these directly for any future non-default-backend/sanitizer check.
+>
+> **IMPORTANT — separate, out-of-Input-scope finding from P9-031 (2026-07-17):** running the full
+> unfiltered `CnaTests` binary (not the Input-filtered subset) crashes reproducibly with `double free
+> or corruption (fasttop)` (SIGABRT) inside the Net subsystem's `ENetBackendTest` suite. Confirmed via
+> isolation testing this is **not an Input bug**: `ENetBackendTest.*` passes cleanly run alone; the
+> corruption requires ~800 preceding tests' allocation history to manifest, consistent with heap
+> corruption originating earlier and only detected when the allocator's consistency check next fires.
+> Every Input-filtered run this session (9 phases, dozens of invocations, including under
+> AddressSanitizer+UndefinedBehaviorSanitizer) has been 100% clean. This is a real, separate memory-
+> safety defect needing dedicated cross-subsystem bisection — flagged, not fixed, since it is unrelated
+> to and out of scope for this track. See `plan_input.md`'s P9-031 Result for full reproduction detail.
+> Each phase closes with a
+> checkpoint task (`P{N}-0XX — Phase N checkpoint and summary`) recording pass/fail counts, files
+> changed, and follow-ups — read the **last completed phase's checkpoint Result** for the most
+> efficient overview, then check `plan_input.md`'s Phase overview table for the next open phase's
+> starting task ID. Commits are per-phase (one `git commit` per closed phase); `git log --oneline` on
+> `feature/input` is the index. A whole-file status/Result consistency check (see any recent commit's
+> diff for the Python snippet, run before every commit) is a standing safety net — a prior session hit
+> an unexplained checkbox-revert bug once, never repeated since. Later phases (4-6) found dramatically
+> fewer gaps than Phases 1-3 (Phase 4 and most of Phase 5 needed **zero** code/test changes — the
+> pre-existing GamePad/Touch test suites were already exhaustive from earlier session work); when a
+> phase like that produces no diff beyond `plan_input.md` itself, that is a genuine, verified outcome
+> (each task still gets independent evidence — re-derived FNA cross-checks, not just re-reading old doc
+> claims), not a shortcut. One recurring authoring mistake to avoid: writing multi-paragraph Result text
+> by hand (via a direct `Edit` call rather than the batch Python script) has twice left stray `"`
+> line-wrap artifacts in the text — always grep `^"` after a manual multi-line edit and fix before
+> committing. Thermal pacing rule in effect: pause new heavy work (builds, large audits) at CPU Tctl
+> >=85°C, resume at <=75°C (`sensors | grep Tctl`). Test-verification note: this session's cumulative
+> `xvfb-run` usage (dozens of invocations) has caused elevated-but-non-failing `GTEST_SKIP` counts on
+> video-dependent tests in later phases (host X11/Xvfb resource pressure, not a code regression —
+> confirmed via isolated single-test sanity checks each time); zero `[  FAILED  ]` lines have appeared
+> in any run this session. If resuming this track: read `plan_input.md`'s Phase overview + the last
+> `[x]`-marked checkpoint task's Result for the exact stopping point, not this file.
+
+## 1. Project summary
+
+**CNA** is a C++23 reimplementation of the XNA 4.0 programming model
+(`Microsoft::Xna::Framework`), built on SDL3 with a pluggable graphics backend layer. This branch
+adds a **Direct3D 9** backend — see `plan_dx9.md` for the full plan. Unlike every other CNA backend,
+this one is not a coverage/parity effort: its stated goal (set by the project owner) is that a CNA
+game running on D3D9 be **indistinguishable** from the same game running on the original XNA 4.0
+runtime, verified against a real XNA 4.0 oracle running under Wine (Phase D9-A), not just "renders
+plausibly."
+
+- **Key decisions already made** (see `plan_dx9.md` design decisions 1–17 for the full rationale):
+  - Plain `Direct3DCreate9`, **not** D3D9Ex — `D3DPOOL_MANAGED` for user resources so they survive
+    `Reset()`, and the real XNA device-lost lifecycle (`DeviceLost`/`DeviceResetting`/`DeviceReset`)
+    is implemented for real, for the first time in this project.
+  - Microsoft's own XNA 4.0 Stock Effects HLSL (`BasicEffect.fx` and 5 siblings, from the FNA tree)
+    are **vendored verbatim** and compiled by CNA itself (`D3DCompile`, `vs_2_0`/`ps_2_0`) — not
+    reimplemented, not ported. The `.fxb` shipped bytecode is a verification oracle only.
+  - `D3DCommon` (shared with D3D11/D3D12) is **not** expanded — D3D9 gets its own
+    `D3D9FormatMapping`/`D3D9StateMapping`/`D3D9VertexDeclarations`.
+  - Render state, not state objects (`SetRenderState`/`SetSamplerState` sequences — no D3D9 state
+    objects exist to cache).
+  - This is the **only** CNA backend that can natively answer `GraphicsAdapter::IsProfileSupported()`
+    for real (`D3DCAPS9`) — Phase D9-10.
+- **A cross-cutting finding, not this plan's to fix**: taking XNA seriously as the spec surfaced six
+  confirmed CNA-vs-XNA divergences that exist on **every** CNA backend today (worst: CNA always
+  lights per-pixel; XNA's default is per-vertex, and CNA has no per-vertex lighting shader anywhere).
+  This plan measures and reports them (Phase D9-A6, `D9-81`); it does **not** fix them — that is a
+  `plan_graphics.md`-level, project-owner decision. See `plan_dx9.md`'s "CNA's divergences from XNA
+  4.0" section before touching any of this.
+
+---
+
+## 2. Current status
+
+### Build status
+
+| Build dir | Backend | Status |
+|---|---|---|
+| `cmake-build-d3d9` | D3D9 (Windows cross-compile, MinGW-w64) | **Verified clean 2026-07-15**: `cmake -DCNA_GRAPHICS_BACKEND=D3D9 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake -DCNA_BUILD_TESTS=ON` configures; `CNA`/`cna_backend_graphics_d3d9` and all 11 D3D9 test binaries build clean. `D3D9_Common` 29/29 + `D3D9_ShaderDispatch` 23/23 + `D3D9_Smoke` 55/55 + `D3D9_Draw` 3/3 + `D3D9_DrawEx` 17/17 + `D3D9_ShaderCache` 6/6 + `D3D9_Instanced` 4/4 + `D3D9_BlendState_Opaque`/`D3D9_BlendState_AlphaBlend`/`D3D9_DepthStencilState_StencilEnable`/`D3D9_RasterizerState_CullMode` (1 check each, reused EasyGL sources) all pass via `ctest --test-dir cmake-build-d3d9 -L D3D9` (11 CTests). A real device now creates, clears, presents, reads back pixels, resizes, recovers from a (simulated) device-lost event, round-trips real vertex/index buffer data, round-trips real 2D/cube/volume texture data (including a genuinely non-power-of-two texture), creates/binds/clears/reads back real 2D/cube/MSAA render targets, binds a real 2-target MRT set, runs a real occlusion query, applies real sampler state, creates all 66 real Microsoft stock-effect shaders through a live device, correctly replicates XNA's own shader-permutation selection logic for all 5 effects, draws its first real 3D triangle (`DrawColoredPrimitives`/`DrawIndexedColoredPrimitives`), draws real effect-aware geometry for **all 5 XNA Stock Effects** (`BasicEffect`/`AlphaTestEffect`/`DualTextureEffect`/`EnvironmentMapEffect`/`SkinnedEffect` via `DrawPrimitivesEx`/`DrawIndexedPrimitivesEx` — textured, vertex-color, multi-light and one-light vertex-lit, fog, alpha-test clip pass/fail, two-sampler doubling-blend, cube-map env-map blend, per-vertex bone-matrix skinning, all pixel-exact against hand-computed expected colors), draws real hardware-instanced geometry (`DrawInstancedPrimitivesEx` via `SetStreamSourceFreq`, CNA's own NOXNA instancing shader, two genuinely distinct per-instance transforms proven pixel-exact in one draw call), genuinely toggles the depth test/write via `SetDepthTestEnabled`/`SetDepthWriteEnabled` (a real 2026-07-15 bug fix, proven by a near/far occlusion discriminator), and reuses the same backend-agnostic EasyGL blend/depth-stencil/rasterizer-state pixel tests D3D11/Vulkan already share, all through the actual public `Game`/`GraphicsDeviceManager`/`GraphicsDevice` API (or, for the shader cache/dispatch, the backend's own real device handle or pure functions). |
+
+### Phase D9-0 — feasibility spikes: CLOSED 2026-07-14
+
+| Task | Status |
+|---|---|
+| `D9-1` — real Microsoft `d3dcompiler_47.dll` compiles all 66/66 stock-effect entry points | ✅ |
+| `D9-73` — 61/66 byte-identical to Microsoft's shipped `.fxb`; decision made (CNA compiles its own) | 🟨 (decided; 5 `PixelLighting` variants still need oracle-proof, `D9-73`'s own obligation) |
+| `D9-A1`/`D9-A2` — real XNA 4.0 runs under Wine and renders a verified `CornflowerBlue` triangle | ✅ |
+| `D9-2` — confirm minimum link set (`d3d9` alone, no `dxguid`) | ✅ |
+| `D9-3` — Wine+DXVK D3D9 loop end-to-end: exact pixel round-trip + full `D3DCAPS9` dump | ✅ |
+| `D9-4` — `D3DPOOL_MANAGED` genuinely `LockRect`-readable and survives `Reset()` intact | ✅ |
+| `D9-5` — `scripts/run-wine-dxvk9.sh` (new script, DXVK-marker gate, positive+negative proven) | ✅ |
+
+**Phase D9-0 is fully closed.** Next up: Phase D9-1 (CMake integration + backend skeleton).
+
+### Phase D9-A — the XNA 4.0 oracle: D9-A1–A4 closed, D9-A5 started (31 scenes, all 5 Stock Effects + fog + all 8 AlphaTestEffect.AlphaFunction values (COMPLETE) + EnvironmentMapEffect fresnel + SkinnedEffect all 3 WeightsPerVertex values (COMPLETE) + SpriteBatch core draw path + address modes + 3 of 5 SpriteSortMode values + multi-texture batching + ALL 4 PrimitiveType values (COMPLETE)), D9-A6 CLOSED 2026-07-16 (EasyGL measured: 10/31 pixel-perfect, 21/31 diverge — see `docs/d3d9-divergence-report.md`)
+
+| Task | Status |
+|---|---|
+| `D9-A1` — stand up real XNA 4.0 under Wine | ✅ |
+| `D9-A2` — minimal XNA 4.0 reference app, no content pipeline | ✅ |
+| `D9-A3` — byte-for-byte equivalent CNA app, shared declarative scene format | ✅ |
+| `D9-A4` — `scripts/xna-diff.py`, DXVK-into-XNA-prefix prerequisite | ✅ |
+| `D9-A5` — growing scene corpus | 🟨 (31 scenes, all 5 XNA Stock Effects + `IEffectFog` + ALL 8 `AlphaTestEffect.AlphaFunction` values (`Less`/`LessEqual`/`GreaterEqual`/`Greater`/`Never`/`Always` on `PSAlphaTestLtGt`, `Equal`/`NotEqual` on `PSAlphaTestEqNe` — `AlphaTestEffect` compare-function coverage COMPLETE) + `EnvironmentMapEffect.FresnelFactor` + `SkinnedEffect` ALL 3 `WeightsPerVertex` values (`1`/`2`/`4` — `SkinnedEffect` weighting coverage COMPLETE) + `SpriteBatch` core draw path, address modes, 3 of 5 `SpriteSortMode` values, and multi-texture `FlushBatch()`-on-texture-change batching (`D9-90`/`D9-91`/`D9-92`/`D9-93` all CLOSED; `D9-93` covers `Deferred`/`BackToFront`/`FrontToBack`, `Immediate`/`Texture` explicitly scoped out — see `plan_dx9.md` D9-93's own closure note) + ALL 4 `PrimitiveType` values (`TriangleList`/`TriangleStrip`/`LineList`/`LineStrip` — `PrimitiveType` coverage COMPLETE) represented: `colored3d`, `textured_quad`, `lit_textured_quad`, `alphatest_quad`, `alphatest_less_quad`, `alphatest_equal_quad`, `alphatest_notequal_quad`, `alphatest_greaterequal_quad`, `alphatest_lessequal_quad`, `alphatest_never_quad`, `alphatest_always_quad`, `dualtexture_quad`, `envmap_quad`, `envmap_fresnel_quad`, `skinned_quad`, `skinned_twobone_quad`, `skinned_fourbone_quad`, `multilight_textured_quad`, `fog_gradient_quad`, `sprite_basic_quad`, `sprite_rotated_quad`, `sprite_flipped_quad`, `sprite_wrap_quad`, `sprite_mirror_quad`, `sprite_sortmode_deferred_quad`, `sprite_sortmode_backtofront_quad`, `sprite_sortmode_fronttoback_quad`, `sprite_multitexture_quad`, `colored_trianglestrip_quad`, `colored_linelist_quad`, `colored_linestrip_quad`, all pixel-perfect) |
+| `D9-A6` — run the corpus against CNA's other backends too | ✅ (EasyGL: 10/31 pixel-perfect, 21/31 diverge; Vulkan/D3D11 not yet measured) |
+
+Closed 2026-07-15 (`D9-A3`/`D9-A4`): built the shared declarative scene format `D9-A3`'s own text
+demanded (`tools/xna-oracle/scenes/*.scene`, minimal `key=value` text, no JSON library needed
+since the XNA-side build environment is GAC-only .NET 4.0 with no NuGet), parsed identically by
+both a rewritten, scene-driven `tools/xna-oracle/Oracle.cs` (moved from `dx9-spike/xna-oracle/`)
+and a new `tools/xna-oracle/CnaOracleRender.cpp` (built via CNA's real public `Game`/
+`GraphicsDeviceManager`/`GraphicsDevice`/`BasicEffect` API, `cna_oracle_render` CMake target, not
+a CTest — no pass/fail of its own). Installed DXVK into the XNA oracle's own Wine prefix
+(`~/.wine-cna-xna40`, `dxvk-setup install`, 32-bit `dxvk-wine32`) — `D9-A4`'s own critical
+prerequisite, confirmed by the adapter string flipping from WineD3D's spoofed `ATI Radeon HD 5600
+Series` to the real `AMD Radeon 780M (RADV PHOENIX)`, so both sides now execute through the same
+DXVK D3D9→Vulkan path. New `scripts/xna-diff.py` (needs Pillow), `--tolerance` defaults to `0`,
+mutation-verified (a 1-off-mutated PNG correctly fails at tolerance 0, correctly passes at
+tolerance 1).
+
+**Result: both oracle comparisons landed so far are pixel-perfect.** `colored3d` (`D9-A2`'s own
+original triangle) and `textured_quad` (new: `BasicEffect.TextureEnabled=true`, a tiny 2×2
+point-filtered checkerboard) each render **byte-identical** on both sides — `0/65536` pixels
+differ, max per-channel delta `0`, confirmed by full sweeps not just spot checks (including the
+exact UV=(0.5,0.5) point-filter texel-boundary pixel for `textured_quad` — both sides independently
+pick the identical texel there). Extended the scene format to a second vertex shape
+(`vertexformat=PositionColor`/`PositionTexture`) and inline procedural texture data on both sides
+for `textured_quad`. **Real bug found and fixed while writing it, in `Oracle.cs` itself**: the
+original `ParseBool` used a C# 6 expression-bodied member (`=> s == "true";"`), which the real
+in-prefix `csc.exe` (.NET Framework 4.0-era, pre-C#-6) rejected outright (`CS1002`/`CS1519`) —
+meaning `D9-A3`'s own original "pixel-perfect" claim had never actually been verified against the
+rewritten, scene-driven `Oracle.cs`, only against the old hardcoded `dx9-spike` spike. Fixed
+(ordinary block-bodied method), recompiled, re-ran `colored3d` through the real current `Oracle.cs`
+and reconfirmed `0/65536` — closing that verification gap. This is the first evidence this
+backend's `BasicEffect` TEXTURED dispatch is also genuinely indistinguishable from real XNA 4.0.
+`D9-A5`'s corpus now has 3 scenes, by design ("growing with the plan," not attempted all at once)
+— see `tools/xna-oracle/README.md`.
+
+**3rd scene, `lit_textured_quad` (2026-07-15) — also pixel-perfect.** Extended the scene format
+again to a third vertex shape (`vertexformat=PositionNormalTexture`, matching `VSInputNmTx`'s
+Position+Normal+TexCoord shape and the existing stride-32 CNA vertex layout) plus
+`ambientcolor`/`light0enabled`/`light0diffuse`/`light0direction` keys wired to
+`BasicEffect.AmbientLightColor`/`DirectionalLight0` on both sides. Deliberately dimmed the light
+(`diffuse=0.5`, no ambient) rather than a bright one — a first draft saturated to full intensity,
+making the lit result indistinguishable from the raw texture and proving nothing about whether the
+lighting math is genuinely applied; the dimmed version visibly halves the texture color
+(`(255,0,0)`→`(128,0,0)`) and still matches real XNA exactly, `0/65536` pixels differ. First
+evidence this backend's lit+textured `BasicEffect` dispatch (`D9-82b`'s own "lit+textured" checks,
+previously only hand-verified against a hand-computed expected pixel) is genuinely
+indistinguishable from real XNA 4.0.
+
+**4th scene, `alphatest_quad` (2026-07-15) — also pixel-perfect, first non-`BasicEffect` Stock
+Effect in the corpus.** Added `effect=BasicEffect`/`AlphaTestEffect` plus `alphafunction`/
+`referencealpha` keys wired to `AlphaTestEffect.AlphaFunction`/`ReferenceAlpha`, reusing the
+existing `PositionTexture` vertex shape. A 2×2 texture whose 4 texels straddle
+`ReferenceAlpha=128` (alpha `255`/`0`/`255`/`64`, `AlphaFunction=Greater`) exercises `clip()`'s
+real discard end to end — passing texels show their own color, failing texels show the clear
+color through the discard, `0/65536` pixels differ.
+
+**Real bug found and fixed live in `CnaOracleRender.cpp`, a dangling-pointer bug, not a backend
+bug.** `GraphicsDevice::DrawUserPrimitives()` reads `GpuDrawParams` from `currentEffect_`, a raw
+pointer `Effect::Apply()` sets. Adding the second effect type scoped the constructed
+`BasicEffect`/`AlphaTestEffect` inside an `if`/`else` block, destroying it at the closing brace —
+before the shared `DrawUserPrimitives()` call further down read the now-dangling pointer. Symptom:
+`textured_quad`/`lit_textured_quad` (both previously passing, unrelated to this change) started
+throwing with flags matching NEITHER scene's actual settings (stale stack memory); `colored3d`
+happened to still pass by pure allocation-timing luck, not correctness. Fixed by declaring both
+possible effect objects as `std::unique_ptr` at `Draw()`'s own top level so whichever gets
+constructed survives every draw call in the function; re-verified all 4 scenes pixel-perfect
+afterward. `Oracle.cs`'s own `Effect fx;` was never at risk (C# is GC-managed, not scope-based).
+
+**5th scene, `dualtexture_quad` (2026-07-15) — also pixel-perfect, 2nd non-`BasicEffect` Stock
+Effect, and the first scene needing a vertex shape NEITHER side had a built-in type for.** Added
+`effect=DualTextureEffect` plus `texture2*`/`diffusecolor` keys, and a new
+`vertexformat=PositionDualTexture` (Position+TexCoord0+TexCoord1, stride 28, `VSInputTx2`). Real
+XNA has no built-in dual-UV vertex struct either, so both sides define their own custom
+`IVertexType`/`VertexDeclaration` — exactly what a real game using `DualTextureEffect` has to do.
+Two 1×1 solid-color textures (white, `(100,60,20)`) + `DiffuseColor=(0.5,0.5,0.5)`: the real
+doubling-blend formula (`texture0 * texture1 * 2 * DiffuseColor`) makes the `*2*0.5` cancel out, so
+the expected result is exactly `(100,60,20,255)` — hand-derived *before* running either side,
+matching `D9-82d`'s own already-proven check value, then confirmed pixel-for-pixel, `0/65536`
+differ. Added as a third `std::unique_ptr` alongside `alphaFx`/`basicFx`, correctly avoiding a
+repeat of `alphatest_quad`'s own dangling-pointer bug — no new bug this time.
+
+**6th scene, `envmap_quad` (2026-07-15) — also pixel-perfect, 3rd non-`BasicEffect` Stock Effect,
+and a real API-surface finding (not a bug) this time.** Added `effect=EnvironmentMapEffect` plus
+`environmentmap*` keys, reusing the existing `PositionNormalTexture` shape (no new vertex format
+needed — `D9-82e`'s own finding). 1×1 base texture + 1×1 `TextureCube` (all 6 faces the same
+color, `D9-82e`'s own `reflect()`-geometry-sidestep trick) + one dim light,
+`EnvironmentMapAmount=0.5`: real formula `lerp(texture*diffuseSum, environmentMap,
+environmentMapAmount)` produced exact `(164,114,89,255)` on both sides, `0/65536` differ.
+
+**Real finding: real XNA/FNA's `EnvironmentMapEffect` implements `IEffectLights.LightingEnabled`
+via explicit interface implementation** — invisible on the concrete class's public C# surface
+(confirmed live: `emfx.LightingEnabled = ...` is a genuine `CS1061` against the real `csc.exe`;
+FNA's own source: `set { if (!value) throw new NotSupportedException(...); }` — lighting is always
+on, no game can disable it). CNA's own `setLightingEnabledProperty` already matches this exact
+behavior faithfully (getter always `true`, setter throws given `false`) — only the *visibility*
+differs (C++ has no explicit-interface-implementation hiding), not the behavior. Neither side
+calls it for this effect now, matching what a real game actually can do.
+
+**7th scene, `skinned_quad` (2026-07-15) — also pixel-perfect. MILESTONE: every one of XNA's 5
+Stock Effects is now represented in the corpus, all pixel-perfect.** Added `effect=SkinnedEffect`
+plus a fourth custom vertex shape (`vertexformat=PositionNormalTextureWeights`, stride 52,
+`VSInputNmTxWeights`, matches the existing stride-52 layout byte-for-byte — no new CNA vertex
+declaration needed, `D9-82f`'s own finding). Real XNA has no built-in skinned vertex struct either
+(same category as `DualTextureEffect`'s dual-UV gap), so both sides define their own custom type.
+Deliberately uses a single Identity bone at 100% vertex weight (`SetBoneTransforms(new[]
+{Matrix.Identity})`, hardcoded, not yet scene-configurable) — the same simplification `D9-82f`'s
+own CTest used: skinning is a mathematical no-op, so the expected math reduces to
+`lit_textured_quad.scene`'s own already-established formula, while still genuinely exercising the
+real per-vertex `BLENDWEIGHT0`/`BLENDINDICES0` upload end to end. Exact `(128,128,128,255)` on
+both sides, `0/65536` differ. Same `LightingEnabled` explicit-interface-implementation carve-out
+found for `SkinnedEffect` too (confirmed against FNA's own source) — not a new bug, a confirmation
+the same real-XNA quirk applies to both of this project's `IEffectLights`-but-always-on effects.
+
+**Also fixed proactively**: added `[StructLayout(LayoutKind.Sequential)]` to both
+`VertexPositionDualTexture` (retroactively) and the new `VertexPositionNormalTextureWeights` on
+the C# side — C#'s default "auto" struct layout does not formally guarantee field-declaration
+order is preserved in memory, which `DrawUserPrimitives<T>`'s raw-byte marshalling against an
+explicit-offset `VertexDeclaration` silently depends on. `VertexPositionDualTexture` had been
+relying on this working out in practice (all-`Vector2`/`Vector3` fields); the newly-mixed
+float+byte struct was a genuinely higher-risk case to leave unpinned. All 7 scenes re-verified
+pixel-perfect afterward, not just the new one.
+
+**8th scene, `multilight_textured_quad` (2026-07-15) — also pixel-perfect, first scene to
+genuinely exercise `BasicEffect`'s multi-light SUMMATION formula.** `D9-82b`'s own "2-light-sum"
+`ShaderIndex` bucket is a structurally different dispatch path from the "`OneLight`" bucket every
+earlier lit scene exercises — two active lights (`DirectionalLight0` diffuse `0.3`,
+`DirectionalLight1` diffuse `0.2`, same direction) sum to the exact same total dimming
+`lit_textured_quad.scene`'s own single `0.5` light already produces, matching that scene's own
+`(128,128,128,255)` byte-for-byte — proving the two lights are genuinely summed, not one silently
+overwriting the other's constant register. `DirectionalLight2` is present but explicitly disabled
+with a large nonzero diffuse (`0.9`) that must NOT contribute — confirmed it doesn't. Extended
+`light1*`/`light2*` scene keys, applied uniformly to all three lit effects
+(`BasicEffect`/`EnvironmentMapEffect`/`SkinnedEffect`). All 8 scenes re-verified pixel-perfect
+afterward.
+
+**9th scene, `fog_gradient_quad` (2026-07-15) — also pixel-perfect, first scene to exercise
+`IEffectFog` (`FogEnabled`/`FogColor`/`FogStart`/`FogEnd`), shared by all 5 Stock Effects.** Fog
+wiring added to all five effect-construction branches on both sides (`atfx`/`dtfx`/`emfx`/`skfx`/
+`bfx` in `Oracle.cs`; `alphaFx`/`dualFx`/`envMapFx`/`skinnedFx`/`basicFx` in
+`CnaOracleRender.cpp`), even though this scene itself only exercises `BasicEffect` — same
+"wire to every effect that has it, exercise from one scene" discipline scene 8 already used for
+`light1*`/`light2*`.
+
+**Required two false starts before a genuinely correct, non-trivial gradient rendered identically
+on both sides — a real finding about FogStart/FogEnd sign conventions, confirmed against FNA's own
+`EffectHelpers.SetFogVector` and `Common.fxh`'s `ComputeFogFactor` (`saturate(dot(position,
+FogVector))`).** With `World=View=Identity`: `fogVector.Z = worldView.M33*scale`,
+`fogVector.W = fogStart*scale`, `scale = 1/(fogStart-fogEnd)`, so
+`fogFactor = saturate(z*scale + fogStart*scale)`.
+- **1st draft**: vertex `z=0`(near)→`z=1`(far), `FogStart=0`/`FogEnd=1` (the "obvious" reading) →
+  `scale=-1` → `fogFactor=saturate(-z)`, which is `<=0` for all `z>=0` — every pixel clamps to 0%
+  fog. Rendered **uniformly white** on **both** real XNA and CNA: an exact `0/65536` match that
+  proved nothing, since fog was never actually applied on either side. Caught only by sampling
+  interior pixels and noticing no gradient existed — the diff tool itself cannot detect "both
+  sides agree but the feature isn't exercised."
+- **2nd draft**: flipped far vertices to `z=-1` for a genuinely negative view-space Z (XNA's
+  "camera looks down -Z" convention). Instead pushed the primitive outside D3D's valid
+  post-projection depth range `[0,w]` (`Projection` is also `Identity` here, so clip-space z **is**
+  the vertex z) — near-plane-clipped away entirely on **both** sides, rendering only clear color.
+  Also an exact match, also proving nothing.
+- **Working fix**: keep vertex z in the safe `[0,1]` range and solve for the `FogStart`/`FogEnd`
+  pair giving `fogFactor=0` at `z=0`, `fogFactor=1` at `z=1`: `FogStart=0`, `FogEnd=-1`
+  (**negative**) → `scale=1` → `fogFactor=z` directly. Produced a genuine monotonic white→grey→
+  black gradient (`(249,249,249)` near → `(127,127,127)` center → `(8,8,8)` far, sampled on the
+  real-XNA side) — confirmed **pixel-for-pixel identical** on CNA, `0/65536` differ. First evidence
+  this backend's fog dispatch is genuinely indistinguishable from real XNA 4.0, with an actual
+  varying gradient proving per-pixel computation rather than a saturated constant.
+
+All 9 scenes re-verified pixel-perfect afterward (not just the new one); full `D3D9` CTest suite
+re-run, 11/11 still green.
+
+**10th scene, `alphatest_less_quad` (2026-07-15) — also pixel-perfect, first scene to exercise a
+SECOND `AlphaTestEffect.AlphaFunction` value (`Less`), not just the single `Greater` value
+`alphatest_quad.scene` covers.** Reuses the same 2×2 texture and `ReferenceAlpha=128` threshold,
+only `AlphaFunction` changes — deliberately **flips** which texels pass vs. get discarded relative
+to the `Greater` scene, proving the compare function itself is genuinely honored (a backend that
+silently ignored `AlphaFunction` would still pass `alphatest_quad.scene` but fail this one). No
+code changes needed on either side — `Less` was already a supported `CompareFunction` value in
+both parsers.
+
+**Real finding — a PNG-encoder quirk in the oracle tooling itself, not a rendering bug.** A first
+draft used a texel with `alpha=0` for the passing top-right texel. The actual shader OUTPUT was
+byte-identical on both sides (`RGBA=(255,255,255,0)`), yet the SAVED PNG differed: real XNA's
+`Texture2D.SaveAsPng` wrote `RGB=(0,0,0)` for that exact-`alpha=0` pixel, while CNA's own PNG
+writer preserved the raw `RGB=(255,255,255)` — confirmed specific to `alpha==0` (not a general
+premultiply-before-encode behavior) because the adjacent `alpha=64` texel matched byte-for-byte on
+both sides in the same run. Fixed by changing that texel's alpha from `0` to `1` (still exercises
+the identical `Less` code path, sidesteps the encoder's fully-transparent-pixel edge case) —
+re-verified `0/65536` differ. All 10 scenes re-verified pixel-perfect afterward; full `D3D9` CTest
+suite re-run, 11/11 still green.
+
+**11th scene, `alphatest_equal_quad` (2026-07-15) — also pixel-perfect, first scene to exercise
+`AlphaFunction=Equal`, a STRUCTURALLY different pixel shader bucket from `Greater`/`Less`.**
+Confirmed against FNA's own `AlphaTestEffect.cs` source: `Less`/`LessEqual`/`GreaterEqual`/
+`Greater`/`Never`/`Always` all compile to the shared `PSAlphaTestLtGt` shader
+(`clip((a < x) ? z : w)`), while `Equal`/`NotEqual` compile to the entirely separate
+`PSAlphaTestEqNe` shader (`clip((abs(a - x) < y) ? z : w)`) — genuinely different comparison
+logic. FNA's source also gives the exact tolerance: `threshold = 0.5f / 255f` (half of one 8-bit
+integer step). The scene straddles that boundary with 4 texels: `alpha=128` (exact match to
+`ReferenceAlpha=128`, PASSES), `alpha=127`/`alpha=129` (off by `1/255`, both FAIL), `alpha=1` (far
+off, FAILS) — the pass/fail pattern was predicted before running either side, then confirmed
+pixel-for-pixel identical, `0/65536` differ. No code changes needed (`Equal` was already
+supported). All 11 scenes re-verified pixel-perfect afterward; full `D3D9` CTest suite re-run,
+11/11 still green.
+
+**12th scene, `envmap_fresnel_quad` (2026-07-15) — also pixel-perfect, first scene to genuinely
+exercise `EnvironmentMapEffect.FresnelFactor` with a real per-vertex gradient. Also fixed a real
+documentation-accuracy gap in `envmap_quad.scene` itself (not a rendering bug).** New
+`fresnelfactor` scene key wired on both sides. **Real finding**: `envmap_quad.scene`'s own comment
+claimed to test the "non-fresnel bucket", but neither side had ever actually set `FresnelFactor`
+for it, and real XNA's `EnvironmentMapEffect` constructor defaults `FresnelFactor=1` (confirmed in
+FNA's source, matched by CNA's own constructor) — meaning that scene had ACTUALLY been running the
+fresnel-ENABLED bucket the whole time. Undetected because the geometry is coincidentally
+degenerate for Fresnel: the quad sits in the same `z=0` plane as `EyePosition=(0,0,0)` (`View` is
+always `Identity`), so `viewAngle=dot(eyeVector,normal)=0` at every vertex with `normal=(0,0,1)`,
+and `pow(max(1-abs(0),0), anything)=1` regardless of the Fresnel exponent — enabled and disabled
+Fresnel produce the IDENTICAL result for that geometry. Fixed with an explicit `fresnelfactor=0`;
+re-verified `0/65536` differ, unchanged.
+
+The new scene proves the real formula (`pow(max(1-abs(dot(eyeVector,worldNormal)),0),
+FresnelFactor) * EnvironmentMapAmount`, computed per-vertex then Gouraud-interpolated). A second
+trap surfaced designing it: any single normal shared by all 4 corners of this symmetric
+origin-centered quad gives an IDENTICAL fresnelFactor everywhere (no gradient) — fixed by
+deliberately assigning DIFFERENT per-vertex normals to the top vs. bottom edge (`(0,0,1)` top →
+`fresnelFactor=1` exactly; `(1,0,0)` bottom → hand-derived `fresnelFactor≈0.29289`). With lighting
+forced to `diffuseSum=0`, result reduces to exactly `fresnelFactor * environmentMapColor` —
+sampled at the exact vertical center, predicted `≈(129.3,64.6,32.3)`, observed exactly
+`(129,65,32)` on both real XNA and CNA. All 12 scenes re-verified pixel-perfect afterward; full
+`D3D9` CTest suite re-run, 11/11 still green.
+
+**13th scene, `skinned_twobone_quad` (2026-07-15) — also pixel-perfect, first scene to exercise a
+REAL, non-degenerate 2-bone skinning blend. Also fixed the SAME category of documentation-accuracy
+gap the Fresnel scene found, this time in `skinned_quad.scene` itself.** New
+`weightspervertex`/`bone1translate` scene keys; the vertex line format extended from 10 to an
+optional 12 columns (a second `boneindex,boneweight` pair), backward compatible with existing
+10-column lines. **Real finding**: `skinned_quad.scene`'s own comment claimed `WeightsPerVertex=1`,
+but that property was never actually set, and real XNA's `SkinnedEffect` defaults
+`WeightsPerVertex=4` (confirmed in FNA's source, matched by CNA) — so that scene had ACTUALLY been
+running the `FourBones` bucket the whole time, harmless only because its single-pair vertex data
+leaves weights `[1..3]=0`. Fixed with an explicit `weightspervertex=1`, now genuinely exercising
+the `OneBone` bucket; re-verified `0/65536` differ, unchanged.
+
+The new scene's formula (confirmed against FNA's own `SkinnedEffect.fx`): `skinning = Σ
+Bones[Indices[i]] * Weights[i]`, a literal weighted sum of raw bone matrices. Bone 0 = Identity,
+Bone 1 = `Translate(0.4,0,0)`, weights `0.5/0.5` — since both bones share the same Identity
+rotation/scale part, the blend is exactly `Translate(0.2,0,0)`, a pure rightward shift of the
+whole quad by `0.2` NDC units, normal (and lighting) unaffected. Sampled at the predicted shifted
+boundaries: the original left edge correctly shows clear color, the lit `(128,128,128,255)` color
+begins exactly at the shifted position, and clear color resumes exactly past the shifted right
+edge — confirmed identical on both sides. All 13 scenes re-verified pixel-perfect afterward; full
+`D3D9` CTest suite re-run, 11/11 still green.
+
+**14th scene, `alphatest_notequal_quad` (2026-07-15) — also pixel-perfect, first scene to exercise
+`AlphaFunction=NotEqual`, the negation of `alphatest_equal_quad.scene` within the SAME
+`PSAlphaTestEqNe` shader bucket.** Confirmed against FNA's own `AlphaTestEffect.cs` source:
+`NotEqual` uses the identical `abs(a - x) < y` comparison as `Equal`, only the pass/fail branch
+targets are swapped. Reuses `alphatest_equal_quad.scene`'s exact texture/threshold, only
+`AlphaFunction` changes — deliberately flips every texel's pass/fail (the exact-match `alpha=128`
+texel now FAILS; the three near/far-miss texels now PASS), confirmed pixel-for-pixel identical.
+No code changes needed (`NotEqual` already supported). This completes coverage of both
+compare-function directions on both real pixel shader buckets (`Greater`/`Less` on
+`PSAlphaTestLtGt`, `Equal`/`NotEqual` on `PSAlphaTestEqNe`). All 14 scenes re-verified
+pixel-perfect afterward; full `D3D9` CTest suite re-run, 11/11 still green.
+
+**15th/16th scenes, `alphatest_greaterequal_quad`/`alphatest_lessequal_quad` (2026-07-15) — also
+pixel-perfect, exercise `GreaterEqual`/`LessEqual`, which share the `PSAlphaTestLtGt` bucket with
+`Greater`/`Less` but differ from them specifically at the EXACT boundary value.** Confirmed
+against FNA's own `AlphaTestEffect.cs`: `GreaterEqual` sets `alphaTest.X = reference - threshold`
+(vs. `Greater`'s `reference + threshold`); `LessEqual` sets `reference + threshold` (vs. `Less`'s
+`reference - threshold`) — a texel whose alpha exactly equals `ReferenceAlpha` PASSES under the
+`-Equal` variant but would be DISCARDED under the plain variant. Both scenes reuse
+`alphatest_equal_quad.scene`'s own texture (`alpha=128,127,129,1`) specifically because it already
+has a texel at the exact `128` boundary — `alphatest_quad.scene`'s own texture never lands exactly
+on `128`, so it could not distinguish these pairs at all. Both scenes' pass/fail patterns were
+predicted before running either side, then confirmed pixel-for-pixel identical, `0/65536` differ
+each. No code changes needed. Together these complete coverage of all 4 alpha-value-dependent
+`PSAlphaTestLtGt` values; only alpha-value-independent `Never`/`Always` remain unrepresented in
+that bucket. All 16 scenes re-verified pixel-perfect afterward; full `D3D9` CTest suite re-run,
+11/11 still green.
+
+**17th/18th scenes, `alphatest_never_quad`/`alphatest_always_quad` (2026-07-15) — also
+pixel-perfect, COMPLETE ALL 8 REAL XNA `AlphaTestEffect.AlphaFunction` VALUES IN THE CORPUS.**
+Confirmed against FNA's own `AlphaTestEffect.cs`: `Never` sets both branch targets negative —
+`clip((a < x) ? z : w)` evaluates to `clip(-1)` unconditionally, discarding every fragment
+regardless of alpha; `Always` sets both targets positive, `clip(1)` unconditionally, never
+discarding anything. Both scenes reuse `alphatest_quad.scene`'s exact texture
+(`alpha=255,1,255,64`) unchanged — under `Never`, all 4 texels (including the `alpha=255` ones
+that would normally pass `Greater`) are discarded, rendering pure clear color everywhere; under
+`Always`, all 4 texels (including the `alpha=1`/`alpha=64` ones that would normally fail
+`Greater`) survive and show their own raw color. Confirmed pixel-for-pixel identical, `0/65536`
+differ each. No code changes needed. **This closes out `AlphaTestEffect`'s entire
+compare-function surface**: `Less`/`LessEqual`/`GreaterEqual`/`Greater`/`Never`/`Always` on
+`PSAlphaTestLtGt`, `Equal`/`NotEqual` on `PSAlphaTestEqNe` — all 8 real XNA `AlphaFunction`
+values now independently verified against the real reference implementation. All 18 scenes
+re-verified pixel-perfect afterward; full `D3D9` CTest suite re-run, 11/11 still green.
+
+**19th scene, `skinned_fourbone_quad` (2026-07-15) — also pixel-perfect, first scene to exercise
+a REAL, non-degenerate 4-bone skinning blend, completing coverage of all 3 real
+`WeightsPerVertex` values.** Extended the vertex line format to an optional 16 columns (a 3rd/4th
+`boneindex,boneweight` pair), backward compatible. New `bone2translate`/`bone3translate` scene
+keys. All four bones are pure translations (same Identity rotation/scale trick
+`skinned_twobone_quad.scene` used): `Bone 0=Identity` (weight `0.4`), `Bone 1=Translate(0.4,0,0)`
+(weight `0.3`), `Bone 2=Translate(0,0.2,0)` (weight `0.2`), `Bone 3=Translate(0,-0.1,0)` (weight
+`0.1`). Hand-derived blend: `0.4*(0,0,0)+0.3*(0.4,0,0)+0.2*(0,0.2,0)+0.1*(0,-0.1,0) =
+(0.12,0.03,0)` exactly — a genuine TWO-AXIS shift (unlike the 2-bone scene's pure-X shift),
+proving all four weighted terms are summed correctly. Sampled at the predicted shifted
+boundaries in both X and Y, confirmed identical on both real XNA and CNA. All 19 scenes
+re-verified pixel-perfect afterward; full `D3D9` CTest suite re-run, 11/11 still green.
+
+**Update 2026-07-15: `SpriteBatch` is no longer an open candidate here** — Phase D9-9
+(`D9-90`/`D9-91`/`D9-92`/`D9-93`) is now fully CLOSED (7 new scenes total:
+`sprite_basic_quad`/`sprite_rotated_quad`/`sprite_flipped_quad`/`sprite_wrap_quad`/
+`sprite_mirror_quad`/`sprite_sortmode_deferred_quad`/`sprite_sortmode_backtofront_quad`/
+`sprite_sortmode_fronttoback_quad`, all pixel-perfect), see Phase D9-9's own section below for
+the full record — including a real D3D9 backend bug (`BuildMatrixTransformEXT`'s Z-row clipping
+away any nonzero `layerDepth` sprite) found and fixed via `D9-93`. Render targets are now a
+documented BLOCKER (see §4's own "New blocker found 2026-07-15"), not a simple next candidate —
+do not re-attempt until root-caused. A genuine `SurfaceFormat` sweep needs new CNA `Texture2D`
+API surface (a generic `SetData<T>` matching real XNA's own, since the current C++ API is
+`Color`-only) before non-`Color` formats can even be exercised through the oracle — also not a
+simple "add a scene" task.
+
+### Phase D9-1 — CMake integration and skeleton: CLOSED 2026-07-14
+
+| Task | Status |
+|---|---|
+| `D9-10` — `D3D9` added to all 7 `CMakeLists.txt` `"D3D12"` sites, minus one real correction | ✅ |
+| `D9-11` — `D3D9GraphicsBackend` skeleton (22 pure virtuals + 10 silently-empty ones handled) | ✅ |
+| `D9-12` — `GraphicsDevice.cpp` `#ifdef` audit | ✅ (zero changes needed) |
+
+**Phase D9-1 is fully closed.** `D9-10` found one real, worth-fixing gap in this plan's own text: it
+described CMake line 288 as "a second Windows-only-related OR chain" needing a D3D9 sibling, but that
+line is actually the `D3DCommon` shared-core conditional — adding D3D9 there would have violated
+design decision 12 ("`D3DCommon` is not expanded"). Left untouched, with an explanatory comment;
+`plan_dx9.md`'s own `D9-10` row now records the correction. Line 392 (the `CNA` circular-link `OR`
+chain) was also deliberately left out of D3D9's `OR` chain — nothing calls back into a CNA-defined
+symbol yet (that's `D9-112`, Phase D9-11, ask-first).
+
+### Phase D9-2 — mapping layer: CLOSED 2026-07-14 (one row 🟨)
+
+| Task | Status |
+|---|---|
+| `D9-20` — `D3D9FormatMapping` (`SurfaceFormat`/`DepthFormat` → `D3DFORMAT`) | ✅ |
+| `D9-21` — `D3D9StateMapping` (7 state enums → D3D9 equivalents) | 🟨 (table done; `D3DCULL` pixel-proof against the oracle owed to `D9-84`) |
+| `D9-22` — `D3D9VertexDeclarations` (stride-keyed `D3DVERTEXELEMENT9` arrays) | ✅ (COLOR0 element type corrected `D9-82`, see that row) |
+| `D9-23` — `D3D9_Common` CTest, mutation-verified | ✅ (28/28 checks) |
+
+**Phase D9-2 is closed** (one honestly-flagged partial, not a blocker). Two non-obvious findings
+worth knowing before touching this code: **`SurfaceFormat::Color` → `D3DFMT_A8B8G8R8`, NOT
+`D3DFMT_A8R8G8B8`** (D3D9's channel-order naming reads MSB→LSB, opposite DXGI's convention — get this
+backwards and every Color-format texture samples with R/B swapped); and **`Rgba1010102` →
+`D3DFMT_A2B10G10R10`, NOT the superficially-similar `D3DFMT_A2R10G10B10`** (that one has no DXGI
+equivalent at all — different alpha-bit position). Both verified against Microsoft's own published
+D3D9→DXGI legacy-format table, not derived by name resemblance. Next up: Phase D9-3 (device, present,
+device-lost).
+
+### Phase D9-3 — device, present, device-lost: ALL 5 rows closed (D9-32/D9-34 honestly 🟨)
+
+| Task | Status |
+|---|---|
+| `D9-30` — real `Direct3DCreate9`/`GetDeviceCaps`/`CreateDevice` with real presentation parameters | ✅ |
+| `D9-31` — `Clear` + all 6 `Clear*` combos + `Present` + `ReadBackbuffer`, each pixel-verified | ✅ (`D3D9_Smoke`) |
+| `D9-32` — enforce `GraphicsProfile` floor at construction | 🟨 (shader-model floor real; full Reach/HiDef table is `D9-100`'s job) |
+| `D9-33` — window resize via device `Reset()` | ✅ (mechanism + dedicated 64×64→96×80 test, Check L) |
+| `D9-34` — XNA device-lost lifecycle | 🟨 (real mechanism + real event order proven via `DebugSimulateContextLoss`; genuine driver-triggered loss + event-payload-vs-real-XNA fidelity are `D9-A`/`D9-140`'s own jobs) |
+
+**Phase D9-3 is now fully closed** (both 🟨 rows have named, honest, out-of-this-plan's-current-reach
+gaps, not missed work). `D9-34`: `Present()` detects real `D3DERR_DEVICELOST`, fires `DeviceLost`;
+`PollDeviceLost()` polls `TestCooperativeLevel()` until `D3DERR_DEVICENOTRESET`, then
+`PerformResetRecovery()` fires `DeviceResetting`, calls a real `Reset()`, restores the viewport, fires
+`DeviceReset`. Since DXVK will rarely lose the device naturally, the full sequence was exercised
+deterministically via the pre-existing `DebugSimulateContextLoss()`/`DebugRestoreContext()` test
+channel (`D3D9_Smoke` Check M, 8 new checks) — real event counts/order, a real `Clear()` throwing the
+real XNA `DeviceLostException` while lost, a real `Reset()` call during recovery, and the device
+genuinely rendering again afterward. Also fixed a separate, pre-existing gap found along the way:
+`GraphicsDevice::getGraphicsDeviceStatusProperty()` was hardcoded `return
+GraphicsDeviceStatus::Normal;` always — now tracks the real backend-reported state.
+
+**Two real, unplanned findings surfaced while closing D9-30/D9-31, both fixed in place:**
+
+1. **D3D9 rejects `SurfaceFormat::Color`'s own `D9-20` back-buffer format.** DXVK's D3D9
+   implementation (correctly matching real D3D9 behavior) refused `D3DFMT_A8B8G8R8` as a *swap-chain*
+   format — that format is legal for textures but D3D9 restricts the primary back buffer to a small
+   set of display-compatible formats. Fixed with a back-buffer-specific substitution to `A8R8G8B8`
+   (`ReadBackbuffer()` already handles both byte orders). Not a DXVK quirk — a real, confirmed D3D9
+   API restriction, documented in `D3D9GraphicsBackend.cpp`.
+2. **`GraphicsDevice::Reset()` never told an already-constructed backend about updated back-buffer/
+   depth-stencil/fullscreen settings** — only virtual resolution and MSAA were re-pushed. This matters
+   because `Game` typically constructs its `GraphicsDevice` (and backend) with *default*
+   `PresentationParameters`, before `GraphicsDeviceManager.ApplyChanges()` ever applies the game's real
+   preferences. Fixed with one more small additive `IGraphicsBackend` method,
+   `UpdatePresentationFormatEXT()` (empty default; every other backend ignores it unchanged) — the
+   same category of fix as the already-approved boundary-problem resolution, not a new architectural
+   decision.
+
+**A third finding forced Phase D9-6 (render states) in far earlier than planned.**
+`GraphicsDevice`'s own constructor unconditionally pushes `BlendState::Opaque`/
+`DepthStencilState::Default`/`RasterizerState::CullCounterClockwise` and the viewport (Task 896/955) —
+meaning `ApplyBlendState`/`SetBlendFactor`/`ApplyDepthStencilState`/`SetReferenceStencil`/
+`ApplyRasterizerState`/`SetViewport`/`SetScissorRect` could not stay `NotYetImplemented()` stubs for
+*any* device to finish constructing, regardless of this plan's own phase ordering. All are now real
+(`D3DRS_*` `SetRenderState()` sequences via the `D9-21` mapping tables — see §2's Phase D9-6 entry
+below). Along the way, also found that `D9-11`'s own "10 silently-empty virtuals" count missed 4 more
+(`ApplyBlendState`/`ApplyDepthStencilState`/`ApplyRasterizerState`/`ApplySamplerState`) because their
+`{}` defaults span multiple lines, invisible to a single-line `grep`; `ApplySamplerState` now throws
+`NotYetImplemented()` like the original 10 (nothing forced it in early — no texture/sampler work
+exists yet).
+
+### Phase D9-6 — render states: ALL 5 rows closed (D9-60/D9-62 honestly 🟨)
+
+| Task | Status |
+|---|---|
+| `D9-60` — `ApplyBlendState`/`SetBlendFactor` | 🟨 (real; `D3DRS_COLORWRITEENABLE` genuinely out of scope — see plan) |
+| `D9-61` — `ApplyDepthStencilState`/`SetReferenceStencil` | ✅ |
+| `D9-62` — `ApplyRasterizerState`/`SetScissorRect`/`SetViewport` | 🟨 (real; oracle pixel-proof owed to `D9-84`, same as `D9-21`'s own `D3DCULL` obligation) |
+| `D9-63` — `ApplySamplerState` | ✅ |
+| `D9-64` — reuse backend-agnostic state CTest sources | ✅ |
+
+`D9-64` closed 2026-07-15: reused the same 4-test subset D3D11 established
+(`easygl_blendstate_opaque_test.cpp`/`easygl_blendstate_alphablend_test.cpp`/
+`easygl_depthstencilstate_stencil_enable_test.cpp`/`easygl_rasterizerstate_cullmode_test.cpp`,
+verbatim, unmodified) as new `D3D9_BlendState_Opaque`/`D3D9_BlendState_AlphaBlend`/
+`D3D9_DepthStencilState_StencilEnable`/`D3D9_RasterizerState_CullMode` CTests. **Found and fixed
+two real, pre-existing D3D9 backend bugs along the way** (both mutation-verified, neither an
+EasyGL-test workaround): `SetDepthTestEnabled`/`SetDepthWriteEnabled` were silent-throw stubs since
+`D9-11`'s original skeleton, never wired up — same class of bug as D3D11's own 2026-07-14
+`SetDepthTestEnabled` fix (commit `191c28f1`), now direct `SetRenderState(D3DRS_ZENABLE/
+ZWRITEENABLE)` calls (`SetBlendEnabled` made a deliberate no-op, matching D3D11/D3D12); and
+`UpdatePresentationFormatEXT()` deferred applying a changed `DepthStencilFormat` until the next
+`Present()`, causing `Clear()` to fail with `D3DERR_INVALIDCALL` on any test that draws
+depth/stencil content on the literal first frame (every pre-existing D3D9 test worked around this
+with a `frame_++ < 1` skip; the reused EasyGL tests don't) — fixed by applying eagerly inside
+`UpdatePresentationFormatEXT()` itself, within the interface's own documented allowance. New
+`D3D9_Smoke` Check Z (2 checks, ported from D3D11's own identical near/far depth-test proof)
+proves the `SetDepthTestEnabled` fix is real. Full D3D9 CTest suite: 11/11 binaries green.
+
+Real, confirmed finding: D3D9's `D3DRS_DEPTHBIAS`/`SLOPESCALEDEPTHBIAS` are floats, and XNA's own
+float `DepthBias`/`SlopeScaleDepthBias` map through with **no unit conversion** (unlike D3D11, which
+needs float→`INT` rounding) — `SetRenderState()` still takes a `DWORD` parameter, so the float bits
+are reinterpreted (`std::bit_cast`), not numerically converted.
+
+`D9-63` (`ApplySamplerState`, closed once `D9-50`'s real textures made it meaningful): plain
+`SetSamplerState()` calls (design decision 11 — no D3D9 sampler state objects), using the `D9-21`
+mapping tables. Slot bound-checked against the real `D3DCAPS9::MaxSimultaneousTextures`, not a
+hardcoded 16. `D3DSAMP_SRGBTEXTURE` is genuinely out of scope — `IGraphicsBackend::ApplySamplerState()`'s
+own signature carries no sRGB parameter at all, same category of pre-existing interface gap `D9-60`
+already found for `D3DRS_COLORWRITEENABLE`. New `D3D9_Smoke` Check Y (2 checks): `SetSamplerState()`
+values read back directly via `GetSamplerState()` (no draw call needed) confirm an exact match; an
+out-of-range slot silently no-ops. Mutation-verified (hardcoded `D3DSAMP_ADDRESSU` to ignore the
+requested value, confirmed exactly that assertion went red). `D3D9_Smoke` now 53/53.
+
+### Phase D9-4 — buffers: D9-40/D9-41/D9-42 CLOSED
+
+| Task | Status |
+|---|---|
+| `D9-40` — `D3D9VertexBufferBackend` | ✅ |
+| `D9-41` — `D3D9IndexBufferBackend`, 16-bit and 32-bit, `CreateIndexBuffer32()` explicit | ✅ |
+| `D9-42` — byte-exact round-trip tests | ✅ (folded into D9-40/41's own checks) |
+
+Real architectural finding, not anticipated by this row's own plan text: `D3DUSAGE_DYNAMIC` requires
+`D3DPOOL_DEFAULT` (D3D9 forbids `DYNAMIC` with `POOL_MANAGED`), so these buffers do **not** survive a
+device `Reset()` the way ordinary `D3DPOOL_MANAGED` resources do. New `ID3D9DefaultPoolResourceEXT`
+interface + a small registry on `D3D9GraphicsBackend` lets `D9-34`'s `PerformResetRecovery()` release
+every live `D3DPOOL_DEFAULT` resource before `Reset()`; each recreates lazily on next use — real,
+authentic D3D9/XNA behavior (a `DYNAMIC` buffer's content genuinely does not survive `DeviceReset` in
+real XNA either). Mutation-verified: temporarily broke `CreateIndexBuffer32()` to build a 16-bit
+buffer instead — caught immediately (a real, uncaught exception from the existing type-mismatch
+guard), reverted, reconfirmed green. Also confirmed and fixed the exact "pointer-inequality is not
+sound proof of recreation" false-negative this project's own D3D12 work already found once (see
+`plan_dx9.md`'s `D9-40` row). `D3D9_Smoke` is now 30/30 checks.
+
+### Phase D9-5 — textures/render targets/readback: FULLY CLOSED (all 7 rows)
+
+| Task | Status |
+|---|---|
+| `D9-50` — `D3D9TextureBackend` (`IDirect3DTexture9`, `D3DPOOL_MANAGED`), mip levels, sub-rect `SetData` | ✅ |
+| `D9-51` — `D3D9TextureCubeBackend`/`D3D9Texture3DBackend`, volume support gated on real `D3DCAPS9` | ✅ |
+| `D9-52` — `GetData()` for 2D/cube/3D | ✅ (found empirically: 2D has none to implement — `Texture2D::GetData()` is CPU-shadow-based, same as D3D11; cube/3D genuinely delegate to the backend and are real `LockRect`/`LockBox` reads) |
+| `D9-53` — `D3D9RenderTargetBackend`/`D3D9RenderTargetCubeBackend` (`D3DUSAGE_RENDERTARGET`, `D3DPOOL_DEFAULT`, real MSAA) | ✅ |
+| `D9-54` — MRT via `SetRenderTarget(i, surface)`, capped at `NumSimultaneousRTs`, over-request throws | ✅ |
+| `D9-55` — `D3D9OcclusionQueryBackend` | ✅ |
+| `D9-56` — NPOT handling driven by `D3DPTEXTURECAPS_POW2`/`NONPOW2CONDITIONAL` | ✅ |
+
+New `include/`/`src/CNA/Internal/Backends/D3D9/D3D9Textures.hpp`+`.cpp`. All three texture backends use
+`D3DFMT_A8B8G8R8`/`D3DPOOL_MANAGED` (RGBA8 storage only, same simplification D3D11 already documents —
+`surfaceFormat` accepted for signature compatibility, not honored). Since `D3DPOOL_MANAGED` (not
+`DEFAULT`), none of these register with the `D9-40` device-lost registry — they survive `Reset()`
+automatically, same as `D9-4`'s own spike found. Cube-face order (0..5 = +X,-X,+Y,-Y,+Z,-Z) matches
+D3D9's own native `D3DCUBEMAP_FACES` enum order, so no face-remapping table is needed. Volume-texture
+creation is gated on `D3DCAPS9::MaxVolumeExtent > 0`, cube-map creation on
+`D3DPTEXTURECAPS_CUBEMAP` — both report supported on this dev environment's DXVK device, so `D3D9_Smoke`
+Check R exercises the real creation path for both, not just the capability-gate branch (the
+unsupported/`nullptr` branch is exercised by construction but not provably reachable without
+lesser-capable hardware — an honest gap, not a hidden one). Wired into `D3D9GraphicsBackend::CreateTexture()`/
+`CreateTextureCube()`/`CreateTexture3D()` (previously stubs/inherited `nullptr` defaults). `D3D9_Smoke`
+Checks Q/R (6 new checks) verify exact-byte round-trips via direct `LockRect`/`LockBox` on the
+`D3DPOOL_MANAGED` resources themselves — no staging-texture copy needed, unlike D3D11's equivalent
+check. Mutation-verified (see §3). `D3D9_Smoke` now 36/36.
+
+New `include/`/`src/CNA/Internal/Backends/D3D9/D3D9RenderTargets.hpp`+`.cpp` (`D9-53`).
+`D3D9RenderTargetBackend`/`D3D9RenderTargetCubeBackend`, both `D3DPOOL_DEFAULT` and registered with the
+`D9-40` device-lost registry (unlike the plain `D9-50` textures) — released before `Reset()`, lazily
+recreated on the next `BindAsRenderTarget()`/`BindAsRenderTargetFace()` call. Real MSAA, clamped via
+`IDirect3D9::CheckDeviceMultiSampleType()` (all-or-nothing, no step-down ladder — matches D3D11's own
+precedent); an MSAA target resolves into its sampleable texture via `StretchRect` on unbind. Cube
+render targets don't support MSAA (matches D3D11's own precedent). Mip auto-generation is NOT
+implemented (named gap). Three real, unplanned findings, all fixed: (1) the resize path
+(`EnsureDeviceSize()`) never released `D3DPOOL_DEFAULT` resources before `Reset()` — only the
+device-lost path did; a real D3D9 requirement, invisible until this task actually created one during
+a resize-adjacent test; (2) a cached depth-stencil-surface `ComPtr` is itself an app-held reference to
+a losable resource, and must be released before every `Reset()` too (caught immediately by DXVK's own
+"still has alive losable resources" diagnostic); (3) `IGraphicsBackend::SetRenderTargetCubeFace()`'s
+inherited default never actually unbinds a cube target for real (it only knows the 2D-only
+`currentCustomRT_` tracking) — fixed with an explicit `D3D9GraphicsBackend::SetRenderTargetCubeFace()`
+override and a second `currentCustomCubeRT_` field. `D3D9_Smoke` Checks S/T/U (6 new checks): 2D
+target, cube target, and MSAA target, each create/bind/Clear/readback (via `GetRenderTargetData()`,
+since a render-target surface is not directly `Lockable`)/unbind-restores-back-buffer. Mutation-verified
+(dropped the MSAA resolve `StretchRect` call — exactly Check U's resolve assertion went red, nothing
+else). `D3D9_Smoke` now 43/43.
+
+`D9-54` (MRT): real `D3D9GraphicsBackend::SetRenderTargets(rts, count)` (`SetRenderTarget(i, surface)`
+for `i=0..count-1`, unused slots up to `NumSimultaneousRTs` explicitly disabled). Over-request throws
+`std::runtime_error` naming both counts (design decision 13) — deliberately **not** matching
+D3D11/D3D12's own silent-clamp precedent, the exact invisible-capability trap this authenticity-focused
+backend does not accept. "Same bit depth"/"no independent blending" are trivially satisfied by this
+project's existing simplifications (every target is `D3DFMT_A8B8G8R8`; blend state is one global
+`SetRenderState()` sequence) — noted, not actively coded. Real, unplanned finding: an MRT bind is not
+representable by the existing single-pointer `currentCustomRT_`/`currentCustomCubeRT_` tracking (same
+gap D3D11's own `SetRenderTargets()` notes), so unbinding via `SetRenderTargets(nullptr, 0)` →
+`SetRenderTarget2D(nullptr)` was silently relying on `UnbindAsRenderTarget()` to restore the back
+buffer — which never fires when nothing was tracked. Fixed by making
+`RestoreBackBufferRenderTargetEXT()` unconditional in the `!rt` branches of `SetRenderTarget2D()`/
+`SetRenderTargetCubeFace()` (idempotent in the ordinary case, the real fix for MRT). New `D3D9_Smoke`
+Check V (3 checks): a 2-target MRT bind + single `Clear()` writes the exact color into both targets'
+own surfaces, unbind restores the back buffer, and over-request throws. Mutation-verified (disabled the
+over-request guard, exactly that assertion went red). `D3D9_Smoke` now 46/46.
+
+`D9-55` (occlusion queries): new `D3D9OcclusionQueryBackend` (`IDirect3DQuery9`,
+`D3DQUERYTYPE_OCCLUSION`) — `Begin()`/`End()` → `Issue(D3DISSUE_BEGIN)`/`Issue(D3DISSUE_END)`;
+`IsComplete()`/`PixelCount()` → `GetData()` (mirrors `D3D11OcclusionQueryBackend`'s shape). Gated on
+the official D3D9 support-probe idiom (`CreateQuery(type, nullptr)`), not assumed. New `D3D9_Smoke`
+Check W (3 checks): real query created, polled to complete within a bounded 30-iteration loop
+(matches `D9-33`'s own resize-convergence convention), `PixelCount()` reads back `0` for a query
+wrapping only a `Clear()` (no draw path exists yet, `D9-82` — a real, honest result, not a stand-in
+for tested geometry). Mutation-verified (forced `IsComplete()` to always return `false`, confirmed
+exactly that one assertion went red — the `PixelCount()==0` assertion correctly stayed green too,
+since `GetData()` "not ready" and "genuinely 0 samples" both honestly return 0, not a masking bug).
+`D3D9_Smoke` now 49/49.
+
+`D9-56` (NPOT capability, **closes Phase D9-5 entirely — all 7 rows now done**): new NOXNA
+`D3D9GraphicsBackend::RequiresPowerOfTwoTexturesEXT()`/`NonPowerOfTwoRequiresClampAddressingEXT()`
+surface the real `D3DCAPS9::TextureCaps` `POW2`/`NONPOW2CONDITIONAL` bits rather than assuming a
+value — the exact cap XNA's own `Reach` profile "no Wrap addressing on NPOT" restriction models.
+This dev environment's DXVK device reports full, unconditional NPOT support (both helpers `false`),
+matching `D9-3`'s own original caps dump. New `D3D9_Smoke` Check X (2 checks): asserts the exact
+reported capability, then creates and round-trips a genuinely non-power-of-two (5×3)
+`D3D9TextureBackend` for real, proving no artificial POW2 restriction exists on top of more-permissive
+real hardware. Enforcing the `Reach`-profile restriction itself against a real `SamplerState`/draw
+call is deferred to `D9-10`/`D9-82` (no draw/sampler path exists yet) — an honest gap, not hidden.
+Mutation-verified (hardcoded `RequiresPowerOfTwoTexturesEXT()` to always return `true`, confirmed
+exactly the capability assertion went red and the NPOT round-trip proof was consistently skipped).
+`D3D9_Smoke` now 51/51.
+
+### Phase D9-7 — Microsoft's stock effects: vendor, compile, embed: FULLY CLOSED (D9-73 honestly 🟨)
+
+| Task | Status |
+|---|---|
+| `D9-70` — vendor the 10 Stock Effects HLSL sources verbatim | ✅ |
+| `D9-71` — offline-compile all 66 entry points to `d3d9_shaders.hpp` | ✅ |
+| `D9-72` — transcribe register annotations into `D3D9ShaderRegisters.hpp` | ✅ |
+| `D9-73` — cross-check against Microsoft's shipped `.fxb` bytecode | 🟨 (already run in Phase D9-0: 61/66 exact; re-confirmed against the real checked-in header too; 5 `PixelLighting` variants owed to `D9-84`'s oracle proof) |
+| `D9-74` — `D3D9ShaderCache` creates all 66 through a live device | ✅ |
+
+`D9-70`: all 10 files (`BasicEffect.fx`, `AlphaTestEffect.fx`, `DualTextureEffect.fx`,
+`EnvironmentMapEffect.fx`, `SkinnedEffect.fx`, `SpriteEffect.fx`, `Macros.fxh`, `Common.fxh`,
+`Lighting.fxh`, `Structures.fxh`) copied byte-for-byte from the FNA tree into
+`src/CNA/Internal/Backends/D3D9/shaders/xna/`, with `LICENSE` (Ms-PL), a provenance `README.md`
+(66 entry points, each verified via `grep`, not hand-typed — an initial draft had 4 wrong names for
+`EnvironmentMapEffect.fx`/`SkinnedEffect.fx`, caught by actually running the grep before publishing
+it), and a specific `THIRD_PARTY_NOTICES.md` entry. New `scripts/verify-d3d9-stock-effects-vendored.sh`
+mechanically diffs the vendored copies against the FNA tree; mutation-verified (appended a line to
+the vendored `BasicEffect.fx`, confirmed the script reports `MISMATCH`/exit 1, reverted). Not a
+CTest — depends on the FNA reference tree being present on the machine, same reasoning `D9-71`'s own
+row gives for its own "run by hand" pipeline.
+
+`D9-71`: new `src/CNA/Internal/Backends/D3D9/shaders/compile_shaders_sm2.py` — parses all 66 entry
+points from the vendored `.fx` files' own `compile [vp]s_2_0 ...` statements via regex (not
+hand-maintained), cross-builds `fxc_tool.cpp` (moved here unchanged from `dx9-spike/`, along with
+`compare_against_fxb.py`) with MinGW-w64, invokes it via a bare `wine` call against
+`~/.wine-cna-d3d9-spike` (not `run-wine-dxvk9.sh` — compiling never opens a device). **Real run:
+66/66 compiled, 0 failures.** Output `d3d9_shaders.hpp` (381 KB, `k<EffectName>_<EntryPointName>`
+array names) confirmed to compile clean as real C++; a second run produced a byte-identical header
+(deterministic). Bonus verification: re-ran `compare_against_fxb.py` against the real checked-in
+header's own bytecode — 61/66 exact matches, the identical 5 `PixelLighting` variants the Phase
+D9-0 spike already found, confirming the real pipeline reproduces the spike's result exactly.
+`dx9-spike/README.md` updated to reflect the move (only `xna-oracle/Oracle.cs` remains there).
+
+`D9-72`: **a real, empirical finding changed this row's own original approach mid-task.** The plan
+assumed a per-effect register table hand-derived from the `.fx` files' own `_vs(cN)`/`_ps(cN)`
+annotations, with register COUNT inferred from each constant's declared HLSL type
+(`float4x4`→4 registers, `float3x3`→3, etc.). **That assumption is provably wrong**: compiling
+`EnvironmentMapEffect.fx`'s `VSEnvMap` and disassembling the real output (`D3DDisassemble()`) shows
+`World` (declared `float4x4`) is allocated only **3** registers (`c16`-`c18`) by the real compiler
+for this specific entry point — its `mul(vin.Position, World)` never reads `pos_ws.w`, so the
+compiler drops the register that would compute it — while `WorldInverseTranspose` genuinely
+occupies `c19`-`c21`, an apparent overlap with a naive 4-register `World` assumption that isn't
+actually a conflict. **Register occupancy depends on what a given ENTRY POINT reads, not just a
+constant's declared type.** Redesigned scope: new `extract_shader_registers.py` compiles **and
+disassembles** each of the 66 shaders, parsing the compiler's own authoritative `// Registers:`
+comment block directly (new `disasm_tool.cpp`, a small `D3DDisassemble()`-calling companion to
+`fxc_tool.cpp`). Output: `D3D9ShaderRegisters.hpp` (627 lines, one array per shader:
+`{name, space, registerIndex, registerCount}`). Compiles clean (`-Wall -Wextra -fsyntax-only`, zero
+warnings); spot-checked against 3 independently-verified cases (`BasicEffect` `VSBasic`,
+`EnvironmentMapEffect` `VSEnvMap`'s `World`/`WorldInverseTranspose` split, `SkinnedEffect`'s 72-bone
+array at `c26` size 216 = 72×3 registers). No fixed-layout POD struct exists to `static_assert`
+against (this row's own original wording) since occupancy varies per entry point — the generated
+tables themselves are the verified ground truth. `D3DConstantBuffers.hpp` was checked and NOT
+reused — different register scheme entirely (D3D11's own cbuffer reimplementation vs. D3D9's flat
+register file), exactly as this row's own note anticipated.
+
+`D9-74` (**Phase D9-7 now fully closed** — `D9-73` stays honestly 🟨, its own deferred obligation
+unaffected): took option (a) from this row's own recommendation — `dxvk-setup install` run against
+`~/.wine-cna-d3d9-spike` (same command `plan_dx.md`'s `DX-2` used for `~/.wine-cna-d3d11`), verified
+for real (`d3d9.dll` now a DXVK symlink; `d3dcompiler_47.dll` untouched — confirmed by re-running the
+full `D3D9_Smoke` suite against this prefix, 53/53 pass). New `D3D9ShaderCache` (`CreateVertexShader`/
+`CreatePixelShader` per named entry point, e.g. `"BasicEffect_VSBasic"`, lazy-create-and-cache),
+backed by a new `Shaders::kAllShaders[]` manifest (66 entries) appended to `compile_shaders_sm2.py`'s
+own output — regenerated, not hand-typed. New `D3D9_ShaderCache` CTest (4 checks): all 66 shaders
+(42 vertex + 24 pixel) create through a live device; a second lookup returns the identical cached
+object; an unknown name throws; the lookup is stage-aware (a real VS name via `GetPixelShader()`
+throws too, and vice versa). Runs clean against both the default CTest prefix and the newly-DXVK
+-equipped compiler prefix. Mutation-verified (made `CreateAllEXT()` skip the first pixel shader,
+confirmed exactly the count-dependent checks went red). Full 3-CTest D3D9 suite passes.
+
+### Phase D9-8 — XNA shader dispatch: D9-80–D9-83 ALL CLOSED (all 5 Stock Effects real + instancing), only D9-84 open
+
+| Task | Status |
+|---|---|
+| `D9-80` — replicate XNA's shader-permutation model (`VSIndices`/`PSIndices`/`ShaderIndex`) | ✅ |
+| `D9-81` — audit `GpuDrawParams` vs. XNA's real `ShaderIndex` inputs, report the gaps | ✅ |
+| `D9-82` — upload constants at Microsoft's registers; `DrawColoredPrimitives`/`DrawIndexedColoredPrimitives` (non-effect-aware, BasicEffect-VertexColor-only scope) | ✅ |
+| `D9-82b` — `DrawPrimitivesEx`/`DrawIndexedPrimitivesEx` entry point + `BasicEffect` dispatch | ✅ |
+| `D9-82c` — `AlphaTestEffect` dispatch | ✅ |
+| `D9-82d` — `DualTextureEffect` dispatch | ✅ |
+| `D9-82e` — `EnvironmentMapEffect` dispatch | ✅ |
+| `D9-82f` — `SkinnedEffect` dispatch | ✅ |
+| `D9-83` — `DrawInstancedPrimitivesEx` via `SetStreamSourceFreq` | ✅ |
+| `D9-84` — every draw path validated against the oracle | ⬜ |
+
+`D9-81`: the audit's own findings were already fully written into the plan row when `plan_dx9.md`
+was first authored (2026-07-14) — this closure is an independent RE-VERIFICATION against the
+CURRENT source (not trusted from memory), via a forked agent that read every cited file directly.
+**Result: all 4 gaps are still real, and 2 of the 4 turn out resolvable without any `GpuDrawParams`
+change** — `oneLight` (`SkinnedEffect.cpp` already computes it from the real `Enabled` properties
+internally) and `AlphaTestEffect`'s `isEqNe` (`alphaTest[1]` (tolerance) `> 0` is a **lossless**,
+provably-exact recovery from `AlphaTestEffect.cs`'s own `alphaTest.Y = threshold` assignment, which
+fires in exactly the `Equal`/`NotEqual` cases and nowhere else — not the "plausible inference, may
+misfire" the plan's own original wording hedged). `PreferPerPixelLighting` and
+`EnvironmentMapEffect`'s `specularEnabled` remain genuine, unresolved gaps needing a cross-cutting,
+project-owner-level `GpuDrawParams` decision — reported, not fixed, per this row's own instruction.
+
+`D9-80`: new `include/`/`src/CNA/Internal/Backends/D3D9/D3D9ShaderDispatch.hpp`+`.cpp` — for all 5
+effects, a `Compute<Effect>ShaderIndex()` ported line-for-line from that effect's own `OnApply()`
+in the FNA `.cs` source, plus `Get<Effect>{Vertex,Pixel}ShaderNameEXT()` backed by the
+`VSIndices`/`PSIndices`/`VSArray`/`PSArray` tables transcribed directly from the vendored `.fx`
+file's own rows. Functions take the real XNA-shaped booleans as parameters, not `GpuDrawParams` —
+sourcing them correctly (using `D9-81`'s own findings for `oneLight`/`isEqNe`) is `D9-82`'s job.
+New `D3D9_ShaderDispatch` CTest (pure-function, no device needed), 23 checks. **Mutation-testing
+found a real gap in the test's own first draft**: an initial "exhaustive sweep" only checked that
+resolved names started with the right effect prefix — a deliberately-corrupted single `VSIndices`
+table entry (mapped to a WRONG-but-still-real, same-prefixed name) was NOT caught by that weaker
+check. Rewrote it as an exact-match sweep against a second, independently-typed expected-name array
+in the test file; re-ran the same mutation, now correctly caught (exact mismatch reported); reverted,
+reconfirmed 23/23 green. Full D3D9 CTest suite (4 binaries) passes.
+
+`D9-82`: split from its own original single-row scope into `D9-82` (this narrow, non-effect-aware
+"colored3d-equivalent" slice) + `D9-82b` (full effect-aware dispatch) — mirrors `plan_dx.md`'s own
+`DX-61` vs. `DX-62..67` precedent exactly, same rationale (real, separate-scale work, not a
+same-sitting extension). This backend's first real 3D triangle: new `D3D9ConstantUpload.hpp`+`.cpp`
+(name-keyed register lookup + `Set{Vertex,Pixel}ShaderConstantF`, throws on a genuine
+transcription-mismatch, silently no-ops against a variant with no named constants), real
+`D3D9GraphicsBackend::DrawColoredPrimitives`/`DrawIndexedColoredPrimitives` (stride-16 only,
+hardcoded to `BasicEffect` `ShaderIndex 3` = `"BasicEffect_VSBasicVcNoFog"`/`"BasicEffect_PSBasicNoFog"`,
+chaining `D9-80`'s dispatch tables into `D9-74`'s shader cache), and a new stride-keyed
+`IDirect3DVertexDeclaration9` cache. **A second real trap found and fixed live** (not the `D3DCULL`
+one this row's own text predicted — a different one): `D9-22`'s original vertex declaration used
+`D3DDECLTYPE_D3DCOLOR` for `COLOR0`, which Microsoft's own D3DDECLTYPE reference says expects
+ARGB-packed memory bytes and swizzles them to RGBA — but XNA's own `Color.PackedValue` is R,G,B,A
+ascending, so feeding it through `D3DDECLTYPE_D3DCOLOR` silently swaps R and B. Confirmed live before
+fixing (fed opaque red, read back opaque blue), fixed by switching to `D3DDECLTYPE_UBYTE4N` (no
+reorder), re-confirmed live (exact red). `D3D9_Common`'s own stride-16/24 assertions updated to
+match. New `D3D9_Draw` CTest (real device draw): 3/3 (non-indexed paint, indexed paint, and a real
+`WorldViewProj`-upload proof via an off-screen `World` translation). Mutation-verified: corrupted
+`DiffuseColor`'s upload value, confirmed only the mutated (non-indexed) check went red while the
+indexed/transform checks stayed green (correctly isolated blast radius); reverted, reconfirmed 3/3
+green. Full D3D9 CTest suite (5 binaries) passes.
+
+`D9-82b`: new `D3D9EffectDraw.cpp` — `DrawPrimitivesExImpl()` (the shared entry point, same
+flag-priority-cascade shape `D3D11GraphicsBackend::DrawPrimitivesExImpl` already uses) +
+`DrawBasicEffectEXT()`. New "soft" `TryUpload{Vertex,Pixel}ShaderConstantEXT()` (never throws on a
+missing name) added to `D3D9ConstantUpload` — the generic dispatcher attempts EVERY constant
+`BasicEffect` could ever declare and lets each variant's own real (`D9-72`) register table silently
+filter out whichever don't apply.
+
+**Real, honest scope-narrowing finding: only 10 of `BasicEffect`'s 32 `ShaderIndex` values are
+actually drawable, not the 24 this row originally estimated.** `BasicEffect`'s remaining `VSInput`
+shapes need vertex layouts this project's 5 established strides (16/20/24/32/52) simply don't
+have (`VSInput` Position-only 12 bytes; `VSInputNm` Position+Normal 24 bytes — collides with the
+EXISTING Position+Color+TexCoord 24-byte layout; `VSInputNmVc`/`VSInputNmTxVc` 28/36 bytes) — every
+unsupported combination throws a named "no matching CNA vertex layout" error (same honest-gap
+category as D3D11's own "`dual_texture_colored3d` not ported"), not a silent wrong-stride draw.
+
+**`D9-81`'s `oneLight` finding corrected during real implementation** — its original text ("read
+`SkinnedEffect.cpp`'s own internal `oneLight_` directly") turned out not actually reachable from
+`IGraphicsBackend::DrawPrimitivesEx()`'s own `GpuDrawParams`-only input (no channel back to the
+originating `Effect` object's private members). Real fix: a light with BOTH diffuse and specular
+still `(0,0,0)` contributes exactly zero to `Lighting.fxh`'s `ComputeLights()` regardless of
+`Enabled`, so `oneLight` is derivable losslessly from `GpuDrawParams`' own existing fields — no
+`GpuDrawParams` extension needed after all (that row's own text updated to match).
+
+Also found/derived live: the `EffectParameter.SetValue(Matrix)` register-transpose trick generalizes
+correctly to a `float3x3`-declared constant (`WorldInverseTranspose`) as well as a truncated
+`float4x4` (`World`, 3 of 4 registers — the same "entry point never reads `.w`" pattern `D9-72`
+first found for `EnvironmentMapEffect`, now confirmed for `BasicEffect`'s lit path too); `EmissiveColor`
+needed reconstruction from `GpuDrawParams`' separate `ambientColor`/`diffuseColor`/`emissiveColor`
+fields (`emissiveColor + ambientColor*diffuseColor`, matching `Lighting.fxh` exactly).
+
+New `D3D9_DrawEx` CTest (real device draw), 10/10 at the time — every expected pixel HAND-COMPUTED
+from `BasicEffect.fx`/`Lighting.fxh`'s own real formulas: unlit+textured, unlit+vertexColor+textured,
+lit+textured 2-light-sum (exact `(150,90,30)`), lit+textured 1-light/`OneLight` bucket (exact
+`(80,48,16)` — deliberately different from the 2-light case so the pair together proves correct
+bucket selection), fog fully-fogged (exact `FogColor` readback), an unsupported combo throws, and
+`AlphaTestEffect`/`DualTextureEffect`/`EnvironmentMapEffect`/`SkinnedEffect` each throw their own
+named not-yet-implemented (`D9-82c`/`d`/`e`/`f`). Mutation-verified: forced `oneLight` to always
+`true`; exactly the 2-light check (the only one sensitive to a bucket-selection bug) went red,
+everything else stayed green; reverted, reconfirmed 10/10. Full D3D9 CTest suite (6 binaries) passes.
+
+`D9-82c`: new `D3D9GraphicsBackend::DrawAlphaTestEffectEXT()` (same file) — all 8 `ShaderIndex`
+values real, no vertex-layout gap this time (`AlphaTestEffect`'s only two `VSInput` shapes map 1:1
+onto the existing stride-20/24 layouts, unlike `BasicEffect`'s case). `GpuDrawParams::alphaTest` is
+already exactly the real `{refVal,tolerance,passWeight,failWeight}` register layout
+`AlphaTestEffect.fx`'s own `clip()` expressions expect — uploaded verbatim, no reconstruction
+needed (confirmed directly against the `.fx` source). Factored `ComputeFogVectorEXT()` out of
+`DrawBasicEffectEXT()` into a shared helper both effects now use. `D3D9_DrawEx` extended to 12/12:
+3 new real checks (`Less` compare passes with an exact `texture*DiffuseColor` readback, `Less`
+compare fails with the background genuinely left unpainted proving `clip()` really discards, `Equal`
+compare passes on the vertex-color bucket). Mutation-verified: forced `isEqNe` to always `false`;
+exactly the `Equal`-bucket check (the only one sensitive to a wrong PS selection) went red, the two
+`Less`-bucket checks stayed green; reverted, reconfirmed 12/12. Full D3D9 CTest suite (6 binaries)
+passes.
+
+`D9-82d`: new `D3D9GraphicsBackend::DrawDualTextureEffectEXT()` (same file). **This row's own
+original "4 ShaderIndex values, all unblocked" claim was wrong — corrected during real
+implementation: only 2 of the 4 are actually drawable.** Real finding: `DualTextureEffect.fx`'s
+real `VSInputTx2` needs a Position+TexCoord0+TexCoord1 vertex (28 bytes) with no equivalent at all
+among the 5 layouts D3D9/D3D11/D3D12 previously shared (D3D11's own `dual_texture3d.vert.hlsl`
+sidesteps this with a single shared UV set — a legitimate simplification for a custom
+reimplementation, not an option here, since this backend draws Microsoft's real unmodified
+compiled shader). **Resolved by adding a new, D3D9-only stride-28 vertex declaration**
+(`D3D9VertexDeclarations.hpp`/`.cpp`) — safe and backend-local (design decision 12: this table
+isn't a `D3DCommon` consumer, doesn't touch any other backend or `GpuDrawParams`). `D3D9_Common`
+extended to 29/29 for the new layout. The vertex-color variant (`VSInputTx2Vc`, 32 bytes) still
+collides with the existing Position+Normal+TexCoord layout and stays undrawable — same category as
+`BasicEffect`'s own `D9-82b` gaps. `texture1`/`DiffuseColor`/`FogVector`/`FogColor` reuse
+`D9-82b`/`D9-82c`'s exact formulas verbatim, including the now-3-effects-shared
+`ComputeFogVectorEXT()`. `D3D9_DrawEx` extended to 13/13: a new real check (`texture0`=white,
+`texture1`=`(100,60,20)`, `DiffuseColor=(0.5,...)` → exact `(100,60,20,255)`, proving the real
+doubling-blend formula end to end). Mutation-verified: skipped the `DiffuseColor` upload; exactly
+the new check went red (the shared `c0` constant slot retained the PRIOR draw's `AlphaTestEffect`
+value, giving a visibly wrong-but-plausible result — a real regression this test genuinely
+catches); reverted, reconfirmed 13/13. (A `texture0`/`texture1`-slot-swap mutation was considered
+but isn't distinguishable by 1×1 uniform-color textures — the real formula is algebraically
+symmetric for constant-color inputs; judged out of scope.) Full D3D9 CTest suite (6 binaries)
+passes.
+
+`D9-82e`: new `D3D9GraphicsBackend::DrawEnvironmentMapEffectEXT()` (same file). **This row's own
+"8 unblocked" estimate was exactly right**, unlike `D9-82b`/`D9-82d`'s own first-pass estimates:
+`specularEnabled` is always `false` in this backend's own dispatch (same category as `BasicEffect`'s
+`PreferPerPixelLighting`), making the 8 specular `ShaderIndex` values structurally unreachable, not
+merely unimplemented — no separate throw branch needed. `VSInputNmTx` matches the EXISTING stride-32
+layout exactly — no new vertex declaration needed here (unlike `D9-82d`). Factored the `oneLight`
+derivation out of `DrawBasicEffectEXT()` into a shared `ComputeOneLightEXT()`, now used by both
+`BasicEffect` and `EnvironmentMapEffect`. `EmissiveColor` needed NO reconstruction here (unlike
+`BasicEffect`) — `EnvironmentMapEffect::FillGpuDrawParams()` already pre-folds
+`(emissiveColor+ambient*diffuse)*alpha` itself, uploaded verbatim. `D3D9_DrawEx` extended to 15/15:
+2 new real checks mirroring `BasicEffect`'s own Check C/D discipline (non-fresnel buckets only, for
+hand-computable exactness) — "basic" bucket/2 lights (exact `(100,130,35)`) and `OneLight`
+bucket/1 light (exact `(90,124,33)`, different from the first, proving correct bucket selection).
+New 1×1 cube-map textures (`CreateTextureCube(1,false,0)`, all 6 faces the same color, sidesteps
+needing to hand-compute `reflect()` geometry). Mutation-verified: forced the newly-shared
+`ComputeOneLightEXT()` to always return `true`; BOTH `BasicEffect`'s own 2-light check AND
+`EnvironmentMapEffect`'s new 2-light check went red simultaneously — the correct blast radius for a
+genuinely shared helper; reverted, reconfirmed 15/15. Full D3D9 CTest suite (6 binaries) passes.
+
+`D9-82f`: new `D3D9GraphicsBackend::DrawSkinnedEffectEXT()` + a new `UploadBonesVS()` helper (same
+file). **This row's own "12 unblocked" estimate was exactly right, same as `D9-82e`'s.**
+`VSInputNmTxWeights` matches the EXISTING stride-52 layout byte-for-byte — no new vertex
+declaration needed. `preferPerPixelLighting` is always `false` (same `D9-81` item-1 gap as
+`BasicEffect`), making the 6 pixel-lighting `ShaderIndex` values structurally unreachable — no
+separate throw branch needed, mirroring `D9-82e`'s own finding. `Skin(vin, boneCount)` only
+transforms Position/Normal before delegating to the SAME `ComputeCommonVSOutputWithLighting()`
+`BasicEffect`'s lit path already uses, so `DiffuseColor`/lighting/fog need identical handling (no
+new derivation logic); `EmissiveColor` is pre-folded exactly like `EnvironmentMapEffect`'s case.
+Genuinely new: `Bones[72]` (`float4x3`, 216 registers, 3/bone) uses the EXACT SAME "first 3 columns
+of the transposed matrix" packing `UploadMatrixConstantVS` already established for
+`World`/`WorldInverseTranspose` (verified against FNA's own `EffectParameter.SetValue(Matrix)`
+`ColumnCount==4/RowCount==3` branch directly), just repeated per-bone into one large
+`SetVertexShaderConstantF` call. `D3D9_DrawEx` extended to 17/17: 2 new real checks mirror the
+established bucket-selection discipline (vertex-lighting/2 lights → exact `(100,60,20)`;
+`OneLight`/1 light → exact `(80,48,16)`), deliberately using a single Identity bone at 100% weight
+(skinning is a no-op) so the expected math reduces to the same lit-textured formulas already
+established, while still genuinely exercising the full `Bones[72]` upload path. Mutation-verified:
+commented out the entire `UploadBonesVS()` call; BOTH new `SkinnedEffect` checks went red (an
+untouched `Bones[0]` register left a zero skinning matrix, degenerating the triangle to a point),
+every other effect's checks stayed green; reverted, reconfirmed 17/17. Full D3D9 CTest suite (6
+binaries) passes.
+
+`D9-83`: new `D3D9InstancedDraw.cpp` — `DrawInstancedPrimitivesEx` via `SetStreamSourceFreq`. Real
+XNA 4.0 has no per-instance-aware Stock Effect vertex shader at all, so (matching D3D11/Vulkan/Bgfx's
+own identical precedent) this does NOT dispatch through `D3D9EffectDraw.cpp` — it uses a fresh,
+hand-authored NOXNA `vs_2_0`/`ps_2_0` shader (`shaders/cna/Instanced3D.hlsl`), compiled via `D9-71`'s
+`fxc_tool.exe` and register-verified against a real `D3DDisassemble()` (`D9-72`'s `disasm_tool.exe`)
+since it isn't a vendored Microsoft `.fx` file. New stride-64 2-stream vertex declaration (stream 0 =
+`POSITION` geometry, stream 1 = `TEXCOORD1-4` per-instance world rows, matching D3D11's own 64-byte
+per-instance convention). `SetStreamSourceFreq(0, D3DSTREAMSOURCE_INDEXEDDATA | instanceCount)` /
+`SetStreamSourceFreq(1, D3DSTREAMSOURCE_INSTANCEDATA | 1)` follows the MSDN convention exactly; both
+are reset to `1` before returning, since D3D9 stream-frequency state persists on the device and every
+other draw path here reuses stream 0. `params.instanceVb == nullptr` falls back to
+`DrawIndexedPrimitivesEx()`, matching D3D11's own identical fallback.
+
+**Real bug found and fixed — in the new CTest's own pixel-sample coordinates, not the instancing
+logic.** The first version of `D3D9_Instanced` sampled `(16,32)`/`(48,32)`, which sit exactly on the
+45°-diagonal hypotenuse of the small right-triangle test geometry (confirmed by hand-deriving both
+triangles' edge equations) — a rasterization-boundary case, not a rendering failure. A full-backbuffer
+scan during debugging showed correctly-shaped, correctly-colored, correctly-positioned geometry was
+already painting; only the two single-pixel probes were ill-chosen. Fixed by resampling at
+`(14,34)`/`(46,34)`, comfortably inside each triangle's fill region. Every D3D9 API call involved
+returned `S_OK` throughout — the shader/declaration/frequency setup was correct from the first working
+build.
+
+New `D3D9_Instanced` CTest, 4/4: two distinct instances (translations `-0.5`/`+0.5`) paint the shared
+`DiffuseColor` at their own distinct locations in one draw call; `instanceVb==nullptr` reaches real
+`BasicEffect` dispatch (not a stub) and throws for the expected reason; a normal
+`DrawIndexedColoredPrimitives()` call issued right after the instanced draw still paints correctly,
+proving the frequency reset is real. Mutation-verified: hardcoded the instance-count frequency to `1`;
+exactly the 2nd-instance check went red, the other 3 stayed green; reverted, reconfirmed 4/4. Full
+D3D9 CTest suite: 7/7 binaries pass. XNA 4.0's own instancing is `HiDef`-only — that profile gate is
+still not enforced (Phase D9-10 closed `Texture2D` size ceilings but explicitly left this one open,
+see that phase's own closure note).
+
+**This closes real, verified dispatch for all 5 XNA Stock Effects plus hardware instancing on this
+backend** — only `D9-84` (oracle validation) remains open in Phase D9-8.
+
+### Phase D9-9 — SpriteBatch: D9-90/D9-91/D9-92/D9-93 CLOSED (D9-93 covers 3 of 5 SpriteSortMode values)
+
+| Task | Status |
+|---|---|
+| `D9-90` — `D3D9SpriteBatchBackend` driving Microsoft's own `SpriteEffect` | ✅ |
+| `D9-91` — the half-pixel offset, verified against the oracle | ✅ |
+| `D9-92` — sampler filter/address-mode wiring with discriminating probe pixels | ✅ |
+| `D9-93` — tested through the public API, diffed across all `SpriteSortMode`s | ✅ (3 of 5: `Deferred`/`BackToFront`/`FrontToBack`; `Immediate`/`Texture` explicitly scoped out) |
+
+**Closed 2026-07-15 (`D9-90`/`D9-91`).** New `D3D9SpriteBatchBackend` (`include/`/`src/CNA/
+Internal/Backends/D3D9/D3D9SpriteBatch.{hpp,cpp}`). `SpriteEffect.fx` was already vendored
+verbatim (byte-identical to FNA's own copy) with compiled bytecode and a register table already
+present in `d3d9_shaders.hpp`/`D3D9ShaderRegisters.hpp` — a side effect of the general D9-71/D9-72
+compile sweep that ran across every vendored `.fx` file, not new work this task did. Vertex
+contract reuses the EXISTING stride-24 `D3D9VertexDeclarations` layout unchanged (matches FNA's
+own `VertexPositionColorTexture4` per-corner shape exactly — resolves D9-22's own "future concern"
+about a stride-32 collision as moot, since sprite vertices are stride 24). CPU-side quad geometry
+(destination/source rect, origin, rotation, `SpriteEffects` flip) reuses D3D11SpriteBatchBackend's
+own already-proven formula verbatim. The genuinely D3D9-specific piece: `MatrixTransform` bakes
+BOTH the SpriteBatch's own transform AND a D3D9 half-pixel correction into one real `float4x4`
+uniform (`projection.M41 += -0.5*projection.M11; projection.M42 += -0.5*projection.M22`, applied
+to a `CreateOrthographicOffCenter(0,W,H,0,0,1)` base) — matching how real XNA/FNA's own
+`SpriteBatch.cs` structures this (Microsoft's real `SpriteEffect.fx` has a genuine matrix uniform,
+unlike D3D11's own CNA-invented shader which has none).
+
+Verified via 3 new `D9-A5` oracle scenes (`sprite_basic_quad`/`sprite_rotated_quad`/
+`sprite_flipped_quad`, all `0/65536` pixel-perfect against real XNA 4.0 on the first attempt) and
+a new `D3D9_SpriteBatch` CTest (4/4 checks).
+
+**Real, non-obvious finding surfaced while mutation-testing the half-pixel offset**: a 1×1-texture
+scene and quadrant-CENTER sample points are BOTH structurally incapable of detecting this offset
+at all — the classic D3D9 half-pixel bug shifts which TEXTURE CONTENT a screen pixel samples, not
+where a rectangle's geometric edges land, and a 1×1 texture has only one texel regardless of any
+sub-pixel shift. Discovered by commenting out the `M41`/`M42` lines and re-running: the boundary
+check and quadrant-center checks stayed green even with the offset entirely removed (a false-
+positive "closed" trap), while the SAME mutation made the two 2×2-four-color-texture oracle scenes
+diverge from real XNA by `4800/65536` pixels — proving the offset genuinely matters. Fixed by
+adding a dedicated CTest check sampling exactly on the internal texel boundary the flip scene's
+own draw produces (confirmed this exact pixel shifts from `(130,125,0)` to `(128,128,0)` under the
+mutation, every other check staying green); re-verified 4/4 green with the real implementation
+restored, all 21 corpus scenes re-verified pixel-perfect, full `D3D9` CTest suite 12/12 green.
+
+**Closed 2026-07-15 (`D9-92`).** `SetSamplerFilter()`/`SetSamplerAddressMode()` already plumbed
+through to the real, already-proven `D9-63` `ApplySamplerState()` path — the missing piece was
+purely test coverage, since `Begin()` with no arguments only ever exercises the default
+`LinearClamp`. Extended the scene format with `spritesourcerect`/`spritesampler` keys and
+`SpriteBatch::Begin(sortMode, blendState, samplerState, null, null)` wiring on both sides. Two new
+`D9-A5` scenes, both pixel-perfect on the first attempt: `sprite_wrap_quad` (`PointWrap`, a 2×1
+RED/GREEN texture sampled with a `sourceRectangle` DOUBLE the texture's own width — tiles the
+pattern `RED,GREEN,RED,GREEN` across 4 destination bands) and `sprite_mirror_quad` (a manually
+constructed Point/Mirror `SamplerState` — real XNA has no named `PointMirror` preset — same
+texture/geometry, folds SYMMETRICALLY around the `U=1` boundary instead: `RED,GREEN,GREEN,RED`,
+genuinely distinguishable from `Wrap`'s tiled pattern using identical source data). Both formulas
+independently predicted before running either side, then confirmed pixel-for-pixel identical. 2
+new checks added to `D3D9_SpriteBatch` (now 6/6). All 24 corpus scenes re-verified pixel-perfect;
+full `D3D9` CTest suite 12/12 green.
+
+**Closed 2026-07-15 (`D9-93`), for 3 of 5 `SpriteSortMode` values — `Immediate`/`Texture`
+explicitly scoped out, not silently assumed.** Design: 2 overlapping `NonPremultiplied`-blended
+sprites (RED tint `(255,0,0,128)` depth=0.0, GREEN tint `(0,255,0,128)` depth=1.0, identical
+destination rectangle) — `AlphaBlend` expects premultiplied colors and would give the wrong math
+for these raw alpha=128 tints regardless of draw order, so the multi-sprite path switches to
+`NonPremultiplied`. 3 new `D9-A5` scenes: `sprite_sortmode_deferred_quad` (insertion order
+RED-then-GREEN, GREEN ends up on top, green-dominant `(64,128,0,159)`),
+`sprite_sortmode_backtofront_quad` (same insertion order, reordered far-to-near so RED ends up on
+top instead, red-dominant `(128,64,0,159)`), `sprite_sortmode_fronttoback_quad` (insertion order
+deliberately REVERSED to GREEN-then-RED, so the ascending reorder is genuinely discriminating — it
+still puts GREEN on top, matching the Deferred scene's value despite the opposite insertion order,
+proving the reorder is by `layerDepth` and not merely insertion order). All 3 pixel-perfect against
+real XNA 4.0 once the bug below was fixed. 3 new checks added to `D3D9_SpriteBatch` (now 9/9),
+exact-value assertions matching every other check in this file.
+
+**A real, previously-undetected D3D9 backend bug was found and fixed via this task.** Every prior
+D9-90/91/92 scene only ever drew with `layerDepth=0.0f`, so `D3D9SpriteBatchBackend::
+BuildMatrixTransformEXT`'s own Z-row math was never exercised before now. Its projection used
+`CreateOrthographicOffCenter(0,W,H,0,0, zFarPlane=1)`, giving `M33=1/(zNear-zFar)=-1, M43=0` — i.e.
+`Z' = -layerDepth` — which maps ANY `layerDepth > 0` outside Direct3D 9's valid `[0,1]` clip-space
+Z range, silently clipping the sprite away entirely (confirmed NOT a depth-test artifact:
+`DepthStencilState.None` — `ZENABLE=FALSE` — was already correctly in effect; clip-space culling
+is a separate, unconditional rasterizer stage). Root-caused by rendering the same scene through the
+real XNA 4.0 oracle FIRST and finding it produced the fully-correct blended values while CNA
+produced nothing but the RED sprite (the GREEN sprite was being clipped in every case, making
+`Deferred` and `BackToFront` render identically — the actual first symptom noticed, before the
+cause was understood). Fixed with `zFarPlane=-1` instead, giving an identity Z-row (`M33=1,
+M43=0`, so `Z'=layerDepth`, unclipped) — only the Z row changes, the already-verified X/Y
+half-pixel math (`D9-91`) depends solely on `M11`/`M22` and is unaffected. Mutation-tested
+(reverted to `zFarPlane=1`, confirmed the sort-mode checks then extant FAILED while every other
+check stayed green, then restored and reconfirmed all green) per this project's own established
+discipline (`D9-91`'s own mutation-testing precedent). All 27 corpus scenes re-verified
+pixel-perfect after the fix; full `D3D9` CTest suite 12/12 green.
+
+**Explicitly NOT covered, not silently assumed**: `SpriteSortMode.Immediate` — its only real
+behavioral difference from `Deferred` (per-`Draw()` GPU submission instead of batching until
+`End()`) is not pixel-observable by this project's oracle methodology (a batched multi-quad draw
+call and N individual draw calls in the same order produce the same final raster image), so a
+scene for it would not add verification value beyond what `Deferred` already proves.
+`SpriteSortMode.Texture` — confirmed NOT a viable oracle scene, not merely deferred: real FNA's
+own `SpriteBatch.cs` `TextureComparer.Compare` sorts by `texture.GetHashCode()`, i.e. `Texture`'s
+inherited default `Object.GetHashCode()` — an implementation-defined identity hash with no
+documented, predictable ordering between two arbitrary textures. Any 2-distinct-texture test's
+"which texture group ends up on top" result is genuinely non-deterministic from a black-box
+test-authoring perspective (not just hard to hand-derive), so no scene for it can meet this
+project's own `--tolerance 0` exact-match discipline reliably.
+
+**Multi-texture batching / a genuine `FlushBatch()`-on-texture-change mid-batch CLOSED 2026-07-15**
+(D9-90's own explicitly-named gap, closed as a `D9-A5` scene-corpus addition, not a new Phase D9-9
+task ID): new `sprite_multitexture_quad.scene` — 3 non-overlapping sprites, interleaved
+RED-texture/BLUE-texture/RED-texture (not RED-RED-BLUE, so the SECOND red draw genuinely forces a
+SECOND rebind after the blue draw's own flush) — reuses the scene format's existing `texture2*`
+keys plus a new optional trailing `textureIndex` column on `spritedraw=` lines. `0/65536`
+pixel-perfect against real XNA 4.0 on the first attempt; mutation-verified (disabled the
+texture-change flush trigger, confirmed the middle sprite's BLUE leaked into the third position —
+`1600/65536` pixels wrong — then restored and reconfirmed green). New `D3D9_SpriteBatch` Check I
+(now 10/10). All 28 corpus scenes re-verified pixel-perfect; full `D3D9` CTest suite 12/12 green.
+
+### Phase D9-10 — `GraphicsProfile` made real: D9-100–D9-105 all CLOSED
+
+| Task | Status |
+|---|---|
+| `D9-100` — research: XNA 4.0 Reach/HiDef capability floors, mapped onto `D3DCAPS9` fields | ✅ |
+| `D9-101` — `GraphicsAdapter::IsProfileSupported()` real on D3D9 | ✅ |
+| `D9-102` — `QueryRenderTargetFormat()`/`QueryBackBufferFormat()` real on D3D9 | ✅ |
+| `D9-103` — profile enforced at resource creation (`Texture2D` size ceilings) | ✅ |
+| `D9-104` — tests: a Reach-illegal request refused, the HiDef equivalent allowed | ✅ |
+| `D9-105` — DXVK-synthesized `D3DCAPS9` caveat documented | ✅ |
+
+**Closed 2026-07-15.** Researched via FNA's own `ProfileCapabilities.cs` (`D9-100`'s own table),
+cross-checked against Shawn Hargreaves' (XNA team lead) official blog post
+`reach-vs-hidef.html`. **Critical finding: `ProfileCapabilities` is dead code in FNA** —
+referenced only inside its own file, never consulted by any `Texture2D`/`GraphicsDevice`
+constructor or method anywhere in FNA. `GraphicsAdapter.IsProfileSupported()` is FNA's own
+unconditional `return true;` with a literal `TODO` (flibit: "This method could be genuinely
+useful!"). **FNA therefore has no enforcement BEHAVIOR to port — only the capability NUMBERS are
+usable; the validation/throwing logic is this project's own design.** One real discrepancy found
+and resolved: FNA's own HiDef table (`MaxTextureSize`/`MaxCubeSize`/`MaxVolumeExtent` =
+8192/8192/2048, commented "DX10 min spec") is an *observed hardware ceiling*, not the Hargreaves
+blog's own documented HiDef *floor* (4096/4096/256) — this implementation uses the documented
+floor, since "capability floor" (the task's own title) means the minimum a profile guarantees,
+not an observed ceiling on stronger-than-required hardware. No MSAA level table or instancing
+requirement exists anywhere in XNA's own published Reach/HiDef spec — a genuine absence, not an
+FNA omission; both stay hardware-queried, not profile-gated.
+
+New `include/`/`src/CNA/Internal/Backends/D3D9/D3D9ProfileCapabilities.{hpp,cpp}`:
+`QueryAdapterCapsEXT()` probes real `D3DCAPS9` via `IDirect3D9::GetDeviceCaps()` WITHOUT
+constructing a live device (the same pre-device-creation pattern `D3D9GraphicsBackend`'s own
+constructor already uses); `MeetsHiDefFloorEXT()` checks the hardware-queryable subset of the
+table; `IsRenderTargetFormatSupportedByHardwareEXT()`/`IsBackBufferFormatSupportedByHardwareEXT()`
+use `CheckDeviceFormat`/`CheckDeviceType` respectively (the swap chain has stricter
+display-compatibility rules than an ordinary render-target texture, D9-30's own finding);
+`ClampMultiSampleCountForFormatEXT()` reimplements `D3D9GraphicsBackend::
+ClampMultiSampleCountEXT()`'s own `CheckDeviceMultiSampleType` pattern as a free function.
+`GraphicsAdapter.cpp`'s three methods wired under `#ifdef CNA_BACKEND_D3D9` — backend-local, the
+other 9 backends keep their honest `return true;`/hardcoded-fallback in the `#else` branch
+(matches `GraphicsDevice.cpp`'s own `#ifdef CNA_BACKEND_BGFX` precedent for backend-conditional
+code in a shared XNA-layer file). `Texture2D`'s two `GraphicsDevice&` constructors now throw
+`System::NotSupportedException` (checked BEFORE any pixel allocation) when the requested size
+exceeds the profile's own ceiling (2048 Reach / 4096 HiDef) — a profile CEILING, not a hardware
+query, regardless of what the device could otherwise support.
+
+**A real, previously-undetected bug was found and fixed along the way, in SHARED cross-backend
+code, not D3D9-specific**: `Game`'s own `GraphicsDevice_` member is eagerly default-constructed
+(hardcoded `GraphicsProfile::Reach`) BEFORE `GraphicsDeviceManager` even exists, and
+`GraphicsDeviceManager::applyToExistingBackend()` threaded a requested profile change into a
+transient `GraphicsDeviceInformation` but never wrote it back onto the already-live device before
+`Reset()` — a real game's own `graphics.GraphicsProfile = GraphicsProfile.HiDef;
+graphics.ApplyChanges();` had **no path to ever reach the actual device**, and
+`GraphicsDevice.GraphicsProfile` silently kept reporting `Reach` regardless. This directly
+blocked this whole phase's own premise (a profile distinction reachable through the real public
+API, not just `D3D9_Smoke` Check K's own backend-direct construction). Fixed with a new NOXNA
+`GraphicsDevice::SetGraphicsProfileEXT()`, called from `applyToExistingBackend()` right before
+`Reset()`. Cross-backend regression-checked: EasyGL's own `CnaTests`
+(`GraphicsAdapterTest`/`GraphicsDeviceDefaultStateTest`/`Texture2DTest`, 70 cases) all still pass
+— the fix only makes `graphicsProfile_` correctly track what was requested; no backend besides
+D3D9 branches on it at all.
+
+New `D3D9_GraphicsProfile` CTest (`examples/d3d9_graphicsprofile_test.cpp`, 10/10 checks), through
+the real public `GraphicsAdapter`/`Game`/`GraphicsDeviceManager`/`Texture2D` API. The required
+"Reach-illegal request refused, HiDef equivalent allowed" pair uses
+`QueryRenderTargetFormat(_, SurfaceFormat.Single, ...)` (genuinely HiDef-only per the researched
+table) rather than this row's own suggested NPOT-wrap example — NPOT-wrap-on-`Reach` was
+deliberately set aside (see below). All checks mutation-verified (the `SetGraphicsProfileEXT`
+propagation fix and `MaxTextureSizeForProfileEXT`, each independently disabled, correctly failed
+their own targeted checks and nothing else, then restored). Full `D3D9` CTest suite 13/13 green.
+
+**D9-105's own honest caveat, restated (not just in `plan_dx9.md`)**: every `D3DCAPS9`-consuming
+function here is REAL logic against a REAL `IDirect3D9`/`IDirect3DDevice9` — but in this Wine+DXVK
+dev loop, the `D3DCAPS9` VALUES those calls return are DXVK's own synthesized capability set, not
+what an authentic XNA-era (~2006-2013) Direct3D 9 driver would report. `IsProfileSupported(HiDef)`
+returning `true` here proves the comparison LOGIC is correct, not that a real HiDef-class GPU
+exists in this loop (it doesn't). Provisional until `D9-140` (real Windows hardware,
+`needs_human`).
+
+**Follow-up CLOSED 2026-07-15: `TextureCube`/`Texture3D` size ceilings and `MaxRenderTargets`
+enforcement.** All three reuse `D3D9ProfileCapabilities`' own already-written helpers (no new
+capability logic, just wiring): `TextureCube` throws past 512 (Reach)/4096 (HiDef);
+`Texture3D` throws UNCONDITIONALLY under Reach (volume textures unsupported at all, not merely
+size-capped) and past 256 under HiDef; `GraphicsDevice::SetRenderTargets()` throws past 1 target
+under Reach (4 under HiDef) — a separate, lower, software-imposed ceiling from
+`MAX_RENDERTARGET_BINDINGS` (XNA's general 4-target cap) and from `D9-54`'s own hardware-cap
+enforcement inside the backend. 8 new checks (`D3D9_GraphicsProfile` now 19/19), same
+"same request refused under Reach, allowed under HiDef" pattern, mutation-verified (disabled all
+3 new profile-ceiling functions at once, confirmed exactly the 6 tied checks — 3 per profile —
+went red, restored). Regression-checked again on EasyGL (150 relevant `CnaTests` cases, all
+green). Full `D3D9` CTest suite 13/13 green.
+
+**Explicitly NOT covered, not silently assumed**: hardware-instancing's own real HiDef-only gate
+(noted as a Phase D9-10 follow-up back when `D9-83` closed, still open); and NPOT-wrap-on-`Reach`
+(D9-56's own originally-deferred example) — real XNA's own enforcement timing/behavior here is
+undocumented, and FNA implements none of it either (confirmed by `D9-100`'s own research), so
+inventing one without a reference would risk asserting behavior this project cannot actually
+verify against real XNA. Both real, honest follow-ups, not claimed done.
+
+### Phase D9-11 — Custom `ShaderEffect`: AUTHORIZED 2026-07-15, FULLY CLOSED same day
+
+New `D3D9ConstantTable.{hpp,cpp}` (`ParseConstantTableEXT()`): a real CTAB (constant table) binary
+parser reading Microsoft's own `D3DXSHADER_CONSTANTTABLE`/`D3DXSHADER_CONSTANTINFO` structures
+directly out of compiled D3D9 shader bytecode, no `ID3DXConstantTable`/D3DX linkage anywhere
+(design decision 9). Needed because, unlike D3D11's own fixed-slot `D3D11EffectBackend` convention
+(HLSL cbuffer offsets are caller-predictable), D3D9 constant *registers* are assigned by the
+compiler and can vary — only a real post-compile name→register lookup is reliable.
+
+New `D3D9_ConstantTable` CTest (`examples/d3d9_constanttable_test.cpp`, 14/14): compiles a known
+3-constant test shader via the real `D3DCompile()`, then cross-checks the parser's output against
+`D3DDisassemble()`'s own independent `"// Registers:"` text block (same regex
+`extract_shader_registers.py`, `D9-72`, already uses) rather than trusting the binary parser
+blindly. **Found and fixed a real bug this way**: the first attempt returned 0 constants — a debug
+byte-dump against real compiler output found every offset field inside the CTAB structures is
+relative to 4 bytes *past* the `'CTAB'` FourCC (where `Size` begins), not the FourCC itself.
+Mutation-verified (reverted to the wrong offset base — parser reads the shader-version-token field
+as an absurd constant count and crashes with `std::bad_alloc`; reverted, reconfirmed 14/14 green).
+Added a defensive sanity bound so malformed/corrupted CTAB data returns empty rather than crashing.
+Full `D3D9` CTest suite now 15/15.
+
+**`D9-111` CLOSED**: new `D3D9EffectBackend.{hpp,cpp}` (`IEffectBackend`) — real runtime
+`D3DCompile()` (`vs_2_0`/`ps_2_0` Reach, `vs_3_0`/`ps_3_0` HiDef), `SetUniform*` genuinely looks
+`name` up per-stage via `D9-110`'s own real register tables (not D3D11EffectBackend's fixed-slot
+convention — D3D9 registers are compiler-assigned and vary per shader). Build-isolated per design
+decision 16: excluded from the main backend source glob, built as its own
+`cna_backend_graphics_d3d9_effect` static library with `d3dcompiler` linked ONLY there — the stock
+D3D9 pipeline stays dependency-free, a real divergence from D3D11/D3D12's own simpler "link it to
+the whole backend" precedent. New `D3D9_EffectBackend` CTest (6/6), matching D3D11EffectBackend's
+own `DX-58` test bar exactly (compile + bind + draw + uniform-driven pixel readback) on a real
+device. **Real finding via mutation-testing**: the original single "far-away WorldViewProj leaves
+background unpainted" check wasn't actually discriminating — an entirely-disabled vertex-constant
+upload ALSO leaves the register at zero, which ALSO degenerates the triangle to nothing, for a
+completely different (broken) reason. Fixed by splitting into a positive-case anchor (identity
+re-upload must still paint red) immediately before the negative case; re-mutated and confirmed the
+anchor now correctly fails first. Full D3D9 CTest suite now 16/16.
+
+**`D9-112` CLOSED — `SpriteBatch::Begin(effect)` wiring, Phase D9-11 now FULLY CLOSED.** New
+`D3D9SpriteBatchBackend::SetCustomEffect()` (flush-on-change, mirrors D3D11's identical pattern).
+`FlushBatch()` branches on a valid custom `D3D9EffectBackend`: uploads viewport size to a
+`"vpSize"` uniform (reusing `D9-111`'s own generic `SetUniformVec2()` directly — no dedicated
+method needed, unlike D3D11's `SetViewportSizeEXT()`, since D3D9's real per-name lookup has no
+fixed-slot limitation to work around), calls `Apply()` then `Bind()`, replacing the stock
+shader/`MatrixTransform` block. Vertex declaration/texture/sampler binding stay unchanged between
+paths — genuinely simpler than D3D11 (whose `InputLayout` is baked into specific shader bytecode)
+since D3D9's declaration is a decoupled device state. New `D3D9GraphicsBackend::CreateEffectBackend()`
+and the matching `CMakeLists.txt` circular-link fix (D3D9 joins the `CNA`-back-link `OR` chain,
+closing the gap `D9-10`'s own row deferred here).
+
+**Real, previously-invisible bug found and fixed**: moving `D3D9EffectBackend.cpp` out of the main
+backend glob while `D3D9ConstantTable.cpp` stayed in it created a genuine link-order circular
+dependency between the two new targets — every D3D9 test binary failed with `undefined reference
+to ParseConstantTableEXT`. Root-caused: `D3D9ConstantTable.cpp` has no consumer outside
+`D3D9EffectBackend.cpp`, so it moved into the isolated effect target too, eliminating the cycle.
+
+New `D3D9_SpriteBatch_CustomEffect` CTest (4/4), through the real public `SpriteBatch`/`ShaderEffect`
+API, mirroring D3D11's own `DX-71` test bar (a runtime-compiled RGB-inversion shader replaces the
+stock pipeline for a batch) in real D3D9 SM2/SM3 HLSL syntax. All 4 passed on the first successful
+build. Mutation-verified: forced the custom-effect branch unreachable, confirmed exactly the
+color-inversion discriminator failed while position/restore-to-stock checks correctly stayed green
+(the stock path still draws in the right place, just uninverted — expected, not a test gap);
+reverted clean. Full D3D9 CTest suite now 17/17; EasyGL/`CnaTests` regression-checked (491/491+,
+`*SpriteBatch*` filter 36/36) — every CMake change scoped inside `CNA_GRAPHICS_BACKEND STREQUAL
+"D3D9"` guards.
+
+### Phase D9-12 — the indistinguishability suite: ALL CLOSED (D9-120/D9-121/D9-122/D9-123)
+
+| Task | Status |
+|---|---|
+| `D9-120` — promote `D9-A`'s corpus to a real, checked-in-reference-image CTest | ✅ |
+| `D9-121` — a written, honest divergence report | ✅ |
+| `D9-122` — `D3D9_Smoke`/`D3D9_Common` + the 4 reused state tests, mutation-verified | ✅ |
+| `D9-123` — `CnaTests` under `CNA_GRAPHICS_BACKEND=D3D9` | ✅ (both the setenv compile blocker and the follow-up `gtest_discover_tests` CTest-registration blocker fixed and verified, see below) |
+
+**Closed 2026-07-15 (`D9-120`/`D9-121`).** All 31 `D9-A5` scenes' real-XNA-4.0 renders regenerated
+FRESH (not trusted from an earlier cached run) and confirmed byte-identical (SHA-256) to the
+already-cached versions before checking them in at `tools/xna-oracle/reference/*.png` (132 KB
+total). New `scripts/run-oracle-corpus-diff.sh` renders each scene via `cna_oracle_render.exe`
+through the existing D3D9 Wine wrapper (**not** the XNA one) and diffs against the checked-in
+reference at `tolerance=0`. New `D3D9_XNA_Diff` CTest — full D3D9 suite now 14/14, ~88s for the
+complete 31-scene sweep, zero XNA-prefix dependency at test-run time. Mutation-verified: corrupted
+one checked-in reference pixel, confirmed the script reports exactly that scene FAIL (with the
+real delta) and exits 1, restored, reconfirmed 31/31 green.
+
+New `docs/d3d9-divergence-report.md` — headline result **0/31 scenes diverge from real XNA 4.0 at
+tolerance=0**, with an explicit table of what the corpus does NOT yet cover (so the empty-list
+result isn't mistaken for total coverage) and an honest, current-status re-read of all six
+project-wide CNA-vs-XNA divergences `plan_dx9.md`'s own section names: Divergence 3
+(`GraphicsProfile` decorative) is now CLOSED on D3D9 (Phase D9-10); Divergence 4 (`SpriteBatch`
+half-texel convention never modeled) is now MEASURED AND CONFIRMED CORRECT on D3D9 (`D9-91`);
+Divergences 1/5/6 remain genuinely unmeasured or only partially measured; Divergence 2 is resolved
+for D3D9's own dispatch correctness only. Also documents the 2 real backend bugs this whole
+measurement effort found and fixed (`D9-93`'s `SpriteSortMode` Z-clipping; Phase D9-10's own
+`GraphicsProfile`-never-reaches-the-device bug) as evidence the methodology finds real problems.
+
+**Closed 2026-07-15 (`D9-122`).** Read every task's closure note that produced a `D3D9_Smoke`/
+`D3D9_Common` check (`D9-23`, `D9-30`–`D9-64`, `D9-82`/`D9-83`, Phase D9-10) and classified each
+check CONFIRMED (explicit mutation-test evidence on record) or GAP (never deliberately broken).
+Ran 6 new mutation cycles against the highest-priority GAPs — each: break the implementation →
+rebuild `cna_test_d3d9_smoke` → confirm EXACTLY the predicted check(s) go red and nothing else →
+revert → rebuild → reconfirm `55/55`:
+
+1. `ApplyBlendState()`'s `D3DRS_DESTBLEND` forced to `D3DBLEND_ONE` — first-ever mutation proof for
+   `D3D9_BlendState_Opaque`/`D3D9_BlendState_AlphaBlend`.
+2. `PerformResetRecovery()`'s `deviceLost_ = false;` disabled — Check M's own recovery assertion
+   failed as predicted, and surfaced a genuine finding (not a bug): the very next line in Check M
+   is a bare `dev.Clear(...)` with no try/catch, so a still-lost device throws an uncaught
+   `DeviceLostException` and crashes the whole test binary (exit 3) before Checks N–Z ever run — a
+   broken device-lost recovery doesn't fail one check, it takes the rest of the suite down with it.
+3. `SetRenderTargets()`'s per-slot bind loop hardcoded to slot 0 — failed only Check V's "both
+   targets get the exact color" assertion; the pre-existing "over-request throws" and "unbind
+   restores back buffer" halves stayed correctly unaffected.
+4. `D3D9RenderTargetBackend::BindAsRenderTarget()`'s `SetRenderTarget(0, ...)` disabled — failed
+   both Check S (baseline, previously UNVERIFIED) and Check U (MSAA), Check T (cube) correctly
+   unaffected, confirming 2D/cube code-path isolation.
+5. `D3D9VertexBufferBackend::Upload()`'s `memcpy` swapped for a zeroing `memset` — failed Check N
+   (baseline round-trip, previously UNVERIFIED), Check P (device-lost buffer recovery), and
+   cascaded into Check Z's two `SetDepthTestEnabled` assertions (expected — Check Z's quads come
+   from `SetData()`-uploaded buffers, a real transitive dependency, not a false positive).
+6. `D3D9TextureCubeBackend::SetData()`'s row-copy `memcpy` swapped for zeroing — failed only Check
+   R's cube-face round-trip assertion (previously UNVERIFIED).
+
+All 6 reverted (`git diff --stat` confirmed zero-diff each time), full `D3D9_Smoke` reconfirmed
+`55/55` after every cycle. **Explicitly NOT mutation-tested, real remaining gaps, not silently
+assumed covered**: Check Y's `MAGFILTER`/`MIPFILTER`/`ADDRESSV` fields (deprioritized — same
+combined boolean assertion as the already-CONFIRMED `ADDRESSU`); Check R's volume-texture half
+(only the cube half was tested); `D3D9_Smoke` Checks B/C/D–I/J/L; `D3D9_Common`'s other 29 of 30
+checks (only 1 `CullMode`-mapping check has explicit evidence, judged lower-priority — homogeneous
+lookup-table checks, method already proven on one representative entry). Full detail in
+`plan_dx9.md`'s own `D9-122` row.
+
+**`D9-123` — FULLY CLOSED 2026-07-15, both the compile blocker and its own downstream follow-up.**
+The POSIX `::setenv()`/`::unsetenv()` wall (`AudioEngineTests.cpp`/`WaveBankTests.cpp`/
+`CueTests.cpp` and 10 other files) is resolved — all 62 call sites replaced with
+`System::Environment::SetEnvironmentVariable` (`sharp-runtime`, already MinGW-proven). `CnaTests`
+now compiles and links cleanly under `CNA_GRAPHICS_BACKEND=D3D9` for the first time ever.
+
+That fix surfaced a second, previously-unreachable blocker: `gtest_discover_tests` tried to
+execute the cross-compiled `CnaTests.exe` directly to enumerate test names, and a PE32+ Windows
+binary can't run natively on Linux without a Wine `CMAKE_CROSSCOMPILING_EMULATOR` — invisible
+before since the binary never compiled far enough to reach this step. Measured the naive fix's
+real cost first (a single Wine spawn costs ~1.2s; the discovered suite has 4367 individual test
+cases, so spawning each separately would cost ~87 minutes of pure process overhead) before picking
+an approach. Fixed by setting `CROSSCOMPILING_EMULATOR` on the `CnaTests` target (the same
+CMake-native mechanism `DX-80`'s own `cna_d3d11_ctest_command` macro already uses for D3D11/D3D12's
+own CTests), selecting the correct per-backend Wine wrapper with its DXVK/vkd3d-proton
+authenticity gate deliberately disabled (`CnaTests` spans non-Graphics namespaces that never open
+a device, so that gate would misreport every one of those as a fake fallback). This also
+automatically fixed `CnaInputTests`' own separate `add_test` registration a few lines below, with
+no code change needed there. Deliberately did NOT redesign test granularity — the project's real
+workflow (`ctest -L D3D9`) label-filters, and none of the 4367 discovered cases carry that label,
+so they're registered but never actually invoked by the normal command; the 87-minute concern only
+applies to a hypothetical unfiltered full run.
+
+**Verified end-to-end, not just "no longer crashes"**: `ctest -L D3D9` — 14/14 pass, no more
+test-file-generation crash; `ctest -N` shows 4383 total registered tests; explicitly ran 2
+individual discovered cases plus `CnaInputTests` itself via `ctest -R` — all genuinely execute
+through Wine and pass. **EasyGL regression-checked**: reconfigured + rebuilt, ran the same 2
+spot-checks natively — pass at native speed, `CMAKE_CROSSCOMPILING` guard correctly no-ops for the
+9 already-established non-cross backends. Not independently re-verified on D3D11/D3D12's own build
+dirs (not configured in this worktree); full detail in `plan_dx9.md`'s `D9-123` row.
+
+### Phase D9-13 — docs: `D9-130` CLOSED, `D9-140` still open (`needs_human`)
+
+New `docs/d3d9-backend.md` — leads with what this backend is *for* (XNA pixel authenticity, not
+feature parity), the fact that it runs Microsoft's own vendored Stock Effects HLSL bytecode, and
+the 0/31-divergence oracle result, before any "known limitations" list. A full `D3D9` column was
+added across all 7 tables in `docs/graphics-backend-feature-matrix.md` (2D SpriteBatch/SpriteFont,
+Stock Effects, RenderTarget/MSAA/mip/depth, Texture2D/3D/Cube, GraphicsDevice state objects,
+OcclusionQuery, Model) plus a new "Remaining genuine D3D9 limitations" section, matching the
+existing Vulkan/Bgfx precedent. Every cell was grounded by actually reading
+`tools/xna-oracle/scenes/*.scene` rather than recalled from memory (e.g. confirmed exactly which
+`SpriteSortMode`/`AlphaTestEffect.AlphaFunction`/`WeightsPerVertex` values have a dedicated scene,
+and that `EnvironmentMapEffect.specularEnabled` is structurally unreachable on this backend's
+current dispatch, `D9-82e`) — cells that couldn't be grounded this way are honestly `⬜`/`🟨`, not
+assumed `✅`. `README.md` gained a `D3D9` Project-Status bullet, a "Build (Windows
+cross-compilation — D3D9 backend)" section mirroring D3D11/D3D12's, and a Tested-Compilers row.
+`programs.md` §9 gained the D3D9-specific three-Wine-prefix subsection this document's own
+`plan_dx9.md` line 103 had flagged as a gap (`programs.md` previously documented only the D3D11
+prefix). `D9-140` (real Windows hardware) remains open, `needs_human`, unchanged.
+
+### Does NOT work yet
+
+`BasicEffect`'s `PreferPerPixelLighting` variants, `EnvironmentMapEffect`'s specular variants, and
+`SkinnedEffect`'s `PreferPerPixelLighting` variants (all blocked on `D9-81`'s still-open
+`GpuDrawParams` gaps), and any `BasicEffect`/`DualTextureEffect`/`EnvironmentMapEffect`/
+`SkinnedEffect` combination with no matching CNA vertex layout (`D9-82b`/`D9-82d`'s own
+enumerations) — all still throw a named not-yet-implemented naming their own follow-up task, by
+design. `SpriteBatch` now has a real, oracle-verified `D3D9SpriteBatchBackend` (Phase D9-9,
+`D9-90`–`D9-93` all CLOSED, see that phase's own section above) — no longer belongs in this list.
+`BasicEffect`'s realistically-drawable 10 `ShaderIndex` values, all 8 of
+`AlphaTestEffect`'s, 2 of `DualTextureEffect`'s 4, all 8 non-specular of `EnvironmentMapEffect`'s
+16, all 12 non-pixel-lighting of `SkinnedEffect`'s 18, and the narrow
+`DrawColoredPrimitives`/`DrawIndexedColoredPrimitives` path are real — every XNA Stock Effect has a
+real dispatch path now. The mapping tables (`D9-20`–`23`) are now consumed by the render-state push path,
+the buffer-creation path, the texture/render-target-creation paths, and the draw path itself.
+
+---
+
+## 3. Recent changes
+
+Most recent first. Full detail lives in `plan_dx9.md` — this is a short index.
+
+| Commit(s) | Summary |
+|---|---|
+| *(pending)* | **RESOLVED the documented render-target-as-texture D3D9 crash from `08aba091`/§4 — a real CNA bug, not a DXVK/environment limitation.** Root cause: every `D3D9EffectDraw.cpp` texture-binding call site did `static_cast<const D3D9TextureBackend*>(params.texture0)` unconditionally, which is undefined behavior whenever `params.texture0` actually points at a `D3D9RenderTargetBackend` (a real, legal runtime type for that `const ITextureBackend*` field, since `IRenderTargetBackend : ITextureBackend`) — exactly what happens when a `RenderTarget2D` is sampled as an ordinary effect texture. `D3D11GraphicsBackend.cpp` already solves this exact problem (`GetSrvForTextureEXT`, a two-concrete-type `dynamic_cast` resolver) — `D3D9` never had the equivalent. Fixed with new `ResolveD3D9TextureEXT`/`ResolveD3D9TextureCubeEXT` helpers (mirroring D3D11's own precedent) replacing all 6 unsafe `static_cast` sites in `D3D9EffectDraw.cpp`, plus the same fix in `D3D9SpriteBatch.cpp`'s own analogous (already `dynamic_cast`-safe, non-crashing but silently-wrong) gap. **Mutation-verified**: temporarily reintroduced the exact original `static_cast`, reproduced the documented symptom verbatim (`terminate called after throwing an instance of 'dxvk::DxvkError'`); reverted, reconfirmed the fix. New `D3D9_DrawEx` Check Q (18 checks): a `D3D9RenderTargetBackend` created/bound/`Clear()`ed/unbound then sampled directly as an ordinary `BasicEffect` texture — exact readback, no crash. Full `ctest -L D3D9`: 17/17 green, zero regressions. Deliberately did not re-attempt the reverted oracle-corpus scene (`D9-A5`/`D9-84`'s own territory) as part of this fix. See §4's own updated record and `plan_dx9.md`'s `D9-84` row. |
+| *(pending)* | **`D9-A6` CLOSED — the oracle corpus run against a SECOND backend (EasyGL) for the first time ever.** Confirmed `tools/xna-oracle/CnaOracleRender.cpp` was already backend-agnostic before touching it (only two `printf` strings and one comment literally said `D3D9`) — added a small `OracleBackendName()` helper keyed off the `CNA_BACKEND_*` compile definitions, no other line changed. New, purely-additive `cna_easygl_test(cna_oracle_render_easygl ...)` CMake registration inside the existing EasyGL-tests section (not a CTest, same "comparison tool" precedent as `cna_oracle_render`); new non-Wine `scripts/run-oracle-corpus-diff-easygl.sh` twin driver script. Existing D3D9 registration/CTest/script untouched (`cmake --build cmake-build-d3d9 --target cna_oracle_render` re-verified still green after the change). **Result: 10/31 pixel-perfect (all `sprite_*` + `alphatest_never_quad`), 21/31 diverge in three evidenced patterns** — (1) 17 scenes diverge only in a thin silhouette-edge band (rasterization fill-rule/pixel-center convention gap vs. D3D9-over-DXVK, most likely), notably including 5 "lit" scenes that turn out structurally incapable of exposing the predicted `preferPerPixelLighting` gap (uniform normal/light by construction); (2) 2 scenes (`colored3d`, `colored_trianglestrip_quad`) diverge almost everywhere but by only 1-3/channel — ordinary Mesa/RADV-vs-DXVK float rounding noise, not a bug; (3) 2 real, previously-unmeasured `plan_graphics.md` candidates — `fog_gradient_quad` renders fully-fogged/black everywhere (including the near/unfogged edge) instead of the correct linear gradient (likely a negative-`FogEnd`-specific EasyGL bug), and `envmap_fresnel_quad` renders nearly the whole quad at the bright top-edge Fresnel value instead of Gouraud-interpolating to the dim bottom edge — a concrete confirmation of this plan's own predicted design-decision-8 gap, in the one scene actually shaped to detect it. All three patterns logged in `docs/d3d9-divergence-report.md`'s new "Cross-backend measurement (D9-A6)" section, **none investigated further or fixed**, per this row's own explicit rule. Vulkan/D3D11 remain unmeasured. |
+| *(pending)* | **`D9-112` CLOSED — `SpriteBatch::Begin(effect)` wiring, Phase D9-11 FULLY CLOSED.** New `D3D9SpriteBatchBackend::SetCustomEffect()` (flush-on-change, mirrors D3D11's identical pattern). `FlushBatch()` branches on a valid custom `D3D9EffectBackend`: uploads viewport size via `D9-111`'s own generic `SetUniformVec2("vpSize", ...)` (no dedicated method needed, unlike D3D11's `SetViewportSizeEXT()`), calls `Apply()` then `Bind()`, replacing the stock shader/`MatrixTransform` block — vertex declaration/texture/sampler binding stay unchanged between paths (D3D9's declaration is a decoupled device state, simpler than D3D11's shader-baked `InputLayout`). New `D3D9GraphicsBackend::CreateEffectBackend()` + the matching `CMakeLists.txt` circular-link fix (D3D9 joins the `CNA`-back-link `OR` chain, closing the gap `D9-10` deferred here). **Real bug found and fixed**: moving `D3D9EffectBackend.cpp` out of the main glob while `D3D9ConstantTable.cpp` stayed in it created a genuine link-order cycle between the two new targets (`undefined reference to ParseConstantTableEXT` on every D3D9 test binary) — root-caused and fixed by moving `D3D9ConstantTable.cpp` into the isolated effect target too (it has no other consumer). New `D3D9_SpriteBatch_CustomEffect` CTest (4/4) through the real public `SpriteBatch`/`ShaderEffect` API, mirroring D3D11's own `DX-71` test bar in real D3D9 SM2/SM3 HLSL — all 4 passed on the first successful build. Mutation-verified (forced the custom-effect branch unreachable, confirmed exactly the color-inversion discriminator failed while position/restore-to-stock checks correctly stayed green; reverted clean). Full D3D9 suite now 17/17; EasyGL/`CnaTests` regression-checked. |
+| `f69094dd` | **`D9-111` CLOSED — `D3D9EffectBackend`, real runtime `D3DCompile()` custom-ShaderEffect backend**. New `D3D9EffectBackend.{hpp,cpp}` (`IEffectBackend`): `CompileProgram()` compiles vertex+pixel source separately (`vs_2_0`/`ps_2_0` Reach, `vs_3_0`/`ps_3_0` HiDef), `SetUniform*` genuinely looks `name` up per-stage via `D9-110`'s own real register tables — not D3D11EffectBackend's own fixed-slot convention, since D3D9 registers are compiler-assigned and vary per shader. Build-isolated per design decision 16: `D3D9EffectBackend.cpp` excluded from the main backend source glob, built as its own `cna_backend_graphics_d3d9_effect` static library with `d3dcompiler` linked ONLY there — the stock D3D9 pipeline stays dependency-free, diverging from D3D11/D3D12's own simpler "link it to the whole backend" precedent. New `D3D9_EffectBackend` CTest (6/6), matching D3D11EffectBackend's own `DX-58` test bar (compile+bind+draw+uniform-driven pixel readback) on a real device — all 6 passed on the FIRST successful build. **Real finding via mutation-testing**: the original single "far-away WorldViewProj leaves background unpainted" check wasn't discriminating — a fully-disabled vertex-constant upload also leaves the register at zero, also degenerating the triangle to nothing, for a completely different reason. Fixed by splitting into a positive-case anchor (identity re-upload must still paint red) before the negative case; re-mutated and confirmed the anchor now correctly fails first. All mutations reverted (`diff`-confirmed byte-identical each time). Full D3D9 suite now 16/16; EasyGL/CNA build regression-checked. `D9-112` remains open. |
+| `d01bbfb1` | **Phase D9-11 authorized 2026-07-15; `D9-110` (CTAB constant-table parser) CLOSED**. New `D3D9ConstantTable.{hpp,cpp}` — real `D3DXSHADER_CONSTANTTABLE`/`D3DXSHADER_CONSTANTINFO` binary parsing (no D3DX/`ID3DXConstantTable`, design decision 9), locating the CTAB comment token via the same DWORD-walking strategy `compare_against_fxb.py` (`D9-73`) already proved against 66 real shaders. New `D3D9_ConstantTable` CTest (14/14): compiles a known 3-constant shader via real `D3DCompile()`, cross-checks against `D3DDisassemble()`'s own independent `"// Registers:"` text (same regex as `extract_shader_registers.py`). **Found and fixed a real bug via this cross-check**: first attempt returned 0 constants — a raw byte-dump against real compiler output found every CTAB offset field is relative to 4 bytes past the `'CTAB'` FourCC (where `Size` begins), not the FourCC itself. Mutation-verified (reverted the fix, parser reads garbage and crashes with `std::bad_alloc` — an even more dramatic catch than a value mismatch); reverted clean, reconfirmed 14/14. Added a defensive bound so malformed CTAB data returns empty instead of crashing. Full D3D9 suite now 15/15; EasyGL/CNA build unaffected (file only compiles under D3D9). |
+| `4ec9e781` | **`D9-123` FULLY CLOSED — the `gtest_discover_tests` cross-compile follow-up**. `CMakeLists.txt:7117`'s `gtest_discover_tests(CnaTests DISCOVERY_MODE PRE_TEST)` had no `MINGW`/`CMAKE_CROSSCOMPILING` guard and tried to directly execute the cross-compiled `CnaTests.exe` (a PE32+ binary) to enumerate test names — invisible before the setenv fix landed. Measured the naive per-test-Wine-spawn cost first (~1.2s/spawn × 4367 discovered cases ≈ 87 minutes) before picking an approach. Fixed by setting `CROSSCOMPILING_EMULATOR` on the `CnaTests` target (same CMake-native mechanism `DX-80`'s own `cna_d3d11_ctest_command` macro already uses), routing through the correct per-backend Wine wrapper with its DXVK/vkd3d-proton authenticity gate deliberately disabled inline (`env CNA_D3D9_SKIP_DXVK_GATE=1 <wrapper>`) — `CnaTests` spans non-Graphics namespaces that never open a device. Also automatically fixed `CnaInputTests`' own separate `add_test`, no extra change needed. Deliberately kept `gtest_discover_tests` as-is rather than redesigning granularity: confirmed the real workflow (`ctest -L D3D9`) label-filters and none of the 4367 discovered cases carry that label, so the 87-minute concern never applies to the actual documented command. **Verified end-to-end**: `ctest -L D3D9` 14/14 pass (no more test-file-generation crash); `ctest -N` shows 4383 total registered tests; 2 individual discovered cases plus `CnaInputTests` itself explicitly run via `ctest -R` and genuinely execute through Wine, not just register. EasyGL regression-checked (reconfigured + rebuilt, same 2 spot-checks pass natively, `CMAKE_CROSSCOMPILING` guard correctly no-ops). Not independently re-verified on D3D11/D3D12's own build dirs. `plan_dx9.md`'s `D9-123` row now ✅ in full. |
+| `5e5dcc7c` | **`D9-123` setenv compile blocker IMPLEMENTED (project-owner go-ahead given) — `CnaTests` compiles under D3D9 for the first time ever**. All 62 `::setenv()`/`::unsetenv()` call sites (60 setenv + 2 unsetenv — a small correction from the proposal's "63+2" estimate) across 13 files replaced with `System::Environment::SetEnvironmentVariable`; `#include "System/Environment.hpp"` added where missing. `tools/audio/audio_no_hardware_harness.cpp` already had a working `#if _WIN32` `_putenv_s()` branch (not actually blocking) — simplified to the shared wrapper for consistency anyway. EasyGL regression-checked: 491/491 tests pass across the 11 affected suites, full-output-grepped for `FAILED`. D3D9 verified: compiles and links with zero errors and zero remaining setenv/unsetenv. Surfaced a second, distinct `gtest_discover_tests` blocker (see the entry above, fixed the same day). |
+| `cf082a52` | **`D9-123` written proposal (superseded by implementation above)** — new `docs/cnatests-mingw-setenv-proposal.md`, grounded by actually grepping every call site rather than the earlier "~10 test files" estimate. Confirmed a zero-new-risk fix already exists: `sharp-runtime`'s `System::Environment::SetEnvironmentVariable` already branches `_putenv_s()` on `_WIN32`, already compiles/links in the existing D3D11/D3D12 MinGW builds, matches .NET's empty-value-unsets convention — a mechanical 1:1 replace, no new abstraction. |
+| `5e3a82c0` | **`D9-130` CLOSED (Phase D9-13 docs) — new `docs/d3d9-backend.md`, a full `D3D9` column across all 7 tables in `docs/graphics-backend-feature-matrix.md`, and a `README.md`/`programs.md` build-doc update**. `docs/d3d9-backend.md` leads with XNA pixel-authenticity (not a feature checklist), the real-Microsoft-shader fact, and the 0/31-divergence oracle result, following `docs/d3d11-backend.md`'s own structure. Every feature-matrix cell was grounded by reading `tools/xna-oracle/scenes/*.scene` directly (confirmed exact `SpriteSortMode`/`AlphaFunction`/`WeightsPerVertex` coverage, and that `EnvironmentMapEffect.specularEnabled` is structurally unreachable, `D9-82e`) rather than recalled from memory; ungrounded cells marked honestly `⬜`/`🟨`. New matrix section "Remaining genuine D3D9 limitations", matching the Vulkan/Bgfx precedent sections. `README.md`: new `D3D9` Project-Status bullet, a "Build (Windows cross-compilation — D3D9 backend)" section, a Tested-Compilers row. `programs.md` §9: new D3D9-specific three-Wine-prefix subsection, closing the gap `plan_dx9.md`'s own line 103 flagged. |
+| `2a0f1576` | **Phase D9-12 `D9-122` CLOSED — systematic mutation-verification of `D3D9_Smoke`/`D3D9_Common` + the 4 reused state tests**. Classified every check as CONFIRMED (explicit prior mutation evidence) or GAP, then ran 6 new mutation cycles against the highest-priority GAPs (`ApplyBlendState`'s `D3DRS_DESTBLEND`, `PerformResetRecovery`'s `deviceLost_` flag — which also surfaced that a broken recovery crashes the whole test binary via an uncaught `DeviceLostException`, not just failing one check — `SetRenderTargets`' per-slot MRT bind, `BindAsRenderTarget`, `D3D9VertexBufferBackend::Upload`, `D3D9TextureCubeBackend::SetData`), each confirmed to fail exactly the predicted check(s) and nothing else, then reverted clean. Full D3D9 CTest suite reconfirmed 14/14 independently (not just the closing agent's own self-report). Full detail in `plan_dx9.md`'s own `D9-122` row and §2's Phase D9-12 section above. |
+| `65ba7ce8` | **Phase D9-12 `D9-120`/`D9-121` CLOSED — the D9-A oracle corpus is now a real, checked-in CTest, plus a written divergence report**. All 31 real-XNA-4.0 reference PNGs regenerated fresh and confirmed byte-identical to earlier cached renders before committing (`tools/xna-oracle/reference/*.png`, 132 KB). New `scripts/run-oracle-corpus-diff.sh` + `D3D9_XNA_Diff` CTest -- diffs every scene against its checked-in reference at `tolerance=0`, needs only the D3D9 Wine prefix (never the XNA one) to run. Mutation-verified (corrupted one reference pixel, confirmed exactly that scene failed with the real delta, restored). New `docs/d3d9-divergence-report.md`: headline **0/31 scenes diverge from real XNA 4.0**, with an explicit "not yet covered" table and an honest status re-read of all 6 project-wide CNA-vs-XNA divergences (3 now closed on D3D9, 4 now measured-correct on D3D9, 1/5/6 still open). Full D3D9 CTest suite now 14/14. |
+| `389470fb` | **Phase D9-10 follow-up CLOSED — `TextureCube`/`Texture3D` profile size ceilings + `MaxRenderTargets` enforcement**. Reuses `D3D9ProfileCapabilities`' own already-written helpers (no new capability logic, just wiring): `TextureCube` throws past 512 (Reach)/4096 (HiDef); `Texture3D` throws UNCONDITIONALLY under Reach (volume textures unsupported entirely) and past 256 under HiDef; `GraphicsDevice::SetRenderTargets()` throws past 1 target under Reach (4 under HiDef) -- separate from `MAX_RENDERTARGET_BINDINGS` (XNA's general cap) and `D9-54`'s own hardware-cap enforcement. 8 new checks (`D3D9_GraphicsProfile` now 19/19), mutation-verified (disabled all 3 new profile functions at once, confirmed exactly the 6 tied checks failed, restored) -- also found and fixed a real bug in the CTest's OWN cleanup logic (only unbinding render targets on the throw path left them bound and crashed `Present()` when a mutation made the call NOT throw). Regression-checked again on EasyGL (150 relevant `CnaTests` cases, all green). Full D3D9 CTest suite 13/13 green. Only NPOT-wrap-on-`Reach` and hardware-instancing's HiDef-only gate remain open in Phase D9-10. |
+| `9c3210df` | **Phase D9-10 CLOSED (`D9-100`–`D9-105`) — `GraphicsProfile.Reach`/`HiDef` made real on D3D9, plus a real cross-backend `GraphicsProfile`-propagation bug found and fixed**. New `D3D9ProfileCapabilities.{hpp,cpp}` (`D3DCAPS9` probed via `IDirect3D9::GetDeviceCaps`/`CheckDeviceFormat`/`CheckDeviceType`/`CheckDeviceMultiSampleType`, all pre-device-creation, backend-local under `#ifdef CNA_BACKEND_D3D9`). `IsProfileSupported()`/`QueryRenderTargetFormat()`/`QueryBackBufferFormat()` real; `Texture2D` throws `System::NotSupportedException` past its own profile's size ceiling (2048 Reach/4096 HiDef). Real bug found in SHARED code: `Game`'s `GraphicsDevice_` member is eagerly default-constructed (hardcoded Reach) before `GraphicsDeviceManager` exists, and `applyToExistingBackend()` never wrote a changed profile back onto the live device -- `graphics.GraphicsProfile = HiDef; graphics.ApplyChanges();` had NO path to the real device at all. Fixed with new `GraphicsDevice::SetGraphicsProfileEXT()`. EasyGL's own `CnaTests` (70 cases) regression-checked, all green. New `D3D9_GraphicsProfile` CTest, 10/10, mutation-verified. Full D3D9 CTest suite 13/13 green. |
+| `47ca4a15` | **`D9-A5` grown to 31 scenes (`colored_linelist_quad`/`colored_linestrip_quad`) — completes ALL 4 real `PrimitiveType` values, both PIXEL-PERFECT (0/65536 differ) on the first attempt**. `LineList`: two SEPARATE horizontal segments at different Y rows, proving independent segments with nothing connecting them (confirmed on real XNA: RED/GREEN midpoints exact, the row between stays background). `LineStrip`: a 3-vertex "V" polyline, proving 2 CONNECTED segments share the middle vertex (confirmed on real XNA: 307 non-background pixels spanning the full expected extent, both leg midpoints exact RED). New `D3D9_Draw` Check E/F (now 6/6) — real bug found and fixed in the CTest's OWN color-packing, not CNA: `0x00FF00FFu` decodes (byte order R,G,B,A ascending, little-endian literal) to `R=255,G=0,B=255,A=0` — magenta at zero alpha, invisible — not green; fixed to `0xFF00FF00u`. Caught immediately via a full-frame debug scan showing the RED segment rendered exactly as predicted but no GREEN pixels anywhere. Mutation-verified after the fix (hardcoded both `primitiveCount`s to 1, confirmed exactly Check E/F went red, restored). All 31 corpus scenes re-verified pixel-perfect; full D3D9 CTest suite 12/12 green. |
+| `426d8af7` | **`D9-A5` grown to 29 scenes (`colored_trianglestrip_quad`) — first scene to ever use `PrimitiveType.TriangleStrip`, PIXEL-PERFECT (0/65536 differ) on the first attempt**. Every earlier scene (and every existing `D3D9_Draw`/`D3D9_DrawEx` check) only ever used `TriangleList`, even though `GraphicsDevice::PrimitiveVerts()`/`ToD3D9Topology()` already handled all 4 `PrimitiveType` values unconditionally -- a real, previously-untested code path, not a new feature (no code changes needed). A 4-vertex colored quad in the canonical "Z" strip order (TL/TR/BL/BR), 4 distinct corner colors so a broken vertex-count<->primitiveCount conversion would show a missing quadrant or wrong Gouraud gradient. New `D3D9_Draw` Check D (now 4/4): an oversized strip quad sampled at the first triangle's own corner AND the second triangle's own corner (only covered if `primitiveCount` genuinely resolved to 2, not 1). Mutation-verified (hardcoded `primitiveCount=1`, confirmed exactly Check D went red, restored, reconfirmed green). All 29 corpus scenes re-verified pixel-perfect; full D3D9 CTest suite 12/12 green. |
+| `b557c2bf` | **`D9-A5` grown to 28 scenes (`sprite_multitexture_quad`) — closes D9-90's own explicitly-named multi-texture-batching gap, PIXEL-PERFECT (0/65536 differ) on the first attempt**. 3 non-overlapping sprites, interleaved RED-texture/BLUE-texture/RED-texture (not RED-RED-BLUE, so the second red draw genuinely forces a SECOND rebind after the blue draw's own flush) -- new optional trailing `textureIndex` column on `spritedraw=` lines, reusing the scene format's existing `texture2*` keys rather than inventing new ones. Mutation-verified (disabled the texture-change flush trigger in `D3D9SpriteBatchBackend::Draw()`, confirmed the middle sprite's BLUE leaked into the third position -- `1600/65536` pixels wrong -- then restored and reconfirmed green). New `D3D9_SpriteBatch` Check I (now 10/10). All 28 corpus scenes re-verified pixel-perfect; full D3D9 CTest suite 12/12 green. |
+| `df682701` | **Phase D9-9 `D9-93` CLOSED (3 of 5 `SpriteSortMode` values) — found and fixed a real D3D9 backend bug (`BuildMatrixTransformEXT`'s Z-row clipped any nonzero `layerDepth` sprite)**. 3 new `D9-A5` scenes (`sprite_sortmode_deferred_quad`/`sprite_sortmode_backtofront_quad`/`sprite_sortmode_fronttoback_quad`) using 2 overlapping `NonPremultiplied`-blended RED/GREEN sprites at different `layerDepth`s. First scene in the whole corpus to draw with `layerDepth != 0` — surfaced that `CreateOrthographicOffCenter(0,W,H,0,0, zFarPlane=1)` gives `Z'=-layerDepth`, outside D3D9's valid `[0,1]` clip-space Z range, silently clipping the second sprite away entirely regardless of sort mode (root-caused via the real XNA oracle producing correct output while CNA didn't). Fixed with `zFarPlane=-1` (identity Z-row, `Z'=layerDepth`) — only the Z row changes, D9-91's own X/Y half-pixel math is unaffected. All 3 new scenes pixel-perfect against real XNA 4.0 after the fix; 3 new checks added to `D3D9_SpriteBatch` (now 9/9), mutation-verified (reverted the fix, confirmed the sort-mode checks failed, restored, reconfirmed green). `SpriteSortMode.Immediate`/`.Texture` explicitly scoped out (not pixel-observable / needs multi-texture design, respectively) — see `plan_dx9.md` D9-93's own closure note. All 27 corpus scenes re-verified pixel-perfect; full D3D9 CTest suite 12/12 green. |
+| `8de8e5b9` | **Phase D9-9 `D9-92` CLOSED — real `TextureAddressMode.Wrap`/`Mirror` for `SpriteBatch`, both oracle-verified with discriminating patterns**. `SetSamplerFilter()`/`SetSamplerAddressMode()` already plumbed through to the real `D9-63` `ApplySamplerState()` path -- the missing piece was purely test coverage, since `Begin()` with no args only exercises `LinearClamp`. New `spritesourcerect`/`spritesampler` scene keys + `Begin(sortMode, blendState, samplerState, null, null)` wiring. 2 new `D9-A5` scenes: `sprite_wrap_quad` (`PointWrap`, sourceRect double the texture width -- tiles RED/GREEN/RED/GREEN across 4 bands) and `sprite_mirror_quad` (manually-constructed Point/Mirror sampler, same geometry -- folds symmetrically to RED/GREEN/GREEN/RED instead, genuinely distinguishable from Wrap). Both patterns predicted before running either side, then confirmed pixel-for-pixel identical. 2 new checks added to `D3D9_SpriteBatch` (now 6/6). All 24 corpus scenes re-verified pixel-perfect; full D3D9 CTest suite 12/12 green. |
+| `b889cab1` | **Phase D9-9 `D9-90`/`D9-91` CLOSED — real `D3D9SpriteBatchBackend`, half-pixel offset oracle- AND mutation-verified**. New `D3D9SpriteBatch.{hpp,cpp}`; reuses the existing stride-24 vertex layout and D3D11SpriteBatchBackend's own quad-geometry formula, real `SpriteEffect.fx` bytecode (already compiled/register-mapped by the general D9-71/72 sweep). `MatrixTransform` bakes SpriteBatch's own transform + a D3D9 half-pixel correction (`M41 += -0.5*M11` etc.) into one uniform. 3 new `D9-A5` scenes (`sprite_basic_quad`/`sprite_rotated_quad`/`sprite_flipped_quad`), all pixel-perfect on the first attempt. Real finding: a 1x1-texture scene and quadrant-center CTest sample points are BOTH structurally incapable of detecting the half-pixel offset (it shifts texture CONTENT sampling, not geometric edges) -- caught via mutation-testing, which showed the boundary check staying green with the offset removed while the multi-texel oracle scenes diverged by 4800/65536 pixels; fixed with a dedicated boundary-blend-color CTest check. New `D3D9_SpriteBatch` CTest, 4/4, mutation-verified. `D9-92` (sampler Wrap/Mirror) and `D9-93` (SpriteSortMode sweep) explicitly NOT closed -- honest gaps, not assumed. All 21 corpus scenes re-verified pixel-perfect; full D3D9 CTest suite 12/12 green. |
+| `17a1a607` | **`D9-A5` grown to 19 scenes (`skinned_fourbone_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to exercise a REAL 4-bone skinning blend, completing all 3 real `WeightsPerVertex` values**. Extended vertex line format to an optional 16 columns (3rd/4th boneindex/boneweight pair); new `bone2translate`/`bone3translate` scene keys. Four pure-translation bones weighted 0.4/0.3/0.2/0.1 blend to an exact hand-derived `Translate(0.12,0.03,0)` -- a genuine two-axis shift proving all four weighted terms sum correctly. Confirmed at predicted shifted boundaries in both X and Y on both sides. All 19 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `08aba091` | **Documented a genuine, unresolved D3D9 backend crash (render-target-as-texture sampling), reverted all attempted code rather than land it half-working**. See §4's own "New blocker found 2026-07-15" for the full reproduction record and recommended next step (Vulkan validation layers). |
+| `83e2edf2` | **`D9-A5` grown to 18 scenes (`alphatest_never_quad`/`alphatest_always_quad`) — also PIXEL-PERFECT (0/65536 differ each), COMPLETE ALL 8 REAL XNA `AlphaTestEffect.AlphaFunction` VALUES IN THE CORPUS**. `Never` sets both branch targets negative (`clip(-1)` unconditionally, discards everything regardless of alpha); `Always` sets both positive (`clip(1)` unconditionally, discards nothing). Both reuse `alphatest_quad.scene`'s exact texture; `Never` renders pure clear color everywhere (even the alpha=255 texels that would normally pass `Greater`), `Always` renders every texel including the alpha=1/64 ones that would normally fail. No code changes needed. `AlphaTestEffect`'s entire compare-function surface is now independently verified: `Less`/`LessEqual`/`GreaterEqual`/`Greater`/`Never`/`Always` on `PSAlphaTestLtGt`, `Equal`/`NotEqual` on `PSAlphaTestEqNe`. All 18 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `dab209af` | **`D9-A5` grown to 16 scenes (`alphatest_greaterequal_quad`/`alphatest_lessequal_quad`) — also PIXEL-PERFECT (0/65536 differ each), exercise `GreaterEqual`/`LessEqual`, sharing `PSAlphaTestLtGt` with `Greater`/`Less` but differing at the EXACT boundary value**. Confirmed against FNA's own `AlphaTestEffect.cs`: `GreaterEqual` sets `X=reference-threshold` (vs `Greater`'s `+threshold`); `LessEqual` sets `X=reference+threshold` (vs `Less`'s `-threshold`) -- a texel exactly at `ReferenceAlpha` passes under the `-Equal` variant, fails under the plain variant. Both reuse `alphatest_equal_quad.scene`'s own texture (which already has an exact-128 texel; `alphatest_quad.scene`'s texture never lands on 128). Predicted patterns confirmed exactly right, then pixel-for-pixel identical. No code changes needed. Completes all 4 alpha-value-dependent `PSAlphaTestLtGt` values. All 16 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `ac7f39cd` | **`D9-A5` grown to 14 scenes (`alphatest_notequal_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to exercise `AlphaFunction=NotEqual`, completing coverage of both real pixel shader buckets' compare-function directions**. Confirmed against FNA's own `AlphaTestEffect.cs` source: `NotEqual` uses the identical `abs(a-x)<y` comparison as `Equal`, only the pass/fail branch targets swap. Reuses `alphatest_equal_quad.scene`'s exact texture/threshold, flips every texel's pass/fail. No code changes needed (`NotEqual` already supported). All 14 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `5bf410fc` | **`D9-A5` grown to 13 scenes (`skinned_twobone_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to exercise a REAL, non-degenerate 2-bone skinning blend**. New `weightspervertex`/`bone1translate` scene keys; vertex line format extended to an optional 12 columns (2nd boneindex/boneweight pair), backward compatible. Real finding: `skinned_quad.scene`'s own comment claimed `WeightsPerVertex=1` but never actually set it -- real XNA defaults to 4, so that scene had actually been running the FourBones bucket, harmless only because its single weight pair leaves the rest 0. Fixed with explicit `weightspervertex=1`. New scene blends Bone0=Identity + Bone1=Translate(0.4,0,0) at 50/50, giving an exact hand-derived Translate(0.2,0,0) -- the whole quad shifts right by 0.2 NDC units, confirmed at the predicted shifted screen boundaries on both sides. All 13 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `1f0738fc` | **`D9-A5` grown to 12 scenes (`envmap_fresnel_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to genuinely exercise `EnvironmentMapEffect.FresnelFactor` with a real per-vertex gradient**. New `fresnelfactor` scene key wired on both sides. Real finding: `envmap_quad.scene`'s own comment wrongly claimed the "non-fresnel bucket" -- real XNA defaults `FresnelFactor=1`, and neither side had ever set it, so that scene had actually been running the fresnel-ENABLED bucket the whole time, undetected because its coplanar-with-eye geometry makes Fresnel enabled/disabled coincide (`viewAngle=0` everywhere -> `pow(1,anything)=1`). Fixed with explicit `fresnelfactor=0`. New scene uses deliberately different per-vertex normals (top vs bottom edge) to escape the origin-centered-quad symmetry trap (any single shared normal gives an identical fresnelFactor at all 4 corners); hand-derived center prediction `≈(129.3,64.6,32.3)` matched the observed `(129,65,32)` exactly on both sides. All 12 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `3263db79` | **`D9-A5` grown to 11 scenes (`alphatest_equal_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to exercise `AlphaFunction=Equal`, a STRUCTURALLY different pixel shader bucket (`PSAlphaTestEqNe`) from `Greater`/`Less`'s shared `PSAlphaTestLtGt`**. Confirmed against FNA's own `AlphaTestEffect.cs` source, including the exact tolerance (`threshold=0.5/255`). 4 texels straddle that boundary: `alpha=128` exact match PASSES, `alpha=127`/`129` (off by `1/255`) both FAIL, `alpha=1` FAILS -- pass/fail pattern predicted before running either side, then confirmed pixel-for-pixel. No code changes needed (`Equal` already supported). All 11 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `7f2bbc7a` | **`D9-A5` grown to 10 scenes (`alphatest_less_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to exercise a SECOND `AlphaTestEffect.AlphaFunction` value (`Less`)**. Reuses `alphatest_quad`'s own texture/threshold, only `AlphaFunction` changes -- flips which texels pass vs. discard, proving the compare function is genuinely honored (not just that `clip()` exists). No code changes needed (`Less` already supported). Real finding: a PNG-encoder quirk, not a rendering bug -- a first draft used `alpha=0` for a passing texel; the shader OUTPUT matched byte-for-byte on both sides, but real XNA's `SaveAsPng` zeroed RGB for that exact-`alpha=0` pixel while CNA preserved it (confirmed `alpha==0`-specific, not general premultiply, since `alpha=64` matched exactly). Fixed by using `alpha=1` instead of `0`. All 10 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `658b4c8c` | **`D9-A5` grown to 9 scenes (`fog_gradient_quad`) — also PIXEL-PERFECT (0/65536 differ), first scene to exercise `IEffectFog`**. Fog wiring added to all 5 effect branches on both sides. Required two false starts before a genuinely correct gradient rendered identically on both sides: (1) `z=0..1`/`FogStart=0`/`FogEnd=1` gave `fogFactor=saturate(-z)`, always clamped to 0 -- uniformly white on both sides, an exact but meaningless match; (2) flipping far vertices to `z=-1` for a "correct" negative view-space Z instead near-plane-clipped the whole quad away on both sides (`Projection` is also `Identity`, so clip-space z is the raw vertex z). Working fix: keep `z=0..1`, use `FogStart=0`/`FogEnd=-1` (negative) so `fogFactor=z` directly -- produced a genuine monotonic white-to-black gradient, confirmed pixel-for-pixel identical on both sides. All 9 scenes re-verified pixel-perfect; full D3D9 CTest suite 11/11 green. |
+| `9b8a4e9a` | **`D9-A5` grown to 8 scenes (`multilight_textured_quad`) — also PIXEL-PERFECT (0/65536 differ)**. First scene to genuinely exercise `BasicEffect`'s multi-light SUMMATION formula (`D9-82b`'s own "2-light-sum" `ShaderIndex` bucket, structurally different from the "OneLight" bucket every earlier lit scene uses). Two active lights (diffuse 0.3+0.2, same direction) sum to the exact same dimming `lit_textured_quad`'s own single 0.5 light produces -- exact `(128,128,128,255)`, matching byte-for-byte, proving genuine summation not overwrite. A third light present but disabled (large nonzero diffuse) confirmed NOT to contribute. Extended `light1*`/`light2*` keys, applied uniformly to all 3 lit effects. All 8 scenes re-verified pixel-perfect. |
+| `e0afe3a0` | **`D9-A5` grown to 7 scenes (`skinned_quad`) — also PIXEL-PERFECT (0/65536 differ). MILESTONE: all 5 XNA Stock Effects now represented in the corpus, all pixel-perfect.** Added `effect=SkinnedEffect` plus a fourth custom vertex shape (`PositionNormalTextureWeights`, stride 52, `VSInputNmTxWeights`, matches existing layout byte-for-byte). Single Identity bone at 100% weight (skinning is a no-op, matching `D9-82f`'s own CTest simplification) reduces expected math to `lit_textured_quad`'s own formula: exact `(128,128,128,255)` both sides. Same `LightingEnabled` explicit-interface-implementation carve-out found for `SkinnedEffect` too (confirmed against FNA source) -- same quirk as `EnvironmentMapEffect`, not a new bug. Also proactively added `[StructLayout(LayoutKind.Sequential)]` to both the new struct and (retroactively) `VertexPositionDualTexture` on the C# side -- C#'s default "auto" layout doesn't formally guarantee field order, which `DrawUserPrimitives<T>`'s raw-byte marshalling silently depends on. |
+| `bf2f467c` | **`D9-A5` grown to 6 scenes (`envmap_quad`) — also PIXEL-PERFECT (0/65536 differ), 3rd non-BasicEffect Stock Effect**. Added `effect=EnvironmentMapEffect` plus `environmentmap*` keys, reusing the existing `PositionNormalTexture` shape. 1x1 base texture + 1x1 all-same-color `TextureCube` + dim light + `EnvironmentMapAmount=0.5`: real `lerp(texture*diffuseSum, environmentMap, environmentMapAmount)` produced exact `(164,114,89,255)` both sides. Real finding (not a bug): real XNA/FNA's `EnvironmentMapEffect` implements `IEffectLights.LightingEnabled` via explicit interface implementation, invisible on the concrete class (confirmed live: `emfx.LightingEnabled=...` is a genuine `CS1061`) -- lighting is always on, no game can disable it. CNA's own `setLightingEnabledProperty` already matches the exact same behavior (getter always true, setter throws given false); only the C++ vs C# visibility differs. Neither side calls it for this effect now. |
+| `88dee0c2` | **`D9-A5` grown to 5 scenes (`dualtexture_quad`) — also PIXEL-PERFECT (0/65536 differ), 2nd non-BasicEffect Stock Effect, first scene needing a vertex shape neither side had a built-in type for**. Added `effect=DualTextureEffect` plus `texture2*`/`diffusecolor` keys and a new `vertexformat=PositionDualTexture` (stride 28, `VSInputTx2`) -- real XNA has no dual-UV vertex struct either, so both sides define their own custom `IVertexType`/`VertexDeclaration`. Two 1x1 solid-color textures + `DiffuseColor=(0.5,0.5,0.5)`: the doubling-blend formula's `*2*0.5` cancels out, expected result `(100,60,20,255)` hand-derived before running either side (matching `D9-82d`'s own proven check value), then confirmed pixel-for-pixel. Added as a third `std::unique_ptr` alongside `alphaFx`/`basicFx`, correctly avoiding a repeat of `alphatest_quad`'s own dangling-pointer bug -- no new bug this time. |
+| `b0272385` | **`D9-A5` grown to 4 scenes (`alphatest_quad`) — also PIXEL-PERFECT (0/65536 differ), first non-BasicEffect Stock Effect in the corpus**. Added `effect=BasicEffect`/`AlphaTestEffect` plus `alphafunction`/`referencealpha` keys. A 2x2 texture straddling `ReferenceAlpha=128` exercises `clip()`'s real discard end to end. Real bug found and fixed live in `CnaOracleRender.cpp`: a dangling-pointer bug (not a backend bug) -- the newly-constructed Effect object was scoped inside an `if`/`else` block and destroyed before the shared `DrawUserPrimitives()` call read `GraphicsDevice::currentEffect_` (a raw pointer `Effect::Apply()` sets), causing `textured_quad`/`lit_textured_quad` to spuriously fail with garbage flags; `colored3d` passed only by allocation-timing luck. Fixed via `std::unique_ptr` at `Draw()`'s own top level; re-verified all 4 scenes pixel-perfect afterward. |
+| `b4252bfa` | **`D9-A5` grown to 3 scenes (`lit_textured_quad`) — also PIXEL-PERFECT (0/65536 differ)**. Extended the shared scene format to a third vertex shape (`vertexformat=PositionNormalTexture`, `VSInputNmTx`'s stride-32 shape) plus `ambientcolor`/`light0enabled`/`light0diffuse`/`light0direction` keys wired to `BasicEffect.AmbientLightColor`/`DirectionalLight0` on both sides. Deliberately dimmed the light (`diffuse=0.5`, no ambient) rather than a bright one that would saturate to full intensity and prove nothing about whether lighting math is genuinely applied -- the dimmed version visibly halves the texture color and still matches real XNA exactly. First evidence this backend's lit+textured `BasicEffect` dispatch is genuinely indistinguishable from real XNA 4.0, not just hand-verified pixel math. |
+| `fd8df277` | **`D9-A5` grown to 2 scenes (`textured_quad`) — also PIXEL-PERFECT (0/65536 differ)**. Extended the shared scene format to a second vertex shape (`vertexformat=PositionColor`/`PositionTexture`) and inline procedural texture data (`texturewidth`/`textureheight`/`texturefilter`/`texturepixel`, no content-pipeline asset needed) on both `Oracle.cs` and `CnaOracleRender.cpp`. Exact match confirmed including the UV=(0.5,0.5) point-filter texel-boundary pixel. Real bug found and fixed in `Oracle.cs` itself: `ParseBool` used a C# 6 expression-bodied member the real .NET-4.0-era `csc.exe` rejects outright (`CS1002`/`CS1519`) -- meaning `D9-A3`'s own original "pixel-perfect" claim had never actually been verified against the rewritten, scene-driven `Oracle.cs` (only the old hardcoded spike); fixed, recompiled, re-ran `colored3d` and reconfirmed 0/65536. |
+| `848e56b2` | **`D9-A3`/`D9-A4` closed (XNA oracle diff harness) — first real oracle comparison is PIXEL-PERFECT (0/65536 differ)**. New shared `.scene` text format (`tools/xna-oracle/scenes/*.scene`), a rewritten scene-driven `tools/xna-oracle/Oracle.cs` (moved from `dx9-spike/`), a new `tools/xna-oracle/CnaOracleRender.cpp` (real public `Game`/`GraphicsDeviceManager`/`BasicEffect` API, `cna_oracle_render` CMake target), and `scripts/xna-diff.py` (needs Pillow, `--tolerance` defaults to 0, mutation-verified). Installed DXVK into the XNA oracle's own Wine prefix (`~/.wine-cna-xna40`) -- `D9-A4`'s own critical prerequisite -- confirmed via the adapter string flipping from WineD3D's spoofed string to the real GPU. `colored3d` scene (`D9-A2`'s own original triangle) matches real XNA 4.0 byte-for-byte across all 65536 pixels. `D9-A5`'s corpus now has its first scene, growing incrementally from here. |
+| `6fd21fa3` | **`D9-64` closed (reuse backend-agnostic state CTests) — Phase D9-6 now FULLY CLOSED (all 5 rows)**. Reused D3D11's own 4-test subset (`easygl_blendstate_opaque_test.cpp`/`easygl_blendstate_alphablend_test.cpp`/`easygl_depthstencilstate_stencil_enable_test.cpp`/`easygl_rasterizerstate_cullmode_test.cpp`, verbatim) as new `D3D9_BlendState_Opaque`/`D3D9_BlendState_AlphaBlend`/`D3D9_DepthStencilState_StencilEnable`/`D3D9_RasterizerState_CullMode` CTests. Found and fixed 2 real, pre-existing backend bugs: (1) `SetDepthTestEnabled`/`SetDepthWriteEnabled` were silent-throw stubs since `D9-11`, never wired up -- same class of bug as D3D11's own 2026-07-14 fix (`191c28f1`), now direct `SetRenderState(D3DRS_ZENABLE/ZWRITEENABLE)` calls (`SetBlendEnabled` -> deliberate no-op, matching D3D11/D3D12); (2) `UpdatePresentationFormatEXT()` deferred a changed `DepthStencilFormat` until the next `Present()`, causing `Clear()` to fail `D3DERR_INVALIDCALL` on any test drawing depth/stencil content on the literal first frame -- fixed by applying eagerly inside `UpdatePresentationFormatEXT()` itself (within the interface's own documented allowance, no `IGraphicsBackend.hpp` change). New `D3D9_Smoke` Check Z (2 checks, ported from D3D11's own near/far depth-test proof) confirms fix 1 for real. Both mutation-verified. Full D3D9 CTest suite: 11/11 binaries green (`D3D9_Smoke` now 55/55). |
+| `90f59e7c` | **`D9-83` closed (`DrawInstancedPrimitivesEx` via `SetStreamSourceFreq`) — Phase D9-8's dispatch+instancing work is now COMPLETE**, only `D9-84` remains. New `D3D9InstancedDraw.cpp`, a fresh NOXNA `vs_2_0`/`ps_2_0` shader (`shaders/cna/Instanced3D.hlsl`, real XNA has no per-instance-aware Stock Effect shader) compiled+disassembly-verified, new stride-64 2-stream vertex declaration. `SetStreamSourceFreq(0/1, INDEXEDDATA\|count / INSTANCEDATA\|1)` per MSDN, reset to 1 before returning. Real bug found and fixed during development was in the new CTest's own pixel-sample coordinates (sat exactly on the test triangle's diagonal hypotenuse), not the instancing logic -- every D3D9 API call returned `S_OK` throughout. New `D3D9_Instanced` CTest, 4/4 (two distinct instances in one draw call, null-instanceVb fallback, stream-frequency reset regression check). Mutation-verified (hardcoded the instance-count frequency to 1; exactly the 2nd-instance check went red). Full 7-CTest D3D9 suite passes. |
+| `d945ec59` | **`D9-82f` closed (`SkinnedEffect` dispatch) — Phase D9-8's dispatch work is now COMPLETE for all 5 XNA Stock Effects**. This row's own "12 unblocked" estimate was exactly right, same as `D9-82e`'s. New `DrawSkinnedEffectEXT()` + `UploadBonesVS()`. `VSInputNmTxWeights` matches the existing stride-52 layout byte-for-byte. `preferPerPixelLighting` always `false` makes the pixel-lighting `ShaderIndex` bucket structurally unreachable. `Bones[72]` (216 registers, 3/bone) reuses the exact same "first 3 columns of the transposed matrix" packing `UploadMatrixConstantVS` already established for `World`/`WorldInverseTranspose`. `D3D9_DrawEx` extended to 17/17 (2 new real checks, Identity-bone skinning-as-no-op design so the expected math reuses the established lit-textured formulas while still exercising the full `Bones[72]` upload path). Mutation-verified (commented out the entire `UploadBonesVS()` call; both new checks went red -- a zero skinning matrix degenerates the triangle to a point -- everything else stayed green). Full 6-CTest D3D9 suite passes. |
+| `da8504c6` | **`D9-82e` closed (`EnvironmentMapEffect` dispatch)** — this row's own "8 unblocked" estimate was exactly right this time. New `DrawEnvironmentMapEffectEXT()`; `specularEnabled` always `false` makes the 8 specular `ShaderIndex` values structurally unreachable (no separate throw branch needed). `VSInputNmTx` matches the existing stride-32 layout exactly -- no new vertex declaration needed (unlike `D9-82d`). Factored `oneLight` derivation out of `DrawBasicEffectEXT()` into a shared `ComputeOneLightEXT()`. `EmissiveColor` needs no reconstruction here (`FillGpuDrawParams()` already pre-folds it). `D3D9_DrawEx` extended to 15/15 (2 new real checks mirroring `BasicEffect`'s own Check C/D bucket-selection discipline, non-fresnel only for exactness). Mutation-verified (forced the shared `ComputeOneLightEXT()` to always `true`; BOTH `BasicEffect`'s AND `EnvironmentMapEffect`'s own 2-light checks went red simultaneously, confirming the shared helper is genuinely shared). Full 6-CTest D3D9 suite passes. |
+| `d7fd2187` | **`D9-82d` closed (`DualTextureEffect` dispatch)** — this row's own original "4 ShaderIndex values, all unblocked" claim was wrong: only 2 of 4 are actually drawable. new `DrawDualTextureEffectEXT()`. Real finding: `VSInputTx2` needs a genuine 2-UV-set vertex (28 bytes) with no equivalent among the 5 shared layouts (D3D11's own reimplementation sidesteps this with a single shared UV set, not an option here since this backend must draw the real unmodified compiled shader) — resolved with a new, D3D9-only stride-28 vertex declaration (safe, backend-local, doesn't touch `GpuDrawParams`/other backends). `D3D9_Common` now 29/29. `D3D9_DrawEx` extended to 13/13 (1 new real check: the doubling-blend formula, exact `(100,60,20,255)`). Mutation-verified (skipped `DiffuseColor` upload, confirmed only the new check went red). Full 6-CTest D3D9 suite passes. |
+| `55e1cd61` | **`D9-82c` closed (`AlphaTestEffect` dispatch)**: new `DrawAlphaTestEffectEXT()`, all 8 `ShaderIndex` values real, no vertex-layout gap this time (`AlphaTestEffect`'s two `VSInput` shapes map 1:1 onto the existing strides). `GpuDrawParams::alphaTest` uploads verbatim -- already exactly the real register layout, no reconstruction needed (unlike `BasicEffect`'s `EmissiveColor`). Factored `ComputeFogVectorEXT()` out into a helper shared with `D9-82b`. `D3D9_DrawEx` extended to 12/12 (3 new real checks: `Less` passes, `Less` fails/discarded, `Equal` passes on the vertex-color bucket). Mutation-verified (forced `isEqNe=false`, confirmed only the `Equal`-bucket check went red). Full 6-CTest D3D9 suite passes. |
+| `5e502529` | **`D9-82b` closed (`DrawPrimitivesEx` entry point + `BasicEffect` dispatch)**: new `D3D9EffectDraw.cpp`; new "soft" `TryUpload*ShaderConstantEXT` helpers. Real, honest finding: only 10 of `BasicEffect`'s 32 `ShaderIndex` values are actually drawable (no CNA vertex layout for the rest) — narrower than this row's original 24-value estimate, documented not hidden. Corrected `D9-81`'s `oneLight` finding (the original "read `SkinnedEffect.cpp` directly" text wasn't actually reachable from `GpuDrawParams`-only input; the real fix is a provably-lossless derivation from existing `GpuDrawParams` fields). New `D3D9_DrawEx` CTest, 10/10, every expected pixel hand-computed from `BasicEffect.fx`/`Lighting.fxh`'s own formulas. Mutation-verified (forced `oneLight=true`, confirmed only the bucket-sensitive check went red). Full 6-CTest D3D9 suite passes. |
+| `031e33a5` | **`D9-82` closed (first real 3D triangle) — split from its original scope into `D9-82`/`D9-82b`**: new `D3D9ConstantUpload` (name-keyed register lookup + `Set{Vertex,Pixel}ShaderConstantF`); real `DrawColoredPrimitives`/`DrawIndexedColoredPrimitives` (stride-16, `BasicEffect` `ShaderIndex 3` only, chaining `D9-80`'s dispatch into `D9-74`'s shader cache); new stride-keyed vertex-declaration cache. Found and fixed a second real trap live (not the predicted `D3DCULL` one): `D9-22`'s `D3DDECLTYPE_D3DCOLOR` for `COLOR0` silently swapped R/B against XNA's own R,G,B,A `Color.PackedValue` layout (confirmed: fed red, read back blue, before the fix) — switched to `D3DDECLTYPE_UBYTE4N` (no reorder), confirmed exact red after. `D3D9_Common`'s stride-16/24 assertions updated to match. New `D3D9_Draw` CTest, 3/3 (paint non-indexed, paint indexed, real `WorldViewProj`-upload proof). Mutation-verified (corrupted `DiffuseColor`, confirmed only the mutated check went red). Full 5-CTest D3D9 suite passes. |
+| `e5aa797b` | **`D9-80`/`D9-81` closed (XNA shader dispatch + audit)**: new `D3D9ShaderDispatch` — `Compute<Effect>ShaderIndex()`/`Get<Effect>{Vertex,Pixel}ShaderNameEXT()` for all 5 stock effects, transcribed from FNA's `.cs` sources + the vendored `.fx` files' own tables. `D9-81`'s audit independently re-verified against current source (forked agent): all 4 `GpuDrawParams` gaps still real, but `oneLight`/`isEqNe` turn out resolvable from CNA's own existing internal state with no `GpuDrawParams` change (only `PreferPerPixelLighting`/`specularEnabled` remain genuine cross-cutting blockers). New `D3D9_ShaderDispatch` CTest, 23 checks. Mutation-testing found a real gap in the test's own first draft (a prefix-only sweep missed a corrupted table entry); rewrote as an exact-match sweep against an independently-typed expected array, re-confirmed the mutation is now caught. Full 4-CTest D3D9 suite passes. |
+| `678bc3be` | **`D9-74` closed (`D3D9ShaderCache`) — Phase D9-7 FULLY CLOSED** (`D9-73` honestly 🟨): installed DXVK into `~/.wine-cna-d3d9-spike` (now has both the real compiler and a live device); new `D3D9ShaderCache` + `Shaders::kAllShaders[]` manifest (regenerated, not hand-typed) + new `D3D9_ShaderCache` CTest (4 checks: all 66 create live, caching works, unknown names throw, stage-aware lookup). Mutation-verified (skipped one shader in `CreateAllEXT()`, confirmed the count-dependent checks went red). Full 3-CTest D3D9 suite passes. |
+| `7ecd2d42` | **`D9-72` closed (transcribe register layout)**: real, empirical finding (`EnvironmentMapEffect.fx`'s `VSEnvMap` allocates `World` only 3 registers, not the naively-assumed 4, since that entry point never reads `pos_ws.w`) invalidated the plan's own original hand-derive-from-source approach. New `extract_shader_registers.py` compiles+disassembles all 66 shaders via a new `disasm_tool.cpp`, parsing the compiler's own `// Registers:` comment block for the real, per-entry-point ground truth. Output `D3D9ShaderRegisters.hpp` (627 lines), compiles clean, spot-checked against 3 independently-verified cases. |
+| `dddeecbc` | **`D9-71` closed (compile all 66 entry points)**: new `compile_shaders_sm2.py` parses the entry-point list from the vendored `.fx` files' own `compile` statements (not hand-maintained), cross-builds the moved-in `fxc_tool.cpp` with MinGW-w64, compiles via a bare `wine` call against `~/.wine-cna-d3d9-spike`. Real run: 66/66 compiled, 0 failures, into a checked-in `d3d9_shaders.hpp` (381 KB) confirmed to compile clean as real C++ and to regenerate byte-identically on a second run. Bonus: re-ran `compare_against_fxb.py` against the real header's own bytecode — 61/66 exact matches, same 5 divergent `PixelLighting` variants the Phase D9-0 spike already found. `fxc_tool.cpp`/`compare_against_fxb.py` fully moved out of `dx9-spike/` into their real home. |
+| `64de9d29` | **`D9-70` closed (vendor Stock Effects HLSL)**: all 10 files copied byte-for-byte from the FNA tree into `src/CNA/Internal/Backends/D3D9/shaders/xna/`, plus `LICENSE`, a provenance `README.md` (66 entry points, grep-verified), and a specific `THIRD_PARTY_NOTICES.md` entry. New `scripts/verify-d3d9-stock-effects-vendored.sh` mechanically diffs against the FNA tree. Mutation-verified (appended a line to the vendored `BasicEffect.fx`, confirmed the script reports `MISMATCH`/exit 1). First row of Phase D9-7. |
+| `eb373571` | **`D9-63` closed (`ApplySamplerState`) — Phase D9-6 down to just `D9-64`**: plain `SetSamplerState()` calls (design decision 11), using the `D9-21` mapping tables; slot bound-checked against real `D3DCAPS9::MaxSimultaneousTextures`, not a hardcoded 16. `D3DSAMP_SRGBTEXTURE` genuinely out of scope (interface signature carries no sRGB parameter, same category as `D9-60`'s own `D3DRS_COLORWRITEENABLE` gap). New `D3D9_Smoke` Check Y (2 checks): values read back via `GetSamplerState()` (no draw needed) confirm an exact match; out-of-range slot silently no-ops. Mutation-verified (hardcoded `D3DSAMP_ADDRESSU` to ignore the requested value, confirmed exactly that assertion went red). `D3D9_Smoke` now 53/53. |
+| `1206fc42` | **`D9-56` closed (NPOT capability) — Phase D9-5 FULLY CLOSED (all 7 rows)**: new NOXNA `RequiresPowerOfTwoTexturesEXT()`/`NonPowerOfTwoRequiresClampAddressingEXT()` surface the real `D3DCAPS9::TextureCaps` `POW2`/`NONPOW2CONDITIONAL` bits. This dev environment's DXVK device reports full, unconditional NPOT support, matching `D9-3`'s own original caps dump. New `D3D9_Smoke` Check X (2 checks): asserts the exact reported capability, then round-trips a genuinely non-power-of-two (5×3) texture for real. Enforcing the `Reach`-profile "no Wrap on NPOT" restriction itself is deferred to `D9-10`/`D9-82` (no draw/sampler path exists yet). Mutation-verified (hardcoded the POW2 helper to always return true, confirmed exactly that assertion went red). `D3D9_Smoke` now 51/51. |
+| `f33d4fe9` | **`D9-55` closed (occlusion queries)**: new `D3D9OcclusionQueryBackend` (`IDirect3DQuery9`, `D3DQUERYTYPE_OCCLUSION`), gated on the official D3D9 support-probe idiom (`CreateQuery(type, nullptr)`). New `D3D9_Smoke` Check W (3 checks). Mutation-verified (forced `IsComplete()` to always return false, confirmed exactly that assertion went red). `D3D9_Smoke` now 49/49. `D9-56` (NPOT) is the only Phase D9-5 row left open. |
+| `9c8ccfe9` | **`D9-54` closed (MRT)**: real `D3D9GraphicsBackend::SetRenderTargets(rts, count)` (`SetRenderTarget(i, surface)` per slot, unused slots disabled, over-request throws per design decision 13, deliberately not matching D3D11/D3D12's own silent-clamp precedent). Real, unplanned finding: an MRT bind isn't representable by the single-pointer `currentCustomRT_`/`currentCustomCubeRT_` tracking, so unbinding via `SetRenderTargets(nullptr, 0)` silently failed to restore the back buffer — fixed by making `RestoreBackBufferRenderTargetEXT()` unconditional in `SetRenderTarget2D()`'s/`SetRenderTargetCubeFace()`'s own `!rt` branches. New `D3D9_Smoke` Check V (3 checks). Mutation-verified (disabled the over-request guard, exactly that assertion went red). `D3D9_Smoke` now 46/46. `D9-55`–`56` (occlusion/NPOT) remain open. |
+| `9b309cc5` | **`D9-53` closed**: new `D3D9RenderTargetBackend`/`D3D9RenderTargetCubeBackend` (`D3DUSAGE_RENDERTARGET`, `D3DPOOL_DEFAULT`, registered with the `D9-40` device-lost registry; real MSAA via `CheckDeviceMultiSampleType`, resolved via `StretchRect` on unbind). Three real, unplanned findings fixed: `EnsureDeviceSize()`'s resize path never released `D3DPOOL_DEFAULT` resources before `Reset()` (only the device-lost path did); a cached depth-stencil-surface `ComPtr` is itself an app-held reference to a losable resource and must be released before every `Reset()` too (DXVK's own "still has alive losable resources" diagnostic caught this immediately); `IGraphicsBackend::SetRenderTargetCubeFace()`'s inherited default never actually unbinds a cube target for real, fixed with an explicit override + a second `currentCustomCubeRT_` field. New `D3D9_Smoke` Checks S/T/U (6 checks): 2D/cube/MSAA render targets, each create/bind/Clear/readback (via `GetRenderTargetData()`)/unbind-restores-back-buffer. Mutation-verified (dropped the MSAA resolve `StretchRect` call, exactly Check U's assertion went red). `D3D9_Smoke` now 43/43. `D9-54`–`56` (MRT/occlusion/NPOT) remain open. |
+| `bfadcb0e` | **Phase D9-5 partially closed** (`D9-50`/`D9-51`/`D9-52`): new `D3D9TextureBackend`/`D3D9TextureCubeBackend`/`D3D9Texture3DBackend` (`D3DFMT_A8B8G8R8`, `D3DPOOL_MANAGED`). Found empirically that `D9-52`'s own premise only half-applies: `ITextureBackend` (2D) has no `GetData()` at all — `Texture2D::GetData()` is CPU-shadow-based, same architecture as D3D11 — while `ITextureCubeBackend`/`ITexture3DBackend` genuinely delegate `GetData()` to the backend, and those ARE real `LockRect`/`LockBox` reads, exactly as `D9-4`'s spike predicted (no staging/`SYSTEMMEM` fallback needed). Volume/cube-map creation gated on real `D3DCAPS9` (`MaxVolumeExtent`/`D3DPTEXTURECAPS_CUBEMAP`), not assumed. New `D3D9_Smoke` Checks Q/R (6 checks): exact-byte round-trips via direct locks on the `D3DPOOL_MANAGED` resources (no staging texture needed). Mutation-verified: corrupting the 2D upload's source-row offset turned exactly Check Q's first assertion red, nothing else; reverted, reconfirmed 36/36 green. `D9-53`–`56` (render targets/MRT/occlusion/NPOT) remain open. |
+| `3e855b2d` | **Phase D9-4 fully closed** (`D9-40`/`D9-41`/`D9-42`): real `D3D9VertexBufferBackend`/`D3D9IndexBufferBackend` (16-bit and 32-bit, `CreateIndexBuffer32()` explicitly overridden), `Lock`/`Unlock` with `SetDataOptions` → `D3DLOCK_DISCARD`/`NOOVERWRITE`. Real finding: `D3DUSAGE_DYNAMIC` requires `D3DPOOL_DEFAULT` (forbidden with `POOL_MANAGED`), so these buffers do NOT survive `Reset()` automatically — new `ID3D9DefaultPoolResourceEXT` registry lets `D9-34`'s recovery path release them before `Reset()`, each recreating lazily on next use (real XNA/D3D9 behavior). Mutation-verified (`CreateIndexBuffer32()` temporarily broken to build a 16-bit buffer, caught immediately via a real uncaught exception, reverted). Also avoided the "pointer-inequality isn't sound recreation proof" false-negative this project's own D3D12 work already found once. `D3D9_Smoke` now 30/30. |
+| `cbd75a0b` | **Phase D9-3 fully closed — `D9-34` (device-lost lifecycle)**: `Present()` detects real `D3DERR_DEVICELOST`, fires `DeviceLost`; while lost, polls `TestCooperativeLevel()` until `D3DERR_DEVICENOTRESET`, then fires `DeviceResetting`, calls a real `Reset()`, restores the viewport, fires `DeviceReset`. `Clear`/all `Clear*` combos/`ReadBackbuffer` now throw the real XNA `DeviceLostException` while lost. Exercised deterministically (DXVK rarely loses the device naturally) via the pre-existing `DebugSimulateContextLoss()`/`DebugRestoreContext()` test channel — new `D3D9_Smoke` Check M (8 checks): real event counts/order, a real `Reset()` during recovery, and the device genuinely working again afterward. Also fixed a separate pre-existing gap: `GraphicsDevice::getGraphicsDeviceStatusProperty()` was hardcoded to `Normal` always; now tracks the real backend-reported state. `D3D9_Smoke` now 24/24. Verified no regression on EasyGL/CnaTests. |
+| `70e81079` | **`D9-32` closed (shader-model floor) + `D9-33`'s dedicated resize test (Check L)**: `GraphicsProfile::HiDef` now checked against the real `D3DCAPS9` at construction, throwing the real XNA `NoSuitableGraphicsDeviceException` if below `vs_3_0`/`ps_3_0` (only the positive path provable on this real, already-SM3-capable GPU); a new `D3D9_Smoke` Check L resizes 64×64→96×80 via the real `GraphicsDeviceManager` path and confirms the viewport, a post-resize pixel readback at both the origin and the new far edge, and `PresentationParameters` all reflect the new size. `D3D9_Smoke` now 17/17. |
+| `50954798` | **`D9-30`/`D9-31` closed + `D9-33`'s resize mechanism + Phase D9-6's `D9-60`/`D9-61`/`D9-62` forced in early**: real `Direct3DCreate9`/`CreateDevice` using the game's actual requested back-buffer/depth-stencil format (the approved `GraphicsBackendCreateArgs` extension, finally consumed for real); all 6 `Clear*` combos + `Present` + `ReadBackbuffer` pixel-verified (`D3D9_Smoke` 12/12); a real `EnsureDeviceSize()` resize-via-`Reset()` mechanism (proven working, not theoretical — it's what makes the smoke test converge to the requested 64×64 size at all). Two real, unplanned findings fixed in place: DXVK genuinely rejects `SurfaceFormat::Color`'s own `D3DFMT_A8B8G8R8` as a *swap-chain* format (a real D3D9 display-format restriction, fixed with a back-buffer-specific substitution to `A8R8G8B8`); and `GraphicsDevice::Reset()` never forwarded updated presentation settings to an already-constructed backend, fixed with one more small additive `IGraphicsBackend` method (`UpdatePresentationFormatEXT`, same category as the already-approved extension). Separately, `GraphicsDevice`'s own constructor turned out to unconditionally push `BlendState`/`DepthStencilState`/`RasterizerState`/viewport defaults, forcing `D9-60`/`D9-61`/`D9-62` in immediately (real `D3DRS_*` `SetRenderState()` sequences) — no device could otherwise finish constructing. Also found 4 more silently-empty `IGraphicsBackend` virtuals `D9-11`'s own grep missed (multi-line `{}` defaults). Verified no regression on EasyGL (34 gtest+CTest checks, including 5 resize/reset-specific ones). |
+| `bf26d7d1` | **Phase D9-2 fully closed** (`D9-20`–`D9-23`): new `D3D9FormatMapping`/`D3D9StateMapping`/`D3D9VertexDeclarations` + a 28-check `D3D9_Common` CTest, mutation-verified. Two non-obvious, easy-to-get-backwards findings, both verified against Microsoft's own published D3D9→DXGI legacy-format table rather than assumed: `SurfaceFormat::Color` → `D3DFMT_A8B8G8R8` (not the superficially-obvious `A8R8G8B8`), and `Rgba1010102` → `D3DFMT_A2B10G10R10` (not `A2R10G10B10`, which has no real DXGI equivalent at all). `TextureFilter` needed a new `{min,mag,mip}` triple struct, not a single enum, since D3D9 has no composed filter value. One row (`D9-21`) is 🟨: the mapping table is done, but its own "pixel-test `D3DCULL` against the oracle" obligation is honestly deferred to `D9-84` (no draw path exists yet to test it with). |
+| `1a3ca71f` | **Phase D9-1 fully closed** (`D9-10`/`D9-11`/`D9-12`): D3D9 wired into `CMakeLists.txt` (6 of 7 `"D3D12"` sites, correcting a stale plan claim about the 7th — see `plan_dx9.md`'s `D9-10` row); new `D3D9GraphicsBackend` skeleton + shared `NotYetImplemented.hpp`; `GraphicsDevice.cpp` audited, zero changes needed. `CNA_GRAPHICS_BACKEND=D3D9` configures and builds clean; a runtime check confirms the skeleton's real bookkeeping methods work and its throwing methods actually throw. |
+| `09121309` | **Phase D9-0 fully closed** (`D9-2`–`D9-5`): confirmed `d3d9`-alone link set (no `dxguid`); a real Wine+DXVK D3D9 device/swap-chain/`Clear`/`Present`/`GetRenderTargetData`/`LockRect` round-trip with an exact pixel match plus a full `D3DCAPS9` dump (`vs_3_0`/`ps_3_0`, `NumSimultaneousRTs=4`, 16384 max texture size, DXVK reports unconditional NPOT support — flagged as provisional/synthetic, not an authentic XNA-era driver's caps); confirmed `D3DPOOL_MANAGED` textures are genuinely `LockRect`-readable and survive `Reset()` with no re-upload (so `Texture2D::GetData()` can be a plain `LockRect` later, `D9-52`); and a new `scripts/run-wine-dxvk9.sh` (mirrors `run-wine-dxvk.sh`'s DXVK-marker gate under new `CNA_D3D9_*` env-var names), proven both ways — passes against the real `~/.wine-cna-d3d11` DXVK prefix, and correctly fails (exit 3) against a freshly-initialized, DXVK-less prefix that silently fell back to WineD3D. |
+| `59a35d4c` | Recorded the project owner's two 2026-07-14 decisions in `plan_dx9.md`: implementation authorized through Phase D9-13, and the `IGraphicsBackend` boundary problem resolved via an approved additive extension. |
+| `d1ae928f` | Added `plan_dx9.md` and the proven Phase D9-0 spike artifacts (`dx9-spike/`: shader compiler, `.fxb` bytecode oracle, real XNA 4.0 reference renderer) to the `feature/dx9` worktree. |
+| many, see `plan_graphics.md` (2026-07-16) | **`plan_graphics.md` Phase 78 (HLSL→GLSL sample shader conversion, DEFERRED.md #11) fully closed — unrelated to the D3D work below, see this file's own top banner.** Task 945 decided (manual line-by-line porting). Task 947 went 0→**13/13**: `NetRumble` (`Clouds.fx` + the bloom trio), `PerPixelLighting`/`VertexLighting` (5 effect/technique combinations), `DistortionSample` (`Distort.fx` + `Distorters.fx`, 5 techniques), `NonPhotoRealistic` (`CartoonEffect.Fx` + `PostprocessEffect.Fx`, 8 techniques), `ShadowMapping`, `NormalMapping`, `BillboardSample`, `ShatterEffect`, `Particles3D`/`XmlParticles`, `ShipGame` (4 distinct shaders: `AnimSprite.fx`/`Blur.fx`/`NormalMapping.fx`/`Particle.fx`, incl. real GPU point sprites), `InstancedModel` (`InstancedModel.fx`, incl. real GPU hardware instancing). 4 new EasyGL-only backend capabilities landed along the way as their own tasks: **1079** (`ShaderEffect` into the 3D draw path), **1080** (custom vertex layouts for that path), **1081** (`TextureCube` sampling for custom shaders), **1082** (real GPU hardware instancing via `glVertexAttribDivisor`). `ctest -R "EasyGL_"` grew from ~190 to **231/233** across the whole campaign, same 2 pre-existing unrelated failures throughout, every task individually mutation-tested and committed separately. Full chronological detail (exact expected pixel values, discriminating-power mutation testing per shader) is in `plan_graphics.md`'s own Task 947/1079–1082 rows, not duplicated here. `plan_samples.md` updated per-sample (13 rows now say "No longer CNA-blocked"). **Not done**: the actual sample ports themselves in `../cna-samples` — out of `cna_graphics` scope. |
+
+---
+
+## 4. Current blocker / main problem
+
+**No blocker.** Phases D9-0/D9-1/D9-2/D9-3/D9-4/D9-5/D9-6/D9-7 are all fully closed (D9-32/D9-34/
+D9-60/D9-62/D9-73 honestly 🟨 — see their own plan rows for exactly what's deferred and why). Phase
+D9-6's last open row, `D9-64` (reused backend-agnostic state CTests), closed 2026-07-15 and
+surfaced two real, pre-existing D3D9 bugs along the way (`SetDepthTestEnabled`/
+`SetDepthWriteEnabled` silent-throw stubs; `UpdatePresentationFormatEXT()`'s deferred-format-apply
+timing) — both fixed and mutation-verified, see Phase D9-6's own section above.
+
+**Phase D9-A: `D9-A3`/`D9-A4` closed 2026-07-15 — the XNA oracle diff harness is real and all
+results landed so far are pixel-perfect** (`colored3d`, `textured_quad`, `lit_textured_quad`,
+`alphatest_quad`, `alphatest_less_quad`, `alphatest_equal_quad`, `alphatest_notequal_quad`,
+`alphatest_greaterequal_quad`, `alphatest_lessequal_quad`, `alphatest_never_quad`,
+`alphatest_always_quad`, `dualtexture_quad`, `envmap_quad`, `envmap_fresnel_quad`, `skinned_quad`,
+`skinned_twobone_quad`, `skinned_fourbone_quad`, `multilight_textured_quad`, `fog_gradient_quad`,
+`sprite_basic_quad`, `sprite_rotated_quad`, `sprite_flipped_quad`, `sprite_wrap_quad`,
+`sprite_mirror_quad`, `sprite_sortmode_deferred_quad`, `sprite_sortmode_backtofront_quad`,
+`sprite_sortmode_fronttoback_quad`, `sprite_multitexture_quad`, `colored_trianglestrip_quad`,
+`colored_linelist_quad`, `colored_linestrip_quad` — `0/65536` pixels differ from real XNA 4.0
+each, see Phase D9-A's own section above). `D9-A5` (the scene corpus) has 31 entries and now
+represents **all 5 XNA Stock Effects** (`BasicEffect`, `AlphaTestEffect`, `DualTextureEffect`,
+`EnvironmentMapEffect`, `SkinnedEffect`) including `BasicEffect`'s own multi-light summation
+bucket, `IEffectFog` (shared by all 5 effects), **ALL 8** `AlphaTestEffect.AlphaFunction` values
+covering both real pixel shader buckets (`Less`/`LessEqual`/`GreaterEqual`/`Greater`/`Never`/
+`Always` on `PSAlphaTestLtGt`, `Equal`/`NotEqual` on `PSAlphaTestEqNe` — `AlphaTestEffect`
+compare-function coverage is now COMPLETE), `EnvironmentMapEffect.FresnelFactor` with a genuine
+per-vertex gradient, **ALL 3** `SkinnedEffect.WeightsPerVertex` values (`1`/`2`/`4` —
+`SkinnedEffect` weighting coverage is now COMPLETE), `SpriteBatch`'s core draw path, sampler
+address modes, 3 of 5 `SpriteSortMode` values, and multi-texture `FlushBatch()`-on-texture-change
+batching (`D9-90`/`D9-91`/`D9-92`/`D9-93` all now CLOSED), and **ALL 4** `PrimitiveType` values
+(`TriangleList`/`TriangleStrip`/`LineList`/`LineStrip` — `PrimitiveType` coverage is now
+COMPLETE), every comparison pixel-perfect; `D9-84` (every draw path validated against the oracle)
+can now genuinely continue, one scene at a time.
+
+**Phase D9-9: `D9-90`–`D9-93` all closed 2026-07-15 — `D3D9SpriteBatchBackend` is real, the
+half-pixel offset is both oracle- and mutation-verified, `Wrap`/`Mirror` addressing are both
+oracle-verified with genuinely distinguishing patterns, and 3 of 5 `SpriteSortMode` values are
+oracle-verified with a real backend bug found and fixed along the way.** See Phase D9-9's own
+section above for the full record, including a real finding about why the FIRST mutation-test
+attempt for `D9-91` (boundary check alone) would have been a false-positive "closed" claim, and
+`D9-93`'s own Z-clipping bug (`BuildMatrixTransformEXT`'s `zFarPlane=1` silently clipped away any
+sprite with `layerDepth > 0`, fixed with `zFarPlane=-1`). Phase D9-9 has no open rows left;
+`SpriteSortMode.Immediate`/`.Texture` remain explicitly out of scope, not silently assumed.
+
+**New blocker found 2026-07-15, NOT fixed, reverted to keep the tree clean — a real D3D9 backend
+crash when a `D3DUSAGE_RENDERTARGET`-flagged `RenderTarget2D` texture exists in-process alongside
+any subsequent draw call.** While attempting to add the corpus's first render-target oracle scene
+(`rendertarget_texture_quad.scene` — create a `RenderTarget2D`, `SetRenderTarget`/`Clear`/unbind
+it, then use it as a `BasicEffect` texture for an ordinary textured quad), `cna_oracle_render.exe`
+crashes with `terminate called after throwing an instance of 'dxvk::DxvkError'` — an UNCAUGHT
+exception (this file's own `main()` already has a `catch (const std::exception&)` around the
+entire `Game::Run()` call; the crash bypasses it entirely, meaning the throw happens on a
+different thread, most likely one of DXVK's own async shader-compiler threads: `DXVK_LOG_LEVEL=
+trace` + `DXVK_LOG_PATH=...` showed the crash lands immediately after `debug: Compiling shader
+FS_...`, with nothing more written to the log).
+
+**Isolated via bisection, not guessed:**
+- Reproduces regardless of render target SIZE (tried `1×1` and `4×4`).
+- Reproduces regardless of whether the render target is ever bound, cleared, or unbound at all —
+  a version that only *constructs* a `RenderTarget2D` (`new RenderTarget2D(dev, w, h)`) and never
+  calls `SetRenderTarget`/`Clear` on it still crashes identically on the next ordinary draw call.
+- Reproduces regardless of whether the render-to-texture happens in the same frame or a frame
+  earlier (tried deferring the RT construction to frame N-1 and the texture-sampling draw to
+  frame N, relying on the framework's automatic `Present()` between `Draw()` calls as a
+  synchronization boundary — no change).
+- Every one of this corpus's other 19 scenes (none of which ever construct a
+  `D3DUSAGE_RENDERTARGET`-flagged texture) pass pixel-perfect, including plain `Texture2D`-based
+  textured-quad scenes using the exact same `BasicEffect`/`PositionTexture`/unlit/untextured-
+  vertex-color shader bucket this new scene also uses — so the crash is specific to the presence
+  of a `RenderTarget2D`-backed (`D3DUSAGE_RENDERTARGET`) texture object, not to texturing or this
+  particular effect/shader bucket in general.
+- `D3D9RenderTargetBackend::Recreate()`/`GetTextureEXT()` (`src/CNA/Internal/Backends/D3D9/
+  D3D9RenderTargets.cpp`) both look correct on inspection: `CreateTexture(..., D3DUSAGE_RENDER
+  TARGET, D3DFMT_A8B8G8R8, D3DPOOL_DEFAULT, ...)` (a real, sample-able D3D9 texture per the D3D9
+  API contract, not a `CreateRenderTarget()` surface-only resource), `GetTextureEXT()` returns the
+  same `colorTexture_.Get()` this creates. Nothing wrong was found by code inspection alone —
+  this needs either Vulkan validation layers or DXVK-internals-level debugging to actually
+  diagnose, beyond what this task's own scope justifies.
+- **Not the same gap `CnaOracleRender.cpp`'s own header comment already documents** (that comment
+  is about `RenderTarget2D::GetData()`'s CPU readback path being unproven) — this new scene never
+  calls `GetData()` at all; the crash is in ordinary GPU-side texture *sampling* of a render
+  target from within a normal effect draw, a different and previously totally untested code path
+  (D9-53's own `D3D9_Smoke` Check S/T/U cover create/bind/Clear/`GetRenderTargetData`-readback/
+  unbind-restores-back-buffer, never "use the render target as a sampled shader texture").
+
+**Reverted, not committed**: all code (`CnaOracleRender.cpp`/`Oracle.cs` `rendertargettexture=`/
+`rendertargetwidth=`/`rendertargetheight=`/`rendertargetclearcolor=` scene-key wiring) and the
+new scene file were fully reverted (`git checkout --`) rather than landed half-working, per this
+project's own "no half-finished implementations" rule — the working tree is clean, all 19
+committed scenes still pass, `D3D9` CTest suite still 11/11 green. **Recommended next step for
+whoever picks this up**: reproduce with Vulkan validation layers enabled
+(`VK_LAYER_KHRONOS_validation` via `VK_INSTANCE_LAYERS`, if available in this environment) to get
+an actual Vulkan-level diagnostic message instead of an opaque `dxvk::DxvkError`; alternatively,
+compare against a minimal known-working D3D9 render-target-to-texture sample (outside this
+project) on the same DXVK/driver stack to establish whether this is a genuine CNA-side bug or an
+environment/DXVK-version limitation. Do not re-attempt the render-target oracle scene until this
+is root-caused — a scene that "passes" by accident (e.g. by catching and silently swallowing the
+crash) would be worse than no scene at all.
+
+**RESOLVED 2026-07-16 — root-caused as a real CNA-side bug, not a DXVK/environment limitation;
+fixed, no Vulkan validation layers ultimately needed.** Root cause found by code inspection once a
+minimal repro was isolated at the `D3D9_DrawEx` CTest level (not the oracle harness — kept that
+work out of scope for this fix, see below): every `D3D9EffectDraw.cpp` texture-binding call site
+(`DrawBasicEffectEXT`/`DrawAlphaTestEffectEXT`/`DrawDualTextureEffectEXT`/
+`DrawEnvironmentMapEffectEXT`/`DrawSkinnedEffectEXT`) did
+`static_cast<const D3D9TextureBackend*>(params.texture0)` unconditionally. `GpuDrawParams::
+texture0`/`texture1`/`envMap` are declared `const ITextureBackend*`/`const ITextureCubeBackend*`,
+and `D3D9RenderTargetBackend`/`D3D9RenderTargetCubeBackend` (`IRenderTargetBackend : ITextureBackend`)
+are real, legal runtime types for that pointer whenever a game samples a `RenderTarget2D`/
+`RenderTargetCube` as an ordinary effect texture — exactly what the reverted oracle scene did. The
+`static_cast` silently reinterpreted a `D3D9RenderTargetBackend*` (an unrelated sibling class, not
+a base/derived relationship) as a `D3D9TextureBackend*`: undefined behavior that read whichever
+field sits at `D3D9TextureBackend::texture_`'s own offset in a `D3D9RenderTargetBackend`'s actual,
+different layout, handed `SetTexture()` a garbage `IDirect3DTexture9*`, and crashed later when
+DXVK's async shader-compiler thread actually tried to use it — matching the observed symptom and
+timing exactly (`SPIR-V`/shader-compile-adjacent crash, uncaught, off the main thread).
+
+This project's own `D3D11GraphicsBackend.cpp` already had to solve the identical problem
+(`GetSrvForTextureEXT`, a `dynamic_cast`-based two-concrete-type resolver) — `D3D9` simply never
+got the equivalent. Fixed with `ResolveD3D9TextureEXT`/`ResolveD3D9TextureCubeEXT` (new, anonymous-
+namespace-local helpers in `D3D9EffectDraw.cpp`, mirroring `D3D11`'s own precedent and its own
+documented "duplicated per-file rather than factored into a shared header" rationale), replacing
+all 6 unsafe `static_cast` call sites. `D3D9SpriteBatch.cpp` had the same category of gap in its
+own texture resolve (already `dynamic_cast`-based, so it silently dropped the texture instead of
+crashing) — fixed the same way for consistency, not because it was the crash's own cause.
+
+**Mutation-verified, not just "compiles and doesn't crash the one time it was run"**: temporarily
+reintroduced the exact original `static_cast` at the `DrawBasicEffectEXT` site and reran the new
+regression check below — reproduced the EXACT documented symptom verbatim (`terminate called
+after throwing an instance of 'dxvk::DxvkError'`); reverted, reconfirmed the fix passes. New
+`D3D9_DrawEx` Check Q (18 checks total now): a `D3D9RenderTargetBackend` created/bound/`Clear()`ed
+to a known color/unbound, then used directly as `params.texture0` for an ordinary unlit+textured
+`BasicEffect` draw — exact readback of the render target's real cleared content (not garbage), no
+crash. Full `ctest -L D3D9`: 17/17 green, zero regressions.
+
+**Deliberately did NOT re-attempt the reverted `rendertarget_texture_quad.scene` oracle-corpus
+addition as part of this fix** — that's `D9-A5`/`D9-84`'s own territory (a separate concern from
+root-causing and fixing the crash itself), and picking it up here would have been exactly the kind
+of scope drift this session was already corrected for once. Whoever next grows the oracle corpus
+can now safely re-add a render-target-as-texture scene; the underlying crash is gone.
+
+**Phase D9-8: `D9-80`–`D9-83` ALL CLOSED — real, verified dispatch for all 5 XNA Stock Effects plus
+hardware instancing on this backend.** The shader-dispatch tables/formulas are transcribed and
+tested, the `GpuDrawParams` audit is independently re-verified (2 of its 4 gaps turned out resolvable
+with no `GpuDrawParams` change; the other 2 remain genuine cross-cutting blockers, not this plan's
+call), this backend has drawn its first real, pixel-verified 3D triangle
+(`DrawColoredPrimitives`/`DrawIndexedColoredPrimitives`, `BasicEffect`-VertexColor-only scope), draws
+real effect-aware geometry for `BasicEffect`/`AlphaTestEffect`/`DualTextureEffect`/
+`EnvironmentMapEffect`/`SkinnedEffect` (`DrawPrimitivesEx`/`DrawIndexedPrimitivesEx` — 10 of
+`BasicEffect`'s 32 `ShaderIndex` values, all 8 of `AlphaTestEffect`'s, 2 of `DualTextureEffect`'s
+4, 8 of `EnvironmentMapEffect`'s 16, and 12 of `SkinnedEffect`'s 18 are actually drawable given
+this project's vertex layouts and `D9-81`'s still-open gaps — all pixel-verified), and now draws
+real hardware-instanced geometry (`DrawInstancedPrimitivesEx` via `SetStreamSourceFreq`, CNA's own
+NOXNA instancing shader since real XNA has no per-instance-aware Stock Effect shader). `D9-64` (reuse the backend-agnostic state CTest sources) is also now closed, finding and fixing 2
+real, pre-existing D3D9 bugs along the way (`SetDepthTestEnabled`/`SetDepthWriteEnabled` silent-
+throw stubs; `UpdatePresentationFormatEXT()`'s deferred-format-apply timing) — Phase D9-6 is now
+fully closed too. Next smallest task: keep growing `D9-A5`'s scene corpus and validating each
+scene against the oracle (`D9-84`, the last row in Phase D9-8) — the harness itself (`D9-A3`/
+`D9-A4`) is done and its first result (`colored3d`) is pixel-perfect.
+`PreferPerPixelLighting` variants (`BasicEffect`/
+`SkinnedEffect`) and `EnvironmentMapEffect`'s specular variants stay blocked on a project-owner-level
+`GpuDrawParams` decision (`D9-81`'s still-open findings). The `D3DCULL` winding trap (`D9-21`) did NOT
+need to be worked around for `D9-82`/`D9-82b`–`f`/`D9-83` (explicit `CullMode::None` resets
+sidestepped it, matching `D3D11_Smoke`'s own precedent) — it's still open, and `D9-84` may yet hit it
+for real once culling-sensitive scenes are drawn.
+
+---
+
+## 5. Known bugs and limitations
+
+- `BasicEffect` via `DrawPrimitivesEx` only supports 12 of its 32 `ShaderIndex` values (was 10,
+  updated 2026-07-16 — see below) — every combination whose `VSInput` shape has no matching CNA
+  vertex layout (Position-only 12 bytes; Position+Normal 24 bytes, colliding with the existing
+  Position+Color+TexCoord layout; Position+Normal+Color[+TexCoord] 28/36 bytes) throws a named
+  error instead of drawing. See `plan_dx9.md` `D9-82b`'s own closure note / `D3D9EffectDraw.cpp`'s
+  header comment for the exact enumeration.
+- **RESOLVED 2026-07-16 (`plan_graphics.md` Phase 80, project-owner-authorized cross-backend
+  fix): `GpuDrawParams` now carries real `preferPerPixelLighting`/`specularEnabled` fields, and
+  this backend's dispatch reads them instead of hardcoding `false`.** `BasicEffect`'s
+  pixel-lighting-textured bucket (`ShaderIndex` 28/29) and `SkinnedEffect`'s entire pixel-lighting
+  bucket (12-17, all 3 `WeightsPerVertex` values) are now reachable and oracle-proven pixel-perfect
+  against real XNA (4 of `D9-73`'s own 5 divergent shader variants — see that row); the untextured
+  bucket (`BasicEffect` `ShaderIndex` 24/25, `VSBasicPixelLighting`) stays permanently blocked by
+  the SAME missing-vertex-layout gap as the untextured vertex-lit bucket above, unrelated to this
+  fix. `EnvironmentMapEffect`'s specular buckets (all 8, `ShaderIndex` 4-7/12-15) are also now
+  reachable — a real bug (constants uploaded to the wrong shader stage, or not at all for
+  `EnvironmentMapSpecular`) was found and fixed along the way, see `plan_dx9.md` `D9-73`/`D9-84`'s
+  own rows for the full record.
+- `DualTextureEffect` via `DrawPrimitivesEx` only supports 2 of its 4 `ShaderIndex` values — the
+  vertex-color variant (`VSInputTx2Vc`, 32 bytes) collides with the existing
+  Position+Normal+TexCoord layout and throws a named error instead of drawing (`plan_dx9.md`
+  `D9-82d`'s own closure note). Unaffected by the above (no `PreferPerPixelLighting`/
+  `specularEnabled` concept in this effect).
+- `D3DCULL` winding (`CullClockwiseFace`/`CullCounterClockwiseFace` vs. `D3DCULL_CW`/`_CCW`) is
+  mapped but not yet pixel-proven against the real XNA oracle (`plan_dx9.md` `D9-21`/`D9-84`).
+
+See `plan_dx9.md`'s "CNA's divergences from XNA 4.0" for the six pre-existing, cross-cutting
+CNA-vs-XNA fidelity gaps this plan will measure (not fix) once Phase D9-A's oracle is complete.
+
+**Two standing, project-wide architecture-decision items, unrelated to D3D9** (not this plan's to
+decide — see `plan_graphics.md` for full detail): `Texture3D`/`TextureCube` inherit
+`GraphicsResource` directly instead of `Texture` (Task 863); `GraphicsDevice` stores state objects
+by value instead of FNA's reference-type aliasing (Task 869). Both need a project-owner direction
+before any backend acts on them — see §9.
+
+---
+
+## 6. Architecture notes
+
+### Main modules (D3D9-relevant)
+
+| Layer | Location | Notes |
+|---|---|---|
+| Backend contracts | `include/CNA/Internal/Backends/Common/IGraphicsBackend.hpp` | Being extended additively (approved) for D3D9's needs — see `plan_dx9.md`. |
+| **D3D9 backend** | `include/\|src/CNA/Internal/Backends/D3D9/` | Windows-only, MinGW-w64 cross-compiled, own format/state/vertex-declaration mapping (not `D3DCommon`). Device/present/buffers/textures/render-targets/render-state/stock-effect-shaders/colored draws, all 5 XNA Stock Effect draws (`BasicEffect`/`AlphaTestEffect`/`DualTextureEffect`/`EnvironmentMapEffect`/`SkinnedEffect`), and hardware instancing (`DrawInstancedPrimitivesEx`) are real; `D9-84` (oracle validation)/`SpriteBatch` still pending. |
+| Vendored XNA stock effects | `src/CNA/Internal/Backends/D3D9/shaders/xna/` (destination) | Microsoft's `.fx`/`.fxh`, verbatim, MS-PL. |
+| Spike artifacts (temporary) | `dx9-spike/` | Proven Phase D9-0 code, being moved into the real tree task by task. |
+
+### Critical invariants (do not break these)
+
+Same project-wide invariants as `plan_dx.md`'s `NEXT.md` used to list (Doxygen/SPDX/NOXNA/property
+convention/stride-keyed vertex layout/etc.) — see `CLAUDE.md` and `CHECKLIST.md`, not repeated here.
+D3D9-specific invariants (from `plan_dx9.md` design decisions): plain D3D9 not D3D9Ex;
+`D3DPOOL_MANAGED` for user resources; Microsoft's `.fx`/`.fxh` sources are never edited; shader
+targets stay `vs_2_0`/`ps_2_0` for stock effects (never "upgraded" to SM3); no D3DX linked, ever.
+
+### FNA / XNA reference
+
+Authoritative behavioral reference for this backend is **not** FNA (FNA has no D3D9 driver) — it is
+XNA itself, in two forms: Microsoft's Stock Effects HLSL sources
+(`/rv/data/library/github.com/FNA-XNA/FNA/src/Graphics/Effect/StockEffects/`) for the shaders, and the
+real XNA 4.0 runtime under Wine (`~/.wine-cna-xna40`, `tools/xna-oracle/`) for behavior.
+
+---
+
+## 7. Useful commands
+
+```bash
+# Wine prefixes (see dx9-spike/README.md for full detail)
+~/.wine-cna-d3d9-spike   # real Microsoft d3dcompiler_47.dll -- shader compile work ONLY
+~/.wine-cna-xna40        # real XNA 4.0 (win32, .NET 4.0, in-prefix csc.exe) -- the oracle
+~/.wine-cna-d3d11        # D3D9 RUNTIME device tests use this one too (its own dxvk-setup install
+                         # already wires d3d9.dll to DXVK) -- do not touch its D3D11/D3D12 CTest role
+
+# Run a D3D9 .exe under Wine+DXVK, with the DXVK-marker gate (mirrors run-wine-dxvk.sh's DX-85 gate)
+scripts/run-wine-dxvk9.sh path/to/some_d3d9_test.exe
+# Override the prefix (defaults to ~/.wine-cna-d3d11): CNA_D3D9_WINEPREFIX=...
+# Bypass the DXVK gate for a deliberate non-DXVK diagnostic: CNA_D3D9_ALLOW_WINED3D=1
+# Skip the gate for a binary that never opens a device (e.g. a future D3D9_Common): CNA_D3D9_SKIP_DXVK_GATE=1
+
+# Once D9-10 lands (CMake wiring), the configure command will mirror D3D11's:
+cmake -S . -B cmake-build-d3d9 \
+      -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+      -DCNA_GRAPHICS_BACKEND=D3D9 -DCNA_BUILD_TESTS=ON
+```
+
+---
+
+## 8. Next smallest tasks
+
+**Phases D9-0 through D9-13 are ALL fully closed** (`D9-32`/`D9-34`/`D9-60`/`D9-62`/`D9-73`
+honestly 🟨 — see their own plan rows for exactly what's deferred and why; `D9-73` is now 4/5
+closed, only the permanently-blocked untextured `VSBasicPixelLighting` variant remains, see below).
+**Phase D9-A's diff harness (`D9-A1`–`D9-A4`) is fully closed**, now 36 scenes deep, all
+pixel-perfect (5 new since the 31-scene count above: `lit_textured_quad_pixellighting`,
+`skinned_pixellighting_quad`/`_twobone_quad`/`_fourbone_quad`, `envmap_specular_quad`).
+
+**`D9-81`'s `PreferPerPixelLighting`/`specularEnabled` `GpuDrawParams` gap is now RESOLVED, 2026-07-16**
+(project owner authorized the full cross-backend fix, `plan_graphics.md` Phase 80, D3D9 first since
+it needs no new shader — Microsoft's own `.fx` sources already have both shader families). This
+backend's dispatch now reads the real values; `plan_dx9.md`'s `D9-73`/`D9-84` rows have the full
+record, including a real bug found and fixed along the way (lighting constants uploaded to the
+wrong shader stage for the pixel-lighting bucket, and a missing `EnvironmentMapSpecular` upload
+entirely). **The remaining 8 backends (EasyGL/Vulkan/Bgfx/WebGPU/D3D11/D3D12/Software each need a
+genuinely new per-vertex-lit shader; `SdlRenderer`/`Headless` don't render 3D lighting at all) are
+`plan_graphics.md`'s own scope, not this plan's** — see that file's Phase 80 for the per-backend
+task breakdown, sequenced one at a time by explicit project-owner request. **Phase D9-12 is
+now fully closed, including `D9-123`** — `D9-120`/`D9-121`/`D9-122`/`D9-123` all ✅ (see §2's own
+Phase D9-12 section for the full `D9-122`/`D9-123` detail, including the `gtest_discover_tests`
+cross-compile fix and its own end-to-end verification). **`D9-130` (Phase D9-13 docs) is closed
+too** — `docs/d3d9-backend.md`, a full `D3D9` column across all 7 tables in
+`docs/graphics-backend-feature-matrix.md`, a `D3D9` build section + Tested-Compilers row in
+`README.md`, and the `programs.md` §9 Wine-prefix gap it flagged are all done.
+
+**Phase D9-11 (custom `ShaderEffect`) is authorized AND fully closed (2026-07-15)** — `D9-110`/
+`D9-111`/`D9-112` all ✅, see §2's own Phase D9-11 section for the complete detail.
+
+**`D9-A6` (run the oracle corpus against CNA's other backends) is now CLOSED too (2026-07-16)** —
+measured EasyGL first: 10/31 scenes pixel-perfect (all `sprite_*` + `alphatest_never_quad`), 21/31
+diverge across three evidenced patterns (a rasterization-boundary gap spanning 17 scenes, GPU/driver
+floating-point rounding noise on 2 scenes, and 2 real, previously-unmeasured `plan_graphics.md`
+candidates — `fog_gradient_quad`'s negative-`FogEnd` handling and `envmap_fresnel_quad`'s Fresnel
+interpolation, the latter a concrete confirmation of this plan's own predicted `preferPerPixelLighting`
+gap). Logged in `docs/d3d9-divergence-report.md`'s new "Cross-backend measurement (D9-A6)" section,
+none fixed, per this row's own explicit "log them and move on" rule. Vulkan/D3D11 remain unmeasured
+by this pass — the same recipe (a `cna_*_test`-style CMake registration + a
+`run-oracle-corpus-diff-<backend>.sh` twin script) is the natural next step for either.
+
+**Only `D9-140` (real Windows hardware verification) remains in this entire plan** — `needs_human`,
+out of scope for this dev environment entirely. Every unilaterally-startable task in `plan_dx9.md`
+is now closed (verified just now: `D9-A6`, the last one, is done above; the only other non-`✅` rows
+in the whole plan are `D9-A5`/`D9-84`, both deliberately-ongoing "growing with the plan" 🟨 rows with
+their own documented remaining scope, not blocked-and-unstarted work).
+
+**Readiness re-audit, 2026-07-16 — accurate current punch list** (replaces this section's own prior
+paragraph, which had gone stale: it still said "`EnvironmentMapEffect` specular/
+`PreferPerPixelLighting` are blocked on `D9-81`'s cross-cutting `GpuDrawParams` gaps," contradicting
+this very section's own "RESOLVED 2026-07-16" paragraph above it — that gap is fixed, not still
+blocking). Every non-`✅` row in `plan_dx9.md` was re-read individually; here is what each one
+actually still needs, if anything:
+
+- **`D9-21` (`D3DCULL`) — CLOSED 2026-07-16.** 3 new oracle scenes (`cullmode_none_quad`/
+  `cullmode_ccwface_quad`/`cullmode_cwface_quad.scene`, reusing `colored3d.scene`'s own triangle,
+  a confirmed negative-NDC-signed-area winding per `docs/xna_culling_compatibility_audit.md`'s
+  real-hardware-verified table) proved `CullModeToD3D9()`'s mapping against real XNA 4.0,
+  `0/65536` each, mutation-verified (swapping the `CW`/`CCW` mapping reproduces the exact
+  predicted failure). Corpus is now 39 scenes.
+- **`D9-62` (`RasterizerState.DepthBias`/`SlopeScaleDepthBias`) — attempted, NOT closed.** A
+  discriminating scene was designed and multiple magnitudes tried (`1.0` through `±1e8`) against
+  the real XNA 4.0 oracle — none produced any observable pixel change, while a bias-free baseline
+  confirmed the underlying depth test itself works. Likely shares a root cause with this project's
+  own separate, pre-existing `Vulkan_DepthBias` CTest failure (same DXVK stack) — a suspected
+  environment/driver limitation, not a CNA-side forwarding bug (unchanged, not suspected). See
+  `D9-21`'s own plan row for the full investigation and the recommended next lead (try a real,
+  non-identity perspective `Projection` — every scene in this corpus is `Identity` today).
+- **`SurfaceFormat` sweep** (`plan_graphics.md` Phase 81) — scoped, not decided: needs a project-
+  owner call on which formats justify the effort, and `Texture2D`'s own API needs new construction/
+  `SetData` paths for non-`Color` formats before the oracle can even describe one. Not started.
+- **`D9-A6` extended to Vulkan/D3D11** — offered, deferred by the project owner (2026-07-16). The
+  same recipe already proven for EasyGL (a `cna_*_test`-style CMake registration + a
+  `run-oracle-corpus-diff-<backend>.sh` twin script) is the natural next step whenever picked up.
+- **Permanently blocked, not further actionable without new, larger, out-of-scope work**:
+  `D9-73`'s 5th `PixelLighting` variant (untextured `VSBasicPixelLighting` — needs a Position-only
+  vertex layout that doesn't exist); `D9-84`'s own full closure (blocked by `D9-62`'s `DepthBias`
+  gap above, the `SurfaceFormat` sweep, plus `SpriteSortMode.Immediate`/`.Texture`, already
+  confirmed out of scope for good reasons, not silently dropped); NPOT-wrap-on-`Reach` and
+  hardware-instancing's `HiDef`-only gate (both need real XNA reference behavior this project has
+  no way to verify — FNA implements neither; do not guess).
+- **`D9-140` (real Windows hardware)** — the only item in the entire plan that is `needs_human`,
+  out of reach in this dev environment entirely.
+- A render-target-as-texture oracle scene can now safely be re-attempted (the crash blocking it is
+  fixed, §4) but isn't itself a named remaining task — it would be new `D9-A5` growth, not a gap.
+
+See `plan_dx9.md`'s "Execution order" table for the full sequence beyond this.
+
+**Other standing backlog, unrelated to D3D9** (full history: `plan_dx.md` for the now-fully-closed
+D3D11/D3D12 work, this file's own top banner for Phase 78):
+- **`plan_samples.md` standing queue** (formerly Phase 79, `plan_graphics.md` Tasks 957–1076,
+  moved+renumbered `SAMPLE-1`–`SAMPLE-120` on 2026-07-16): a full re-audit of all 153
+  `../cna-samples`-catalogued samples, one row per sample. **13 rows** (`SAMPLE-32`/`33`/`34`/`35`/
+  `36`/`38`/`39`/`40`/`42`/`43`/`45`/`62`/`66`) now say "No longer CNA-blocked" thanks to Phase 78
+  — their own CNA-side shader gap is closed, but they're still `⬜` in `plan_samples.md` because
+  **the actual sample port itself** (`.cpp`/`.hpp`/`Content/` under `../cna-samples/samples/<Name>/`)
+  hasn't been written yet — that's a different repo, out of `cna_graphics` scope, tracked in
+  `../cna-samples`'s own plan file. The other ~88 `⬜` rows in `plan_samples.md` are unrelated to
+  shaders (re-verification passes, other DEFERRED.md items) — pick any of those, or any of the 13
+  above if the sibling repo's own plan calls for it. Do not touch `⛔` rows (structural/permanent,
+  no CNA action possible).
+- Task 952 (`RenderTargetCube` depth-gating bug on Bgfx) remains **DEFERRED**, not a next task —
+  see §9.
+
+---
+
+## 9. Do not do yet
+
+- **Do not fix any of the six CNA-vs-XNA divergences** (`plan_dx9.md`'s own section) from inside this
+  branch — measure with the oracle, report, propose to the project owner for a `plan_graphics.md`
+  task. Never "just add the flag while in there."
+- **Do not start Phase D9-11 (custom `ShaderEffect`)** without asking first — explicitly flagged
+  optional/ask-first in `plan_dx9.md`'s execution order.
+- **Do not edit Microsoft's vendored `.fx`/`.fxh` files**, ever, for any reason (`D9-70`).
+- **Do not "upgrade" stock effects to `vs_3_0`/`ps_3_0`** because the hardware supports it.
+- **Do not widen an oracle tolerance to turn a red test green** (`D9-A4`) — that silently converts
+  this from an authenticity project into a parity project.
+- **Do not touch `GpuDrawParams`, `D3DCommon/`, `D3D11/`, or `D3D12/`** — still off-limits regardless
+  of branch state (cross-cutting or another backend's active territory).
+- **Do not touch `IGraphicsBackend.hpp` beyond the approved additive extension** (new
+  `GraphicsBackendCreateArgs` fields + the one device-event channel) — nothing else, no drive-by
+  refactors.
+- **`plan_dx.md` is entirely closed for both D3D11 and D3D12, through Phase DX16** (2026-07-15) —
+  nothing left to authorize or implement there on this Debian machine. Only `DX-27`/`DX-90`/`DX-91`
+  (D3D11) and `DX-110`/`DX-114` (D3D12) remain, all `needs_human` — a real Windows machine with a
+  real GPU, or a real device-removed trigger neither backend can induce under Wine. **Do not open a
+  "Phase DX17" or similar speculatively** — if the project owner wants more D3D work, they'll say so
+  (e.g. the same way Phase DX16 itself started from an explicit percentage-audit request). Don't
+  invent new gaps to close just because the plan file is open-ended in principle.
+- **When working Phase DX12, do not merge D3D11 and D3D12 into one shared device/backend class**
+  "for less duplication" — `plan_dx.md` design decision 4 already scoped what's genuinely shared
+  (`D3DCommon`); forcing the actual device/command/resource logic to share code across two
+  structurally different APIs is exactly the kind of premature abstraction `CLAUDE.md` warns
+  against.
+- **Do not assume D3D12 swap-chain/`Present()` support works locally under Wine "since D3D11's
+  DXVK path worked"** — `DX-100`'s real spike found the opposite for presentation specifically
+  (`CreateSwapChainForHwnd` crashes/fails under vanilla Wine's `dxgi.dll` + vkd3d-proton, even
+  though the device/queue/command-list path itself is genuinely solid). Build `DX-102` onward
+  around off-screen/readback proof and re-verify swap-chain support explicitly before relying on
+  it, rather than inheriting D3D11's own assumption by analogy.
+- **Do not resume Task 952** (Bgfx `RenderTargetCube` depth-gating bug) without explicit
+  instruction — explicitly marked **DEFERRED** by the project owner after 2 full investigation
+  rounds found no root cause.
+- **Do not attempt Task 863 or Task 869** (the two architecture-decision items in §5) without the
+  project owner picking a direction first.
+- **Phase 78's `cna_graphics`-side shader-conversion work (Tasks 945/946/947/1079–1082) is DONE**
+  (2026-07-16, explicit project-owner direction) — do not re-port any of the 13+1 already-closed
+  shaders, and do not re-litigate Task 945's own decision (manual porting). What's still off-limits
+  without new instruction: writing the actual sample ports themselves in the sibling `../cna-samples`
+  repo — that's a different repo with its own plan file (not opened this session), genuinely outside
+  `cna_graphics` scope, not merely "not yet started."
+- **Do not chase `cna_demo_xact`'s build failure** — missing example asset directory, not a CNA bug.
+- **Do not attempt `EasyGL_MRT_TwoAttachments`** opportunistically — pre-existing, off-limits
+  without a dedicated task.
+- **Do not run more than one backend's `ctest`/`CnaTests` suite concurrently** — causes spurious
+  `Subprocess aborted` failures from resource contention, not real bugs.
+- **Do not bundle multiple task numbers into one commit** — one task per commit, staged by explicit
+  filename (never `git add -A`/`.`).
+- **Do not claim indistinguishability from Wine+DXVK results alone** — `D3DCAPS9` under DXVK is
+  synthesized, not driver-reported, and device-lost rarely fires naturally under Wine. Real hardware
+  verification is `D9-140`, `needs_human`.
+
+---
+
+## 10. Resume prompt
+
+```
+Read NEXT.md first (this file, feature/dx9 branch), then plan_dx9.md in full before touching any
+code -- this is a much stricter plan than the other CNA backends (indistinguishability from real
+XNA 4.0, verified against a real oracle, not just "renders plausibly").
+
+Implementation is authorized through Phase D9-13. The IGraphicsBackend boundary problem is resolved
+(additive GraphicsBackendCreateArgs extension + device-event channel, approved 2026-07-14). Phase
+D9-11 (custom ShaderEffect) still needs an explicit ask before starting. Phase D9-14 needs real
+Windows hardware, out of reach here.
+
+Pick exactly one task from §8 "Next smallest tasks" (default to the first one unless told
+otherwise; the D3D9 punch list is exhausted down to `needs_human` rows, so also consider the
+"Other standing backlog, unrelated to D3D9" items at the end of that section). Inspect only the
+files that task names -- do not go exploring unrelated modules, and do not refactor anything you
+find along the way that isn't directly required for this task. See §9 for what stays off-limits
+generally.
+
+Make one small, verified improvement:
+1. Investigate/reproduce first (run the exact command named in the task).
+2. Implement the smallest correct thing per plan_dx9.md's design decisions -- do not improvise past
+   what the plan already decided.
+3. Where the task is a rendering/behavior claim, verify it against the real XNA 4.0 oracle
+   (tools/xna-oracle/, ~/.wine-cna-xna40), not just "looks right" -- that is this plan's whole
+   point.
+4. Update plan_dx9.md's own task table (status + notes) with the real result.
+5. Update this NEXT.md: Sec.2/Sec.3/Sec.8, following the same short-index style as the rest of the
+   file -- do not let it grow into a duplicate of plan_dx9.md.
+6. Commit (staged by explicit filename, one task per commit), following this repo's existing
+   commit-message style (git log --oneline).
+
+Do not start a second task in the same session unless the first is fully closed, tested, and
+committed, and NEXT.md/plan_dx9.md are updated.
+```
