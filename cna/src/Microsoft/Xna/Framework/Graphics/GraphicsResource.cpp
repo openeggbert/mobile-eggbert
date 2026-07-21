@@ -41,11 +41,6 @@ namespace Microsoft::Xna::Framework::Graphics
         Dispose(false);
     }
 
-    GraphicsDevice* GraphicsResource::getGraphicsDeviceProperty() const
-    {
-        return graphicsDevice_;
-    }
-
     bool GraphicsResource::getIsDisposedProperty() const
     {
         return isDisposed_;
@@ -61,24 +56,9 @@ namespace Microsoft::Xna::Framework::Graphics
         name_ = value;
     }
 
-    System::Object* GraphicsResource::getTagProperty() const
-    {
-        return tag_;
-    }
-
-    void GraphicsResource::setTagProperty(System::Object* value)
-    {
-        tag_ = value;
-    }
-
     void GraphicsResource::Dispose()
     {
         Dispose(true);
-    }
-
-    std::string GraphicsResource::ToString() const
-    {
-        return name_.empty() ? Object::ToString() : name_;
     }
 
     void GraphicsResource::Dispose(bool disposing)

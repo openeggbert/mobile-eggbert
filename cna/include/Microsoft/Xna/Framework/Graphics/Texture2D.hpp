@@ -278,7 +278,7 @@ namespace Microsoft::Xna::Framework::Graphics
 
     protected:
         /**
-         * @brief Constructs a Texture2D from a pre-built backend (used by RenderTarget2D).
+         * @brief Constructs a Texture2D from a pre-built backend (used by ReconstructFromCache).
          * @param device     The owning device.
          * @param w          Width in pixels.
          * @param h          Height in pixels.
@@ -288,14 +288,6 @@ namespace Microsoft::Xna::Framework::Graphics
          */
         Texture2D(GraphicsDevice& device, int w, int h, SurfaceFormat fmt, int levelCount,
                   std::shared_ptr<ITextureBackend> backend);
-
-        /**
-         * @brief Returns the raw non-owning backend pointer.
-         *
-         * Used by RenderTarget2D after construction.
-         * @return Pointer to the backend, or nullptr.
-         */
-        [[nodiscard]] ITextureBackend* GetBackendRaw() const { return backend_.get(); }
 
         /** @brief Releases the GPU texture handle when the resource is disposed. */
         void Dispose(bool disposing) override;

@@ -31,26 +31,6 @@ namespace Microsoft::Xna::Framework::Graphics
         /** @brief Returns the display height in pixels. */
         [[nodiscard]] SharpRuntime::intcs getHeightProperty() const;
 
-        /** @brief Returns the display aspect ratio (width / height). */
-        [[nodiscard]] float getAspectRatioProperty() const;
-
-        /** @brief Returns the surface format of this display mode. */
-        [[nodiscard]] SurfaceFormat getFormatProperty() const;
-
-        /**
-         * @brief Returns true if both display modes have the same width, height, and format.
-         * @param other The display mode to compare with.
-         * @return True if equal.
-         */
-        [[nodiscard]] bool operator==(const DisplayMode& other) const;
-
-        /**
-         * @brief Returns true if the display modes differ.
-         * @param other The display mode to compare with.
-         * @return True if not equal.
-         */
-        [[nodiscard]] bool operator!=(const DisplayMode& other) const;
-
         /** @brief Returns the fully qualified .NET type name of this class. */
         NOXNA [[nodiscard]] const std::string& GetTypeName() const override;
 

@@ -6,7 +6,6 @@
 
 #include "CNA/CNAHelper.hpp"
 #include "Microsoft/Xna/Framework/DisplayOrientation.hpp"
-#include "Microsoft/Xna/Framework/Rectangle.hpp"
 #include "Microsoft/Xna/Framework/Graphics/DepthFormat.hpp"
 #include "Microsoft/Xna/Framework/Graphics/PresentInterval.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RenderTargetUsage.hpp"
@@ -62,12 +61,6 @@ namespace Microsoft::Xna::Framework::Graphics
         void setBackBufferWidthProperty(SharpRuntime::intcs value);
 
         /**
-         * @brief Gets a rectangle whose size matches the back buffer dimensions (origin at 0,0).
-         * @return Rectangle with width and height of the back buffer.
-         */
-        [[nodiscard]] Microsoft::Xna::Framework::Rectangle getBoundsProperty() const;
-
-        /**
          * @brief Gets the native window handle associated with the device.
          * @return Current device window handle.
          */
@@ -100,12 +93,6 @@ namespace Microsoft::Xna::Framework::Graphics
          * @return true if the device should be created off-screen, with no window.
          */
         NOXNA [[nodiscard]] bool getHeadlessEXTProperty() const;
-
-        /**
-         * @brief Sets whether the device should be created without any real window (off-screen).
-         * @param value true to create the device off-screen, with no window. Defaults to false.
-         */
-        NOXNA void setHeadlessEXTProperty(bool value);
 
         /**
          * @brief Gets the depth/stencil buffer format.
@@ -160,24 +147,6 @@ namespace Microsoft::Xna::Framework::Graphics
          * @return Current display orientation.
          */
         [[nodiscard]] Microsoft::Xna::Framework::DisplayOrientation getDisplayOrientationProperty() const;
-
-        /**
-         * @brief Sets the display orientation.
-         * @param value New display orientation.
-         */
-        void setDisplayOrientationProperty(Microsoft::Xna::Framework::DisplayOrientation value);
-
-        /**
-         * @brief Gets the render-target usage policy for the back buffer.
-         * @return Current render-target usage.
-         */
-        [[nodiscard]] RenderTargetUsage getRenderTargetUsageProperty() const;
-
-        /**
-         * @brief Sets the render-target usage policy for the back buffer.
-         * @param value New render-target usage.
-         */
-        void setRenderTargetUsageProperty(RenderTargetUsage value);
 
         /**
          * @brief Creates a copy of this PresentationParameters.

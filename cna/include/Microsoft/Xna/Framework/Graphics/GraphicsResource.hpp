@@ -24,9 +24,6 @@ namespace Microsoft::Xna::Framework::Graphics
         /** @brief Destroys the GraphicsResource and releases backend resources. */
         NOXNA ~GraphicsResource() override;
 
-        /** @brief Returns the graphics device that owns this resource. */
-        [[nodiscard]] GraphicsDevice* getGraphicsDeviceProperty() const;
-
         /** @brief Returns true if this resource has been disposed. */
         [[nodiscard]] bool getIsDisposedProperty() const;
 
@@ -38,21 +35,6 @@ namespace Microsoft::Xna::Framework::Graphics
          * @param value The new name to assign.
          */
         virtual void setNameProperty(const std::string& value);
-
-        /** @brief Returns an arbitrary user tag associated with this resource. */
-        [[nodiscard]] System::Object* getTagProperty() const;
-
-        /**
-         * @brief Sets an arbitrary user tag for this resource.
-         * @param value Pointer to the tag object; the caller retains ownership.
-         */
-        void setTagProperty(System::Object* value);
-
-        /**
-         * @brief Returns the Name if set, otherwise returns the type name.
-         * @return Name or type name string.
-         */
-        [[nodiscard]] std::string ToString() const override;
 
         /** @brief Releases all resources held by this object. */
         void Dispose() override;

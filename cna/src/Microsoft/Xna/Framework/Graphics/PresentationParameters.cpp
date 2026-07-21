@@ -47,11 +47,6 @@ namespace Microsoft::Xna::Framework::Graphics
         backBufferWidth_ = value;
     }
 
-    Microsoft::Xna::Framework::Rectangle PresentationParameters::getBoundsProperty() const
-    {
-        return Microsoft::Xna::Framework::Rectangle(0, 0, backBufferWidth_, backBufferHeight_);
-    }
-
     PresentationParameters::IntPtr PresentationParameters::getDeviceWindowHandleProperty() const
     {
         return deviceWindowHandle_;
@@ -65,11 +60,6 @@ namespace Microsoft::Xna::Framework::Graphics
     bool PresentationParameters::getHeadlessEXTProperty() const
     {
         return headlessEXT_;
-    }
-
-    void PresentationParameters::setHeadlessEXTProperty(bool value)
-    {
-        headlessEXT_ = value;
     }
 
     DepthFormat PresentationParameters::getDepthStencilFormatProperty() const
@@ -115,21 +105,6 @@ namespace Microsoft::Xna::Framework::Graphics
     Microsoft::Xna::Framework::DisplayOrientation PresentationParameters::getDisplayOrientationProperty() const
     {
         return displayOrientation_;
-    }
-
-    void PresentationParameters::setDisplayOrientationProperty(Microsoft::Xna::Framework::DisplayOrientation value)
-    {
-        displayOrientation_ = value;
-    }
-
-    RenderTargetUsage PresentationParameters::getRenderTargetUsageProperty() const
-    {
-        return renderTargetUsage_;
-    }
-
-    void PresentationParameters::setRenderTargetUsageProperty(RenderTargetUsage value)
-    {
-        renderTargetUsage_ = value;
     }
 
     PresentationParameters PresentationParameters::Clone() const

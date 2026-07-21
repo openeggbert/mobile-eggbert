@@ -2,16 +2,7 @@
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
 
 #include "CNA/Internal/Backends/Common/IGraphicsBackend.hpp"
-#include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
-#include "Microsoft/Xna/Framework/Graphics/Effect.hpp"
-#include "Microsoft/Xna/Framework/Graphics/IEffectMatrices.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
-#include "Microsoft/Xna/Framework/Graphics/RenderTarget2D.hpp"
-#include "Microsoft/Xna/Framework/Graphics/RenderTargetCube.hpp"
-#include "Microsoft/Xna/Framework/Graphics/VertexPositionColor.hpp"
-#include "Microsoft/Xna/Framework/Graphics/VertexPositionColorTexture.hpp"
-#include "Microsoft/Xna/Framework/Graphics/VertexPositionTexture.hpp"
-#include "Microsoft/Xna/Framework/Graphics/VertexPositionNormalTexture.hpp"
 #include "Microsoft/Xna/Framework/Input/Mouse.hpp"
 #include "Microsoft/Xna/Framework/Input/TextInputEXT.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp"
@@ -20,15 +11,6 @@
 #include "CNA/Internal/Backends/Bgfx/BgfxGraphicsBackend.hpp"
 #endif
 
-// plan_dx9.md Phase D9-10 (D9-103 follow-up): GraphicsProfile.Reach's own MaxRenderTargets=1
-// ceiling, real on this backend only -- matches Texture2D.cpp's own #ifdef CNA_BACKEND_D3D9
-// convention exactly. Distinct from MAX_RENDERTARGET_BINDINGS below (XNA's own general 4-target
-// ceiling, backend-agnostic) and from D9-54's own NumSimultaneousRTs hardware-cap enforcement
-// inside D3D9GraphicsBackend::SetRenderTargets() -- this is the profile's own, separately lower,
-// software-imposed ceiling.
-#ifdef CNA_BACKEND_D3D9
-#include "CNA/Internal/Backends/D3D9/D3D9ProfileCapabilities.hpp"
-#endif
 
 #include <SDL3/SDL.h>
 
@@ -50,9 +32,6 @@ namespace Microsoft::Xna::Framework::Graphics
 
     namespace
     {
-        // Matches FNA's internal GraphicsDevice.MAX_RENDERTARGET_BINDINGS.
-        constexpr std::size_t MAX_RENDERTARGET_BINDINGS = 4;
-
         std::runtime_error makeSdlError(const char* operation)
         {
             return std::runtime_error(std::string(operation) + " failed: " + SDL_GetError());
@@ -148,9 +127,6 @@ namespace Microsoft::Xna::Framework::Graphics
           ownsWindow_(false),
           backend_(nullptr),
           viewport_(),
-          currentVertexBuffer_(nullptr),
-          currentIndexBuffer_(nullptr),
-          currentEffect_(nullptr),
           virtualWidth_(presentationParameters.getBackBufferWidthProperty()),
           virtualHeight_(presentationParameters.getBackBufferHeightProperty()),
           adapter_(&adapter),
@@ -237,30 +213,6 @@ namespace Microsoft::Xna::Framework::Graphics
         return viewport_;
     }
 
-    void GraphicsDevice::setViewportProperty(const Viewport& value)
-    {
-        viewport_ = value;
-        if (backend_)
-            backend_->SetViewport(value.getXProperty(), value.getYProperty(),
-                                   value.getWidthProperty(), value.getHeightProperty(),
-                                   value.getMinDepthProperty(), value.getMaxDepthProperty());
-    }
-
-    const IndexBuffer* GraphicsDevice::getIndicesProperty() const
-    {
-        return currentIndexBuffer_;
-    }
-
-    void GraphicsDevice::setIndicesProperty(const IndexBuffer* indexBuffer)
-    {
-        SetIndexBuffer(indexBuffer);
-    }
-
-    bool GraphicsDevice::getIsDisposedProperty() const
-    {
-        return isDisposed_;
-    }
-
     void GraphicsDevice::Clear(const Color& color)
     {
         // Task 928: real XNA/FNA's single-argument overload clears the target, depth buffer,
@@ -271,14 +223,6 @@ namespace Microsoft::Xna::Framework::Graphics
         // static constant).
         Clear(ClearOptions::Target | ClearOptions::DepthBuffer | ClearOptions::Stencil,
               color, getViewportProperty().getMaxDepthProperty(), 0);
-    }
-
-    void GraphicsDevice::Clear(float r, float g, float b, float a)
-    {
-        if (backend_ != nullptr)
-        {
-            backend_->Clear(r, g, b, a);
-        }
     }
 
     void GraphicsDevice::Clear(ClearOptions options, const Color& color, float depth, int stencil)
@@ -305,18 +249,12 @@ namespace Microsoft::Xna::Framework::Graphics
         // GraphicsDevice::Clear(const Color&) -- which unconditionally requests
         // Target|DepthBuffer|Stencil, matching FNA's own single-argument overload -- crashes on
         // SDL_RENDERER instead of degrading to a color-only clear.
-        bool hasRealDepthBuffer;
-        if (!currentRenderTargets_.empty())
-        {
-            const auto* rt = dynamic_cast<RenderTarget2D*>(currentRenderTargets_[0].getRenderTargetProperty());
-            const bool depthFormatRequested = rt && rt->getDepthStencilFormatProperty() != DepthFormat::None;
-            const auto* rtBackend = rt ? rt->GetRenderTargetBackend() : nullptr;
-            hasRealDepthBuffer = rtBackend && rtBackend->HasRealDepthBuffer(depthFormatRequested);
-        }
-        else
-        {
-            hasRealDepthBuffer = backend_->SupportsDepthStencil();
-        }
+        //
+        // NOXNA pruning note: this used to also check the currently-bound RenderTarget2D's own
+        // depth buffer (via currentRenderTargets_) -- render-target binding (SetRenderTarget/
+        // SetRenderTargets/RenderTarget2D) was removed as dead code (zero callers anywhere in the
+        // reachable codebase), so only the backbuffer's own depth-stencil support is relevant now.
+        const bool hasRealDepthBuffer = backend_->SupportsDepthStencil();
         if (!hasRealDepthBuffer)
         {
             options &= ClearOptions::Target;
@@ -362,11 +300,6 @@ namespace Microsoft::Xna::Framework::Graphics
         {
             backend_->ClearStencil(stencil);
         }
-    }
-
-    void GraphicsDevice::Clear(const Color& color, float depth)
-    {
-        Clear(ClearOptions::Target | ClearOptions::DepthBuffer, color, depth, 0);
     }
 
     void GraphicsDevice::Present()
@@ -511,805 +444,6 @@ namespace Microsoft::Xna::Framework::Graphics
         graphicsProfile_ = profile;
     }
 
-    void GraphicsDevice::SetVertexBuffer(const VertexBuffer* vertexBuffer)
-    {
-        if (vertexBuffer && vertexBuffer->getIsDisposedProperty())
-            throw System::ObjectDisposedException(vertexBuffer->getNameProperty());
-        currentVertexBuffer_ = vertexBuffer;
-    }
-
-    void GraphicsDevice::SetIndexBuffer(const IndexBuffer* indexBuffer)
-    {
-        if (indexBuffer && indexBuffer->getIsDisposedProperty())
-            throw System::ObjectDisposedException(indexBuffer->getNameProperty());
-        currentIndexBuffer_ = indexBuffer;
-    }
-
-    const VertexBuffer* GraphicsDevice::GetVertexBuffer() const
-    {
-        return currentVertexBuffer_;
-    }
-
-    const IndexBuffer* GraphicsDevice::GetIndexBuffer() const
-    {
-        return currentIndexBuffer_;
-    }
-
-    const IndexBuffer* GraphicsDevice::Indices() const
-    {
-        return currentIndexBuffer_;
-    }
-
-    void GraphicsDevice::Indices(const IndexBuffer* indexBuffer)
-    {
-        SetIndexBuffer(indexBuffer);
-    }
-
-    namespace
-    {
-        void ExtractMatrices(const Effect* effect, Matrix& world, Matrix& view, Matrix& proj)
-        {
-            world = Matrix::getIdentityProperty();
-            view  = Matrix::getIdentityProperty();
-            proj  = Matrix::getIdentityProperty();
-            if (const auto* m = dynamic_cast<const IEffectMatrices*>(effect))
-            {
-                world = m->getWorldProperty();
-                view  = m->getViewProperty();
-                proj  = m->getProjectionProperty();
-            }
-        }
-    }
-
-    void GraphicsDevice::DrawPrimitives(PrimitiveType primitiveType, int vertexStart, int primitiveCount)
-    {
-        if (backend_ == nullptr)
-            return;
-
-        if (currentVertexBuffer_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawPrimitives: no vertex buffer is bound.");
-
-        if (currentEffect_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawPrimitives: no effect has been applied.");
-
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primitiveCount, "primitiveCount");
-        System::ArgumentOutOfRangeException::ThrowIfNegative(vertexStart, "vertexStart");
-
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        CNA::Internal::Backends::GpuDrawParams p;
-        currentEffect_->FillGpuDrawParams(p);
-        p.vertexStart = vertexStart;
-        applySamplerStatesToBackend();
-        backend_->DrawPrimitivesEx(
-            currentVertexBuffer_->GetBackend(),
-            world, view, proj,
-            primitiveType, primitiveCount, p
-        );
-    }
-
-    void GraphicsDevice::DrawIndexedPrimitives(
-        PrimitiveType primitiveType,
-        int baseVertex,
-        int minVertexIndex,
-        int numVertices,
-        int startIndex,
-        int primitiveCount
-    )
-    {
-        (void)minVertexIndex;
-        (void)numVertices;
-
-        if (backend_ == nullptr)
-            return;
-
-        if (currentVertexBuffer_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawIndexedPrimitives: no vertex buffer is bound.");
-
-        if (currentIndexBuffer_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawIndexedPrimitives: no index buffer is bound.");
-
-        if (currentEffect_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawIndexedPrimitives: no effect has been applied.");
-
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primitiveCount, "primitiveCount");
-        System::ArgumentOutOfRangeException::ThrowIfNegative(startIndex, "startIndex");
-        System::ArgumentOutOfRangeException::ThrowIfNegative(baseVertex, "baseVertex");
-
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        CNA::Internal::Backends::GpuDrawParams p;
-        currentEffect_->FillGpuDrawParams(p);
-        p.startIndex = startIndex;
-        p.baseVertex = baseVertex;
-        applySamplerStatesToBackend();
-        backend_->DrawIndexedPrimitivesEx(
-            currentVertexBuffer_->GetBackend(),
-            currentIndexBuffer_->GetBackend(),
-            world, view, proj,
-            primitiveType, primitiveCount, p
-        );
-    }
-
-    void GraphicsDevice::DrawInstancedPrimitives(
-        PrimitiveType primitiveType,
-        int baseVertex,
-        int minVertexIndex,
-        int numVertices,
-        int startIndex,
-        int primitiveCount,
-        int instanceCount
-    )
-    {
-        (void)minVertexIndex;
-        (void)numVertices;
-
-        if (backend_ == nullptr)
-            return;
-
-        if (currentVertexBuffer_ == nullptr)
-            throw std::runtime_error(
-                "GraphicsDevice::DrawInstancedPrimitives: no vertex buffer is bound.");
-
-        if (currentIndexBuffer_ == nullptr)
-            throw std::runtime_error(
-                "GraphicsDevice::DrawInstancedPrimitives: no index buffer is bound.");
-
-        if (currentEffect_ == nullptr)
-            throw std::runtime_error(
-                "GraphicsDevice::DrawInstancedPrimitives: no effect has been applied.");
-
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primitiveCount, "primitiveCount");
-        System::ArgumentOutOfRangeException::ThrowIfNegative(startIndex, "startIndex");
-        System::ArgumentOutOfRangeException::ThrowIfNegative(baseVertex, "baseVertex");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(instanceCount, "instanceCount");
-
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        CNA::Internal::Backends::GpuDrawParams p;
-        currentEffect_->FillGpuDrawParams(p);
-        p.instanceCount = instanceCount;
-        p.startIndex    = startIndex;
-        p.baseVertex    = baseVertex;
-        // Find the per-instance vertex buffer binding (instanceFrequency > 0).
-        for (const auto& binding : currentVertexBuffers_) {
-            if (binding.getInstanceFrequencyProperty() > 0) {
-                if (auto* vb = binding.getVertexBufferProperty()) {
-                    p.instanceVb = &vb->GetBackend();
-                    break;
-                }
-            }
-        }
-        applySamplerStatesToBackend();
-        backend_->DrawInstancedPrimitivesEx(
-            currentVertexBuffer_->GetBackend(),
-            currentIndexBuffer_->GetBackend(),
-            world, view, proj,
-            primitiveType, primitiveCount, instanceCount, p
-        );
-    }
-
-    void GraphicsDevice::DrawUserPrimitives(
-        PrimitiveType primitiveType,
-        const void* vertexData,
-        int vertexOffset,
-        int primitiveCount
-    )
-    {
-        if (backend_ == nullptr)
-            return;
-
-        if (currentEffect_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawUserPrimitives: no effect has been applied.");
-
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primitiveCount, "primitiveCount");
-
-        // Compute vertex count from primitive type (mirrors FNA PrimitiveVerts).
-        int totalVerts;
-        switch (primitiveType)
-        {
-            case PrimitiveType::TriangleList:  totalVerts = primitiveCount * 3; break;
-            case PrimitiveType::TriangleStrip: totalVerts = primitiveCount + 2; break;
-            case PrimitiveType::LineList:      totalVerts = primitiveCount * 2; break;
-            case PrimitiveType::LineStrip:     totalVerts = primitiveCount + 1; break;
-            case PrimitiveType::PointListEXT:  totalVerts = primitiveCount;     break;
-            default:
-                throw System::InvalidOperationException("Unrecognized primitive type!");
-        }
-
-        // vertexData points to an array of VertexPositionColor starting at vertexOffset.
-        const auto* vertices = static_cast<const VertexPositionColor*>(vertexData) + vertexOffset;
-
-        // Pack into the compact GPU layout that the backend expects (16 bytes: vec3 + 4 ubytes).
-        struct GpuVertex { float x, y, z; std::uint8_t r, g, b, a; };
-        static_assert(sizeof(GpuVertex) == 16, "GpuVertex must be 16 bytes");
-
-        std::vector<GpuVertex> packed(static_cast<std::size_t>(totalVerts));
-        for (int i = 0; i < totalVerts; ++i)
-        {
-            packed[i].x = vertices[i].Position.X;
-            packed[i].y = vertices[i].Position.Y;
-            packed[i].z = vertices[i].Position.Z;
-            packed[i].r = static_cast<std::uint8_t>(vertices[i].Color.getRProperty());
-            packed[i].g = static_cast<std::uint8_t>(vertices[i].Color.getGProperty());
-            packed[i].b = static_cast<std::uint8_t>(vertices[i].Color.getBProperty());
-            packed[i].a = static_cast<std::uint8_t>(vertices[i].Color.getAProperty());
-        }
-
-        // Upload to a temporary vertex buffer and draw.
-        auto tmpVb = backend_->CreateVertexBuffer(totalVerts);
-        tmpVb->SetData(packed.data(), totalVerts, sizeof(GpuVertex));
-
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        applySamplerStatesToBackend();
-        backend_->DrawColoredPrimitives(*tmpVb, world, view, proj, primitiveType, primitiveCount);
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(
-        PrimitiveType primitiveType,
-        const void* vertexData,
-        int vertexOffset,
-        int numVertices,
-        const void* indexData,
-        int indexOffset,
-        int primitiveCount
-    )
-    {
-        if (backend_ == nullptr)
-            return;
-
-        if (currentEffect_ == nullptr)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primitiveCount, "primitiveCount");
-
-        // Compute total index count from primitive type (mirrors FNA PrimitiveVerts).
-        int indexCount = 0;
-        switch (primitiveType)
-        {
-            case PrimitiveType::TriangleList:  indexCount = primitiveCount * 3; break;
-            case PrimitiveType::TriangleStrip: indexCount = primitiveCount + 2; break;
-            case PrimitiveType::LineList:      indexCount = primitiveCount * 2; break;
-            case PrimitiveType::LineStrip:     indexCount = primitiveCount + 1; break;
-            case PrimitiveType::PointListEXT:  indexCount = primitiveCount;     break;
-            default:
-                throw System::InvalidOperationException("Unrecognized primitive type!");
-        }
-
-        // Pack vertices from caller array (assumed VertexPositionColor layout).
-        const auto* vertices = static_cast<const VertexPositionColor*>(vertexData) + vertexOffset;
-        struct GpuVertex { float x, y, z; std::uint8_t r, g, b, a; };
-        static_assert(sizeof(GpuVertex) == 16, "GpuVertex must be 16 bytes");
-
-        std::vector<GpuVertex> packed(static_cast<std::size_t>(numVertices));
-        for (int i = 0; i < numVertices; ++i)
-        {
-            packed[i].x = vertices[i].Position.X;
-            packed[i].y = vertices[i].Position.Y;
-            packed[i].z = vertices[i].Position.Z;
-            packed[i].r = static_cast<std::uint8_t>(vertices[i].Color.getRProperty());
-            packed[i].g = static_cast<std::uint8_t>(vertices[i].Color.getGProperty());
-            packed[i].b = static_cast<std::uint8_t>(vertices[i].Color.getBProperty());
-            packed[i].a = static_cast<std::uint8_t>(vertices[i].Color.getAProperty());
-        }
-
-        // Copy 16-bit indices with offset applied.
-        const auto* indices = static_cast<const std::uint16_t*>(indexData) + indexOffset;
-        std::vector<std::uint16_t> indexCopy(static_cast<std::size_t>(indexCount));
-        for (int i = 0; i < indexCount; ++i)
-            indexCopy[i] = indices[i];
-
-        auto tmpVb = backend_->CreateVertexBuffer(numVertices);
-        tmpVb->SetData(packed.data(), numVertices, sizeof(GpuVertex));
-
-        auto tmpIb = backend_->CreateIndexBuffer16(indexCount);
-        tmpIb->SetData16(indexCopy.data(), indexCount);
-
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        applySamplerStatesToBackend();
-        backend_->DrawIndexedColoredPrimitives(*tmpVb, *tmpIb, world, view, proj, primitiveType, primitiveCount);
-    }
-
-    // -----------------------------------------------------------------------
-    // DrawUserPrimitives — typed overloads
-    // -----------------------------------------------------------------------
-
-    // Public NOXNA static — mirrors FNA's private PrimitiveVerts().
-    int GraphicsDevice::PrimitiveVerts(PrimitiveType type, int primitiveCount)
-    {
-        switch (type)
-        {
-            case PrimitiveType::TriangleList:  return primitiveCount * 3;
-            case PrimitiveType::TriangleStrip: return primitiveCount + 2;
-            case PrimitiveType::LineList:      return primitiveCount * 2;
-            case PrimitiveType::LineStrip:     return primitiveCount + 1;
-            case PrimitiveType::PointListEXT:  return primitiveCount;
-            default:
-                throw System::InvalidOperationException("Unrecognized primitive type!");
-        }
-    }
-
-    namespace
-    {
-        int VertexCountForUserPrimitives(PrimitiveType type, int primitiveCount)
-        {
-            return GraphicsDevice::PrimitiveVerts(type, primitiveCount);
-        }
-
-        // GPU-layout packed structs (no vtable, exact stride).
-        struct GpuVPC  { float x,y,z; std::uint8_t r,g,b,a; };                        // 16
-        struct GpuVPT  { float x,y,z,u,v; };                                           // 20
-        struct GpuVPCT { float x,y,z; std::uint8_t r,g,b,a; float u,v; };             // 24
-        struct GpuVPNT { float x,y,z, nx,ny,nz, u,v; };                               // 32
-
-        static_assert(sizeof(GpuVPC)  == 16);
-        static_assert(sizeof(GpuVPT)  == 20);
-        static_assert(sizeof(GpuVPCT) == 24);
-        static_assert(sizeof(GpuVPNT) == 32);
-    }
-
-    // Grows the scratch buffer only when the requested size exceeds current capacity, so
-    // steady-state DrawUserPrimitives/DrawUserIndexedPrimitives calls (same or shrinking vertex
-    // counts) reuse the existing allocation instead of allocating on every draw.
-    void* GraphicsDevice::AcquireUserVertexScratch(std::size_t bytes)
-    {
-        if (userVertexScratch_.size() < bytes) userVertexScratch_.resize(bytes);
-        return userVertexScratch_.data();
-    }
-
-    void* GraphicsDevice::AcquireUserIndexScratch(std::size_t bytes)
-    {
-        if (userIndexScratch_.size() < bytes) userIndexScratch_.resize(bytes);
-        return userIndexScratch_.data();
-    }
-
-    // DrawUserPrimitives — VertexPositionColor
-    void GraphicsDevice::DrawUserPrimitives(PrimitiveType type,
-                                            const VertexPositionColor* data, int offset, int count)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(count, "primitiveCount");
-        const int n = VertexCountForUserPrimitives(type, count);
-        auto* packed = static_cast<GpuVPC*>(AcquireUserVertexScratch(static_cast<std::size_t>(n) * sizeof(GpuVPC)));
-        for (int i = 0; i < n; ++i)
-        {
-            const auto& v = data[offset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Color.getRProperty(), v.Color.getGProperty(),
-                          v.Color.getBProperty(), v.Color.getAProperty() };
-        }
-        auto vb = backend_->CreateVertexBuffer(n);
-        vb->SetData(packed, n, sizeof(GpuVPC));
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawPrimitivesEx(*vb, world, view, proj, type, count, p); }
-    }
-
-    // DrawUserPrimitives — VertexPositionTexture
-    void GraphicsDevice::DrawUserPrimitives(PrimitiveType type,
-                                            const VertexPositionTexture* data, int offset, int count)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(count, "primitiveCount");
-        const int n = VertexCountForUserPrimitives(type, count);
-        auto* packed = static_cast<GpuVPT*>(AcquireUserVertexScratch(static_cast<std::size_t>(n) * sizeof(GpuVPT)));
-        for (int i = 0; i < n; ++i)
-        {
-            const auto& v = data[offset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto vb = backend_->CreateVertexBuffer(n);
-        vb->SetData(packed, n, sizeof(GpuVPT));
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawPrimitivesEx(*vb, world, view, proj, type, count, p); }
-    }
-
-    // DrawUserPrimitives — VertexPositionColorTexture
-    void GraphicsDevice::DrawUserPrimitives(PrimitiveType type,
-                                            const VertexPositionColorTexture* data, int offset, int count)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(count, "primitiveCount");
-        const int n = VertexCountForUserPrimitives(type, count);
-        auto* packed = static_cast<GpuVPCT*>(AcquireUserVertexScratch(static_cast<std::size_t>(n) * sizeof(GpuVPCT)));
-        for (int i = 0; i < n; ++i)
-        {
-            const auto& v = data[offset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Color.getRProperty(), v.Color.getGProperty(),
-                          v.Color.getBProperty(), v.Color.getAProperty(),
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto vb = backend_->CreateVertexBuffer(n);
-        vb->SetData(packed, n, sizeof(GpuVPCT));
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawPrimitivesEx(*vb, world, view, proj, type, count, p); }
-    }
-
-    // DrawUserPrimitives — VertexPositionNormalTexture
-    void GraphicsDevice::DrawUserPrimitives(PrimitiveType type,
-                                            const VertexPositionNormalTexture* data, int offset, int count)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(count, "primitiveCount");
-        const int n = VertexCountForUserPrimitives(type, count);
-        auto* packed = static_cast<GpuVPNT*>(AcquireUserVertexScratch(static_cast<std::size_t>(n) * sizeof(GpuVPNT)));
-        for (int i = 0; i < n; ++i)
-        {
-            const auto& v = data[offset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Normal.X, v.Normal.Y, v.Normal.Z,
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto vb = backend_->CreateVertexBuffer(n);
-        vb->SetData(packed, n, sizeof(GpuVPNT));
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawPrimitivesEx(*vb, world, view, proj, type, count, p); }
-    }
-
-    // DrawUserPrimitives — explicit VertexDeclaration (FNA second generic overload)
-    void GraphicsDevice::DrawUserPrimitives(PrimitiveType type,
-                                            const void* vertexData, int vertexOffset,
-                                            int primitiveCount,
-                                            const VertexDeclaration& vertexDeclaration)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primitiveCount, "primitiveCount");
-        const int n      = VertexCountForUserPrimitives(type, primitiveCount);
-        const int stride = vertexDeclaration.getVertexStrideProperty();
-        // Apply vertexOffset in bytes then upload n vertices worth of raw data.
-        const auto* src = static_cast<const std::uint8_t*>(vertexData)
-                          + static_cast<std::ptrdiff_t>(vertexOffset) * stride;
-        auto vb = backend_->CreateVertexBuffer(n);
-        vb->SetData(src, n, static_cast<std::size_t>(stride));
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-        applySamplerStatesToBackend();
-        backend_->DrawPrimitivesEx(*vb, world, view, proj, type, primitiveCount, p);
-    }
-
-    // -----------------------------------------------------------------------
-    // DrawUserIndexedPrimitives — typed overloads
-    // -----------------------------------------------------------------------
-
-    namespace
-    {
-        int IndexCountForPrimitives(PrimitiveType type, int primitiveCount)
-        {
-            switch (type)
-            {
-                case PrimitiveType::TriangleList:  return primitiveCount * 3;
-                case PrimitiveType::TriangleStrip: return primitiveCount + 2;
-                case PrimitiveType::LineList:      return primitiveCount * 2;
-                case PrimitiveType::LineStrip:     return primitiveCount + 1;
-                case PrimitiveType::PointListEXT:  return primitiveCount;
-                default:
-                    throw System::InvalidOperationException("Unrecognized primitive type!");
-            }
-        }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionColor* vertices, int vOffset, int numVerts,
-                                                   const std::uint16_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPC*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPC)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Color.getRProperty(), v.Color.getGProperty(),
-                          v.Color.getBProperty(), v.Color.getAProperty() };
-        }
-        auto* idx = static_cast<std::uint16_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint16_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPC));
-        auto ib = backend_->CreateIndexBuffer16(ic);
-        ib->SetData16(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionTexture* vertices, int vOffset, int numVerts,
-                                                   const std::uint16_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPT*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPT)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto* idx = static_cast<std::uint16_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint16_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPT));
-        auto ib = backend_->CreateIndexBuffer16(ic);
-        ib->SetData16(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionColorTexture* vertices, int vOffset, int numVerts,
-                                                   const std::uint16_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPCT*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPCT)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Color.getRProperty(), v.Color.getGProperty(),
-                          v.Color.getBProperty(), v.Color.getAProperty(),
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto* idx = static_cast<std::uint16_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint16_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPCT));
-        auto ib = backend_->CreateIndexBuffer16(ic);
-        ib->SetData16(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionNormalTexture* vertices, int vOffset, int numVerts,
-                                                   const std::uint16_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPNT*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPNT)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Normal.X, v.Normal.Y, v.Normal.Z,
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto* idx = static_cast<std::uint16_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint16_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPNT));
-        auto ib = backend_->CreateIndexBuffer16(ic);
-        ib->SetData16(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    // DrawUserIndexedPrimitives — 32-bit index overloads
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionColor* vertices, int vOffset, int numVerts,
-                                                   const std::uint32_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPC*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPC)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Color.getRProperty(), v.Color.getGProperty(),
-                          v.Color.getBProperty(), v.Color.getAProperty() };
-        }
-        auto* idx = static_cast<std::uint32_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint32_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPC));
-        auto ib = backend_->CreateIndexBuffer32(ic);
-        ib->SetData32(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionTexture* vertices, int vOffset, int numVerts,
-                                                   const std::uint32_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPT*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPT)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto* idx = static_cast<std::uint32_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint32_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPT));
-        auto ib = backend_->CreateIndexBuffer32(ic);
-        ib->SetData32(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionColorTexture* vertices, int vOffset, int numVerts,
-                                                   const std::uint32_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPCT*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPCT)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Color.getRProperty(), v.Color.getGProperty(),
-                          v.Color.getBProperty(), v.Color.getAProperty(),
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto* idx = static_cast<std::uint32_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint32_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPCT));
-        auto ib = backend_->CreateIndexBuffer32(ic);
-        ib->SetData32(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const VertexPositionNormalTexture* vertices, int vOffset, int numVerts,
-                                                   const std::uint32_t* indices, int iOffset, int primCount)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic = IndexCountForPrimitives(type, primCount);
-        auto* packed = static_cast<GpuVPNT*>(AcquireUserVertexScratch(static_cast<std::size_t>(numVerts) * sizeof(GpuVPNT)));
-        for (int i = 0; i < numVerts; ++i)
-        {
-            const auto& v = vertices[vOffset + i];
-            packed[i] = { v.Position.X, v.Position.Y, v.Position.Z,
-                          v.Normal.X, v.Normal.Y, v.Normal.Z,
-                          v.TextureCoordinate.X, v.TextureCoordinate.Y };
-        }
-        auto* idx = static_cast<std::uint32_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint32_t)));
-        std::copy(indices + iOffset, indices + iOffset + ic, idx);
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(packed, numVerts, sizeof(GpuVPNT));
-        auto ib = backend_->CreateIndexBuffer32(ic);
-        ib->SetData32(idx, ic);
-        { Matrix world, view, proj;
-          ExtractMatrices(currentEffect_, world, view, proj);
-          CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-          applySamplerStatesToBackend();
-          backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p); }
-    }
-
-    // DrawUserIndexedPrimitives — explicit VertexDeclaration (FNA second generic overloads)
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const void* vertexData, int vOffset, int numVerts,
-                                                   const std::uint16_t* indexData, int iOffset, int primCount,
-                                                   const VertexDeclaration& vd)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic     = IndexCountForPrimitives(type, primCount);
-        const int stride = vd.getVertexStrideProperty();
-        const auto* src  = static_cast<const std::uint8_t*>(vertexData)
-                           + static_cast<std::ptrdiff_t>(vOffset) * stride;
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(src, numVerts, static_cast<std::size_t>(stride));
-        auto* idx = static_cast<std::uint16_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint16_t)));
-        std::copy(indexData + iOffset, indexData + iOffset + ic, idx);
-        auto ib = backend_->CreateIndexBuffer16(ic);
-        ib->SetData16(idx, ic);
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-        applySamplerStatesToBackend();
-        backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p);
-    }
-
-    void GraphicsDevice::DrawUserIndexedPrimitives(PrimitiveType type,
-                                                   const void* vertexData, int vOffset, int numVerts,
-                                                   const std::uint32_t* indexData, int iOffset, int primCount,
-                                                   const VertexDeclaration& vd)
-    {
-        if (!backend_) return;
-        if (!currentEffect_)
-            throw std::runtime_error("GraphicsDevice::DrawUserIndexedPrimitives: no effect has been applied.");
-        System::ArgumentOutOfRangeException::ThrowIfNegativeOrZero(primCount, "primitiveCount");
-        const int ic     = IndexCountForPrimitives(type, primCount);
-        const int stride = vd.getVertexStrideProperty();
-        const auto* src  = static_cast<const std::uint8_t*>(vertexData)
-                           + static_cast<std::ptrdiff_t>(vOffset) * stride;
-        auto vb = backend_->CreateVertexBuffer(numVerts);
-        vb->SetData(src, numVerts, static_cast<std::size_t>(stride));
-        auto* idx = static_cast<std::uint32_t*>(AcquireUserIndexScratch(static_cast<std::size_t>(ic) * sizeof(std::uint32_t)));
-        std::copy(indexData + iOffset, indexData + iOffset + ic, idx);
-        auto ib = backend_->CreateIndexBuffer32(ic);
-        ib->SetData32(idx, ic);
-        Matrix world, view, proj;
-        ExtractMatrices(currentEffect_, world, view, proj);
-        CNA::Internal::Backends::GpuDrawParams p; currentEffect_->FillGpuDrawParams(p);
-        applySamplerStatesToBackend();
-        backend_->DrawIndexedPrimitivesEx(*vb, *ib, world, view, proj, type, primCount, p);
-    }
-
     CNA::Internal::Backends::IGraphicsBackend& GraphicsDevice::GetBackend() const
     {
         if (backend_ == nullptr)
@@ -1325,30 +459,10 @@ namespace Microsoft::Xna::Framework::Graphics
         return GetBackend().SupportsCapability(capability);
     }
 
-    void GraphicsDevice::SetCurrentEffect(Effect* effect)
-    {
-        currentEffect_ = effect;
-    }
-
     const std::string& GraphicsDevice::GetTypeName() const
     {
         static const std::string typeName = "Microsoft.Xna.Framework.Graphics.GraphicsDevice";
         return typeName;
-    }
-
-    void GraphicsDevice::SetPresentationParameters(const PresentationParameters& pp)
-    {
-        presentationParameters_ = pp;
-        if (backend_)
-            backend_->SetSwapInterval(toSwapInterval(pp.getPresentationIntervalProperty()));
-    }
-
-    void GraphicsDevice::RecreateBackendForMultiSampleCount(int multiSampleCount)
-    {
-        presentationParameters_.setMultiSampleCountProperty(multiSampleCount);
-        backend_.reset();
-        createBackend();
-        UpdateViewportFromWindow();
     }
 
     SDL_Renderer* GraphicsDevice::GetRendererInternal() const
@@ -1433,12 +547,6 @@ namespace Microsoft::Xna::Framework::Graphics
         contextRecoveryEnabled_ = enabled;
         if (backend_)
             backend_->SetContextRecoveryEnabled(enabled);
-    }
-
-    void GraphicsDevice::SetStringMarkerEXT(const std::string& marker)
-    {
-        if (backend_)
-            backend_->SetStringMarkerEXT(marker.c_str());
     }
 
     void GraphicsDevice::createBackend()
@@ -1589,20 +697,6 @@ namespace Microsoft::Xna::Framework::Graphics
         }
     }
 
-    void GraphicsDevice::applySamplerStatesToBackend()
-    {
-        if (!backend_) return;
-        for (int i = 0; i < SamplerStateCollection::MaxSamplers; ++i)
-        {
-            const SamplerState& ss = samplerStates_[i];
-            backend_->ApplySamplerState(i,
-                (int)ss.getFilterProperty(),
-                (int)ss.getAddressUProperty(),
-                (int)ss.getAddressVProperty(),
-                ss.getMaxAnisotropyProperty());
-        }
-    }
-
     void GraphicsDevice::applyPresentationParametersToWindow()
     {
         if (window_ == nullptr)
@@ -1637,33 +731,9 @@ namespace Microsoft::Xna::Framework::Graphics
 
     // --- New XNA 4.0 API methods ---
 
-    GraphicsDeviceStatus GraphicsDevice::getGraphicsDeviceStatusProperty() const
-    {
-        // plan_dx9.md D9-34: tracks the real backend-reported status via deviceStatus_ (updated by
-        // the deviceEventCallback lambda in createBackend()). Every backend except D3D9 never calls
-        // that callback, so this stays Normal for them -- identical behavior to before this field
-        // existed.
-        return deviceStatus_;
-    }
-
-    DisplayMode GraphicsDevice::getDisplayModeProperty() const
-    {
-        if (presentationParameters_.getIsFullScreenProperty())
-        {
-            int w = 0, h = 0;
-            if (backend_) backend_->GetViewportSize(w, h);
-            return DisplayMode(w, h, SurfaceFormat::Color);
-        }
-        return getAdapterProperty().getCurrentDisplayModeProperty();
-    }
-
     TextureCollection& GraphicsDevice::getTexturesProperty() { return textures_; }
-    SamplerStateCollection& GraphicsDevice::getSamplerStatesProperty() { return samplerStates_; }
     TextureCollection& GraphicsDevice::getVertexTexturesProperty() { return vertexTextures_; }
-    SamplerStateCollection& GraphicsDevice::getVertexSamplerStatesProperty() { return vertexSamplerStates_; }
 
-    BlendState& GraphicsDevice::getBlendStateProperty() { return blendState_; }
-    const BlendState& GraphicsDevice::getBlendStateProperty() const { return blendState_; }
     void GraphicsDevice::setBlendStateProperty(const BlendState& value)
     {
         blendState_ = value;
@@ -1681,8 +751,6 @@ namespace Microsoft::Xna::Framework::Graphics
         setBlendFactorProperty(value.getBlendFactorProperty());
     }
 
-    DepthStencilState& GraphicsDevice::getDepthStencilStateProperty() { return depthStencilState_; }
-    const DepthStencilState& GraphicsDevice::getDepthStencilStateProperty() const { return depthStencilState_; }
     void GraphicsDevice::setDepthStencilStateProperty(const DepthStencilState& value)
     {
         depthStencilState_ = value;
@@ -1710,8 +778,6 @@ namespace Microsoft::Xna::Framework::Graphics
         setReferenceStencilProperty(value.getReferenceStencilProperty());
     }
 
-    RasterizerState& GraphicsDevice::getRasterizerStateProperty() { return rasterizerState_; }
-    const RasterizerState& GraphicsDevice::getRasterizerStateProperty() const { return rasterizerState_; }
     void GraphicsDevice::setRasterizerStateProperty(const RasterizerState& value)
     {
         rasterizerState_ = value;
@@ -1722,14 +788,6 @@ namespace Microsoft::Xna::Framework::Graphics
                 value.getScissorTestEnableProperty(),
                 value.getDepthBiasProperty(),
                 value.getSlopeScaleDepthBiasProperty());
-    }
-
-    Rectangle GraphicsDevice::getScissorRectangleProperty() const { return scissorRectangle_; }
-    void GraphicsDevice::setScissorRectangleProperty(const Rectangle& value)
-    {
-        scissorRectangle_ = value;
-        if (backend_)
-            backend_->SetScissorRect(value.X, value.Y, value.Width, value.Height);
     }
 
     Color GraphicsDevice::getBlendFactorProperty() const { return blendFactor_; }
@@ -1753,232 +811,5 @@ namespace Microsoft::Xna::Framework::Graphics
         referenceStencil_ = value;
         if (backend_)
             backend_->SetReferenceStencil(value);
-    }
-
-    void GraphicsDevice::Reset()
-    {
-        Reset(presentationParameters_, adapter_);
-    }
-
-    void GraphicsDevice::Reset(const PresentationParameters& presentationParameters)
-    {
-        Reset(presentationParameters, adapter_);
-    }
-
-    void GraphicsDevice::GetBackBufferData(Color* data, int elementCount)
-    {
-        GetBackBufferData(nullptr, data, 0, elementCount);
-    }
-
-    void GraphicsDevice::GetBackBufferData(Color* data, int startIndex, int elementCount)
-    {
-        GetBackBufferData(nullptr, data, startIndex, elementCount);
-    }
-
-    void GraphicsDevice::GetBackBufferData(const Rectangle* rect, Color* data, int startIndex, int elementCount)
-    {
-        if (data == nullptr)
-            throw std::invalid_argument("data");
-
-        int x, y, w, h;
-        if (rect)
-        {
-            x = rect->X;
-            y = rect->Y;
-            w = rect->Width;
-            h = rect->Height;
-        }
-        else
-        {
-            x = 0;
-            y = 0;
-            backend_->GetViewportSize(w, h);
-        }
-
-        if (elementCount < w * h)
-            throw std::runtime_error("GetBackBufferData: data array too small for requested region");
-        Texture::ValidateGetDataFormat(presentationParameters_.getBackBufferFormatProperty(), 4);
-
-        // Color inherits a vtable pointer, so its first byte is NOT the R component.
-        // Use a plain byte buffer for ReadBackbuffer, then unpack each RGBA group
-        // into a Color(r, g, b, a) to avoid writing into the vtable pointer.
-        const int pixelCount = w * h;
-        std::vector<uint8_t> buf(static_cast<std::size_t>(pixelCount) * 4);
-        backend_->ReadBackbuffer(x, y, w, h, buf.data());
-        for (int i = 0; i < pixelCount; ++i)
-        {
-            const uint8_t* p = buf.data() + i * 4;
-            data[startIndex + i] = Color(p[0], p[1], p[2], p[3]);
-        }
-    }
-
-    void GraphicsDevice::ResetViewportAndScissorForRenderTarget(int width, int height)
-    {
-        setViewportProperty(Viewport(0, 0, width, height));
-        setScissorRectangleProperty(Rectangle(0, 0, width, height));
-    }
-
-    void GraphicsDevice::SetRenderTarget(RenderTarget2D* renderTarget)
-    {
-        if (renderTarget && renderTarget->getIsDisposedProperty())
-            throw System::ObjectDisposedException(renderTarget->getNameProperty());
-        if (backend_)
-            backend_->SetRenderTarget2D(renderTarget ? renderTarget->GetRenderTargetBackend() : nullptr);
-
-        currentRenderTargets_.clear();
-        renderTargetBound_ = (renderTarget != nullptr);
-        if (renderTarget != nullptr)
-            currentRenderTargets_.push_back(RenderTargetBinding(
-                static_cast<Texture*>(renderTarget)));
-
-        // Matches FNA: Viewport/ScissorRectangle always reset to the new render target's size
-        // (or the backbuffer's, when unbinding) — never left at whatever was set before.
-        if (renderTarget != nullptr)
-            ResetViewportAndScissorForRenderTarget(renderTarget->getWidthProperty(),
-                                                    renderTarget->getHeightProperty());
-        else
-            ResetViewportAndScissorForRenderTarget(presentationParameters_.getBackBufferWidthProperty(),
-                                                    presentationParameters_.getBackBufferHeightProperty());
-
-        if (renderTarget &&
-            renderTarget->getRenderTargetUsageProperty() == RenderTargetUsage::DiscardContents)
-        {
-            // Only ask for a depth-buffer clear when the target actually has one. A requested
-            // DepthFormat::None never has one; beyond that, ask the BACKEND (Task 708) rather
-            // than trusting the merely-requested XNA-level format, since a backend may honor no
-            // depth format at all regardless of what was requested (SDL_Renderer's 2D-only
-            // render targets never allocate real depth-buffer storage).
-            const bool depthFormatRequested =
-                renderTarget->getDepthStencilFormatProperty() != DepthFormat::None;
-            const auto* rtBackend = renderTarget->GetRenderTargetBackend();
-            const bool hasDepthBuffer =
-                rtBackend && rtBackend->HasRealDepthBuffer(depthFormatRequested);
-            Clear(hasDepthBuffer ? (ClearOptions::Target | ClearOptions::DepthBuffer) : ClearOptions::Target,
-                  Color(0, 0, 0, 255), 1.0f, 0);
-        }
-    }
-
-    void GraphicsDevice::SetRenderTarget(RenderTargetCube* renderTarget, CubeMapFace cubeMapFace)
-    {
-        if (renderTarget && renderTarget->getIsDisposedProperty())
-            throw System::ObjectDisposedException(renderTarget->getNameProperty());
-        if (backend_)
-            backend_->SetRenderTargetCubeFace(
-                renderTarget ? renderTarget->GetRenderTargetCubeBackend() : nullptr,
-                static_cast<int>(cubeMapFace));
-
-        currentRenderTargets_.clear();
-        renderTargetBound_ = (renderTarget != nullptr);
-
-        if (renderTarget != nullptr)
-            ResetViewportAndScissorForRenderTarget(renderTarget->getWidthProperty(),
-                                                    renderTarget->getHeightProperty());
-        else
-            ResetViewportAndScissorForRenderTarget(presentationParameters_.getBackBufferWidthProperty(),
-                                                    presentationParameters_.getBackBufferHeightProperty());
-    }
-
-    void GraphicsDevice::SetRenderTargets(const std::vector<RenderTargetBinding>& renderTargets)
-    {
-        if (renderTargets.size() > MAX_RENDERTARGET_BINDINGS)
-            throw std::invalid_argument("SetRenderTargets: at most " +
-                std::to_string(MAX_RENDERTARGET_BINDINGS) + " render targets may be bound at once.");
-
-#ifdef CNA_BACKEND_D3D9
-        // D9-103 follow-up: GraphicsProfile.Reach's own MaxRenderTargets=1 ceiling (D9-100's own
-        // table) -- a SEPARATE, lower, software-imposed limit from MAX_RENDERTARGET_BINDINGS
-        // above (XNA's own general 4-target ceiling) and from D9-54's own hardware-cap
-        // enforcement inside the backend (NumSimultaneousRTs, which could be higher).
-        {
-            const int profile = static_cast<int>(graphicsProfile_);
-            const int maxForProfile = CNA::Internal::Backends::D3D9::MaxRenderTargetsForProfileEXT(profile);
-            if (static_cast<int>(renderTargets.size()) > maxForProfile)
-            {
-                throw System::NotSupportedException(
-                    "SetRenderTargets: " + std::to_string(renderTargets.size()) +
-                    " render targets exceeds GraphicsProfile." +
-                    (profile == 1 ? std::string("HiDef") : std::string("Reach")) +
-                    "'s own maximum of " + std::to_string(maxForProfile));
-            }
-        }
-#endif
-
-        // Task 717 finding: SetRenderTarget(RenderTarget2D*) (singular) already guards against a
-        // disposed target -- this plural overload didn't, letting a disposed RenderTarget2D reach
-        // GetRenderTargetBackend() below, which (before this same task's RenderTarget2D::Dispose
-        // fix) returned a dangling pointer -- a use-after-free crash instead of a clean exception.
-        for (const auto& binding : renderTargets)
-        {
-            auto* rt = dynamic_cast<RenderTarget2D*>(binding.getRenderTargetProperty());
-            if (rt && rt->getIsDisposedProperty())
-                throw System::ObjectDisposedException(rt->getNameProperty());
-        }
-
-        currentRenderTargets_ = renderTargets;
-        renderTargetBound_ = !renderTargets.empty();
-        if (renderTargets.empty())
-        {
-            // Matches FNA: reset to the backbuffer's size when unbinding.
-            ResetViewportAndScissorForRenderTarget(presentationParameters_.getBackBufferWidthProperty(),
-                                                    presentationParameters_.getBackBufferHeightProperty());
-            if (!backend_) return;
-            backend_->SetRenderTargets(nullptr, 0);
-            return;
-        }
-        if (!backend_) return;
-        std::vector<CNA::Internal::Backends::IRenderTargetBackend*> backends;
-        backends.reserve(renderTargets.size());
-        for (const auto& binding : renderTargets)
-        {
-            auto* rt = dynamic_cast<RenderTarget2D*>(binding.getRenderTargetProperty());
-            backends.push_back(rt ? rt->GetRenderTargetBackend() : nullptr);
-        }
-        backend_->SetRenderTargets(backends.data(), static_cast<int>(backends.size()));
-
-        auto* first = dynamic_cast<RenderTarget2D*>(renderTargets[0].getRenderTargetProperty());
-        // Matches FNA: Viewport/ScissorRectangle reset to the FIRST bound target's size.
-        if (first)
-            ResetViewportAndScissorForRenderTarget(first->getWidthProperty(), first->getHeightProperty());
-        if (first &&
-            first->getRenderTargetUsageProperty() == RenderTargetUsage::DiscardContents)
-        {
-            // See SetRenderTarget(RenderTarget2D*)'s identical guard for the rationale.
-            const bool depthFormatRequested =
-                first->getDepthStencilFormatProperty() != DepthFormat::None;
-            const auto* rtBackend = first->GetRenderTargetBackend();
-            const bool hasDepthBuffer =
-                rtBackend && rtBackend->HasRealDepthBuffer(depthFormatRequested);
-            Clear(hasDepthBuffer ? (ClearOptions::Target | ClearOptions::DepthBuffer) : ClearOptions::Target,
-                  Color(0, 0, 0, 255), 1.0f, 0);
-        }
-    }
-
-    std::vector<RenderTargetBinding> GraphicsDevice::GetRenderTargets() const
-    {
-        return currentRenderTargets_;
-    }
-
-    void GraphicsDevice::SetVertexBuffer(const VertexBuffer* vertexBuffer, int /*vertexOffset*/)
-    {
-        SetVertexBuffer(vertexBuffer);
-    }
-
-    void GraphicsDevice::SetVertexBuffers(const std::vector<VertexBufferBinding>& vertexBuffers)
-    {
-        constexpr int kMaxVertexBufferBindings = 16; // XNA4 HiDef spec limit
-        if (static_cast<int>(vertexBuffers.size()) > kMaxVertexBufferBindings)
-            throw System::ArgumentOutOfRangeException(
-                "vertexBuffers",
-                std::to_string(vertexBuffers.size()),
-                "Max Vertex Buffers supported is " + std::to_string(kMaxVertexBufferBindings));
-
-        currentVertexBuffers_ = vertexBuffers;
-        if (!vertexBuffers.empty())
-            currentVertexBuffer_ = vertexBuffers[0].getVertexBufferProperty();
-    }
-
-    std::vector<VertexBufferBinding> GraphicsDevice::GetVertexBuffers() const
-    {
-        return currentVertexBuffers_;
     }
 }
