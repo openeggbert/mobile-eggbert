@@ -9,10 +9,6 @@
 
 namespace System {
 
-    Exception::Exception()
-        : message_("") {
-    }
-
     Exception::Exception(const char* msg)
         : message_(msg ? msg : "") {
     }
@@ -27,43 +23,6 @@ namespace System {
 
     const std::string& Exception::getMessageProperty() const {
         return message_;
-    }
-
-    std::exception_ptr Exception::getInnerExceptionProperty() const {
-        return innerException_;
-    }
-
-    const std::string& Exception::getStackTraceProperty() const {
-        static const std::string empty;
-        return empty;
-    }
-
-    std::map<std::string, std::string>& Exception::getDataProperty() {
-        return data_;
-    }
-
-    const std::map<std::string, std::string>& Exception::getDataProperty() const {
-        return data_;
-    }
-
-    const std::string& Exception::getHelpLinkProperty() const {
-        return helpLink_;
-    }
-
-    void Exception::setHelpLinkProperty(const std::string& value) {
-        helpLink_ = value;
-    }
-
-    const std::string& Exception::getSourceProperty() const {
-        return source_;
-    }
-
-    void Exception::setSourceProperty(const std::string& value) {
-        source_ = value;
-    }
-
-    SharpRuntime::intcs Exception::getHResultProperty() const {
-        return hResult_;
     }
 
     void Exception::setHResultProperty(SharpRuntime::intcs value) {

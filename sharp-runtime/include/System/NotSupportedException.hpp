@@ -18,22 +18,11 @@ namespace System {
      */
     class NotSupportedException : public SystemException {
     public:
-        /** @brief Initializes a new instance with the default message. */
-        NotSupportedException();
-
         /** @brief Initializes a new instance with the specified message. */
         explicit NotSupportedException(const char* message);
 
         /** @brief Initializes a new instance with the specified message. */
         explicit NotSupportedException(const std::string& message);
-
-        /**
-         * @brief Initializes a new instance with a specified message and a
-         * reference to the inner exception that is the cause of this exception.
-         *
-         * C++ counterpart of .NET NotSupportedException(string, Exception).
-         */
-        NotSupportedException(const std::string& message, std::exception_ptr innerException);
     };
 
 } // namespace System

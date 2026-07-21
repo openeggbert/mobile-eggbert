@@ -11,9 +11,6 @@
 
 namespace System::IO
 {
-    MemoryStream::MemoryStream()
-        : position_(0), writable_(true) {}
-
     MemoryStream::MemoryStream(const bytecs* buffer, intcs size)
         : data_(buffer, buffer + size), position_(0), writable_(false) {}
 
@@ -84,15 +81,6 @@ namespace System::IO
         position_ = newLength;
     }
 
-    void MemoryStream::WriteByte(bytecs value)
-    {
-        ensureNotClosed();
-        if (!writable_) throw System::NotSupportedException("Stream does not support writing.");
-        if (position_ >= static_cast<intcs>(data_.size())) data_.push_back(value);
-        else data_[static_cast<size_t>(position_)] = value;
-        ++position_;
-    }
-
     // Verified against MemoryStream.cs's Dispose(bool): real .NET explicitly does NOT clear
     // the underlying buffer on Close/Dispose -- "Don't set buffer to null - allow TryGetBuffer,
     // GetBuffer & ToArray to work" -- nor does it reset the position. This previously cleared
@@ -111,30 +99,5 @@ namespace System::IO
     {
         ensureNotClosed();
         return static_cast<intcs>(data_.size());
-    }
-
-    intcs MemoryStream::getPositionProperty() const
-    {
-        ensureNotClosed();
-        return position_;
-    }
-
-    void MemoryStream::setPositionProperty(intcs value)
-    {
-        ensureNotClosed();
-        if (value < 0)
-            throw System::ArgumentOutOfRangeException("value", "Non-negative number required.");
-        position_ = value;
-    }
-
-    void MemoryStream::SetLength(intcs value)
-    {
-        ensureNotClosed();
-        if (value < 0)
-            throw System::ArgumentOutOfRangeException("value", "Non-negative number required.");
-        if (!writable_)
-            throw System::NotSupportedException("Stream does not support writing.");
-        data_.resize(static_cast<size_t>(value), bytecs{0});
-        if (position_ > value) position_ = value;
     }
 }

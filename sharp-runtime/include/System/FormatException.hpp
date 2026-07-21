@@ -16,14 +16,8 @@ namespace System {
      */
     class FormatException : public SystemException {
     public:
-        /** @brief Initializes a new instance with the default message. */
-        FormatException();
         /** @brief Initializes a new instance with the specified error message. */
         explicit FormatException(const char* message);
-        /** @brief Initializes a new instance with the specified error message. */
-        explicit FormatException(const std::string& message);
-        /** @brief Initializes a new instance with the specified message and inner exception. */
-        FormatException(const std::string& message, std::exception_ptr inner);
     };
 
 } // namespace System

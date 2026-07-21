@@ -5,7 +5,6 @@
 #include "System/ArgumentException.hpp"
 #include "System/ArgumentNullException.hpp"
 #include "System/ArgumentOutOfRangeException.hpp"
-#include "System/NotSupportedException.hpp"
 #include "System/ObjectDisposedException.hpp"
 #include "System/IO/DirectoryNotFoundException.hpp"
 #include "System/IO/FileNotFoundException.hpp"
@@ -154,16 +153,6 @@ namespace System::IO
                     static_cast<std::streamsize>(count));
     }
 
-    void FileStream::WriteByte(bytecs value)
-    {
-        file_.put(static_cast<char>(value));
-    }
-
-    void FileStream::Flush()
-    {
-        if (file_.is_open()) file_.flush();
-    }
-
     void FileStream::Close()
     {
         if (file_.is_open()) file_.close();
@@ -185,45 +174,4 @@ namespace System::IO
         return ec ? length_ : static_cast<intcs>(size);
     }
 
-    bool FileStream::IsOpen() const { return file_.is_open(); }
-
-    intcs FileStream::getPositionProperty() const
-    {
-        auto& f = const_cast<std::fstream&>(file_);
-        std::streampos pos = canRead_ ? f.tellg() : f.tellp();
-        return static_cast<intcs>(pos);
-    }
-
-    void FileStream::setPositionProperty(intcs value)
-    {
-        if (value < 0)
-            throw System::ArgumentOutOfRangeException("value", "Non-negative number required.");
-        file_.clear();
-        if (canRead_)  file_.seekg(static_cast<std::streamoff>(value));
-        if (canWrite_) file_.seekp(static_cast<std::streamoff>(value));
-    }
-
-    void FileStream::SetLength(intcs value)
-    {
-        if (value < 0)
-            throw System::ArgumentOutOfRangeException("value", "Non-negative number required.");
-        // Check open state before canWrite_: canWrite_ reflects the access mode requested at
-        // construction and is never reset by Close(), so without this check SetLength() after
-        // Close() would still resize the file on disk via path_ below despite the stream
-        // claiming to be closed.
-        if (!file_.is_open())
-            throw System::ObjectDisposedException("Cannot access a closed file.");
-        if (!canWrite_)
-            throw System::NotSupportedException("Stream does not support writing.");
-
-        file_.flush();
-        std::error_code ec;
-        std::filesystem::resize_file(path_, static_cast<std::uintmax_t>(value), ec);
-        if (ec) {
-            throw IOException("Unable to set the length of file '" + path_ + "'.");
-        }
-
-        length_ = value;
-        if (getPositionProperty() > value) setPositionProperty(value);
-    }
 }

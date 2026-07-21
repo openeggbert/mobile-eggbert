@@ -15,14 +15,8 @@ namespace System {
      */
     class OverflowException : public ArithmeticException {
     public:
-        /** @brief Initializes a new instance with the default overflow message. */
-        OverflowException();
         /** @brief Initializes a new instance with the specified message (const char* overload). */
         explicit OverflowException(const char* str);
-        /** @brief Initializes a new instance with the specified error message. */
-        explicit OverflowException(const std::string& message);
-        /** @brief Initializes a new instance with the specified message and inner exception. */
-        OverflowException(const std::string& message, std::exception_ptr innerException);
     };
 
 } // namespace System

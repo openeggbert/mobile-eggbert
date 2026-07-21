@@ -8,7 +8,6 @@
 #pragma once
 
 #include <exception>
-#include <map>
 #include <memory>
 #include <string>
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
@@ -33,15 +32,9 @@ namespace System {
     private:
         std::string message_;
         std::exception_ptr innerException_;
-        mutable std::map<std::string, std::string> data_;
-        std::string source_;
-        std::string helpLink_;
         SharpRuntime::intcs hResult_ = static_cast<SharpRuntime::intcs>(0x80131500u); // COR_E_EXCEPTION
 
     public:
-        /** @brief Initializes a new instance of the Exception class with an empty message. */
-        Exception();
-
         ~Exception() override = default;
 
         /**
@@ -72,52 +65,11 @@ namespace System {
         [[nodiscard]] virtual const std::string& getMessageProperty() const;
 
         /**
-         * @brief Returns the exception that caused the current exception.
-         *
-         * C++ counterpart of .NET Exception.InnerException.
-         * @return The inner exception pointer, or nullptr if none.
-         */
-        [[nodiscard]] std::exception_ptr getInnerExceptionProperty() const;
-
-        /**
-         * @brief Returns an empty string.
-         *
-         * C++ counterpart of .NET Exception.StackTrace.
-         * Stack traces are not captured in C++ exceptions.
-         */
-        [[nodiscard]] const std::string& getStackTraceProperty() const;
-
-        /**
-         * @brief Returns a mutable key/value collection of additional user-defined data.
-         *
-         * C++ counterpart of .NET Exception.Data.
-         */
-        [[nodiscard]] std::map<std::string, std::string>& getDataProperty();
-        [[nodiscard]] const std::map<std::string, std::string>& getDataProperty() const;
-
-        /**
-         * @brief Gets or sets a link to the help file associated with this exception.
-         *
-         * C++ counterpart of .NET Exception.HelpLink.
-         */
-        [[nodiscard]] virtual const std::string& getHelpLinkProperty() const;
-        virtual void setHelpLinkProperty(const std::string& value);
-
-        /**
-         * @brief Gets or sets the name of the application or object that caused the error.
-         *
-         * C++ counterpart of .NET Exception.Source.
-         */
-        [[nodiscard]] virtual const std::string& getSourceProperty() const;
-        virtual void setSourceProperty(const std::string& value);
-
-        /**
          * @brief Gets or sets a coded numerical value assigned to this exception.
          *
          * C++ counterpart of .NET Exception.HResult. Defaults to COR_E_EXCEPTION (0x80131500),
          * matching .NET's default for the base Exception type.
          */
-        [[nodiscard]] SharpRuntime::intcs getHResultProperty() const;
         void setHResultProperty(SharpRuntime::intcs value);
 
         /**

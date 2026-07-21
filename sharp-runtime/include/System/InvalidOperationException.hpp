@@ -24,13 +24,6 @@ namespace System {
 
         /** @brief Initializes a new instance with the specified message. */
         explicit InvalidOperationException(const std::string& message);
-
-        /**
-         * @brief Initializes a new instance with a message and an inner exception.
-         *
-         * C++ counterpart of .NET InvalidOperationException(string, Exception).
-         */
-        InvalidOperationException(const std::string& message, std::exception_ptr innerException);
     };
 
 } // namespace System

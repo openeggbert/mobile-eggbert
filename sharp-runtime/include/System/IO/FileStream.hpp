@@ -56,29 +56,10 @@ namespace System::IO
         intcs Read(bytecs buffer[], intcs offset, intcs count) override;
         /** Writes count bytes from buffer starting at offset into the file. */
         void  Write(const bytecs buffer[], intcs offset, intcs count) override;
-        /** Writes a single byte to the file. */
-        void  WriteByte(bytecs value) override;
         /** Closes the file stream. */
         void  Close() override;
-        /** Flushes any buffered data to the file. */
-        void  Flush() override;
 
         /** Returns the length of the file in bytes. */
         [[nodiscard]] intcs getLengthProperty() const override;
-        /** Returns true if the stream was opened with write access. */
-        [[nodiscard]] bool  getCanWriteProperty() const override { return canWrite_; }
-        /** Returns true if the stream was opened with read access. */
-        [[nodiscard]] bool  getCanReadProperty()  const override { return canRead_; }
-        /** Returns true if the underlying file is open. */
-        [[nodiscard]] bool  IsOpen() const;
-
-        /** Returns true if the underlying file is open (FileStream always supports seeking while open). */
-        [[nodiscard]] bool  getCanSeekProperty() const override { return file_.is_open(); }
-        /** Returns the current read/write position within the file. */
-        [[nodiscard]] intcs getPositionProperty() const override;
-        /** Sets the current read/write position within the file. Throws ArgumentOutOfRangeException if negative. */
-        void setPositionProperty(intcs value) override;
-        /** Truncates or extends the file to the given length. */
-        void SetLength(intcs value) override;
     };
 }

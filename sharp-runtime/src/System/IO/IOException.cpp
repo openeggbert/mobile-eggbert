@@ -6,13 +6,7 @@
 namespace System::IO {
 
     namespace {
-        constexpr const char* DefaultMsg = "I/O error occurred.";
         constexpr SharpRuntime::intcs CorEIo = static_cast<SharpRuntime::intcs>(0x80131620);
-    }
-
-    IOException::IOException()
-        : System::SystemException(DefaultMsg) {
-        setHResultProperty(CorEIo);
     }
 
     IOException::IOException(const char* message)
@@ -22,11 +16,6 @@ namespace System::IO {
 
     IOException::IOException(const std::string& message)
         : System::SystemException(message) {
-        setHResultProperty(CorEIo);
-    }
-
-    IOException::IOException(const std::string& message, std::exception_ptr inner)
-        : System::SystemException(message, std::move(inner)) {
         setHResultProperty(CorEIo);
     }
 

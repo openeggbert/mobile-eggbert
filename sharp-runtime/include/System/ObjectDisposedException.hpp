@@ -23,13 +23,6 @@ namespace System {
 
     public:
         /**
-         * @brief Initializes a new instance of the ObjectDisposedException class.
-         *
-         * Uses a default generic disposed-object message.
-         */
-        ObjectDisposedException();
-
-        /**
          * @brief Initializes a new instance of the ObjectDisposedException class
          * with the name of the disposed object.
          *
@@ -53,31 +46,6 @@ namespace System {
          * @param message Error message.
          */
         ObjectDisposedException(const char* objectName, const char* message);
-
-        /**
-         * @brief Initializes a new instance of the ObjectDisposedException class
-         * with the specified object name and message.
-         *
-         * @param objectName Name of the disposed object.
-         * @param message Error message.
-         */
-        ObjectDisposedException(const std::string& objectName, const std::string& message);
-
-        /**
-         * @brief Initializes a new instance with the specified message and inner exception.
-         *
-         * C++ counterpart of .NET ObjectDisposedException(string, Exception).
-         * @param message Error message.
-         * @param inner   The exception that caused this exception.
-         */
-        ObjectDisposedException(const std::string& message, std::exception_ptr inner);
-
-        /**
-         * @brief Gets the name of the disposed object.
-         *
-         * @return Object name, or empty string if not specified.
-         */
-        [[nodiscard]] const std::string& getObjectNameProperty() const;
 
         /**
          * @brief Throws ObjectDisposedException if the specified condition is true.

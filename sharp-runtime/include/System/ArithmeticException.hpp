@@ -19,29 +19,6 @@ namespace System {
     public:
         /**
          * @brief Initializes a new instance of ArithmeticException with the
-         * default error message.
-         *
-         * C++ counterpart of .NET ArithmeticException().
-         */
-        ArithmeticException()
-            : SystemException("Overflow or underflow in the arithmetic operation.") {
-            setHResultProperty(static_cast<SharpRuntime::intcs>(0x80070216)); // COR_E_ARITHMETIC
-        }
-
-        /**
-         * @brief Initializes a new instance of ArithmeticException with the
-         * specified error message.
-         *
-         * C++ counterpart of .NET ArithmeticException(string).
-         * @param message The error message that explains the reason for the exception.
-         */
-        explicit ArithmeticException(const std::string& message)
-            : SystemException(message) {
-            setHResultProperty(static_cast<SharpRuntime::intcs>(0x80070216)); // COR_E_ARITHMETIC
-        }
-
-        /**
-         * @brief Initializes a new instance of ArithmeticException with the
          * specified error message (from a C string).
          *
          * C++ convenience overload — no .NET equivalent.
@@ -49,20 +26,6 @@ namespace System {
          */
         explicit ArithmeticException(const char* message)
             : SystemException(message) {
-            setHResultProperty(static_cast<SharpRuntime::intcs>(0x80070216)); // COR_E_ARITHMETIC
-        }
-
-        /**
-         * @brief Initializes a new instance of ArithmeticException with a
-         * specified error message and a reference to the inner exception that
-         * is the cause of this exception.
-         *
-         * C++ counterpart of .NET ArithmeticException(string, Exception).
-         * @param message The error message that explains the reason for the exception.
-         * @param inner   The exception that is the cause of the current exception.
-         */
-        ArithmeticException(const std::string& message, std::exception_ptr inner)
-            : SystemException(message, std::move(inner)) {
             setHResultProperty(static_cast<SharpRuntime::intcs>(0x80070216)); // COR_E_ARITHMETIC
         }
     };

@@ -23,10 +23,4 @@ namespace System {
         setHResultProperty(static_cast<SharpRuntime::intcs>(0x80131509)); // COR_E_INVALIDOPERATION
     }
 
-    InvalidOperationException::InvalidOperationException(
-        const std::string& message, std::exception_ptr innerException)
-        : SystemException(message, std::move(innerException)) {
-        setHResultProperty(static_cast<SharpRuntime::intcs>(0x80131509)); // COR_E_INVALIDOPERATION
-    }
-
 } // namespace System

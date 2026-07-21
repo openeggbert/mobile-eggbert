@@ -154,11 +154,6 @@ namespace System {
             return handlers_.empty();
         }
 
-        /** @brief Removes all subscribers. */
-        void Clear() {
-            handlers_.clear();
-        }
-
     private:
         std::vector<std::pair<Token, HandlerType>> handlers_;
         Token nextToken_ = InvalidToken + 1;

@@ -22,12 +22,6 @@ namespace System {
         return message + "\nObject name: '" + objectName + "'.";
     }
 
-    ObjectDisposedException::ObjectDisposedException()
-        : InvalidOperationException(DefaultObjectDisposedMessage),
-          objectName_("") {
-        setHResultProperty(static_cast<SharpRuntime::intcs>(0x80131622)); // COR_E_OBJECTDISPOSED
-    }
-
     ObjectDisposedException::ObjectDisposedException(const char* objectName)
         : InvalidOperationException(BuildMessage(objectName != nullptr ? std::string(objectName) : std::string(),
                                                  DefaultObjectDisposedMessage)),
@@ -46,23 +40,6 @@ namespace System {
                                                  message != nullptr ? std::string(message) : std::string())),
           objectName_(objectName != nullptr ? objectName : "") {
         setHResultProperty(static_cast<SharpRuntime::intcs>(0x80131622)); // COR_E_OBJECTDISPOSED
-    }
-
-    ObjectDisposedException::ObjectDisposedException(const std::string& objectName, const std::string& message)
-        : InvalidOperationException(BuildMessage(objectName, message)),
-          objectName_(objectName) {
-        setHResultProperty(static_cast<SharpRuntime::intcs>(0x80131622)); // COR_E_OBJECTDISPOSED
-    }
-
-    ObjectDisposedException::ObjectDisposedException(const std::string& message, std::exception_ptr inner)
-        : InvalidOperationException(message, std::move(inner)),
-          objectName_("") {
-        setHResultProperty(static_cast<SharpRuntime::intcs>(0x80131622)); // COR_E_OBJECTDISPOSED
-    }
-
-    const std::string& ObjectDisposedException::getObjectNameProperty() const
-    {
-        return objectName_;
     }
 
     void ObjectDisposedException::ThrowIf(bool condition, const char* objectName)

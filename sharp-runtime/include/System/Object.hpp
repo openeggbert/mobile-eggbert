@@ -5,8 +5,6 @@
 
 #include <string>
 #include <cstddef>
-#include <typeinfo>
-#include "System/Type.hpp"
 
 /**
  * @def GetTypeNameHPP()
@@ -110,21 +108,6 @@ namespace System
          * @return A hash code for this object.
          */
         [[nodiscard]] virtual int GetHashCode() const;
-
-        /**
-         * @brief Gets a Type object that describes the runtime type of this object.
-         *
-         * C++ counterpart of .NET Object.GetType().
-         * Uses C++ RTTI (typeid(*this)) so the returned Type correctly reflects
-         * the most-derived concrete class even when called through a base pointer.
-         * This method is not virtual — like its .NET counterpart it cannot be
-         * overridden, but RTTI ensures the dynamic type is always returned.
-         * @return A Type instance representing the runtime type of this object.
-         */
-        [[nodiscard]] Type GetType() const
-        {
-            return Type::FromTypeInfo(typeid(*this));
-        }
 
         /**
          * @brief Returns the runtime type name of this object.

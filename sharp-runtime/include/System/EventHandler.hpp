@@ -90,18 +90,9 @@ namespace System
         /** Token type returned by Add(); used to remove a specific handler via Remove(). */
         using Token = std::size_t;
 
-        /**
-         * @brief Type of an optional replay hook set via SetReplayHook().
-         *
-         * Receives the newly-added handler (not yet invoked with anything) so it can be called
-         * immediately for whatever backlog/pending state the owner wants to replay.
-         */
-        using ReplayHook = std::function<void(const HandlerType&)>;
-
     private:
         std::vector<std::pair<Token, HandlerType>> handlers_;
         Token nextToken_ = 0;
-        ReplayHook replayHook_;
 
     public:
         /**
@@ -131,49 +122,15 @@ namespace System
         }
 
         /**
-         * @brief Sets an optional hook invoked once, synchronously, every time a new handler is
-         * added via Add()/operator+=, before the handler is stored.
-         *
-         * Not part of .NET's `event` semantics in general, but models a real, documented quirk a
-         * handful of specific .NET/XNA events have: subscribing to them immediately replays
-         * already-happened state to the new subscriber (e.g. XNA's
-         * `NetworkSession.GamerJoined`, which fires once for every gamer already in the session
-         * at the moment `+=` runs, not just for gamers who join afterward). Plain
-         * multicast-delegate-style events (the overwhelming majority) have no such quirk and must
-         * never call this — leaving the hook unset (the default) makes Add() behave exactly as
-         * before.
-         *
-         * The intended owner is whatever object exposes this EventHandler as a public field
-         * (e.g. `NetworkSession`): it sets the hook once (typically in its own constructor) to a
-         * closure that inspects its own current state and calls the passed-in handler directly
-         * for each already-pending item. The hook is called with the raw HandlerType, not through
-         * Raise()/Invoke(), so it does not touch nextToken_/handlers_ and cannot itself be
-         * observed as a second "real" subscriber.
-         *
-         * @param hook The replay hook, or an empty std::function to clear it.
-         */
-        void SetReplayHook(ReplayHook hook)
-        {
-            replayHook_ = std::move(hook);
-        }
-
-        /**
          * @brief Adds a new subscribed handler and returns a removal token.
          *
          * Pass the returned token to Remove() to unsubscribe this specific handler.
-         *
-         * If a replay hook is set (see SetReplayHook()), it is invoked with handler before
-         * handler is stored, replaying whatever backlog the owner wants a new subscriber to see.
          *
          * @param handler Handler to add.
          * @return Token that identifies this subscription.
          */
         Token Add(HandlerType handler)
         {
-            if (replayHook_)
-            {
-                replayHook_(handler);
-            }
             const Token token = nextToken_++;
             handlers_.emplace_back(token, std::move(handler));
             return token;
@@ -198,14 +155,6 @@ namespace System
         }
 
         /**
-         * @brief Removes all subscribed handlers.
-         */
-        void Clear()
-        {
-            handlers_.clear();
-        }
-
-        /**
          * @brief Returns whether no handlers are currently subscribed.
          *
          * @return true if there are no subscribed handlers, otherwise false.
@@ -213,16 +162,6 @@ namespace System
         [[nodiscard]] bool Empty() const
         {
             return handlers_.empty();
-        }
-
-        /**
-         * @brief Returns the number of subscribed handlers.
-         *
-         * @return Number of handlers currently stored.
-         */
-        [[nodiscard]] std::size_t Size() const
-        {
-            return handlers_.size();
         }
 
         /**
@@ -248,20 +187,6 @@ namespace System
             {
                 entry.second(sender, e);
             }
-        }
-
-        /**
-         * @brief Invokes all subscribed handlers.
-         *
-         * This is an alias for Raise() and is provided because in C# events and
-         * delegates are commonly invoked using the term "Invoke".
-         *
-         * @param sender Object that raised the event.
-         * @param e Event arguments.
-         */
-        void Invoke(Object* sender, const TEventArgs& e)
-        {
-            Raise(sender, e);
         }
     };
 }
