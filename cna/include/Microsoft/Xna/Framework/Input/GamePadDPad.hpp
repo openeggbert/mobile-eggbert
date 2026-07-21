@@ -16,30 +16,6 @@ namespace Microsoft::Xna::Framework::Input
      */
     struct GamePadDPad
     {
-        /**
-         * @brief Gets the state of the down button.
-         * @return The down button state.
-         */
-        [[nodiscard]] ButtonState getDownProperty() const;
-
-        /**
-         * @brief Gets the state of the left button.
-         * @return The left button state.
-         */
-        [[nodiscard]] ButtonState getLeftProperty() const;
-
-        /**
-         * @brief Gets the state of the right button.
-         * @return The right button state.
-         */
-        [[nodiscard]] ButtonState getRightProperty() const;
-
-        /**
-         * @brief Gets the state of the up button.
-         * @return The up button state.
-         */
-        [[nodiscard]] ButtonState getUpProperty() const;
-
         /** @brief Constructs a GamePadDPad with all directions released. */
         NOXNA GamePadDPad();
 

@@ -8,18 +8,14 @@
 #include "CNA/Internal/Input/InputManager.hpp"
 #include "CNA/Internal/Input/GestureDetector.hpp"
 #include "CNA/Internal/Input/SystemDeviceBackend.hpp"
-#include "System/InvalidOperationException.hpp"
 
 namespace Microsoft::Xna::Framework::Input::Touch
 {
-    using Microsoft::Xna::Framework::DisplayOrientation;
     using Microsoft::Xna::Framework::Vector2;
 
     TouchPanel::intcs TouchPanel::displayWidth_ = 0;
     TouchPanel::intcs TouchPanel::displayHeight_ = 0;
-    DisplayOrientation TouchPanel::displayOrientation_ = DisplayOrientation::Default;
     GestureType TouchPanel::enabledGestures_ = GestureType::None;
-    std::uintptr_t TouchPanel::windowHandle_ = 0;
     bool TouchPanel::touchDeviceExists_ = false;
 
     std::queue<GestureSample> TouchPanel::gestures_;
@@ -27,19 +23,9 @@ namespace Microsoft::Xna::Framework::Input::Touch
     std::array<TouchLocation, TouchPanel::MAX_TOUCHES> TouchPanel::previousTouches_{};
     std::vector<TouchLocation> TouchPanel::validTouches_;
 
-    TouchPanel::intcs TouchPanel::getDisplayWidthProperty()
-    {
-        return displayWidth_;
-    }
-
     void TouchPanel::setDisplayWidthProperty(intcs value)
     {
         displayWidth_ = value;
-    }
-
-    TouchPanel::intcs TouchPanel::getDisplayHeightProperty()
-    {
-        return displayHeight_;
     }
 
     void TouchPanel::setDisplayHeightProperty(intcs value)
@@ -47,39 +33,9 @@ namespace Microsoft::Xna::Framework::Input::Touch
         displayHeight_ = value;
     }
 
-    DisplayOrientation TouchPanel::getDisplayOrientationProperty()
-    {
-        return displayOrientation_;
-    }
-
-    void TouchPanel::setDisplayOrientationProperty(DisplayOrientation value)
-    {
-        displayOrientation_ = value;
-    }
-
     GestureType TouchPanel::getEnabledGesturesProperty()
     {
         return enabledGestures_;
-    }
-
-    void TouchPanel::setEnabledGesturesProperty(GestureType value)
-    {
-        enabledGestures_ = value;
-    }
-
-    bool TouchPanel::getIsGestureAvailableProperty()
-    {
-        return !gestures_.empty();
-    }
-
-    std::uintptr_t TouchPanel::getWindowHandleProperty()
-    {
-        return windowHandle_;
-    }
-
-    void TouchPanel::setWindowHandleProperty(std::uintptr_t value)
-    {
-        windowHandle_ = value;
     }
 
     bool TouchPanel::getTouchDeviceExistsProperty()
@@ -154,18 +110,6 @@ namespace Microsoft::Xna::Framework::Input::Touch
             return TouchCollection(std::move(capped));
         }
         return fallback;
-    }
-
-    GestureSample TouchPanel::ReadGesture()
-    {
-        if (gestures_.empty())
-        {
-            throw System::InvalidOperationException();
-        }
-
-        GestureSample result = gestures_.front();
-        gestures_.pop();
-        return result;
     }
 
     void TouchPanel::EnqueueGesture(const GestureSample& gesture)
@@ -297,27 +241,6 @@ namespace Microsoft::Xna::Framework::Input::Touch
         CNA::Internal::Input::InputManager::AdvanceTouchFrame();
 
         CNA::Internal::Input::GestureDetector::OnUpdate();
-    }
-
-    void TouchPanel::ResetForTests()
-    {
-        touches_.fill(TouchLocation());
-        previousTouches_.fill(TouchLocation());
-        validTouches_.clear();
-        while (!gestures_.empty())
-        {
-            gestures_.pop();
-        }
-        touchDeviceExists_  = false;
-        enabledGestures_    = GestureType::None;
-        // Also reset the display metrics + window handle. INTERNAL_onTouchEvent scales touch
-        // coordinates by displayWidth_/displayHeight_ and early-returns when either is <= 0, so a
-        // leaked display size from a prior test silently corrupts another test's touch/gesture
-        // coordinates. These were previously worked around by save/restore in the touch tests.
-        displayWidth_       = 0;
-        displayHeight_      = 0;
-        displayOrientation_ = DisplayOrientation::Default;
-        windowHandle_       = 0;
     }
 
     void TouchPanel::updateInputManagerTouch(intcs fingerId, TouchLocationState state, const Vector2& position)

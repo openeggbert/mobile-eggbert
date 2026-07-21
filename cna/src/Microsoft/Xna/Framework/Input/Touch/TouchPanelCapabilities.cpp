@@ -14,5 +14,4 @@ namespace Microsoft::Xna::Framework::Input::Touch
     }
 
     bool TouchPanelCapabilities::getIsConnectedProperty()      const { return isConnected_; }
-    int  TouchPanelCapabilities::getMaximumTouchCountProperty() const { return maximumTouchCount_; }
 }

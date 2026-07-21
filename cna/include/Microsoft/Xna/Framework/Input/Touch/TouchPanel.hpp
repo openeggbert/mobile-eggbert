@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "CNA/CNAHelper.hpp"
-#include "Microsoft/Xna/Framework/DisplayOrientation.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/GestureSample.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/GestureType.hpp"
 #include "Microsoft/Xna/Framework/Input/Touch/TouchCollection.hpp"
@@ -48,22 +47,10 @@ namespace Microsoft::Xna::Framework::Input::Touch
         NOXNA static constexpr intcs NO_FINGER = -1;
 
         /**
-         * @brief Gets the display width used for normalized touch coordinates.
-         * @return The display width in pixels.
-         */
-        [[nodiscard]] static intcs getDisplayWidthProperty();
-
-        /**
          * @brief Sets the display width used for normalized touch coordinates.
          * @param value The display width in pixels.
          */
         static void setDisplayWidthProperty(intcs value);
-
-        /**
-         * @brief Gets the display height used for normalized touch coordinates.
-         * @return The display height in pixels.
-         */
-        [[nodiscard]] static intcs getDisplayHeightProperty();
 
         /**
          * @brief Sets the display height used for normalized touch coordinates.
@@ -72,46 +59,10 @@ namespace Microsoft::Xna::Framework::Input::Touch
         static void setDisplayHeightProperty(intcs value);
 
         /**
-         * @brief Gets the current display orientation.
-         * @return The display orientation.
-         */
-        [[nodiscard]] static Microsoft::Xna::Framework::DisplayOrientation getDisplayOrientationProperty();
-
-        /**
-         * @brief Sets the current display orientation.
-         * @param value The display orientation to set.
-         */
-        static void setDisplayOrientationProperty(Microsoft::Xna::Framework::DisplayOrientation value);
-
-        /**
          * @brief Gets the gesture types currently enabled for detection.
          * @return The enabled gesture types.
          */
         [[nodiscard]] static GestureType getEnabledGesturesProperty();
-
-        /**
-         * @brief Sets the gesture types enabled for detection.
-         * @param value The gesture types to enable.
-         */
-        static void setEnabledGesturesProperty(GestureType value);
-
-        /**
-         * @brief Gets whether a gesture sample is ready to be read.
-         * @return True if a gesture is available; false otherwise.
-         */
-        [[nodiscard]] static bool getIsGestureAvailableProperty();
-
-        /**
-         * @brief Gets the native window handle associated with the touch panel, if any.
-         * @return The native window handle.
-         */
-        [[nodiscard]] static std::uintptr_t getWindowHandleProperty();
-
-        /**
-         * @brief Sets the native window handle associated with the touch panel.
-         * @param value The native window handle.
-         */
-        static void setWindowHandleProperty(std::uintptr_t value);
 
         /**
          * @brief Gets whether a touch device is currently known to exist.
@@ -140,12 +91,6 @@ namespace Microsoft::Xna::Framework::Input::Touch
          * @return The current touch collection.
          */
         [[nodiscard]] static TouchCollection GetState();
-
-        /**
-         * @brief Removes and returns the oldest queued gesture sample.
-         * @return The next gesture sample.
-         */
-        [[nodiscard]] static GestureSample ReadGesture();
 
         /**
          * @brief Queues a gesture sample for later retrieval via ReadGesture.
@@ -198,20 +143,10 @@ namespace Microsoft::Xna::Framework::Input::Touch
          */
         NOXNA static void Update();
 
-        /**
-         * @brief Test-only: resets all process-wide touch/gesture state — the touch arrays, the
-         *        gesture queue, the touch-device-exists flag, and enabled gestures — to defaults.
-         * @note NOXNA — a CNA test-support helper, not part of the XNA 4.0 API. Display size /
-         *       orientation are left untouched (tests set those explicitly).
-         */
-        NOXNA static void ResetForTests();
-
     private:
         static intcs displayWidth_;
         static intcs displayHeight_;
-        static Microsoft::Xna::Framework::DisplayOrientation displayOrientation_;
         static GestureType enabledGestures_;
-        static std::uintptr_t windowHandle_;
         static bool touchDeviceExists_;
 
         static std::queue<GestureSample> gestures_;

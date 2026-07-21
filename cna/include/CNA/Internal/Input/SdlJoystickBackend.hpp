@@ -67,12 +67,4 @@ namespace CNA::Internal::Input
      * @brief Returns the currently active SDL joystick backend (the real SDL one unless overridden).
      */
     ISdlJoystickBackend& sdl_joystick_backend();
-
-    /**
-     * @brief Test-only: swaps in a fake joystick backend; pass nullptr to restore the real one.
-     *
-     * Not part of the runtime path. Reset back to the real backend between tests (the input
-     * central reset does this).
-     */
-    void SetSdlJoystickBackendForTests(ISdlJoystickBackend* backend);
 }

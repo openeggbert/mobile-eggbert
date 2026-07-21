@@ -137,11 +137,4 @@ namespace Microsoft::Xna::Framework::Input
             TextEditingCandidatesEXT(candidates, selected, horizontal);
     }
 
-    void TextInputEXT::ResetForTests()
-    {
-        TextInput    = nullptr;
-        TextEditing  = nullptr;
-        TextEditingCandidatesEXT = nullptr;
-        windowHandle_ = 0;
-    }
 }

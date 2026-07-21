@@ -31,9 +31,4 @@ namespace CNA::Internal::Input
      * @brief Returns the active system device backend (the real SDL one unless overridden).
      */
     ISystemDeviceBackend& system_device_backend();
-
-    /**
-     * @brief Test-only: swaps in a fake device backend; pass nullptr to restore the real one.
-     */
-    void SetSystemDeviceBackendForTests(ISystemDeviceBackend* backend);
 }

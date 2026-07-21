@@ -17,70 +17,10 @@ namespace Microsoft::Xna::Framework::Input
     struct GamePadButtons
     {
         /**
-         * @brief Gets the state of the A button.
-         * @return The A button state.
-         */
-        [[nodiscard]] ButtonState getAProperty() const;
-
-        /**
-         * @brief Gets the state of the B button.
-         * @return The B button state.
-         */
-        [[nodiscard]] ButtonState getBProperty() const;
-
-        /**
          * @brief Gets the state of the Back button.
          * @return The Back button state.
          */
         [[nodiscard]] ButtonState getBackProperty() const;
-
-        /**
-         * @brief Gets the state of the X button.
-         * @return The X button state.
-         */
-        [[nodiscard]] ButtonState getXProperty() const;
-
-        /**
-         * @brief Gets the state of the Y button.
-         * @return The Y button state.
-         */
-        [[nodiscard]] ButtonState getYProperty() const;
-
-        /**
-         * @brief Gets the state of the Start button.
-         * @return The Start button state.
-         */
-        [[nodiscard]] ButtonState getStartProperty() const;
-
-        /**
-         * @brief Gets the state of the left shoulder button.
-         * @return The left shoulder button state.
-         */
-        [[nodiscard]] ButtonState getLeftShoulderProperty() const;
-
-        /**
-         * @brief Gets the state of the left stick button.
-         * @return The left stick button state.
-         */
-        [[nodiscard]] ButtonState getLeftStickProperty() const;
-
-        /**
-         * @brief Gets the state of the right shoulder button.
-         * @return The right shoulder button state.
-         */
-        [[nodiscard]] ButtonState getRightShoulderProperty() const;
-
-        /**
-         * @brief Gets the state of the right stick button.
-         * @return The right stick button state.
-         */
-        [[nodiscard]] ButtonState getRightStickProperty() const;
-
-        /**
-         * @brief Gets the state of the big button.
-         * @return The big button state.
-         */
-        [[nodiscard]] ButtonState getBigButtonProperty() const;
 
         /** @brief Constructs with no buttons pressed. */
         NOXNA GamePadButtons();

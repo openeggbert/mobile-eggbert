@@ -69,9 +69,4 @@ namespace CNA::Internal::Input
     {
         return *g_currentBackend;
     }
-
-    void SetSystemDeviceBackendForTests(ISystemDeviceBackend* backend)
-    {
-        g_currentBackend = backend ? backend : &g_realBackend;
-    }
 }

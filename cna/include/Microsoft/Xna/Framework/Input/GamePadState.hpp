@@ -21,18 +21,6 @@ namespace Microsoft::Xna::Framework::Input
     struct GamePadState
     {
         /**
-         * @brief Indicates whether the controller is connected.
-         * @return True if connected; false otherwise.
-         */
-        [[nodiscard]] bool getIsConnectedProperty() const;
-
-        /**
-         * @brief Gets the packet number associated with this state.
-         * @return The packet number.
-         */
-        [[nodiscard]] int getPacketNumberProperty() const;
-
-        /**
          * @brief Sets the packet number. FNA declares `PacketNumber`'s setter `internal`
          * (platform-layer use only), not part of the public XNA API.
          * @param value The new packet number.
@@ -44,24 +32,6 @@ namespace Microsoft::Xna::Framework::Input
          * @return The gamepad buttons state.
          */
         [[nodiscard]] const GamePadButtons& getButtonsProperty() const;
-
-        /**
-         * @brief Returns a structure identifying which directions of the directional pad are pressed.
-         * @return The directional pad state.
-         */
-        [[nodiscard]] const GamePadDPad& getDPadProperty() const;
-
-        /**
-         * @brief Returns a structure indicating the position of the controller thumbsticks.
-         * @return The thumbstick positions.
-         */
-        [[nodiscard]] const GamePadThumbSticks& getThumbSticksProperty() const;
-
-        /**
-         * @brief Returns a structure identifying the position of triggers on the controller.
-         * @return The trigger positions.
-         */
-        [[nodiscard]] const GamePadTriggers& getTriggersProperty() const;
 
         /** @brief Constructs a disconnected state with all values at rest. */
         NOXNA GamePadState();
@@ -91,20 +61,6 @@ namespace Microsoft::Xna::Framework::Input
                      float leftTrigger,
                      float rightTrigger,
                      std::initializer_list<Buttons> buttons);
-
-        /**
-         * @brief Determines whether the specified button(s) are pressed.
-         * @param button Buttons to query; can be combined with bitwise OR.
-         * @return True if all specified buttons are pressed; false otherwise.
-         */
-        [[nodiscard]] bool IsButtonDown(Buttons button) const;
-
-        /**
-         * @brief Determines whether the specified button(s) are not pressed.
-         * @param button Buttons to query; can be combined with bitwise OR.
-         * @return True if all specified buttons are up; false otherwise.
-         */
-        [[nodiscard]] bool IsButtonUp(Buttons button) const;
 
         /**
          * @brief Compares this instance with another for equality.

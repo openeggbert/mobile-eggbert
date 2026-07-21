@@ -26,17 +26,7 @@ namespace Microsoft::Xna::Framework::Input
         return (buttons_ & flag) == flag ? ButtonState::Pressed : ButtonState::Released;
     }
 
-    ButtonState GamePadButtons::getAProperty() const             { return ButtonStateFromFlag(Buttons::A); }
-    ButtonState GamePadButtons::getBProperty() const             { return ButtonStateFromFlag(Buttons::B); }
     ButtonState GamePadButtons::getBackProperty() const          { return ButtonStateFromFlag(Buttons::Back); }
-    ButtonState GamePadButtons::getXProperty() const             { return ButtonStateFromFlag(Buttons::X); }
-    ButtonState GamePadButtons::getYProperty() const             { return ButtonStateFromFlag(Buttons::Y); }
-    ButtonState GamePadButtons::getStartProperty() const         { return ButtonStateFromFlag(Buttons::Start); }
-    ButtonState GamePadButtons::getLeftShoulderProperty() const  { return ButtonStateFromFlag(Buttons::LeftShoulder); }
-    ButtonState GamePadButtons::getLeftStickProperty() const     { return ButtonStateFromFlag(Buttons::LeftStick); }
-    ButtonState GamePadButtons::getRightShoulderProperty() const { return ButtonStateFromFlag(Buttons::RightShoulder); }
-    ButtonState GamePadButtons::getRightStickProperty() const    { return ButtonStateFromFlag(Buttons::RightStick); }
-    ButtonState GamePadButtons::getBigButtonProperty() const     { return ButtonStateFromFlag(Buttons::BigButton); }
 
     bool GamePadButtons::Equals(const GamePadButtons& other) const
     {

@@ -164,11 +164,6 @@ namespace Microsoft::Xna::Framework::Input
         NOXNA static void INTERNAL_OnTextEditingCandidates(
             const std::vector<std::string>& candidates, int selected, bool horizontal);
 
-        /**
-         * @brief Test-only: resets TextInputEXT's static state (callbacks, window handle).
-         */
-        NOXNA static void ResetForTests();
-
     private:
         /** @brief Backing store for the window handle property. */
         static std::uintptr_t windowHandle_;

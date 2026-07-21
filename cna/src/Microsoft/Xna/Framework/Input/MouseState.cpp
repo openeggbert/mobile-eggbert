@@ -49,12 +49,6 @@ namespace Microsoft::Xna::Framework::Input
     int         MouseState::getXProperty()               const { return x_; }
     int         MouseState::getYProperty()               const { return y_; }
     ButtonState MouseState::getLeftButtonProperty()      const { return leftButton_; }
-    ButtonState MouseState::getRightButtonProperty()     const { return rightButton_; }
-    ButtonState MouseState::getMiddleButtonProperty()    const { return middleButton_; }
-    ButtonState MouseState::getXButton1Property()        const { return xButton1_; }
-    ButtonState MouseState::getXButton2Property()        const { return xButton2_; }
-    int         MouseState::getScrollWheelValueProperty() const { return scrollWheelValue_; }
-    int         MouseState::getHorizontalScrollWheelValueEXTProperty() const { return horizontalScrollWheelValue_; }
 
     bool MouseState::Equals(const MouseState& other) const
     {

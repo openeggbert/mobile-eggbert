@@ -119,24 +119,6 @@ namespace CNA::Internal::Input
         }
     }
 
-    void InputManager::ResetForTests()
-    {
-        getInternalInputState() = InternalInputState{};
-    }
-
-    void InputManager::ResetAllForTests()
-    {
-        // Deterministic order: clear the bridge's file-static event bookkeeping first, then the
-        // accumulated input singleton, then the higher-level panels/handlers. All entries are
-        // independent process-wide statics, so ordering is for reproducibility, not correctness.
-        SdlInputBridge::ResetForTests();
-        ResetForTests();
-        Microsoft::Xna::Framework::Input::Touch::TouchPanel::ResetForTests();
-        GestureDetector::ResetForTests();
-        Microsoft::Xna::Framework::Input::Mouse::ResetForTests();
-        Microsoft::Xna::Framework::Input::TextInputEXT::ResetForTests();
-    }
-
     void InputManager::SetMousePosition(const int x, const int y)
     {
         auto& mouseState = getInternalInputState().Mouse;
@@ -180,16 +162,6 @@ namespace CNA::Internal::Input
     {
         auto& mouseState = getInternalInputState().Mouse;
         mouseState.HorizontalScrollWheelValue += delta;
-    }
-
-    void InputManager::SetMouseRelativeMode(const bool enabled)
-    {
-        auto& mouseState = getInternalInputState().Mouse;
-        mouseState.RelativeMode = enabled;
-        // Flush stale accumulated motion on toggle, matching SDL3_FNAPlatform's
-        // throwaway SDL_GetRelativeMouseState() call on enable.
-        mouseState.RelativeDeltaX = 0.0f;
-        mouseState.RelativeDeltaY = 0.0f;
     }
 
     void InputManager::AddMouseRelativeDelta(const float dx, const float dy)

@@ -129,14 +129,8 @@ namespace CNA::Internal::Input
         static void AddHorizontalScrollWheelDelta(int delta);
 
         /**
-         * @brief Toggles FNA extension relative-mouse-mode accumulation and flushes
-         * any pending relative delta (matches SDL3_FNAPlatform's flush-on-enable).
-         */
-        static void SetMouseRelativeMode(bool enabled);
-
-        /**
          * @brief Accumulates a relative mouse motion delta. Only has an effect while
-         * relative mode is enabled (see SetMouseRelativeMode); fed from every mouse
+         * relative mode is enabled; fed from every mouse
          * motion event regardless of mode, matching the SDL event stream.
          */
         static void AddMouseRelativeDelta(float dx, float dy);
@@ -233,25 +227,5 @@ namespace CNA::Internal::Input
             Microsoft::Xna::Framework::PlayerIndex playerIndex
         );
 
-        /**
-         * @brief Test-only: resets all accumulated input state (mouse, keyboard, all gamepad
-         *        slots, touch) to defaults.
-         *
-         * The input state is a process-wide singleton shared across the whole test binary, so
-         * tests that mutate it (connect a gamepad, press keys, etc.) must reset it to avoid
-         * leaking state into later tests. Not part of the runtime input path — for tests only.
-         */
-        static void ResetForTests();
-
-        /**
-         * @brief Test-only: resets ALL input subsystems' process-wide state in a deterministic order.
-         *
-         * Central entry point that fans out to every input subsystem so a test does not have to
-         * know (and remember) the full list of individual reset helpers: SdlInputBridge file-static
-         * state, this InputManager singleton, TouchPanel statics (incl. display metrics + window
-         * handle), GestureDetector statics, Mouse statics, and TextInputEXT callbacks/handle.
-         * Call this in a fixture SetUp()/TearDown() to guarantee input tests are order-independent.
-         */
-        static void ResetAllForTests();
     };
 }

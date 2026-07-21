@@ -21,12 +21,6 @@ namespace Microsoft::Xna::Framework::Input::Touch
         [[nodiscard]] bool getIsConnectedProperty() const;
 
         /**
-         * @brief Gets the maximum number of simultaneous touch points supported.
-         * @return The maximum touch count.
-         */
-        [[nodiscard]] int getMaximumTouchCountProperty() const;
-
-        /**
          * @brief Constructs disconnected capabilities with zero touch count.
          * @note NOXNA — FNA has no explicit parameterless constructor for this type.
          */

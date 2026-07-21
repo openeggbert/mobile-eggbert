@@ -78,9 +78,4 @@ namespace CNA::Internal::Input
     {
         return *g_currentBackend;
     }
-
-    void SetSdlJoystickBackendForTests(ISdlJoystickBackend* backend)
-    {
-        g_currentBackend = (backend != nullptr) ? backend : &g_realBackend;
-    }
 }

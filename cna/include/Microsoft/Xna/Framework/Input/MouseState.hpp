@@ -31,47 +31,6 @@ namespace Microsoft::Xna::Framework::Input
          */
         [[nodiscard]] ButtonState getLeftButtonProperty() const;
 
-        /**
-         * @brief Gets the state of the right mouse button.
-         * @return The right button state.
-         */
-        [[nodiscard]] ButtonState getRightButtonProperty() const;
-
-        /**
-         * @brief Gets the state of the middle mouse button.
-         * @return The middle button state.
-         */
-        [[nodiscard]] ButtonState getMiddleButtonProperty() const;
-
-        /**
-         * @brief Gets the state of XButton1.
-         * @return The XButton1 state.
-         */
-        [[nodiscard]] ButtonState getXButton1Property() const;
-
-        /**
-         * @brief Gets the state of XButton2.
-         * @return The XButton2 state.
-         */
-        [[nodiscard]] ButtonState getXButton2Property() const;
-
-        /**
-         * @brief Returns the cumulative scroll wheel value since the game started.
-         * @return The scroll wheel value.
-         */
-        [[nodiscard]] int getScrollWheelValueProperty() const;
-
-        /**
-         * @brief NOXNA/EXT: the cumulative HORIZONTAL scroll wheel value since the game started.
-         *
-         * XNA 4.0 / FNA `MouseState` have no horizontal wheel member, so this is a CNA extension backed by
-         * SDL's `wheel.x` (the vertical `getScrollWheelValueProperty` handles `wheel.y`). Scaled to the same
-         * XNA 120-unit notch. It is deliberately **excluded from `Equals`/`GetHashCode`** so those stay
-         * byte-identical to FNA — it is a pure additive readable field.
-         * @return The cumulative horizontal scroll wheel value.
-         */
-        NOXNA [[nodiscard]] int getHorizontalScrollWheelValueEXTProperty() const;
-
         /** @brief Constructs a MouseState with all values at rest. */
         NOXNA MouseState();
 

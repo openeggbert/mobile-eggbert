@@ -430,45 +430,4 @@ namespace CNA::Internal::Input
         }
     }
 
-    void GestureDetector::ResetForTests()
-    {
-        activeFingerId           = TouchPanel::NO_FINGER;
-        activeFingerPosition     = Vector2::Zero;
-        callBelatedPinchComplete = false;
-        eventTimestamp           = TimePoint{};
-        fingerIds.clear();
-        justDoubleTapped         = false;
-        lastUpdatePosition       = Vector2::Zero;
-        pressPosition            = Vector2::Zero;
-        secondFingerId           = TouchPanel::NO_FINGER;
-        secondFingerPosition     = Vector2::Zero;
-        state                    = GestureState::NONE;
-        updateTimestamp          = TimePoint{};
-        velocity                 = Vector2::Zero;
-        // Return to the real-clock baseline. Without this, a test that enabled the manual test
-        // clock and forgot to disable it (or was interrupted) would leak frozen-time mode into
-        // later real-timing tests (e.g. the SDL-bridge Tap/Flick tests), making them order-
-        // dependent. Tests that want the manual clock call EnableTestClock() after reset.
-        g_useTestClock           = false;
-        g_testNow                = TimePoint{};
-    }
-
-    void GestureDetector::EnableTestClock()
-    {
-        g_useTestClock = true;
-        // Start at a non-zero base: TimePoint{} (the epoch) doubles as the "no prior update yet"
-        // sentinel for the flick-velocity calc (FNA's DateTime.MinValue), so a legitimate event at
-        // t=0 must not collide with it. One hour of headroom keeps every real timestamp distinct.
-        g_testNow      = TimePoint{} + std::chrono::hours(1);
-    }
-
-    void GestureDetector::DisableTestClock()
-    {
-        g_useTestClock = false;
-    }
-
-    void GestureDetector::AdvanceTestClockMilliseconds(const long milliseconds)
-    {
-        g_testNow += std::chrono::milliseconds(milliseconds);
-    }
 }

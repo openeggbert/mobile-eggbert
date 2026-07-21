@@ -55,24 +55,9 @@ namespace Microsoft::Xna::Framework::Input
     {
     }
 
-    bool GamePadState::getIsConnectedProperty() const { return isConnected_; }
-    int  GamePadState::getPacketNumberProperty() const { return packetNumber_; }
     void GamePadState::setPacketNumberProperty(int value) { packetNumber_ = value; }
 
     const GamePadButtons&    GamePadState::getButtonsProperty()     const { return buttons_; }
-    const GamePadDPad&       GamePadState::getDPadProperty()        const { return dPad_; }
-    const GamePadThumbSticks& GamePadState::getThumbSticksProperty() const { return thumbSticks_; }
-    const GamePadTriggers&   GamePadState::getTriggersProperty()    const { return triggers_; }
-
-    bool GamePadState::IsButtonDown(Buttons button) const
-    {
-        return (buttons_.buttons_ & button) == button;
-    }
-
-    bool GamePadState::IsButtonUp(Buttons button) const
-    {
-        return (buttons_.buttons_ & button) != button;
-    }
 
     Buttons GamePadState::StickToButtons(const Microsoft::Xna::Framework::Vector2& stick,
                                          Buttons left, Buttons right,

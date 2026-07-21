@@ -53,12 +53,4 @@ namespace Microsoft::Xna::Framework::Input::Touch
     {
     }
 
-    GestureType                              GestureSample::getGestureTypeProperty() const { return gestureType_; }
-    System::TimeSpan                         GestureSample::getTimestampProperty()   const { return timestamp_; }
-    const Microsoft::Xna::Framework::Vector2& GestureSample::getPositionProperty()   const { return position_; }
-    const Microsoft::Xna::Framework::Vector2& GestureSample::getPosition2Property()  const { return position2_; }
-    const Microsoft::Xna::Framework::Vector2& GestureSample::getDeltaProperty()      const { return delta_; }
-    const Microsoft::Xna::Framework::Vector2& GestureSample::getDelta2Property()     const { return delta2_; }
-    int GestureSample::getFingerIdEXTProperty()  const { return fingerIdEXT_; }
-    int GestureSample::getFingerId2EXTProperty() const { return fingerId2EXT_; }
 }
