@@ -539,6 +539,142 @@ file starting with the 3 hot files (`AudioMixer` first, since it's the most self
 rewrite; then `SdlGraphicsBackend`; then the input pair), full rebuild + smoke-test after each
 file, commit per logical unit, not one giant diff.
 
+## Phase 4 status: done (2026-07-21) — SDL3 → SDL2 migration
+
+Executed per the pre-analysis's own recommended order (vendor swap → `AudioMixer` →
+`SdlGraphicsBackend` → input pair → remaining thin call sites), as 4 commits. No files were
+added or removed by this phase (confirmed via `git diff --stat` against the pre-Phase-4 commit) —
+37 `cna`/`sharp-runtime` `.hpp`/`.cpp` files touched, all internal-implementation edits; the
+combined file count (337) and translation-unit count for `WindowsPhoneSpeedyBlupi` (142) are
+unchanged from the end of Phase 2.6.
+
+**Vendor swap**: `cna/third_party/{SDL,SDL_image,SDL_mixer}` replaced with SDL2 (release-2.30.11),
+SDL2_image (release-2.8.2), SDL2_mixer (release-2.8.0) — same flat-copy treatment Phase 1 used,
+sourced from the shared `~/deps/` cache per the org-level `CLAUDE.md`'s no-re-cloning rule.
+`cna/cmake/ThirdPartySDL.cmake` rewritten for SDL2's build/install layout (target names, library
+filenames, `SDL2IMAGE_*`/`SDL2MIXER_*` option names in place of `SDLIMAGE_*`/`SDLMIXER_*`) and
+every CMake file referencing SDL3 target names updated (root `CMakeLists.txt`, `cna/CMakeLists.txt`,
+`cna/cmake/{BackendLibraries,CnaLibrary,UnitTests}.cmake`, `sharp-runtime/CMakeLists.txt`, the
+mingw-w64 toolchain files, `CNA/Entrypoint.hpp`).
+
+**AudioMixer** (the pre-analysis's own "most self-contained rewrite" call, done first): SDL3_mixer's
+track-object model (`MIX_CreateTrack`/`MIX_Audio`, per-track cooked callbacks, `MIX_PROP_PLAY_*`
+loop-region properties) has no SDL2_mixer equivalent — SDL2_mixer is channel-index based, with no
+persistent per-sound object and no bounded loop-region support at all. Introduced a
+`CNA::Internal::Audio::Track` abstraction backed by a dedicated channel, lazily attached only while
+playing. Looping is implemented as single-lap playback + lazy poll-and-restart (`TrackPlaying()`)
+rather than SDL2_mixer's own loop counter, specifically so `Stop(false)`'s "let this lap finish,
+then stop" contract still works (SDL2_mixer's native loop counter has no way to express that once
+started). Stereo pan uses a per-channel `Mix_RegisterEffect` crossfeed-matrix callback (the same
+FNA-matching math as before); pitch uses a one-shot linear-interpolation resample of the decoded
+chunk — a disclosed simplification vs. the pre-migration true realtime frequency-ratio glide, never
+exercised by mobile-eggbert (which only ever sets pitch before `Play()`, confirmed via
+`Sound.cpp`). Bounded loop regions (`LoopBegin`/`LoopLength`) are unsupported (`Mix_Chunk` has no
+loop-point concept) — whole-chunk looping only; also never exercised (mobile-eggbert's `SoundEffect`
+is always loaded from whole `.wav` files via the plain string constructor). `MediaPlayer`'s single
+background-music slot mapped cleanly onto SDL2_mixer's purpose-built `Mix_Music` API — actually
+*simpler* than the pre-migration per-track implementation. `DynamicSoundEffectInstance`'s continuous
+PCM streaming (no SDL2_mixer equivalent to a live-audio-stream-bound track) reimplemented via a
+silent looped placeholder chunk plus a `Mix_RegisterEffect` callback pulling from an
+`SDL_AudioStream` ring buffer — not exercised by mobile-eggbert itself (Phase 2.6 kept the class only
+because `FrameworkDispatcher.cpp` names it directly, not because this game calls it).
+
+**SdlGraphicsBackend** (the rendering backend, ~830 lines, the largest single file): the most
+extensive rework. `SDL_CreateRenderer`'s SDL3 `(window, name)` pair became SDL2's `(window, device
+index, flags)`; vsync moved from a runtime `SDL_SetRenderVSync` call to a creation-time
+`SDL_RENDERER_PRESENTVSYNC` flag (`SetSwapInterval()` is now a documented no-op after construction —
+SDL2 has no runtime vsync toggle at all); `SDL_RenderTexture`/`RenderTextureRotated` became
+`SDL_RenderCopyF`/`RenderCopyExF`; `SDL_RenderReadPixels` changed from "allocate and return a new
+surface" to "write into a caller buffer" (actually simpler on SDL2 — no format-conversion step
+needed). Deliberately does not request `SDL_RENDERER_ACCELERATED`, so headless/software-only video
+drivers (`SDL_VIDEODRIVER=dummy`, this project's own smoke-test/CI driver) still get a working
+renderer instead of a hard `SDL_CreateRenderer` failure. `ApplyBlendState()` falls back to
+`SDL_BLENDMODE_BLEND` when a custom-composed blend mode is rejected — hit for real during this
+phase's own smoke-testing: SDL2's software renderer (used under `SDL_VIDEODRIVER=dummy`) rejects
+most `SDL_ComposeCustomBlendMode` factor/operation combinations outright ("That operation is not
+supported"), unlike SDL2's opengl/vulkan renderers or the pre-migration SDL3 stack, which both
+supported the full generality; the accelerated (real-display, OpenGL) path never needs the fallback.
+
+Two items needed real reimplementation, exactly as the pre-analysis flagged in advance:
+- `SDL_SetRenderLogicalPresentation`'s 4 modes (Letterbox/Overscan/Stretch/NativeBackBuffer) have no
+  single SDL2 equivalent — `SDL_RenderSetLogicalSize` natively covers only Letterbox (uniform
+  scale-to-fit, centered). Overscan (scale-to-fill, centered, cropping overflow) and Stretch
+  (independent x/y scale, no cropping) are now applied manually via `SDL_RenderSetScale` +
+  `SDL_RenderSetViewport` (a deliberately oversized/negative-origin viewport for Overscan, relying on
+  SDL2 always clipping to the real render-target bounds regardless of viewport size). `ReadBackbuffer`'s
+  own physical/logical-size invariant check now reads `SDL_RenderGetViewport` instead of the SDL3-only
+  `SDL_GetRenderLogicalPresentationRect` — correct in all 4 modes since every mode now sets the
+  viewport explicitly (or lets SDL2 auto-manage it for Letterbox).
+- `SDL_RenderTextureAffine` (arbitrary 3-corner quad mapping, used for
+  `SpriteBatch.Begin(transformMatrix)`) has no SDL2 equivalent — reimplemented via
+  `SDL_RenderGeometry`, feeding it the same already-transformed screen-space quad corners directly
+  as a two-triangle textured mesh with per-vertex UV/color (`SDL_RenderGeometry` ignores texture
+  color/alpha mod, unlike the normal draw path, so color is passed per-vertex instead).
+
+`GameWindow`/`GraphicsDeviceManager`/`GraphicsDevice`/`Game.cpp`: window creation needs explicit x/y
+position arguments (`SDL_WINDOWPOS_UNDEFINED`); fullscreen takes a window-flags value
+(`SDL_WINDOW_FULLSCREEN_DESKTOP`) instead of a bool; several setters (`SetWindowSize`,
+`SetWindowTitle`, `SetWindowResizable`, `SetWindowBordered`, `MinimizeWindow`, `RestoreWindow`) now
+return `void` instead of `bool`; the event loop's window sub-events are nested under one
+`SDL_WINDOWEVENT` top-level type (`event.window.event == SDL_WINDOWEVENT_RESIZED` etc.), unlike
+SDL3's separate top-level `SDL_EVENT_WINDOW_*` constants — see `Game::PollEvents()`.
+`GraphicsAdapter`'s display enumeration moved from SDL3's opaque `SDL_DisplayID` array
+(`SDL_GetDisplays`) to SDL2's plain zero-based display-index model (`SDL_GetNumVideoDisplays`/
+`SDL_GetDisplayMode`). `Texture2D`/`ImageLoader`: `SDL_Surface` creation/conversion/blit function
+renames (`SDL_CreateRGBSurfaceWithFormat(From)`, `SDL_FreeSurface`, `SDL_ConvertSurfaceFormat`,
+`SDL_SoftStretchLinear` in place of `SDL_BlitSurfaceScaled(..., SDL_SCALEMODE_LINEAR)`) plus a custom
+dynamic-memory `SDL_RWops` (SDL2 has no auto-growing memory write sink, unlike SDL3's
+`SDL_IOFromDynamicMem`) for the `Stream`-overload `SaveAsPng`/`SaveAsJpeg` — never called by
+mobile-eggbert itself, only the filename overloads are.
+
+**Input pair + sensors**: `SdlGamepadBackend`/`SdlJoystickBackend`: `SDL_Gamepad` →
+`SDL_GameController` throughout (SDL3 renamed the whole subsystem); `IsGamepad`/`OpenGamepad`/
+`OpenJoystick` now take a device *index* rather than an instance id (SDL2's `SDL_IsGameController`/
+`SDL_GameControllerOpen`/`SDL_JoystickOpen` are index-based) — the only real call site
+(`SdlInputBridge`'s `CONTROLLERDEVICEADDED`/`JOYDEVICEADDED` handlers) already has a device index on
+hand for exactly that event (SDL2 documents `.which` as a device index on ADDED, an instance id on
+REMOVED), so no conversion was actually needed. Joystick battery query loses percentage granularity
+(SDL2's `SDL_JoystickCurrentPowerLevel` returns a coarse enum only) — `*percent` is always -1,
+matching XNA's own "not always available" contract. `SdlInputBridge.cpp` (1430 lines): event-type
+constants, union member renames (`event.cdevice`/`caxis`/`cbutton`, not `gdevice`/`gaxis`/`gbutton`),
+keyboard event fields moved under a nested `.keysym` (`event.key.keysym.sym`/`scancode`/`mod`),
+touch event field `.fingerId` (not `.fingerID`), `SDL_RenderCoordinatesFromWindow` →
+`SDL_RenderWindowToLogical`. Two SDL3-only event types (per-device mouse/keyboard added/removed, IME
+candidate-list) have no SDL2 equivalent at all — the corresponding NOXNA/EXT events
+(`MouseConnectedEXT` etc., `TextEditingCandidatesEXT`) simply never fire under this backend, a
+disclosed capability gap, not exercised by mobile-eggbert itself. `SdlSensorSubsystem.hpp`: SDL2's
+sensor API is device-index-based (`SDL_NumSensors`/`SDL_SensorOpen(int)`/
+`SDL_SensorGetDeviceInstanceID`), unlike SDL3's array-of-instance-ids `SDL_GetSensors()`;
+`SDL_EVENT_SENSOR_UPDATE` → `SDL_SENSORUPDATE`; the `SDL_EventFilter` trampoline's return type
+changed from `bool` to `int` (a real, caught-by-the-file's-own-`static_assert` signature mismatch);
+`SDL_AddEventWatch` returns `void` in SDL2 (no failure to detect beyond the pre-existing
+force-failure test hook) and `SDL_RemoveEventWatch` is named `SDL_DelEventWatch`.
+`SystemDeviceBackend.cpp`: SDL2 has no multi-mouse/multi-keyboard enumeration at all
+(`SDL_GetMice`/`SDL_GetKeyboards` are SDL3-only) — `GetMice()`/`GetKeyboards()` now report one
+synthetic default-device entry each; `GetTouchDevices()` keeps real per-device enumeration but loses
+device names (SDL2 has none). `MouseCursor`: stock cursor enum renamed
+(`SDL_SYSTEM_CURSOR_ARROW`, not `_DEFAULT`) and `SDL_DestroyCursor` → `SDL_FreeCursor`.
+`TextInputEXT`: SDL2's text-input API lost its per-window/IME-type-hint-properties parameters
+entirely (process-global `SDL_StartTextInput()`/`SDL_StopTextInput()`/`SDL_SetTextInputRect()`, no
+properties system) — `StartTextInputWithTypeEXT`'s type hint is silently dropped, a disclosed
+simplification not exercised by mobile-eggbert (no XNA/NOXNA text-entry UI calls it).
+
+**Verification**: full clean configure+build (`cna/.sdl-prebuilt-*` deleted, `build/` reconfigured
+from scratch) — 0 compile errors after fixing a first pass of build failures (mostly int/bool
+return-convention mismatches the compiler caught immediately, a few real API-shape differences:
+`SDL_AudioStream`'s forward-declared struct tag conflicting with SDL2's real
+`typedef struct _SDL_AudioStream SDL_AudioStream`, `Mix_UnregisterEffects` not existing under that
+name in SDL2_mixer (`Mix_UnregisterAllEffects` instead), `SDLK_A`..`SDLK_Z` needing lowercase SDL2
+names). Smoke-tested twice: `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` (this project's standing
+headless verification method since Phase 2) ran the full test duration with zero errors/crashes,
+software renderer, blend-mode fallback engaged as designed; a second run against the real X11
+display (`DISPLAY=:0`) confirmed the accelerated OpenGL path also initializes cleanly with no
+fallback needed. Both logs match the established init-sequence shape (window → renderer → logical
+presentation → audio mixer) with no new warnings beyond the disclosed, intentional ones above.
+
+**Commits**: vendor swap; `AudioMixer` rewrite; `SdlGraphicsBackend` + window/display layer rewrite;
+input pair + sensors rewrite — 4 commits, each independently buildable in sequence, none pushed.
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
