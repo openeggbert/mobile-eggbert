@@ -44,35 +44,23 @@ option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch 
 # added at all). Replaced with: set the string, validate it against a live
 # list, done.
 #
-# D3D9 (Windows-only, same as D3D11/D3D12) and SDL_GPU (portable, needs
-# libshaderc for its runtime ShaderEffect GLSL->SPIR-V compile -- see
-# cna/plan_sdlgpu.md SDLGPU-42/43) are cna's two newest backends and were
-# missing from this list.
-set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER EASYGL BGFX VULKAN WEBGPU HEADLESS SOFTWARE D3D11 D3D12 CANVAS ASCII DX3 D3D9 SDL_GPU)
+# mobile-eggbert's vendored cna copy keeps only SDL_RENDERER, HEADLESS, and SOFTWARE (see
+# plan_lite.md Phase 3) -- EasyGL, Bgfx, Vulkan, WebGPU, D3D9/D3D11/D3D12, Canvas, Ascii, and
+# DX3 were removed along with their source directories and CMake wiring.
+set(MOBILE_EGGBERT_BACKENDS SDL_RENDERER HEADLESS SOFTWARE)
 
 if(ANDROID)
     # Only SDL_RENDERER is supported (no desktop GL context the same way;
     # SDL_RENDERER runs on GLES under the hood).
     set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend" FORCE)
 elseif(EMSCRIPTEN)
-    # SDL_RENDERER (runs on WebGL under the hood) is the default and most
-    # tested; CANVAS (browser HTML5 Canvas 2D, GPU-free) can be selected
-    # explicitly with -DCNA_GRAPHICS_BACKEND=CANVAS -- see cna/plan_canvas.md.
+    # SDL_RENDERER (runs on WebGL under the hood) is the default and most tested.
     set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
 else()
     # Desktop: choose one backend, default SDL_RENDERER. Override with
-    # -DCNA_GRAPHICS_BACKEND=<backend>, e.g. -DCNA_GRAPHICS_BACKEND=VULKAN.
-    # WEBGPU is experimental (see cna/plan_webgpu.md). HEADLESS
-    # touches no GPU/window at all (see cna/plan_headless.md) -- for
-    # driving this game's own logic under CI without a display server, not
-    # for visible rendering. ASCII is an SDL-windowed glyph-grid decorator,
-    # not a real terminal/TTY backend (see cna/plan_ascii.md). DX3 reimplements
-    # a narrow DirectX 3 (DirectDraw) subset on top of SDL3 via the sibling
-    # ../free-direct repo -- portable, not Windows/Wine-only like D3D11/D3D12
-    # (see cna/plan_dx3.md). D3D9 is Windows/Wine-only like D3D11/D3D12 (see
-    # cna/plan_dx9.md). SDL_GPU is portable but needs libshaderc installed
-    # (libshaderc1 or libshaderc-dev) for its runtime ShaderEffect GLSL compile
-    # (see cna/plan_sdlgpu.md).
+    # -DCNA_GRAPHICS_BACKEND=<backend>, e.g. -DCNA_GRAPHICS_BACKEND=HEADLESS. HEADLESS touches no
+    # GPU/window at all -- for driving this game's own logic under CI without a display server,
+    # not for visible rendering. SOFTWARE is a CPU rasterizer, also display-server-free.
     set(CNA_GRAPHICS_BACKEND "SDL_RENDERER" CACHE STRING "Selected CNA backend")
 endif()
 set_property(CACHE CNA_GRAPHICS_BACKEND PROPERTY STRINGS ${MOBILE_EGGBERT_BACKENDS})
@@ -202,15 +190,6 @@ else()
                 "${MOBILE_EGGBERT_CONTENT_DIR}"
                 "$<TARGET_FILE_DIR:${_game_target}>/Content"
                 COMMENT "Copying game content next to executable")
-    endif()
-    if(CNA_GRAPHICS_BACKEND STREQUAL "WEBGPU" AND CNA_WEBGPU_RUNTIME_LIBRARY)
-        add_custom_command(TARGET ${_game_target} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${CNA_WEBGPU_RUNTIME_LIBRARY}" "$<TARGET_FILE_DIR:${_game_target}>"
-                COMMENT "Copying wgpu-native runtime next to game executable")
-        if(UNIX AND NOT APPLE)
-            set_property(TARGET ${_game_target} APPEND PROPERTY BUILD_RPATH "$ORIGIN")
-        endif()
     endif()
     if(EXISTS "${MOBILE_EGGBERT_WORLDS_DIR}")
         add_custom_command(TARGET ${_game_target} POST_BUILD

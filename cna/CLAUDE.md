@@ -395,32 +395,14 @@ individual task. Do not push unless the user explicitly asks to push.
 |---------------------------|-----------------------------------------------|--------------------------------|
 | XNA public API            | `include/Microsoft/Xna/Framework/…`           | Game-facing, must match XNA    |
 | Backend contracts         | `include/CNA/Internal/Backends/Common/…`      | `IGraphicsBackend` etc.        |
-| Backend implementations   | `src/CNA/Internal/Backends/{SDL,EasyGL,Vulkan}` | Hidden from XNA API           |
+| Backend implementations   | `src/CNA/Internal/Backends/{SdlRenderer,Headless,Software}` | Hidden from XNA API |
 | CNA utilities             | `include/CNA/`, `src/CNA/`                    | NOXNA helpers, logging, etc.   |
 
 Backend selection is compile-time via `CNA_GRAPHICS_BACKEND` CMake option
-(`SDL_RENDERER` | `EASYGL` | `VULKAN` | `BGFX` | `WEBGPU`). `WEBGPU` is experimental and has a
-functional native 2D baseline, not yet the 3D/effect parity of the established GPU backends.
-
----
-
-## WebGPU Is Active (Experimental)
-
-The project owner explicitly lifted the former WebGPU prohibition on **2026-07-12** and authorized
-implementation as CNA's fifth graphics backend.
-
-- WebGPU tasks live in **`plan_webgpu.md`** (`WEBGPU-1`–`WEBGPU-123`). Keep task statuses and
-  limitations current as implementation proceeds.
-- The native backend uses pinned **wgpu-native v29.0.1.1**, selected with
-  `-DCNA_GRAPHICS_BACKEND=WEBGPU`. Prefer `CNA_WEBGPU_ROOT` for reproducible/offline builds; the
-  CMake integration may otherwise download the matching official binary package.
-- The current baseline implements native surface/device setup, clear/present, Texture2D, buffer
-  uploads and WGSL SpriteBatch. Do not describe it as Vulkan-level or full XNA 3D parity until the
-  remaining shader, state, effect, render-target, readback and test tasks are actually complete.
-- Preserve the established backends: WebGPU changes should remain backend-local or common only
-  where a common-interface change is genuinely required and verified across existing backends.
-
-See `docs/webgpu-backend.md` for the current capability boundary.
+(`SDL_RENDERER` | `HEADLESS` | `SOFTWARE`). This mobile-eggbert vendored copy of `cna` keeps only
+these three backends — see mobile-eggbert's `plan_lite.md` Phase 3. `EasyGL`, `Vulkan`, `Bgfx`,
+`WebGPU`, `D3D9`/`D3D11`/`D3D12`, `Canvas`, `Ascii`, and `Dx3` were removed along with their
+source directories, CMake wiring, and backend-specific docs/plan files.
 
 ---
 

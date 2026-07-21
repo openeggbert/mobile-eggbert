@@ -223,6 +223,72 @@ are read from their own GitHub repos as source, but no changes are pushed back t
   source). `sharp-runtime`: 15M → 7M (its vendor libs are tiny single-file deps, so the
   `include/`+`src/` cut shows up directly in checkout size).
 
+## Phase 3 status: done (this commit)
+
+- Deleted the 11 non-kept backend directories from both `cna/src/CNA/Internal/Backends/` and
+  `cna/include/CNA/Internal/Backends/`: `Ascii Bgfx Canvas D3D9 D3D11 D3D12 D3DCommon Dx3 EasyGL
+  SdlGpu Vulkan WebGPU`. Verified first that none of the 3 kept backends (`SdlRenderer Headless
+  Software`) include anything from `D3DCommon` or any other removed backend — the only
+  cross-backend dependency any of them has is the shared `Backends/Common/` interface
+  (`IGraphicsBackend` etc., relative-included as `../Common/...`), which was left untouched.
+  8 files remain under `Backends/` include+src combined (`Common` + the 3 kept backends' own
+  `SdlGraphicsBackend`/`HeadlessGraphicsBackend`/`SoftwareGraphicsBackend` .hpp/.cpp pairs).
+- `cna/cmake/BackendSelection.cmake`: rewritten from a 14-backend selector (with Windows-only/
+  Emscripten-only hard gates, sibling-repo checks for `easy-gl`/`free-direct`, BGFX FetchContent,
+  WebGPU/SDL_GPU third-party wiring) down to the 3 kept backends only.
+  `cna/cmake/BackendLibraries.cmake`: dropped the `D3DCommon` shared-core library, the ASCII/
+  SdlRenderer-core sharing library, the D3D9 isolated-effect-library block, and the 11-branch
+  `elseif` chain for backend-specific link libraries (only `SDL_RENDERER`'s `SDL3::SDL3` link
+  remains — `HEADLESS`/`SOFTWARE` never needed backend-specific extra libs even before this).
+  `mobile-eggbert/CMakeLists.txt`: `MOBILE_EGGBERT_BACKENDS` cut from 14 entries to 3; removed the
+  now-permanently-dead `CNA_GRAPHICS_BACKEND STREQUAL "WEBGPU"` runtime-copy block.
+- **Found and fixed a real latent break while doing this**: `cna/cmake/Examples.cmake` (~940
+  lines of cna's own demo apps) had ~20 `add_executable`/`target_link_libraries(... CNA_Net ...)`
+  calls for Net/GamerServices demo targets, all nested inside a single
+  `if(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL" OR ... "VULKAN")` block. Since mobile-eggbert always
+  forces `CNA_GRAPHICS_BACKEND=SDL_RENDERER`, that condition was already false throughout Phases
+  1-2, so Phase 2 deleting `CNA_Net`'s source never actually broke mobile-eggbert's own build —
+  but it would have broken a plain `cmake --build --target all` (or building `cna` standalone
+  with `-DCNA_GRAPHICS_BACKEND=EASYGL`, which no longer exists as a choice anyway after this
+  phase's `BackendSelection.cmake` rewrite made that condition permanently unreachable). Rather
+  than leave ~940 lines of now-permanently-dead CMake referencing deleted subsystems/backends,
+  deleted `cna/examples/` (used by nothing in mobile-eggbert — cna's own demo apps),
+  `cna/tools/` (dev tooling: reference-dump, avatar pipeline, gltf-to-cnj converter, etc.),
+  `cna/main.cpp` (cna's own standalone entry point, never built by mobile-eggbert), and
+  `cna/dx9-spike/`, plus the CMake files that wired them in:
+  `cmake/Examples.cmake`, `cmake/Tests/*.cmake` (14 files — per-backend CTest registration for
+  removed backends plus the kept ones, all dead now that `tests/` itself is gone since Phase 2),
+  `cmake/Harnesses.cmake`, `cmake/ToolGltfToCnj.cmake`.
+- Also removed, now genuinely dead weight rather than deferred cleanup: `third_party/enet` and
+  `cmake/ThirdPartyENet.cmake` — the only consumer, `Microsoft::Xna::Framework::Net`, was already
+  deleted in Phase 2, confirmed via `grep` that zero remaining source file mentions
+  `enet`/`ENet` — and the now-unreferenced `cmake/ThirdPartyWebGPU.cmake` /
+  `cmake/WebGPUNativeSmokeTest.cmake` (nothing includes them once `BackendSelection.cmake` no
+  longer has a `WEBGPU` branch).
+- Removed the planning/reference docs for the 11 deleted backends specifically (left everything
+  else — `Net`/`Xnb`/`Media`/`GltfImport`-related docs, `plan_headless.md`, `plan_software.md` —
+  untouched, since those subsystems still have live remaining code after Phase 2, unlike the 11
+  removed backends which have zero source left at all): `plan_ascii.md plan_canvas.md plan_dx.md
+  plan_dx3.md plan_dx9.md plan_sdlgpu.md plan_webgpu.md` and `docs/{ascii,canvas,dx3,webgpu}-
+  backend.md` / `docs/easygl_bugs.md`. Updated `cna/CLAUDE.md`'s own backend-list/table and
+  deleted its now-dangling "WebGPU Is Active" section (pointed at the just-deleted
+  `docs/webgpu-backend.md`).
+- Updated `README.md`: simplified the Linux/Windows native build commands (no more
+  `-DCNA_BACKEND_EASY_GL=OFF -DCNA_BACKEND_BGFX=OFF`, which don't exist as options anymore),
+  deleted the entire "Direct3D 11 / Direct3D 12" section (Wine/DXVK/Proton instructions for a
+  now-removed backend), rewrote "Backend status" down to the 3 kept backends, removed a second
+  stale `git submodule update --init --recursive` step from the Emscripten build instructions.
+- **Verified via 3 separate configure+build passes**: `SDL_RENDERER` (mobile-eggbert's actual
+  target, `WindowsPhoneSpeedyBlupi`) — 225 translation units, 0 failures, binary links; smoke-run
+  under `SDL_VIDEODRIVER=dummy` produced real init logs (window/renderer/audio-mixer creation,
+  not just silent non-crash) confirming the game actually runs end-to-end, not just links.
+  `HEADLESS` and `SOFTWARE` (`cna`'s own `CNA`+backend library target, standalone) — both
+  configure and build with 0 failures. Also verified a removed backend
+  (`-DCNA_GRAPHICS_BACKEND=EASYGL`) now fails fast at configure time with a clear
+  `CNA: Unknown graphics backend: EASYGL` error instead of silently doing something wrong.
+- `cna` size: 144M → 115M. `sharp-runtime`: 7M → 2.9M (`vendor/googletest` placeholder was the
+  bulk of what was left to remove there after Phase 2).
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
