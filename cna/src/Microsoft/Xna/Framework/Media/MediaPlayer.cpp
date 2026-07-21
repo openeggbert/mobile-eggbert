@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Media/MediaPlayer.hpp"
 
+#include <algorithm>
 #include <atomic>
 
 #ifdef SOUND_ENABLED
-#include <SDL3/SDL.h>
-#include <SDL3_mixer/SDL_mixer.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include "CNA/Internal/Audio/AudioMixer.hpp"
 #endif
 
@@ -32,42 +33,34 @@ namespace Microsoft::Xna::Framework::Media
 #ifdef SOUND_ENABLED
     namespace
     {
-        MIX_Track*  g_musicTrack  = nullptr;
-        MIX_Audio*  g_musicAudio  = nullptr;
+        // SDL2_mixer's Mix_Music API is a much more direct fit for this class's needs than
+        // SDL3_mixer's generic per-track model was -- it's purpose-built for exactly one
+        // streamed background-music slot at a time, which is all MediaPlayer ever needs.
+        Mix_Music* g_music = nullptr;
 
         std::atomic<bool> g_songEnded{false};
 
-        void SDLCALL OnMusicTrackStopped(void* /*userdata*/, MIX_Track* /*track*/)
+        // Mix_HookMusicFinished's callback takes no userdata/music argument (unlike SDL3_mixer's
+        // per-track stopped callback) -- there is only ever one music slot, so none is needed.
+        void SDLCALL OnMusicFinished()
         {
             // Called from the audio thread — only set a flag.
             g_songEnded.store(true, std::memory_order_relaxed);
         }
 
-        void DestroyMusicAudio()
+        void DestroyMusic()
         {
-            if (g_musicAudio)
+            if (g_music)
             {
-                MIX_DestroyAudio(g_musicAudio);
-                g_musicAudio = nullptr;
-            }
-        }
-
-        void DestroyMusicTrack()
-        {
-            if (g_musicTrack)
-            {
-                MIX_StopTrack(g_musicTrack, 0);
-                MIX_DestroyTrack(g_musicTrack);
-                g_musicTrack = nullptr;
+                Mix_HaltMusic();
+                Mix_FreeMusic(g_music);
+                g_music = nullptr;
             }
         }
 
         void ApplyMusicVolume(float vol, bool muted)
         {
-            if (g_musicTrack)
-            {
-                MIX_SetTrackGain(g_musicTrack, muted ? 0.0f : vol);
-            }
+            Mix_VolumeMusic(std::clamp(static_cast<int>((muted ? 0.0f : vol) * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
         }
     }
 #endif
@@ -103,8 +96,7 @@ namespace Microsoft::Xna::Framework::Media
         }
 
 #ifdef SOUND_ENABLED
-        DestroyMusicTrack();
-        DestroyMusicAudio();
+        DestroyMusic();
         g_songEnded.store(false, std::memory_order_relaxed);
 #endif
         TimerStop();
@@ -237,55 +229,34 @@ namespace Microsoft::Xna::Framework::Media
 
 #ifdef SOUND_ENABLED
         // Stop and release any previously playing music.
-        DestroyMusicTrack();
-        DestroyMusicAudio();
+        DestroyMusic();
         g_songEnded.store(false, std::memory_order_relaxed);
 
-        MIX_Mixer* mixer = CNA::Internal::Audio::GetMixer();
+        CNA::Internal::Audio::GetMixer();
 
-        // Load the song file (streaming, no full predecode for long music tracks).
-        g_musicAudio = MIX_LoadAudio(mixer, song->getHandle().c_str(), false);
-        if (!g_musicAudio)
+        // Mix_LoadMUS streams from disk rather than fully predecoding (matches the pre-migration
+        // SDL3_mixer call's own `predecode=false` choice for long music tracks).
+        g_music = Mix_LoadMUS(song->getHandle().c_str());
+        if (!g_music)
         {
-            return;
-        }
-
-        g_musicTrack = MIX_CreateTrack(mixer);
-        if (!g_musicTrack)
-        {
-            DestroyMusicAudio();
-            return;
-        }
-
-        if (!MIX_SetTrackAudio(g_musicTrack, g_musicAudio))
-        {
-            DestroyMusicTrack();
-            DestroyMusicAudio();
             return;
         }
 
         ApplyMusicVolume(volume_, isMuted_);
-        MIX_SetTrackStoppedCallback(g_musicTrack, OnMusicTrackStopped, nullptr);
+        Mix_HookMusicFinished(OnMusicFinished);
 
-        // Report duration from the audio asset.
-        SDL_AudioSpec spec{};
-        if (MIX_GetAudioFormat(g_musicAudio, &spec) && spec.freq > 0)
+        // Report duration from the audio asset. Mix_MusicDuration returns <= 0 for formats it
+        // cannot determine duration for (e.g. some streamed formats) -- left unset in that case,
+        // matching the pre-migration implementation's own best-effort "only if available" guard.
+        const double seconds = Mix_MusicDuration(g_music);
+        if (seconds > 0.0)
         {
-            Sint64 frames = MIX_GetAudioDuration(g_musicAudio);
-            if (frames > 0)
-            {
-                song->setDurationProperty(
-                    System::TimeSpan::FromSeconds(
-                        static_cast<double>(frames) / spec.freq
-                    )
-                );
-            }
+            song->setDurationProperty(System::TimeSpan::FromSeconds(seconds));
         }
 
-        if (!MIX_PlayTrack(g_musicTrack, 0))
+        if (Mix_PlayMusic(g_music, 1) != 0)
         {
-            DestroyMusicTrack();
-            DestroyMusicAudio();
+            DestroyMusic();
             return;
         }
 

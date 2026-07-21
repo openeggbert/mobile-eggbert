@@ -13,7 +13,12 @@
 #include "System/TimeSpan.hpp"
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 
-struct SDL_AudioStream;
+// SDL2's real type is `typedef struct _SDL_AudioStream SDL_AudioStream;` -- forward-declaring a
+// plain `struct SDL_AudioStream;` (as SDL3's identically-named, differently-tagged struct allowed)
+// creates a distinct, conflicting type once the real <SDL2/SDL_audio.h> is also included in the
+// same translation unit. Matching SDL2's own typedef exactly avoids that conflict.
+struct _SDL_AudioStream;
+typedef struct _SDL_AudioStream SDL_AudioStream;
 
 namespace Microsoft::Xna::Framework::Audio
 {

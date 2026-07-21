@@ -3,7 +3,7 @@
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.hpp"
 
 #ifdef SOUND_ENABLED
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 namespace Microsoft::Xna::Framework::Audio
@@ -15,7 +15,7 @@ namespace Microsoft::Xna::Framework::Audio
 #ifdef SOUND_ENABLED
         if (captureStream_ != nullptr)
         {
-            SDL_DestroyAudioStream(captureStream_);
+            SDL_FreeAudioStream(captureStream_);
         }
 #endif
     }
@@ -60,7 +60,7 @@ namespace Microsoft::Xna::Framework::Audio
             // FNA (SDL3_FNAPlatform.GetMicrophoneQueuedBytes) uses SDL_GetAudioStreamQueued, but
             // SDL3's own docs say to prefer SDL_GetAudioStreamAvailable for "how much can I read
             // right now" -- which is what CheckBuffer()/GetData() actually need here.
-            const int available = SDL_GetAudioStreamAvailable(captureStream_);
+            const int available = SDL_AudioStreamAvailable(captureStream_);
             if (available > 0)
             {
                 return static_cast<SharpRuntime::intcs>(available);

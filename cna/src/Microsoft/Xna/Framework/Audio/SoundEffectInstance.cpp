@@ -12,25 +12,23 @@
 #include "System/ObjectDisposedException.hpp"
 
 #ifdef SOUND_ENABLED
-#include <SDL3/SDL.h>
-#include <SDL3_mixer/SDL_mixer.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include "CNA/Internal/Audio/AudioMixer.hpp"
 #endif
 
 namespace Microsoft::Xna::Framework::Audio
 {
-    // T-4C: per-track DSP state (see SoundEffectInstance.hpp's filterState_ for the ownership/
-    // move-safety rationale). Kind/frequency/oneOverQ are written by INTERNAL_apply*Filter (main
-    // thread) and read by FilterMixCallback (SDL3_mixer's mixing thread) -- guarded by
-    // MIX_LockMixer/UnlockMixer in the writer, relying on SDL3_mixer's own documented guarantee
-    // that "the SDL audio device thread [holds this same lock] while actual mixing is in
-    // progress" (so the callback itself must NOT also lock -- it would be redundant at best).
-    // yl/yb are the filter's per-channel recursive state and are touched ONLY by the mixing
-    // thread inside the callback, never by the setters, so they need no synchronization at all.
-    // P11-PAN-001 (RFC-1): also holds the crossfeed pan value, since SDL3_mixer only exposes one
-    // "cooked" callback slot per track (CHECKLIST.md CP-19) -- this struct is that slot's entire
-    // shared state, filter and pan alike, not just the filter anymore. `pan` is written under the
-    // same MIX_LockMixer/UnlockMixer discipline as frequency/oneOverQ above.
+    // T-4C: per-instance filter state (see SoundEffectInstance.hpp's filterState_ for the
+    // ownership/move-safety rationale). No public API currently sets `kind` away from `None` --
+    // the LowPass/HighPass/BandPass filter setters this state was originally designed for were
+    // already unreachable-and-pruned by Phase 2.6 (plan_lite.md), leaving this struct itself (and
+    // the always-taken `kind == None` path in EnsureTrackDspState) as-is, since it's still a
+    // legitimate shape for that surface to return in if it's ever restored. Pan is no longer
+    // tracked here post-Phase-4 (SDL2 migration): AudioMixer::Track owns pan directly now (see
+    // AudioMixer.cpp's PanEffectCallback), since SDL2_mixer's Mix_RegisterEffect is a genuine
+    // per-channel slot (unlike SDL3_mixer's one-cooked-callback-per-track constraint that made
+    // sharing this same struct's slot with pan necessary in the first place).
     struct FilterState
     {
         enum class Kind { None, LowPass, HighPass, BandPass };
@@ -39,18 +37,14 @@ namespace Microsoft::Xna::Framework::Audio
         float oneOverQ    = 1.0f;
         float yl[2]       = {0.0f, 0.0f};
         float yb[2]       = {0.0f, 0.0f};
-        // P11-PAN-001: current stereo pan, range [-1,1], matching Pan_/Apply3D's own pan. 0.0f
-        // (the FilterState default and the Pan property's own default) is the crossfeed matrix's
-        // identity, so a never-panned track costs nothing extra in the callback.
-        float pan         = 0.0f;
     };
 
 #ifdef SOUND_ENABLED
     namespace
     {
-        MIX_Track* AsTrack(void* p)
+        CNA::Internal::Audio::Track* AsTrack(void* p)
         {
-            return static_cast<MIX_Track*>(p);
+            return static_cast<CNA::Internal::Audio::Track*>(p);
         }
 
         // P12-PITCH-001: the real implementation behind
@@ -71,133 +65,16 @@ namespace Microsoft::Xna::Framework::Audio
             return std::pow(2.0f, pitch);
         }
 
-        // CP-16: master volume is applied once, globally, via MIX_SetMixerGain (SDL3_mixer's own
-        // master gain stage), not baked into each track's own gain here -- doing both would
-        // double-apply it, and only the mixer-level gain re-applies live to already-playing
-        // tracks without this function needing to be called again.
-        // P9-3D-005: `doppler` is a multiplier applied on top of the pitch-derived ratio, matching
-        // FNA's UpdatePitch() (`(2^INTERNAL_pitch) * doppler`, SoundEffectInstance.cs) -- defaults
-        // to 1.0f (no-op) for every caller except Apply3D.
-        // P11-PAN-001 (RFC-1): `filterState` receives the pan value instead of MIX_SetTrackStereo
-        // computing per-channel gains directly -- SDL3_mixer's own stereo gain has no crossfeed
-        // term (CHECKLIST.md CP-19), so it's fixed to unity here and CNA owns 100% of the stereo
-        // image via the crossfeed matrix applied in the shared filter/pan cooked callback
-        // (ApplyPanCrossfeed below). `filterState` may be null (SOUND_ENABLED-less builds aside,
-        // this only happens if EnsureTrackDspState's allocation somehow failed) -- in that case
-        // the pan write is simply skipped, matching this function's existing null-`track` guard.
-        void ApplyTrackProperties(MIX_Track* track, FilterState* filterState,
-                                   float volume, float pan, float pitch, float doppler = 1.0f)
-        {
-            if (!track) return;
-
-            MIX_SetTrackGain(track, volume);
-
-            static const MIX_StereoGains kUnityStereo{1.0f, 1.0f};
-            MIX_SetTrackStereo(track, &kUnityStereo);
-
-            if (filterState)
-            {
-                MIX_Mixer* mixer = CNA::Internal::Audio::GetMixer();
-                MIX_LockMixer(mixer);
-                filterState->pan = pan;
-                MIX_UnlockMixer(mixer);
-            }
-
-            const float ratio = ComputePitchRatio(pitch) * doppler;
-            MIX_SetTrackFrequencyRatio(track, ratio < 0.01f ? 0.01f : ratio);
-        }
-
-        // AUD-04-008/009: trackGeneration is the CNA::Internal::Audio::GetMixerGeneration() value
-        // captured when trackPtr was created (SoundEffectInstance::trackMixerGeneration_) -- if it
-        // no longer matches the current generation, AudioMixer::DestroyMixer() has already freed
-        // this exact MIX_Track (and every other track its mixer owned), so touching it here via
-        // MIX_StopTrack/MIX_DestroyTrack would itself be a use-after-free/double-free. trackPtr is
-        // always cleared regardless: whether this call genuinely destroyed it or it was already
-        // gone, the caller has no live track either way.
-        void DestroyTrackSafe(void*& trackPtr, std::uint64_t trackGeneration)
-        {
-            MIX_Track* track = AsTrack(trackPtr);
-            if (track && trackGeneration == CNA::Internal::Audio::GetMixerGeneration())
-            {
-                MIX_StopTrack(track, 0);
-                MIX_DestroyTrack(track);
-            }
-            trackPtr = nullptr;
-        }
-
-        // P14-ORDER-002: CNA::Internal::Audio::GetMixer() throws a raw std::runtime_error on its
-        // very first-ever call if no audio hardware/device is available (P9-HARDWARE-002). Every
-        // INTERNAL_apply*Filter call site used to be reachable only after Play() had already
-        // called GetMixer() successfully at least once (gated by an `if (!track_) return;` guard
-        // this task removes), so a throw here was never actually observable. Now that filter
-        // setup can run before Play() too (order-independent, matching how FACT establishes a
-        // track's filter atomically alongside the voice itself), this may genuinely be the first
-        // GetMixer() call in the process. These are all NOXNA-internal, no-op-if-not-ready methods
-        // that never throw -- swallow the failure here rather than let a raw std::runtime_error
-        // escape into Cue::Play(), which isn't a sanctioned raw-exception boundary the way
-        // XactParser/SoundBank's constructor are.
-        MIX_Mixer* TryGetMixer()
-        {
-            try
-            {
-                return CNA::Internal::Audio::GetMixer();
-            }
-            catch (const std::exception&)
-            {
-                return nullptr;
-            }
-        }
-
-        // T-4C: FAudio's exact state-variable filter (Chamberlin SVF; see FAudio_internal.c's
-        // FAudio_INTERNAL_FilterVoice). Pure math, independent of SDL3_mixer, so it can also be
-        // driven directly and synchronously by SoundEffectInstanceTestAccess -- MIX_Track's real
-        // callback only fires asynchronously from the mixing thread, which would make a test
-        // either flaky or need a real-time wait.
-        void ApplyFilter(FilterState& state, float* pcm, int channels, int samples)
-        {
-            const float f  = state.frequency;
-            const float q1 = state.oneOverQ;
-
-            for (int i = 0; i + channels <= samples; i += channels)
-            {
-                for (int c = 0; c < channels && c < 2; ++c)
-                {
-                    float& yl = state.yl[c];
-                    float& yb = state.yb[c];
-                    const float x = pcm[i + c];
-
-                    yl = yl + f * yb;
-                    const float yh = x - yl - q1 * yb;
-                    yb = f * yh + yb;
-
-                    switch (state.kind)
-                    {
-                        case FilterState::Kind::LowPass:  pcm[i + c] = yl; break;
-                        case FilterState::Kind::HighPass: pcm[i + c] = yh; break;
-                        case FilterState::Kind::BandPass: pcm[i + c] = yb; break;
-                        default: break; // Not reachable -- caller already checked kind != None.
-                    }
-                }
-            }
-        }
-
-        // P11-PAN-001 (RFC-1): the real implementation behind
-        // SoundEffectInstance::INTERNAL_calculatePanCrossfeedMatrix (a thin forwarding shim,
-        // defined further down) -- lives here, not as a class member body, purely so
-        // ApplyPanCrossfeed below (an anonymous-namespace free function, called from the
-        // real-time mixing callback) can call it without needing class-member access. Matches
-        // FNA's SetPanMatrixCoefficients exactly (SoundEffectInstance.cs,
-        // dspSettings.SrcChannelCount == 2 && DstChannelCount == 2 branch): hard panning does NOT
-        // eliminate an entire channel -- the two source channels are blended together on
-        // whichever output speaker `pan` favors, and the OTHER speaker goes silent, rather than
-        // each speaker only ever hearing its own matching input channel (CHECKLIST.md CP-19, the
-        // deviation this method fixes).
+        // P11-PAN-001-equivalent: FNA's exact 4-coefficient stereo crossfeed pan matrix,
+        // duplicated by hand from AudioMixer.cpp's identically-named/documented function (the
+        // two translation units have no shared internal math header for it) so
+        // INTERNAL_calculatePanCrossfeedMatrix below keeps working as a standalone, independently
+        // unit-testable pure function even though AudioMixer::SetTrackPan now owns the real,
+        // live-track application of this same math.
         void ComputePanCrossfeedMatrix(float pan, float& ll, float& rl, float& lr, float& rr)
         {
             if (pan <= 0.0f)
             {
-                // Left speaker blends left/right channels; right speaker gets less of the right
-                // channel (and none of the left).
                 ll = 0.5f * pan + 1.0f;
                 rl = 0.5f * -pan;
                 lr = 0.0f;
@@ -205,8 +82,6 @@ namespace Microsoft::Xna::Framework::Audio
             }
             else
             {
-                // Left speaker gets less of the left channel (and none of the right); right
-                // speaker blends right/left channels.
                 ll = -pan + 1.0f;
                 rl = 0.0f;
                 lr = 0.5f * pan;
@@ -214,57 +89,47 @@ namespace Microsoft::Xna::Framework::Audio
             }
         }
 
-        // Applies the crossfeed matrix above directly to interleaved stereo PCM. Only meaningful
-        // for `channels == 2` -- SDL3_mixer forces every track to true stereo output before the
-        // cooked callback runs (ApplyTrackProperties's unity MIX_SetTrackStereo call), so this is
-        // always satisfied for a real callback invocation; guarded defensively anyway, matching
-        // this file's existing style. `pan == 0.0f` (the common, never-panned case) skips the
-        // transform entirely -- the matrix would reduce to the identity {1,0,0,1} anyway, so this
-        // is a pure optimization, not a behavior branch.
-        void ApplyPanCrossfeed(float pan, int channels, float* pcm, int samples)
+        // CP-16: master volume is applied once, globally, via Mix_MasterVolume (SDL2_mixer's own
+        // master gain stage), not baked into each track's own gain here -- doing both would
+        // double-apply it, and only the master-level gain re-applies live to already-playing
+        // tracks without this function needing to be called again.
+        // P9-3D-005: `doppler` is a multiplier applied on top of the pitch-derived ratio, matching
+        // FNA's UpdatePitch() (`(2^INTERNAL_pitch) * doppler`, SoundEffectInstance.cs) -- defaults
+        // to 1.0f (no-op) for every caller except Apply3D.
+        // P11-PAN-001-equivalent: `pan` is applied via AudioMixer::SetTrackPan, which owns the
+        // crossfeed-matrix pan effect internally now (see AudioMixer.cpp's PanEffectCallback) --
+        // this file no longer needs its own per-instance cooked-callback registration for it.
+        void ApplyTrackProperties(CNA::Internal::Audio::Track* track,
+                                   float volume, float pan, float pitch, float doppler = 1.0f)
         {
-            if (channels != 2 || pan == 0.0f) return;
+            if (!track) return;
 
-            float ll, rl, lr, rr;
-            ComputePanCrossfeedMatrix(pan, ll, rl, lr, rr);
+            CNA::Internal::Audio::SetTrackGain(track, volume);
+            CNA::Internal::Audio::SetTrackPan(track, pan);
 
-            for (int i = 0; i + 2 <= samples; i += 2)
-            {
-                const float l = pcm[i];
-                const float r = pcm[i + 1];
-                pcm[i]     = l * ll + r * rl;
-                pcm[i + 1] = l * lr + r * rr;
-            }
+            const float ratio = ComputePitchRatio(pitch) * doppler;
+            CNA::Internal::Audio::SetTrackPitch(track, ratio < 0.01f ? 0.01f : ratio);
         }
 
-        // Runs this track's entire shared cooked-callback DSP chain: the filter first (if any),
-        // then the crossfeed pan matrix (P11-PAN-001, RFC-1) -- both are just float-PCM
-        // transforms on the same buffer, run in sequence, matching the RFC-1 design sketch
-        // (plan_audio.md P10-PAN-003). Unlike the old ProcessFilterState this replaces, this must
-        // NOT bail out early when there's no filter -- pan crossfeed still needs to run for every
-        // track, filtered or not.
-        void ProcessFilterState(FilterState& state, float* pcm, int channels, int samples)
+        // AUD-04-008/009: trackGeneration is the CNA::Internal::Audio::GetMixerGeneration() value
+        // captured when trackPtr was created (SoundEffectInstance::trackMixerGeneration_) -- if it
+        // no longer matches the current generation, AudioMixer::DestroyMixer() has already
+        // detached this exact Track's channel (and every other track its mixer owned), so
+        // touching it here via StopTrack/DestroyTrack would operate on stale channel state.
+        // trackPtr is always cleared regardless: whether this call genuinely destroyed it or it
+        // was already gone, the caller has no live track either way.
+        void DestroyTrackSafe(void*& trackPtr, std::uint64_t trackGeneration)
         {
-            if (channels <= 0) return;
-
-            if (state.kind != FilterState::Kind::None)
+            CNA::Internal::Audio::Track* track = AsTrack(trackPtr);
+            if (track)
             {
-                ApplyFilter(state, pcm, channels, samples);
+                if (trackGeneration == CNA::Internal::Audio::GetMixerGeneration())
+                {
+                    CNA::Internal::Audio::StopTrack(track);
+                }
+                CNA::Internal::Audio::DestroyTrack(track);
             }
-
-            ApplyPanCrossfeed(state.pan, channels, pcm, samples);
-        }
-
-        // SDL3_mixer trampoline: fires as a per-track "cooked" callback (after gain/pan/3D are
-        // applied, right before this track's audio is mixed into the output -- the closest
-        // SDL3_mixer equivalent to FAudio's per-voice filter). `userdata` is the instance's
-        // FilterState*, kept alive by its own unique_ptr (see SoundEffectInstance.hpp)
-        // independent of the SoundEffectInstance's own address, so this stays valid even if the
-        // instance is later moved.
-        void SDLCALL FilterMixCallback(void* userdata, MIX_Track* /*track*/,
-                                        const SDL_AudioSpec* spec, float* pcm, int samples)
-        {
-            ProcessFilterState(*static_cast<FilterState*>(userdata), pcm, spec->channels, samples);
+            trackPtr = nullptr;
         }
     }
 #endif
@@ -454,94 +319,56 @@ namespace Microsoft::Xna::Framework::Audio
         // If paused, resume instead of restarting.
         if (State_ == SoundState::Paused)
         {
-            MIX_Track* track = AsTrack(GetLiveTrackHandle());
+            CNA::Internal::Audio::Track* track = AsTrack(GetLiveTrackHandle());
             if (track)
             {
-                MIX_ResumeTrack(track);
+                CNA::Internal::Audio::ResumeTrack(track);
                 State_   = SoundState::Playing;
                 playing_ = true;
                 return;
             }
         }
 
-        auto* audio = static_cast<MIX_Audio*>(nativeAudioHandle_);
-        if (!audio)
+        auto* chunk = static_cast<Mix_Chunk*>(nativeAudioHandle_);
+        if (!chunk)
         {
             State_   = SoundState::Stopped;
             playing_ = false;
             return;
         }
 
-        MIX_Mixer* mixer = CNA::Internal::Audio::GetMixer();
+        CNA::Internal::Audio::GetMixer();
 
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
+        CNA::Internal::Audio::Track* track = AsTrack(GetLiveTrackHandle());
         if (!track)
         {
-            track = MIX_CreateTrack(mixer);
-            if (!track)
-            {
-                State_   = SoundState::Stopped;
-                playing_ = false;
-                return;
-            }
+            track = CNA::Internal::Audio::CreateTrack();
             track_ = track;
             // AUD-04-008/009: captured at the exact moment this track is created, so
             // GetLiveTrackHandle() can detect a later AudioMixer::DestroyMixer() call that
-            // frees it out from under this instance.
+            // detaches it out from under this instance.
             trackMixerGeneration_ = CNA::Internal::Audio::GetMixerGeneration();
         }
 
-        if (!MIX_SetTrackAudio(track, audio))
-        {
-            State_   = SoundState::Stopped;
-            playing_ = false;
-            return;
-        }
+        CNA::Internal::Audio::SetTrackAudio(track, chunk);
+
+        // CP-17: the authored loop region (FNA's LoopBegin/LoopLength) is NOT honored post-Phase-4
+        // (SDL2 migration) -- classic SDL2_mixer's Mix_Chunk has no notion of a loop point
+        // distinct from the whole chunk's own start/end, unlike SDL3_mixer's
+        // MIX_PROP_PLAY_LOOP_START_FRAME_NUMBER/MAX_FRAME_NUMBER properties. `IsLooped_` still
+        // loops the ENTIRE chunk (see AudioMixer::Track's own looping doc) -- only a bounded
+        // sub-region loop is unsupported. mobile-eggbert itself never authors a loop region
+        // (every SoundEffect it loads comes from a whole .wav file via the plain string
+        // constructor), so this gap is never actually exercised by this game -- see
+        // plan_lite.md's Phase 4 status for the full disclosure.
+        CNA::Internal::Audio::SetTrackLooping(track, IsLooped_);
 
         // AUDIO-001: was `ApplyTrackProperties(track, filterState_.get(), Volume_, Pan_, Pitch_)`
         // -- a plain re-Play() after Apply3D() must reapply the persisted spatial attenuation/
         // pan/Doppler too, not just Volume_/Pan_/Pitch_ (see INTERNAL_applyComposedTrackProperties).
         INTERNAL_applyComposedTrackProperties();
 
-        SDL_PropertiesID props = SDL_CreateProperties();
-        if (props == 0)
-        {
-            State_   = SoundState::Stopped;
-            playing_ = false;
-            return;
-        }
-
-        SDL_SetNumberProperty(props, MIX_PROP_PLAY_LOOPS_NUMBER, IsLooped_ ? -1 : 0);
-
-        // CP-17: apply the authored loop region (matches FNA's LoopBegin/LoopLength, only
-        // meaningful while IsLooped -- see SoundEffectInstance.cs's Play()). loopStart_==0 &&
-        // loopLength_==0 (the common case: no explicit loop region was ever given) leaves both
-        // properties at their SDL3_mixer defaults, which loop the entire track -- unchanged
-        // behavior for every effect that never had a loop region authored.
-        if (IsLooped_ && (loopStart_ != 0 || loopLength_ != 0))
-        {
-            SDL_SetNumberProperty(props, MIX_PROP_PLAY_LOOP_START_FRAME_NUMBER,
-                                   static_cast<Sint64>(loopStart_));
-            if (loopLength_ != 0)
-            {
-                // SDL3_mixer has no separate "loop end" property distinct from "track end" --
-                // MAX_FRAME_NUMBER treats this position as EOF for the whole track. Combined with
-                // LOOP_START_FRAME_NUMBER above, this matches FNA/XAudio2's LoopBegin/LoopLength
-                // exactly: the intro plays once, then only [loopStart_, loopStart_+loopLength_)
-                // repeats -- confirmed against real decoded audio via a raw SDL3_mixer callback
-                // (P10-LOOP-003/004, SoundEffectInstanceTests.cpp's
-                // BoundedLoopRegionPlaysIntroOnceThenRepeatsOnlyTheLoopRegion), correcting an
-                // earlier, never-actually-decoded-audio-verified assumption that this truncated
-                // the pre-loop intro too (see plan_audio.md's P10-LOOP-003/004 note).
-                SDL_SetNumberProperty(props, MIX_PROP_PLAY_MAX_FRAME_NUMBER,
-                                       static_cast<Sint64>(loopStart_) + static_cast<Sint64>(loopLength_));
-            }
-        }
-
-        const bool ok = MIX_PlayTrack(track, props);
-        SDL_DestroyProperties(props);
-
-        if (!ok)
+        if (!CNA::Internal::Audio::PlayTrack(track))
         {
             State_   = SoundState::Stopped;
             playing_ = false;
@@ -564,17 +391,18 @@ namespace Microsoft::Xna::Framework::Audio
     void SoundEffectInstance::Stop(bool immediate)
     {
 #ifdef SOUND_ENABLED
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
+        CNA::Internal::Audio::Track* track = AsTrack(GetLiveTrackHandle());
         if (track)
         {
             if (immediate)
             {
-                MIX_StopTrack(track, 0);
+                CNA::Internal::Audio::StopTrack(track);
             }
             else
             {
-                // Exit loop so the track plays to the end and stops naturally.
-                MIX_SetTrackLoops(track, 0);
+                // Exit loop so the track plays to the end and stops naturally (see
+                // AudioMixer::Track's own doc for how the lazy loop-restart honors this).
+                CNA::Internal::Audio::ExitTrackLoop(track);
             }
         }
 #endif
@@ -607,22 +435,28 @@ namespace Microsoft::Xna::Framework::Audio
     void SoundEffectInstance::EnsureTrackDspState()
     {
 #ifdef SOUND_ENABLED
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
+        // Post-Phase-4 (SDL2 migration): pan is applied directly by AudioMixer::SetTrackPan (see
+        // ApplyTrackProperties above), which needs no per-instance callback registration --
+        // Mix_RegisterEffect is (re)registered by AudioMixer itself on every SetTrackPan/PlayTrack
+        // call. This function is kept (rather than removed outright) purely so filterState_
+        // keeps getting lazily allocated here, matching its existing lifecycle in case the
+        // LowPass/HighPass/BandPass filter setters this struct was designed for are ever restored
+        // (see FilterState's own updated doc).
+        CNA::Internal::Audio::Track* track = AsTrack(GetLiveTrackHandle());
         if (!track) return;
         if (!filterState_) filterState_ = std::make_unique<FilterState>();
-        MIX_SetTrackCookedCallback(track, FilterMixCallback, filterState_.get());
 #endif
     }
 
     void SoundEffectInstance::INTERNAL_applyComposedTrackProperties()
     {
 #ifdef SOUND_ENABLED
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
+        CNA::Internal::Audio::Track* track = AsTrack(GetLiveTrackHandle());
         if (!track) return;
 
-        EnsureTrackDspState(); // must exist before ApplyTrackProperties writes pan
+        EnsureTrackDspState();
         const float pan = is3D_ ? spatialPan_ : Pan_;
-        ApplyTrackProperties(track, filterState_.get(), Volume_ * attenuation_, pan, Pitch_, dopplerFactor_);
+        ApplyTrackProperties(track, Volume_ * attenuation_, pan, Pitch_, dopplerFactor_);
 #endif
     }
 
@@ -719,16 +553,20 @@ namespace Microsoft::Xna::Framework::Audio
     SoundState SoundEffectInstance::getStateProperty() const
     {
 #ifdef SOUND_ENABLED
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
+        CNA::Internal::Audio::Track* track = AsTrack(GetLiveTrackHandle());
         if (!track)
         {
             return SoundState::Stopped;
         }
-        if (MIX_TrackPaused(track))
+        if (CNA::Internal::Audio::TrackPaused(track))
         {
             return SoundState::Paused;
         }
-        if (MIX_TrackPlaying(track))
+        // TrackPlaying() also reconciles AudioMixer::Track's lazy loop-restart as a side effect
+        // (see its own doc) -- this is the call site that makes IsLooped-forever playback keep
+        // going across repeated getStateProperty() polls, matching this codebase's existing
+        // poll-and-reconcile style (DynamicSoundEffectInstance::Update()).
+        if (CNA::Internal::Audio::TrackPlaying(track))
         {
             return SoundState::Playing;
         }
