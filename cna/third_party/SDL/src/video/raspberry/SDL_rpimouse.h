@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,7 +24,8 @@
 
 #include "../SDL_sysvideo.h"
 
-struct SDL_CursorData
+typedef struct _RPI_CursorData RPI_CursorData;
+struct _RPI_CursorData
 {
     DISPMANX_RESOURCE_HANDLE_T resource;
     DISPMANX_ELEMENT_HANDLE_T element;
@@ -32,9 +33,11 @@ struct SDL_CursorData
     int w, h;
 };
 
-#define SDL_RPI_CURSORDATA(curs) RPI_CursorData *curdata = (RPI_CursorData *)((curs) ? (curs)->internal : NULL)
+#define SDL_RPI_CURSORDATA(curs) RPI_CursorData *curdata = (RPI_CursorData *)((curs) ? (curs)->driverdata : NULL)
 
-extern void RPI_InitMouse(SDL_VideoDevice *_this);
-extern void RPI_QuitMouse(SDL_VideoDevice *_this);
+extern void RPI_InitMouse(_THIS);
+extern void RPI_QuitMouse(_THIS);
 
-#endif // SDL_RPI_mouse_h_
+#endif /* SDL_RPI_mouse_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

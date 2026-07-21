@@ -78,7 +78,7 @@ if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../sharp-runtime/CMakeLists.txt")
 endif()
 add_subdirectory(../sharp-runtime SHARP_RUNTIME)
 
-#find_package(SDL3_ttf REQUIRED)
+#find_package(SDL2_ttf REQUIRED)
 
 include(cmake/BackendSelection.cmake)
 

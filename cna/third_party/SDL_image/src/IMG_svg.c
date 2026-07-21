@@ -1,6 +1,6 @@
 /*
   SDL_image:  An example image loading library for use with SDL
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,9 +23,17 @@
  * https://github.com/memononen/nanosvg
  */
 
-#include <SDL3_image/SDL_image.h>
+#include "SDL_image.h"
 
 #ifdef LOAD_SVG
+
+#if !SDL_VERSION_ATLEAST(2, 0, 16)
+/* SDL_roundf() is available starting with 2.0.16 */
+static float SDLCALL SDL_roundf(float x)
+{
+    return (x >= 0.0f) ? SDL_floorf(x + 0.5f) : SDL_ceilf(x - 0.5f);
+}
+#endif /* SDL 2.0.16 */
 
 /* Replace C runtime functions with SDL C runtime functions for building on Windows */
 #define free    SDL_free
@@ -46,7 +54,6 @@
 #undef strncpy
 #define strncpy SDL_strlcpy
 #define strlen  SDL_strlen
-#undef strstr
 #define strstr  SDL_strstr
 #define strtol  SDL_strtol
 #define strtoll SDL_strtoll
@@ -65,8 +72,6 @@
 #define sqrtf   SDL_sqrtf
 #define tanf    SDL_tanf
 #define roundf  SDL_roundf
-#undef  isnan
-#define isnan   SDL_isnanf
 #ifndef FLT_MAX
 #define FLT_MAX     3.402823466e+38F
 #endif
@@ -79,32 +84,28 @@
 #include "nanosvgrast.h"
 
 /* See if an image is contained in a data source */
-bool IMG_isSVG(SDL_IOStream *src)
+int IMG_isSVG(SDL_RWops *src)
 {
     Sint64 start;
-    bool is_SVG;
+    int is_SVG;
     char magic[4096];
     size_t magic_len;
 
-    if (!src) {
-        return false;
+    if (!src)
+        return 0;
+    start = SDL_RWtell(src);
+    is_SVG = 0;
+    magic_len = SDL_RWread(src, magic, 1, sizeof(magic) - 1);
+    magic[magic_len] = '\0';
+    if (SDL_strstr(magic, "<svg")) {
+        is_SVG = 1;
     }
-
-    start = SDL_TellIO(src);
-    is_SVG = false;
-    magic_len = SDL_ReadIO(src, magic, sizeof(magic) - 1);
-    if (magic_len > 0) {
-        magic[magic_len] = '\0';
-        if (SDL_strstr(magic, "<svg")) {
-            is_SVG = true;
-        }
-    }
-    SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
-    return is_SVG;
+    SDL_RWseek(src, start, RW_SEEK_SET);
+    return(is_SVG);
 }
 
 /* Load a SVG type image from an SDL datasource */
-SDL_Surface *IMG_LoadSizedSVG_IO(SDL_IOStream *src, int width, int height)
+SDL_Surface *IMG_LoadSizedSVG_RW(SDL_RWops *src, int width, int height)
 {
     char *data;
     struct NSVGimage *image;
@@ -112,7 +113,7 @@ SDL_Surface *IMG_LoadSizedSVG_IO(SDL_IOStream *src, int width, int height)
     SDL_Surface *surface = NULL;
     float scale = 1.0f;
 
-    data = (char *)SDL_LoadFile_IO(src, NULL, false);
+    data = (char *)SDL_LoadFile_RW(src, NULL, SDL_FALSE);
     if (!data) {
         return NULL;
     }
@@ -121,13 +122,13 @@ SDL_Surface *IMG_LoadSizedSVG_IO(SDL_IOStream *src, int width, int height)
     image = nsvgParse(data, "px", 96.0f);
     SDL_free(data);
     if (!image || image->width <= 0.0f || image->height <= 0.0f) {
-        SDL_SetError("Couldn't parse SVG image");
+        IMG_SetError("Couldn't parse SVG image");
         return NULL;
     }
 
     rasterizer = nsvgCreateRasterizer();
     if (!rasterizer) {
-        SDL_SetError("Couldn't create SVG rasterizer");
+        IMG_SetError("Couldn't create SVG rasterizer");
         nsvgDelete(image);
         return NULL;
     }
@@ -145,9 +146,11 @@ SDL_Surface *IMG_LoadSizedSVG_IO(SDL_IOStream *src, int width, int height)
         scale = 1.0f;
     }
 
-    surface = SDL_CreateSurface((int)SDL_ceilf(image->width * scale),
-                                (int)SDL_ceilf(image->height * scale),
-                                SDL_PIXELFORMAT_RGBA32);
+    surface = SDL_CreateRGBSurfaceWithFormat(0,
+                                             (int)SDL_ceilf(image->width * scale),
+                                             (int)SDL_ceilf(image->height * scale),
+                                             32,
+                                             SDL_PIXELFORMAT_RGBA32);
 
     if (!surface) {
         nsvgDeleteRasterizer(rasterizer);
@@ -163,25 +166,27 @@ SDL_Surface *IMG_LoadSizedSVG_IO(SDL_IOStream *src, int width, int height)
 }
 
 #else
+#if _MSC_VER >= 1300
+#pragma warning(disable : 4100) /* warning C4100: 'op' : unreferenced formal parameter */
+#endif
 
 /* See if an image is contained in a data source */
-bool IMG_isSVG(SDL_IOStream *src)
+int IMG_isSVG(SDL_RWops *src)
 {
-    return false;
+    return(0);
 }
 
 /* Load a SVG type image from an SDL datasource */
-SDL_Surface *IMG_LoadSizedSVG_IO(SDL_IOStream *src, int width, int height)
+SDL_Surface *IMG_LoadSizedSVG_RW(SDL_RWops *src, int width, int height)
 {
-    SDL_SetError("SDL_image built without SVG support");
-    return NULL;
+    return(NULL);
 }
 
 #endif /* LOAD_SVG */
 
 /* Load a SVG type image from an SDL datasource */
-SDL_Surface *IMG_LoadSVG_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadSVG_RW(SDL_RWops *src)
 {
-    return IMG_LoadSizedSVG_IO(src, 0, 0);
+    return IMG_LoadSizedSVG_RW(src, 0, 0);
 }
 

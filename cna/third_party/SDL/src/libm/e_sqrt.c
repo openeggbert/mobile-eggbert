@@ -1,4 +1,3 @@
-#include "SDL_internal.h"
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -38,7 +37,7 @@
  *	If (2) is false, then q   = q ; otherwise q   = q  + 2      .
  *		 	       i+1   i             i+1   i
  *
- *	With some algebraic manipulation, it is not difficult to see
+ *	With some algebric manipulation, it is not difficult to see
  *	that (2) is equivalent to
  *                             -(i+1)
  *			s  +  2       <= y			(3)
@@ -149,7 +148,7 @@ double attribute_hidden __ieee754_sqrt(double x)
 	    t  = s0;
 	    if((t<ix0)||((t==ix0)&&(t1<=ix1))) {
 		s1  = t1+r;
-		if(((t1&sign)==(u_int32_t)sign)&&(s1&sign)==0) s0 += 1;
+		if(((t1&sign)==sign)&&(s1&sign)==0) s0 += 1;
 		ix0 -= t;
 		if (ix1 < t1) ix0 -= 1;
 		ix1 -= t1;
@@ -281,7 +280,7 @@ A.  sqrt(x) by Newton Iteration
 	This formula has one division fewer than the one above; however,
 	it requires more multiplications and additions. Also x must be
 	scaled in advance to avoid spurious overflow in evaluating the
-	expression 3y*y+x. Hence it is not recommended unless division
+	expression 3y*y+x. Hence it is not recommended uless division
 	is slow. If division is very slow, then one should use the
 	reciproot algorithm given in section B.
 
@@ -331,7 +330,7 @@ B.  sqrt(x) by Reciproot Iteration
 
 	Let x0 and x1 be the leading and the trailing 32-bit words of
 	a floating point number x (in IEEE double format) respectively
-	(see section A). By performing shifts and subtracts on x0 and y0,
+	(see section A). By performing shifs and subtracts on x0 and y0,
 	we obtain a 7.8-bit approximation of 1/sqrt(x) as follows.
 
 	    k := 0x5fe80000 - (x0>>1);

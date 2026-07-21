@@ -1,4 +1,3 @@
-#include "SDL_internal.h"
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -60,6 +59,10 @@ static const double aT[] = {
  -3.65315727442169155270e-02, /* 0xBFA2B444, 0x2C6A6C2F */
   1.62858201153657823623e-02, /* 0x3F90AD3A, 0xE322DA11 */
 };
+
+#ifdef __WATCOMC__ /* Watcom defines huge=__huge */
+#undef huge
+#endif
 
 static const double
 one   = 1.0,

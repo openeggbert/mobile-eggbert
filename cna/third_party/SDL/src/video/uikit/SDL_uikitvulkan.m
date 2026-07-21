@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,19 +24,21 @@
  * SDL_x11vulkan.c.
  */
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if defined(SDL_VIDEO_VULKAN) && defined(SDL_VIDEO_DRIVER_UIKIT)
 
 #include "SDL_uikitvideo.h"
 #include "SDL_uikitwindow.h"
 
+#include "SDL_loadso.h"
 #include "SDL_uikitvulkan.h"
 #include "SDL_uikitmetalview.h"
+#include "SDL_syswm.h"
 
 #include <dlfcn.h>
 
-const char *defaultPaths[] = {
+const char* defaultPaths[] = {
     "libvulkan.dylib",
 };
 
@@ -44,35 +46,35 @@ const char *defaultPaths[] = {
  * proofing. */
 #define DEFAULT_HANDLE RTLD_DEFAULT
 
-bool UIKit_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
+int UIKit_Vulkan_LoadLibrary(_THIS, const char *path)
 {
     VkExtensionProperties *extensions = NULL;
     Uint32 extensionCount = 0;
-    bool hasSurfaceExtension = false;
-    bool hasMetalSurfaceExtension = false;
-    bool hasIOSSurfaceExtension = false;
+    SDL_bool hasSurfaceExtension = SDL_FALSE;
+    SDL_bool hasMetalSurfaceExtension = SDL_FALSE;
+    SDL_bool hasIOSSurfaceExtension = SDL_FALSE;
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = NULL;
 
     if (_this->vulkan_config.loader_handle) {
         return SDL_SetError("Vulkan Portability library is already loaded.");
     }
 
-    // Load the Vulkan loader library
+    /* Load the Vulkan loader library */
     if (!path) {
-        path = SDL_GetHint(SDL_HINT_VULKAN_LIBRARY);
+        path = SDL_getenv("SDL_VULKAN_LIBRARY");
     }
 
     if (!path) {
-        // Handle the case where Vulkan Portability is linked statically.
+        /* Handle the case where Vulkan Portability is linked statically. */
         vkGetInstanceProcAddr =
-            (PFN_vkGetInstanceProcAddr)dlsym(DEFAULT_HANDLE,
-                                             "vkGetInstanceProcAddr");
+        (PFN_vkGetInstanceProcAddr)dlsym(DEFAULT_HANDLE,
+                                         "vkGetInstanceProcAddr");
     }
 
     if (vkGetInstanceProcAddr) {
         _this->vulkan_config.loader_handle = DEFAULT_HANDLE;
     } else {
-        const char **paths;
+        const char** paths;
         const char *foundPath = NULL;
         int numPaths;
         int i;
@@ -81,7 +83,7 @@ bool UIKit_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
             paths = &path;
             numPaths = 1;
         } else {
-            // Look for the .dylib packaged with the application instead.
+            /* Look for the .dylib packaged with the application instead. */
             paths = defaultPaths;
             numPaths = SDL_arraysize(defaultPaths);
         }
@@ -99,15 +101,15 @@ bool UIKit_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
                     SDL_arraysize(_this->vulkan_config.loader_path));
         vkGetInstanceProcAddr =
             (PFN_vkGetInstanceProcAddr)SDL_LoadFunction(
-                _this->vulkan_config.loader_handle,
-                "vkGetInstanceProcAddr");
+                                    _this->vulkan_config.loader_handle,
+                                    "vkGetInstanceProcAddr");
     }
 
     if (!vkGetInstanceProcAddr) {
         SDL_SetError("Failed to find %s in either executable or %s: %s",
                      "vkGetInstanceProcAddr",
                      "linked Vulkan Portability library",
-                     (const char *)dlerror());
+                     (const char *) dlerror());
         goto fail;
     }
 
@@ -132,32 +134,35 @@ bool UIKit_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
 
     for (Uint32 i = 0; i < extensionCount; i++) {
         if (SDL_strcmp(VK_KHR_SURFACE_EXTENSION_NAME, extensions[i].extensionName) == 0) {
-            hasSurfaceExtension = true;
+            hasSurfaceExtension = SDL_TRUE;
         } else if (SDL_strcmp(VK_EXT_METAL_SURFACE_EXTENSION_NAME, extensions[i].extensionName) == 0) {
-            hasMetalSurfaceExtension = true;
+            hasMetalSurfaceExtension = SDL_TRUE;
         } else if (SDL_strcmp(VK_MVK_IOS_SURFACE_EXTENSION_NAME, extensions[i].extensionName) == 0) {
-            hasIOSSurfaceExtension = true;
+            hasIOSSurfaceExtension = SDL_TRUE;
         }
     }
 
     SDL_free(extensions);
 
     if (!hasSurfaceExtension) {
-        SDL_SetError("Installed Vulkan Portability doesn't implement the " VK_KHR_SURFACE_EXTENSION_NAME " extension");
+        SDL_SetError("Installed Vulkan Portability doesn't implement the "
+                     VK_KHR_SURFACE_EXTENSION_NAME " extension");
         goto fail;
     } else if (!hasMetalSurfaceExtension && !hasIOSSurfaceExtension) {
-        SDL_SetError("Installed Vulkan Portability doesn't implement the " VK_EXT_METAL_SURFACE_EXTENSION_NAME " or " VK_MVK_IOS_SURFACE_EXTENSION_NAME " extensions");
+        SDL_SetError("Installed Vulkan Portability doesn't implement the "
+                     VK_EXT_METAL_SURFACE_EXTENSION_NAME " or "
+                     VK_MVK_IOS_SURFACE_EXTENSION_NAME " extensions");
         goto fail;
     }
 
-    return true;
+    return 0;
 
 fail:
     _this->vulkan_config.loader_handle = NULL;
-    return false;
+    return -1;
 }
 
-void UIKit_Vulkan_UnloadLibrary(SDL_VideoDevice *_this)
+void UIKit_Vulkan_UnloadLibrary(_THIS)
 {
     if (_this->vulkan_config.loader_handle) {
         if (_this->vulkan_config.loader_handle != DEFAULT_HANDLE) {
@@ -167,48 +172,57 @@ void UIKit_Vulkan_UnloadLibrary(SDL_VideoDevice *_this)
     }
 }
 
-char const * const *UIKit_Vulkan_GetInstanceExtensions(SDL_VideoDevice *_this, Uint32 *count)
+SDL_bool UIKit_Vulkan_GetInstanceExtensions(_THIS,
+                                          SDL_Window *window,
+                                          unsigned *count,
+                                          const char **names)
 {
     static const char *const extensionsForUIKit[] = {
         VK_KHR_SURFACE_EXTENSION_NAME, VK_EXT_METAL_SURFACE_EXTENSION_NAME
     };
-    if(count) {
-        *count = SDL_arraysize(extensionsForUIKit);
+    if (!_this->vulkan_config.loader_handle) {
+        SDL_SetError("Vulkan is not loaded");
+        return SDL_FALSE;
     }
-    return extensionsForUIKit;
+
+    return SDL_Vulkan_GetInstanceExtensions_Helper(
+            count, names, SDL_arraysize(extensionsForUIKit),
+            extensionsForUIKit);
 }
 
-bool UIKit_Vulkan_CreateSurface(SDL_VideoDevice *_this,
-                               SDL_Window *window,
-                               VkInstance instance,
-                               const struct VkAllocationCallbacks *allocator,
-                               VkSurfaceKHR *surface)
+SDL_bool UIKit_Vulkan_CreateSurface(_THIS,
+                                  SDL_Window *window,
+                                  VkInstance instance,
+                                  VkSurfaceKHR *surface)
 {
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =
         (PFN_vkGetInstanceProcAddr)_this->vulkan_config.vkGetInstanceProcAddr;
     PFN_vkCreateMetalSurfaceEXT vkCreateMetalSurfaceEXT =
         (PFN_vkCreateMetalSurfaceEXT)vkGetInstanceProcAddr(
-            (VkInstance)instance,
-            "vkCreateMetalSurfaceEXT");
+                                            (VkInstance)instance,
+                                            "vkCreateMetalSurfaceEXT");
     PFN_vkCreateIOSSurfaceMVK vkCreateIOSSurfaceMVK =
         (PFN_vkCreateIOSSurfaceMVK)vkGetInstanceProcAddr(
-            (VkInstance)instance,
-            "vkCreateIOSSurfaceMVK");
+                                            (VkInstance)instance,
+                                            "vkCreateIOSSurfaceMVK");
     VkResult result;
     SDL_MetalView metalview;
 
     if (!_this->vulkan_config.loader_handle) {
-        return SDL_SetError("Vulkan is not loaded");
+        SDL_SetError("Vulkan is not loaded");
+        return SDL_FALSE;
     }
 
     if (!vkCreateMetalSurfaceEXT && !vkCreateIOSSurfaceMVK) {
-        return SDL_SetError(VK_EXT_METAL_SURFACE_EXTENSION_NAME " or " VK_MVK_IOS_SURFACE_EXTENSION_NAME
-                            " extensions are not enabled in the Vulkan instance.");
+        SDL_SetError(VK_EXT_METAL_SURFACE_EXTENSION_NAME " or "
+                     VK_MVK_IOS_SURFACE_EXTENSION_NAME
+                     " extensions are not enabled in the Vulkan instance.");
+        return SDL_FALSE;
     }
 
     metalview = UIKit_Metal_CreateView(_this, window);
     if (metalview == NULL) {
-        return false;
+        return SDL_FALSE;
     }
 
     if (vkCreateMetalSurfaceEXT) {
@@ -217,11 +231,13 @@ bool UIKit_Vulkan_CreateSurface(SDL_VideoDevice *_this,
         createInfo.pNext = NULL;
         createInfo.flags = 0;
         createInfo.pLayer = (__bridge const CAMetalLayer *)
-            UIKit_Metal_GetLayer(_this, metalview);
-        result = vkCreateMetalSurfaceEXT(instance, &createInfo, allocator, surface);
+                            UIKit_Metal_GetLayer(_this, metalview);
+        result = vkCreateMetalSurfaceEXT(instance, &createInfo, NULL, surface);
         if (result != VK_SUCCESS) {
             UIKit_Metal_DestroyView(_this, metalview);
-            return SDL_SetError("vkCreateMetalSurfaceEXT failed: %s", SDL_Vulkan_GetResultString(result));
+            SDL_SetError("vkCreateMetalSurfaceEXT failed: %s",
+                         SDL_Vulkan_GetResultString(result));
+            return SDL_FALSE;
         }
     } else {
         VkIOSSurfaceCreateInfoMVK createInfo = {};
@@ -230,10 +246,12 @@ bool UIKit_Vulkan_CreateSurface(SDL_VideoDevice *_this,
         createInfo.flags = 0;
         createInfo.pView = (const void *)metalview;
         result = vkCreateIOSSurfaceMVK(instance, &createInfo,
-                                       allocator, surface);
+                                           NULL, surface);
         if (result != VK_SUCCESS) {
             UIKit_Metal_DestroyView(_this, metalview);
-            return SDL_SetError("vkCreateIOSSurfaceMVK failed: %s", SDL_Vulkan_GetResultString(result));
+            SDL_SetError("vkCreateIOSSurfaceMVK failed: %s",
+                         SDL_Vulkan_GetResultString(result));
+            return SDL_FALSE;
         }
     }
 
@@ -241,24 +259,17 @@ bool UIKit_Vulkan_CreateSurface(SDL_VideoDevice *_this,
      * Metal_DestroyView from. Right now the metal view's ref count is +2 (one
      * from returning a new view object in CreateView, and one because it's
      * a subview of the window.) If we release the view here to make it +1, it
-     * will be destroyed when the window is destroyed.
-     *
-     * TODO: Now that we have SDL_Vulkan_DestroySurface someone with enough
-     * knowledge of Metal can proceed. */
+     * will be destroyed when the window is destroyed. */
     CFBridgingRelease(metalview);
 
-    return true;
+    return SDL_TRUE;
 }
 
-void UIKit_Vulkan_DestroySurface(SDL_VideoDevice *_this,
-                                 VkInstance instance,
-                                 VkSurfaceKHR surface,
-                                 const struct VkAllocationCallbacks *allocator)
+void UIKit_Vulkan_GetDrawableSize(_THIS, SDL_Window *window, int *w, int *h)
 {
-    if (_this->vulkan_config.loader_handle) {
-        SDL_Vulkan_DestroySurface_Internal(_this->vulkan_config.vkGetInstanceProcAddr, instance, surface, allocator);
-        // TODO: Add CFBridgingRelease(metalview) here perhaps?
-    }
+    UIKit_Metal_GetDrawableSize(_this, window, w, h);
 }
 
 #endif
+
+/* vi: set ts=4 sw=4 expandtab: */

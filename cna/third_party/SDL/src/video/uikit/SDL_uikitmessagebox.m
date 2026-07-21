@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,18 +18,19 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_UIKIT
 
+#include "SDL.h"
 #include "SDL_uikitvideo.h"
 #include "SDL_uikitwindow.h"
 
-// Display a UIKit message box
+/* Display a UIKit message box */
 
-static bool s_showingMessageBox = false;
+static SDL_bool s_showingMessageBox = SDL_FALSE;
 
-bool UIKit_ShowingMessageBox(void)
+SDL_bool UIKit_ShowingMessageBox(void)
 {
     return s_showingMessageBox;
 }
@@ -39,28 +40,28 @@ static void UIKit_WaitUntilMessageBoxClosed(const SDL_MessageBoxData *messagebox
     *clickedindex = messageboxdata->numbuttons;
 
     @autoreleasepool {
-        // Run the main event loop until the alert has finished
-        // Note that this needs to be done on the main thread
-        s_showingMessageBox = true;
+        /* Run the main event loop until the alert has finished */
+        /* Note that this needs to be done on the main thread */
+        s_showingMessageBox = SDL_TRUE;
         while ((*clickedindex) == messageboxdata->numbuttons) {
             [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
         }
-        s_showingMessageBox = false;
+        s_showingMessageBox = SDL_FALSE;
     }
 }
 
-static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messageboxdata, int *buttonID)
+static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messageboxdata, int *buttonid)
 {
     int i;
     int __block clickedindex = messageboxdata->numbuttons;
     UIWindow *window = nil;
     UIWindow *alertwindow = nil;
+    UIAlertController *alert;
 
     if (![UIAlertController class]) {
         return NO;
     }
 
-    UIAlertController *alert;
     alert = [UIAlertController alertControllerWithTitle:@(messageboxdata->title)
                                                 message:@(messageboxdata->message)
                                          preferredStyle:UIAlertControllerStyleAlert];
@@ -81,10 +82,10 @@ static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messag
         }
 
         action = [UIAlertAction actionWithTitle:@(sdlButton->text)
-                                          style:style
-                                        handler:^(UIAlertAction *alertAction) {
-                                          clickedindex = (int)(sdlButton - messageboxdata->buttons);
-                                        }];
+                                style:style
+                                handler:^(UIAlertAction *alertAction) {
+                                    clickedindex = (int)(sdlButton - messageboxdata->buttons);
+                                }];
         [alert addAction:action];
 
         if (sdlButton->flags & SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT) {
@@ -93,24 +94,12 @@ static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messag
     }
 
     if (messageboxdata->window) {
-        SDL_UIKitWindowData *data = (__bridge SDL_UIKitWindowData *)messageboxdata->window->internal;
+        SDL_WindowData *data = (__bridge SDL_WindowData *) messageboxdata->window->driverdata;
         window = data.uiwindow;
     }
 
     if (window == nil || window.rootViewController == nil) {
-        if (@available(iOS 13.0, tvOS 13.0, *)) {
-            UIWindowScene *scene = UIKit_GetActiveWindowScene();
-            if (scene) {
-                alertwindow = [[UIWindow alloc] initWithWindowScene:scene];
-            }
-        }
-        if (!alertwindow) {
-#ifdef SDL_PLATFORM_VISIONOS
-            alertwindow = [[UIWindow alloc] init];
-#else
-            alertwindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-#endif
-        }
+        alertwindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
         alertwindow.rootViewController = [UIViewController new];
         alertwindow.windowLevel = UIWindowLevelAlert;
 
@@ -128,34 +117,33 @@ static BOOL UIKit_ShowMessageBoxAlertController(const SDL_MessageBoxData *messag
 
     UIKit_ForceUpdateHomeIndicator();
 
-    *buttonID = messageboxdata->buttons[clickedindex].buttonID;
+    *buttonid = messageboxdata->buttons[clickedindex].buttonid;
     return YES;
 }
 
-typedef struct UIKit_ShowMessageBoxData
+static void UIKit_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, int *buttonid, int *returnValue)
+{ @autoreleasepool
 {
-    const SDL_MessageBoxData *messageboxdata;
-    int *buttonID;
-    bool result;
-} UIKit_ShowMessageBoxData;
-
-static void SDLCALL UIKit_ShowMessageBoxMainThreadCallback(void *userdata)
-{
-    @autoreleasepool {
-        UIKit_ShowMessageBoxData *data = (UIKit_ShowMessageBoxData *) userdata;
-        data->result = UIKit_ShowMessageBoxAlertController(data->messageboxdata, data->buttonID);
+    if (UIKit_ShowMessageBoxAlertController(messageboxdata, buttonid)) {
+        *returnValue = 0;
+    } else {
+        *returnValue = SDL_SetError("Could not show message box.");
     }
-}
+}}
 
-bool UIKit_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonID)
+int UIKit_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
+{ @autoreleasepool
 {
-    UIKit_ShowMessageBoxData data = { messageboxdata, buttonID, false };
-    if (!SDL_RunOnMainThread(UIKit_ShowMessageBoxMainThreadCallback, &data, true)) {
-        return false;
-    } else if (!data.result) {
-        return SDL_SetError("Could not show message box.");
-    }
-    return true;
-}
+    __block int returnValue = 0;
 
-#endif // SDL_VIDEO_DRIVER_UIKIT
+    if ([NSThread isMainThread]) {
+        UIKit_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue);
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), ^{ UIKit_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue); });
+    }
+    return returnValue;
+}}
+
+#endif /* SDL_VIDEO_DRIVER_UIKIT */
+
+/* vi: set ts=4 sw=4 expandtab: */

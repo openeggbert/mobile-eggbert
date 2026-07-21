@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,22 +18,24 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_RISCOS
 
-#include "SDL_riscosvideo.h"
-#include "SDL_riscosmouse.h"
 #include "../../events/SDL_mouse_c.h"
 
 #include <kernel.h>
 
-static SDL_Cursor *RISCOS_CreateDefaultCursor(void)
+static SDL_Cursor *RISCOS_CreateDefaultCursor()
 {
-    SDL_Cursor *cursor = SDL_calloc(1, sizeof(*cursor));
+    SDL_Cursor *cursor;
+
+    cursor = SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
-        // NULL is used to indicate the default cursor
-        cursor->internal = NULL;
+        /* NULL is used to indicate the default cursor */
+        cursor->driverdata = NULL;
+    } else {
+        SDL_OutOfMemory();
     }
 
     return cursor;
@@ -44,36 +46,38 @@ static void RISCOS_FreeCursor(SDL_Cursor *cursor)
     SDL_free(cursor);
 }
 
-static bool RISCOS_ShowCursor(SDL_Cursor *cursor)
+static int RISCOS_ShowCursor(SDL_Cursor *cursor)
 {
     if (cursor) {
-        // Turn the mouse pointer on
+        /* Turn the mouse pointer on */
         _kernel_osbyte(106, 1, 0);
     } else {
-        // Turn the mouse pointer off
+        /* Turn the mouse pointer off */
         _kernel_osbyte(106, 0, 0);
     }
 
-    return true;
+    return 0;
 }
 
-bool RISCOS_InitMouse(SDL_VideoDevice *_this)
+int RISCOS_InitMouse(_THIS)
 {
     SDL_Mouse *mouse = SDL_GetMouse();
 
-    // mouse->CreateCursor = RISCOS_CreateCursor;
-    // mouse->CreateSystemCursor = RISCOS_CreateSystemCursor;
+    /* mouse->CreateCursor = RISCOS_CreateCursor; */
+    /* mouse->CreateSystemCursor = RISCOS_CreateSystemCursor; */
     mouse->ShowCursor = RISCOS_ShowCursor;
     mouse->FreeCursor = RISCOS_FreeCursor;
-    // mouse->WarpMouse = RISCOS_WarpMouse;
-    // mouse->WarpMouseGlobal = RISCOS_WarpMouseGlobal;
-    // mouse->SetRelativeMouseMode = RISCOS_SetRelativeMouseMode;
-    // mouse->CaptureMouse = RISCOS_CaptureMouse;
-    // mouse->GetGlobalMouseState = RISCOS_GetGlobalMouseState;
+    /* mouse->WarpMouse = RISCOS_WarpMouse; */
+    /* mouse->WarpMouseGlobal = RISCOS_WarpMouseGlobal; */
+    /* mouse->SetRelativeMouseMode = RISCOS_SetRelativeMouseMode; */
+    /* mouse->CaptureMouse = RISCOS_CaptureMouse; */
+    /* mouse->GetGlobalMouseState = RISCOS_GetGlobalMouseState; */
 
     SDL_SetDefaultCursor(RISCOS_CreateDefaultCursor());
 
-    return true;
+    return 0;
 }
 
-#endif // SDL_VIDEO_DRIVER_RISCOS
+#endif /* SDL_VIDEO_DRIVER_RISCOS */
+
+/* vi: set ts=4 sw=4 expandtab: */

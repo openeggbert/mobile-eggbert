@@ -1,6 +1,6 @@
 /*
   SDL_image:  An example image loading library for use with SDL
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,9 +33,9 @@
  *  4-plane 32bpp format with a fourth "intensity" plane
  */
 
-#include <SDL3/SDL_endian.h>
+#include "SDL_endian.h"
 
-#include <SDL3_image/SDL_image.h>
+#include "SDL_image.h"
 
 #ifdef LOAD_PCX
 
@@ -57,43 +57,40 @@ struct PCXheader {
 };
 
 /* See if an image is contained in a data source */
-bool IMG_isPCX(SDL_IOStream *src)
+int IMG_isPCX(SDL_RWops *src)
 {
     Sint64 start;
-    bool is_PCX;
+    int is_PCX;
     const int ZSoft_Manufacturer = 10;
     const int PC_Paintbrush_Version = 5;
     const int PCX_Uncompressed_Encoding = 0;
     const int PCX_RunLength_Encoding = 1;
     struct PCXheader pcxh;
 
-    if (!src) {
-        return false;
-    }
-
-    start = SDL_TellIO(src);
-    is_PCX = false;
-    if (SDL_ReadIO(src, &pcxh, sizeof(pcxh)) == sizeof(pcxh) ) {
+    if ( !src )
+        return 0;
+    start = SDL_RWtell(src);
+    is_PCX = 0;
+    if ( SDL_RWread(src, &pcxh, sizeof(pcxh), 1) == 1 ) {
         if ( (pcxh.Manufacturer == ZSoft_Manufacturer) &&
              (pcxh.Version == PC_Paintbrush_Version) &&
              (pcxh.Encoding == PCX_RunLength_Encoding ||
               pcxh.Encoding == PCX_Uncompressed_Encoding) ) {
-            is_PCX = true;
+            is_PCX = 1;
         }
     }
-    SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
-    return is_PCX;
+    SDL_RWseek(src, start, RW_SEEK_SET);
+    return(is_PCX);
 }
 
 /* Load a PCX type image from an SDL datasource */
-SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadPCX_RW(SDL_RWops *src)
 {
     Sint64 start;
     struct PCXheader pcxh;
     SDL_Surface *surface = NULL;
     int width, height;
-    int y;
-    size_t bpl;
+    int y, bpl;
     Uint8 *row, *buf = NULL;
     char *error = NULL;
     int bits, src_bits;
@@ -102,20 +99,20 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
     Uint32 format;
 
     if ( !src ) {
-        /* The error message has been set in SDL_IOFromFile */
+        /* The error message has been set in SDL_RWFromFile */
         return NULL;
     }
-    start = SDL_TellIO(src);
+    start = SDL_RWtell(src);
 
-    if (SDL_ReadIO(src, &pcxh, sizeof(pcxh)) != sizeof(pcxh) ) {
+    if ( !SDL_RWread(src, &pcxh, sizeof(pcxh), 1) ) {
         error = "file truncated";
         goto done;
     }
-    pcxh.Xmin = SDL_Swap16LE(pcxh.Xmin);
-    pcxh.Ymin = SDL_Swap16LE(pcxh.Ymin);
-    pcxh.Xmax = SDL_Swap16LE(pcxh.Xmax);
-    pcxh.Ymax = SDL_Swap16LE(pcxh.Ymax);
-    pcxh.BytesPerLine = SDL_Swap16LE(pcxh.BytesPerLine);
+    pcxh.Xmin = SDL_SwapLE16(pcxh.Xmin);
+    pcxh.Ymin = SDL_SwapLE16(pcxh.Ymin);
+    pcxh.Xmax = SDL_SwapLE16(pcxh.Xmax);
+    pcxh.Ymax = SDL_SwapLE16(pcxh.Ymax);
+    pcxh.BytesPerLine = SDL_SwapLE16(pcxh.BytesPerLine);
 
 #if 0
     printf("Manufacturer = %d\n", pcxh.Manufacturer);
@@ -146,7 +143,7 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
         error = "unsupported PCX format";
         goto done;
     }
-    surface = SDL_CreateSurface(width, height, format);
+    surface = SDL_CreateRGBSurfaceWithFormat(0, width, height, 0, format);
     if ( surface == NULL ) {
         goto done;
     }
@@ -160,17 +157,16 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
     row = (Uint8 *)surface->pixels;
     for ( y=0; y<surface->h; ++y ) {
         /* decode a scan line to a temporary buffer first */
-        size_t i;
+        int i;
         if ( pcxh.Encoding == 0 ) {
-            if (SDL_ReadIO(src, buf, bpl) != bpl ) {
+            if ( !SDL_RWread(src, buf, bpl, 1) ) {
                 error = "file truncated";
                 goto done;
             }
         } else {
             for ( i = 0; i < bpl; i++ ) {
-
                 if ( !count ) {
-                    if (SDL_ReadIO(src, &ch, 1) != 1 ) {
+                    if ( !SDL_RWread(src, &ch, 1, 1) ) {
                         error = "file truncated";
                         goto done;
                     }
@@ -178,7 +174,7 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
                         count = 1;
                     } else {
                         count = ch - 0xc0;
-                        if (SDL_ReadIO(src, &ch, 1) != 1 ) {
+                        if( !SDL_RWread(src, &ch, 1, 1) ) {
                             error = "file truncated";
                             goto done;
                         }
@@ -208,7 +204,7 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
             }
         } else if ( src_bits == 8 ) {
             /* Copy the row directly */
-            SDL_memcpy(row, buf, SDL_min((size_t)width, bpl));
+            SDL_memcpy(row, buf, SDL_min(width, bpl));
         } else if ( src_bits == 24 ) {
             /* de-interlace planes */
             Uint8 *innerSrc = buf;
@@ -234,47 +230,32 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
     }
 
     if ( bits == 8 ) {
+        SDL_Color *colors = surface->format->palette->colors;
         int nc = 1 << src_bits;
-        SDL_Palette *palette;
         int i;
 
-        palette = SDL_CreateSurfacePalette(surface);
-        if (!palette) {
-            error = "Couldn't create palette";
-            goto done;
-        }
-        if (nc > palette->ncolors) {
-            nc = palette->ncolors;
-        }
-        palette->ncolors = nc;
-
+        surface->format->palette->ncolors = nc;
         if ( src_bits == 8 ) {
-            Uint8 pch;
-            Uint8 colormap[768];
-
+            Uint8 ch;
             /* look for a 256-colour palette */
             do {
-                if (SDL_ReadIO(src, &pch, 1) != 1 ) {
+                if ( !SDL_RWread(src, &ch, 1, 1) ) {
                     /* Couldn't find the palette, try the end of the file */
-                    SDL_SeekIO(src, -768, SDL_IO_SEEK_END);
+                    SDL_RWseek(src, -768, RW_SEEK_END);
                     break;
                 }
-            } while ( pch != 12 );
+            } while ( ch != 12 );
 
-            if (SDL_ReadIO(src, colormap, sizeof(colormap)) != sizeof(colormap) ) {
-                error = "file truncated";
-                goto done;
-            }
             for ( i = 0; i < 256; i++ ) {
-                palette->colors[i].r = colormap[i * 3 + 0];
-                palette->colors[i].g = colormap[i * 3 + 1];
-                palette->colors[i].b = colormap[i * 3 + 2];
+                SDL_RWread(src, &colors[i].r, 1, 1);
+                SDL_RWread(src, &colors[i].g, 1, 1);
+                SDL_RWread(src, &colors[i].b, 1, 1);
             }
         } else {
             for ( i = 0; i < nc; i++ ) {
-                palette->colors[i].r = pcxh.Colormap[i * 3 + 0];
-                palette->colors[i].g = pcxh.Colormap[i * 3 + 1];
-                palette->colors[i].b = pcxh.Colormap[i * 3 + 2];
+                colors[i].r = pcxh.Colormap[i * 3];
+                colors[i].g = pcxh.Colormap[i * 3 + 1];
+                colors[i].b = pcxh.Colormap[i * 3 + 2];
             }
         }
     }
@@ -282,29 +263,31 @@ SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
 done:
     SDL_free(buf);
     if ( error ) {
-        SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
+        SDL_RWseek(src, start, RW_SEEK_SET);
         if ( surface ) {
-            SDL_DestroySurface(surface);
+            SDL_FreeSurface(surface);
             surface = NULL;
         }
-        SDL_SetError("%s", error);
+        IMG_SetError("%s", error);
     }
-    return surface;
+    return(surface);
 }
 
 #else
+#if _MSC_VER >= 1300
+#pragma warning(disable : 4100) /* warning C4100: 'op' : unreferenced formal parameter */
+#endif
 
 /* See if an image is contained in a data source */
-bool IMG_isPCX(SDL_IOStream *src)
+int IMG_isPCX(SDL_RWops *src)
 {
-    return false;
+    return(0);
 }
 
 /* Load a PCX type image from an SDL datasource */
-SDL_Surface *IMG_LoadPCX_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadPCX_RW(SDL_RWops *src)
 {
-    SDL_SetError("SDL_image built without PCX support");
-    return NULL;
+    return(NULL);
 }
 
 #endif /* LOAD_PCX */

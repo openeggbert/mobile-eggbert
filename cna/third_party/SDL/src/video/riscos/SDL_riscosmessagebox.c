@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,16 +18,17 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_RISCOS
 
+#include "SDL_messagebox.h"
 #include "SDL_riscosmessagebox.h"
 
 #include <kernel.h>
 #include <swis.h>
 
-bool RISCOS_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonID)
+int RISCOS_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
 {
     _kernel_swi_regs regs;
     _kernel_oserror error;
@@ -39,9 +40,9 @@ bool RISCOS_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *button
     regs.r[0] = (unsigned int)&error;
 
     regs.r[1] = (1 << 8) | (1 << 4);
-    if (messageboxdata->flags & SDL_MESSAGEBOX_INFORMATION) {
+    if (messageboxdata->flags == SDL_MESSAGEBOX_INFORMATION) {
         regs.r[1] |= (1 << 9);
-    } else if (messageboxdata->flags & SDL_MESSAGEBOX_WARNING) {
+    } else if (messageboxdata->flags == SDL_MESSAGEBOX_WARNING) {
         regs.r[1] |= (2 << 9);
     }
 
@@ -60,8 +61,10 @@ bool RISCOS_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *button
 
     _kernel_swi(Wimp_ReportError, &regs, &regs);
 
-    *buttonID = (regs.r[1] == 0) ? -1 : messageboxdata->buttons[regs.r[1] - 3].buttonID;
-    return true;
+    *buttonid = (regs.r[1] == 0) ? -1 : messageboxdata->buttons[regs.r[1] - 3].buttonid;
+    return 0;
 }
 
-#endif // SDL_VIDEO_DRIVER_RISCOS
+#endif /* SDL_VIDEO_DRIVER_RISCOS */
+
+/* vi: set ts=4 sw=4 expandtab: */

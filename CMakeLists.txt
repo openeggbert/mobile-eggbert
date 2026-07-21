@@ -100,12 +100,12 @@ if(CNA_SPRITE_BATCHING_ENABLED)
     target_compile_definitions(${_game_target} PRIVATE CNA_SPRITE_BATCHING_ENABLED)
 endif()
 
-# CNA builds SDL3 once into its own prebuilt root and sets SDL3_DIR / SDL3_image_DIR /
-# SDL3_mixer_DIR in the CMake cache.  SDL IMPORTED targets are directory-scoped, so we
-# must call find_package() here to make SDL3::SDL3 visible in this project's scope.
-find_package(SDL3       REQUIRED CONFIG)
-find_package(SDL3_image REQUIRED CONFIG)
-find_package(SDL3_mixer REQUIRED CONFIG)
+# CNA builds SDL2 once into its own prebuilt root and sets SDL2_DIR / SDL2_image_DIR /
+# SDL2_mixer_DIR in the CMake cache.  SDL IMPORTED targets are directory-scoped, so we
+# must call find_package() here to make SDL2::SDL2 visible in this project's scope.
+find_package(SDL2       REQUIRED CONFIG)
+find_package(SDL2_image REQUIRED CONFIG)
+find_package(SDL2_mixer REQUIRED CONFIG)
 
 # CNA and the selected graphics backend static library have circular
 # symbol references on Linux (backend uses Color/Rectangle/Matrix from CNA,
@@ -114,12 +114,12 @@ find_package(SDL3_mixer REQUIRED CONFIG)
 # Note: --start-group/--end-group are not available on Emscripten's linker
 # or on Android (lld does not need it and warns).
 if(EMSCRIPTEN)
-    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL3::SDL3-static)
+    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL2::SDL2-static)
 elseif(ANDROID)
     # Android uses lld which resolves circular static-lib references without
     # --start-group. On Android the executable is actually a shared library
-    # (libmain.so) loaded by SDLActivity; SDL3 is linked statically.
-    target_link_libraries(${_game_target} PRIVATE CNA SDL3::SDL3 android log)
+    # (libmain.so) loaded by SDLActivity; SDL2 is linked statically.
+    target_link_libraries(${_game_target} PRIVATE CNA SDL2::SDL2 android log)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
     # cna names every backend target
     # cna_backend_graphics_<backend, lowercased> -- this used to be a
@@ -135,16 +135,16 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
     if(TARGET ${_cna_backend_target})
         target_link_libraries(${_game_target} PRIVATE
             -Wl,--start-group CNA CNA_GamerServices ${_cna_backend_target} -Wl,--end-group
-            SDL3::SDL3)
+            SDL2::SDL2)
     else()
-        target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL3::SDL3)
+        target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL2::SDL2)
     endif()
 else()
-    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL3::SDL3)
+    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL2::SDL2)
 endif()
 
-if(TARGET SDL3::SDL3main)
-    target_link_libraries(${_game_target} PRIVATE SDL3::SDL3main)
+if(TARGET SDL2::SDL2main)
+    target_link_libraries(${_game_target} PRIVATE SDL2::SDL2main)
 endif()
 
 if(ANDROID)

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -11,15 +11,16 @@
 */
 /* Simple program:  Move N sprites around on the screen as fast as possible */
 
-#include <SDL3/SDL_test_common.h>
-#include <SDL3/SDL_main.h>
-#include "testutils.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
-#include <stdlib.h>
+#include "SDL_test_common.h"
+#include "testutils.h"
 
 static SDLTest_CommonState *state;
 
@@ -29,36 +30,32 @@ typedef struct
     SDL_Renderer *renderer;
     SDL_Texture *background;
     SDL_Texture *sprite;
-    SDL_FRect sprite_rect;
+    SDL_Rect sprite_rect;
     int scale_direction;
 } DrawState;
 
-static DrawState *drawstates;
-static int done;
-static bool test_composite = false;
+DrawState *drawstates;
+int done;
+SDL_bool test_composite = SDL_FALSE;
 
 /* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
 static void
 quit(int rc)
 {
     SDLTest_CommonQuit(state);
-    /* Let 'main()' return normally */
-    if (rc != 0) {
-        exit(rc);
-    }
+    exit(rc);
 }
 
-static bool
+SDL_bool
 DrawComposite(DrawState *s)
 {
-    SDL_Rect viewport;
-    SDL_FRect R;
+    SDL_Rect viewport, R;
     SDL_Texture *target;
-    SDL_Surface *surface;
 
-    static bool blend_tested = false;
+    static SDL_bool blend_tested = SDL_FALSE;
     if (!blend_tested) {
         SDL_Texture *A, *B;
+        Uint32 P;
 
         A = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 1, 1);
         SDL_SetTextureBlendMode(A, SDL_BLENDMODE_BLEND);
@@ -73,23 +70,17 @@ DrawComposite(DrawState *s)
         SDL_SetRenderTarget(s->renderer, B);
         SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x00);
         SDL_RenderFillRect(s->renderer, NULL);
-        SDL_RenderTexture(s->renderer, A, NULL, NULL);
+        SDL_RenderCopy(s->renderer, A, NULL, NULL);
+        SDL_RenderReadPixels(s->renderer, NULL, SDL_PIXELFORMAT_ARGB8888, &P, sizeof(P));
 
-        surface = SDL_RenderReadPixels(s->renderer, NULL);
-        if (surface) {
-            Uint8 r, g, b, a;
-            if (SDL_ReadSurfacePixel(surface, 0, 0, &r, &g, &b, &a)) {
-                SDL_Log("Blended pixel: 0x%.2x%.2x%.2x%.2x", r, g, b, a);
-            }
-            SDL_DestroySurface(surface);
-        }
+        SDL_Log("Blended pixel: 0x%8.8" SDL_PRIX32 "\n", P);
 
         SDL_DestroyTexture(A);
         SDL_DestroyTexture(B);
-        blend_tested = true;
+        blend_tested = SDL_TRUE;
     }
 
-    SDL_GetRenderViewport(s->renderer, &viewport);
+    SDL_RenderGetViewport(s->renderer, &viewport);
 
     target = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, viewport.w, viewport.h);
     SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
@@ -116,45 +107,45 @@ DrawComposite(DrawState *s)
     s->sprite_rect.x = (viewport.w - s->sprite_rect.w) / 2;
     s->sprite_rect.y = (viewport.h - s->sprite_rect.h) / 2;
 
-    SDL_RenderTexture(s->renderer, s->sprite, NULL, &s->sprite_rect);
+    SDL_RenderCopy(s->renderer, s->sprite, NULL, &s->sprite_rect);
 
     SDL_SetRenderTarget(s->renderer, NULL);
-    SDL_RenderTexture(s->renderer, s->background, NULL, NULL);
+    SDL_RenderCopy(s->renderer, s->background, NULL, NULL);
 
     SDL_SetRenderDrawBlendMode(s->renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(s->renderer, 0xff, 0x00, 0x00, 0x80);
-    R.x = 0.0f;
-    R.y = 0.0f;
-    R.w = 100.0f;
-    R.h = 100.0f;
+    R.x = 0;
+    R.y = 0;
+    R.w = 100;
+    R.h = 100;
     SDL_RenderFillRect(s->renderer, &R);
     SDL_SetRenderDrawBlendMode(s->renderer, SDL_BLENDMODE_NONE);
 
-    SDL_RenderTexture(s->renderer, target, NULL, NULL);
+    SDL_RenderCopy(s->renderer, target, NULL, NULL);
     SDL_DestroyTexture(target);
 
     /* Update the screen! */
     SDL_RenderPresent(s->renderer);
-    return true;
+    return SDL_TRUE;
 }
 
-static bool
+SDL_bool
 Draw(DrawState *s)
 {
     SDL_Rect viewport;
     SDL_Texture *target;
 
-    SDL_GetRenderViewport(s->renderer, &viewport);
+    SDL_RenderGetViewport(s->renderer, &viewport);
 
     target = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, viewport.w, viewport.h);
     if (!target) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create render target texture: %s", SDL_GetError());
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create render target texture: %s\n", SDL_GetError());
+        return SDL_FALSE;
     }
     SDL_SetRenderTarget(s->renderer, target);
 
     /* Draw the background */
-    SDL_RenderTexture(s->renderer, s->background, NULL, NULL);
+    SDL_RenderCopy(s->renderer, s->background, NULL, NULL);
 
     /* Scale and draw the sprite */
     s->sprite_rect.w += s->scale_direction;
@@ -171,18 +162,18 @@ Draw(DrawState *s)
     s->sprite_rect.x = (viewport.w - s->sprite_rect.w) / 2;
     s->sprite_rect.y = (viewport.h - s->sprite_rect.h) / 2;
 
-    SDL_RenderTexture(s->renderer, s->sprite, NULL, &s->sprite_rect);
+    SDL_RenderCopy(s->renderer, s->sprite, NULL, &s->sprite_rect);
 
     SDL_SetRenderTarget(s->renderer, NULL);
-    SDL_RenderTexture(s->renderer, target, NULL, NULL);
+    SDL_RenderCopy(s->renderer, target, NULL, NULL);
     SDL_DestroyTexture(target);
 
     /* Update the screen! */
     SDL_RenderPresent(s->renderer);
-    return true;
+    return SDL_TRUE;
 }
 
-static void loop(void)
+void loop(void)
 {
     int i;
     SDL_Event event;
@@ -205,7 +196,7 @@ static void loop(void)
             }
         }
     }
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
     if (done) {
         emscripten_cancel_main_loop();
     }
@@ -216,14 +207,16 @@ int main(int argc, char *argv[])
 {
     int i;
     int frames;
-    Uint64 then, now;
+    Uint32 then, now;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     /* Initialize test framework */
     state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
     if (!state) {
         return 1;
     }
-
     for (i = 1; i < argc;) {
         int consumed;
 
@@ -231,7 +224,7 @@ int main(int argc, char *argv[])
         if (consumed == 0) {
             consumed = -1;
             if (SDL_strcasecmp(argv[i], "--composite") == 0) {
-                test_composite = true;
+                test_composite = SDL_TRUE;
                 consumed = 1;
             }
         }
@@ -252,17 +245,18 @@ int main(int argc, char *argv[])
 
         drawstate->window = state->windows[i];
         drawstate->renderer = state->renderers[i];
-        drawstate->sprite = LoadTexture(drawstate->renderer, "icon.png", true);
-        drawstate->background = LoadTexture(drawstate->renderer, "sample.png", false);
+        if (test_composite) {
+            drawstate->sprite = LoadTexture(drawstate->renderer, "icon-alpha.bmp", SDL_TRUE, NULL, NULL);
+        } else {
+            drawstate->sprite = LoadTexture(drawstate->renderer, "icon.bmp", SDL_TRUE, NULL, NULL);
+        }
+        drawstate->background = LoadTexture(drawstate->renderer, "sample.bmp", SDL_FALSE, NULL, NULL);
         if (!drawstate->sprite || !drawstate->background) {
             quit(2);
         }
-        SDL_GetTextureSize(drawstate->sprite, &drawstate->sprite_rect.w, &drawstate->sprite_rect.h);
+        SDL_QueryTexture(drawstate->sprite, NULL, NULL,
+                         &drawstate->sprite_rect.w, &drawstate->sprite_rect.h);
         drawstate->scale_direction = 1;
-
-        if (test_composite) {
-            SDL_SetTextureAlphaMod(drawstate->sprite, 0x80);
-        }
     }
 
     /* Main render loop */
@@ -270,7 +264,7 @@ int main(int argc, char *argv[])
     then = SDL_GetTicks();
     done = 0;
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(loop, 0, 1);
 #else
     while (!done) {
@@ -283,7 +277,7 @@ int main(int argc, char *argv[])
     now = SDL_GetTicks();
     if (now > then) {
         double fps = ((double)frames * 1000) / (now - then);
-        SDL_Log("%2.2f frames per second", fps);
+        SDL_Log("%2.2f frames per second\n", fps);
     }
 
     SDL_stack_free(drawstates);
@@ -291,3 +285,5 @@ int main(int argc, char *argv[])
     quit(0);
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

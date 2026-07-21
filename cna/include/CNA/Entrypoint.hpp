@@ -13,13 +13,13 @@
  * a no-op — it either provides an identity macro or is not included at all — so including
  * this header is safe and portable everywhere.
  *
- * Game code must include this header instead of \<SDL3/SDL_main.h\> directly so that the
+ * Game code must include this header instead of \<SDL2/SDL_main.h\> directly so that the
  * SDL dependency stays hidden behind the CNA platform layer.
  */
 
-#if defined(SDL_PLATFORM_ANDROID) || defined(__ANDROID__)
-#  include <SDL3/SDL_main.h>
+#if defined(__ANDROID__)
+#  include <SDL2/SDL_main.h>
 #elif defined(CNA_BACKEND_SDL) || defined(SDL_h_)
 // Non-Android SDL builds: include SDL_main.h for completeness; it is a no-op there.
-#  include <SDL3/SDL_main.h>
+#  include <SDL2/SDL_main.h>
 #endif

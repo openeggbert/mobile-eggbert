@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,28 +18,34 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
-#if defined(SDL_LOADSO_DUMMY)
+#if defined(SDL_LOADSO_DUMMY) || defined(SDL_LOADSO_DISABLED)
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-// System dependent library loading routines
+/* System dependent library loading routines                           */
 
-SDL_SharedObject *SDL_LoadObject(const char *sofile)
+#include "SDL_loadso.h"
+
+void *SDL_LoadObject(const char *sofile)
 {
-    SDL_Unsupported();
+    const char *loaderror = "SDL_LoadObject() not implemented";
+    SDL_SetError("Failed loading %s: %s", sofile, loaderror);
     return NULL;
 }
 
-SDL_FunctionPointer SDL_LoadFunction(SDL_SharedObject *handle, const char *name)
+void *SDL_LoadFunction(void *handle, const char *name)
 {
-    SDL_Unsupported();
+    const char *loaderror = "SDL_LoadFunction() not implemented";
+    SDL_SetError("Failed loading %s: %s", name, loaderror);
     return NULL;
 }
 
-void SDL_UnloadObject(SDL_SharedObject *handle)
+void SDL_UnloadObject(void *handle)
 {
-    // no-op.
+    /* no-op. */
 }
 
-#endif // SDL_LOADSO_DUMMY
+#endif /* SDL_LOADSO_DUMMY || SDL_LOADSO_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

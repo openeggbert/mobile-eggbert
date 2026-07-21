@@ -12,21 +12,21 @@ if(EMSCRIPTEN)
     set(_cna_sdl_prebuilt_default "${CMAKE_CURRENT_SOURCE_DIR}/.sdl-prebuilt-emscripten")
 else()
     # Keyed by target platform/arch so a cross-build (e.g. Windows via mingw-w64) cannot
-    # silently overwrite the native build's cached SDL3 install, and vice versa.
+    # silently overwrite the native build's cached SDL2 install, and vice versa.
     set(_cna_sdl_prebuilt_default "${CMAKE_CURRENT_SOURCE_DIR}/.sdl-prebuilt-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 set(CNA_SDL_PREBUILT_ROOT "${_cna_sdl_prebuilt_default}"
-    CACHE PATH "Persistent SDL3 install root (survives cmake --clean and build-tree deletion)")
+    CACHE PATH "Persistent SDL2 install root (survives cmake --clean and build-tree deletion)")
 
 function(cna_configure_vendored_sdl)
-    if(TARGET SDL3::SDL3 AND TARGET SDL3_image::SDL3_image AND TARGET SDL3_mixer::SDL3_mixer)
+    if(TARGET SDL2::SDL2 AND TARGET SDL2_image::SDL2_image AND TARGET SDL2_mixer::SDL2_mixer)
         return()
     endif()
 
     if(CNA_USE_SYSTEM_SDL)
-        find_package(SDL3       REQUIRED)
-        find_package(SDL3_image REQUIRED)
-        find_package(SDL3_mixer REQUIRED)
+        find_package(SDL2       REQUIRED)
+        find_package(SDL2_image REQUIRED)
+        find_package(SDL2_mixer REQUIRED)
         return()
     endif()
 
@@ -56,37 +56,38 @@ function(cna_configure_vendored_sdl)
 
     # Platform-specific shared-library filenames
     if(EMSCRIPTEN)
-        set(_sdl3_lib      "${_prefix}/lib/libSDL3.a")
-        set(_sdl_image_lib "${_prefix}/lib/libSDL3_image.a")
-        set(_sdl_mixer_lib "${_prefix}/lib/libSDL3_mixer.a")
+        set(_sdl2_lib      "${_prefix}/lib/libSDL2.a")
+        set(_sdl_image_lib "${_prefix}/lib/libSDL2_image.a")
+        set(_sdl_mixer_lib "${_prefix}/lib/libSDL2_mixer.a")
         set(_sdl_shared OFF)
         set(_sdl_static  ON)
     elseif(ANDROID)
-        set(_sdl3_lib      "${_prefix}/lib/libSDL3.so")
-        set(_sdl_image_lib "${_prefix}/lib/libSDL3_image.so")
-        set(_sdl_mixer_lib "${_prefix}/lib/libSDL3_mixer.so")
+        set(_sdl2_lib      "${_prefix}/lib/libSDL2.so")
+        set(_sdl_image_lib "${_prefix}/lib/libSDL2_image.so")
+        set(_sdl_mixer_lib "${_prefix}/lib/libSDL2_mixer.so")
         set(_sdl_shared ON)
         set(_sdl_static OFF)
     elseif(WIN32)
-        set(_sdl3_lib      "${_prefix}/bin/SDL3.dll")
-        set(_sdl3_implib   "${_prefix}/lib/SDL3.lib")
-        set(_sdl_image_lib "${_prefix}/bin/SDL3_image.dll")
-        set(_sdl_image_implib "${_prefix}/lib/SDL3_image.lib")
-        set(_sdl_mixer_lib "${_prefix}/bin/SDL3_mixer.dll")
-        set(_sdl_mixer_implib "${_prefix}/lib/SDL3_mixer.lib")
+        set(_sdl2_lib      "${_prefix}/bin/SDL2.dll")
+        set(_sdl2_implib   "${_prefix}/lib/SDL2.lib")
+        set(_sdl_image_lib "${_prefix}/bin/SDL2_image.dll")
+        set(_sdl_image_implib "${_prefix}/lib/SDL2_image.lib")
+        set(_sdl_mixer_lib "${_prefix}/bin/SDL2_mixer.dll")
+        set(_sdl_mixer_implib "${_prefix}/lib/SDL2_mixer.lib")
         set(_sdl_shared ON)
         set(_sdl_static OFF)
     elseif(APPLE)
-        set(_sdl3_lib      "${_prefix}/lib/libSDL3.dylib")
-        set(_sdl_image_lib "${_prefix}/lib/libSDL3_image.dylib")
-        set(_sdl_mixer_lib "${_prefix}/lib/libSDL3_mixer.dylib")
+        set(_sdl2_lib      "${_prefix}/lib/libSDL2-2.0.dylib")
+        set(_sdl_image_lib "${_prefix}/lib/libSDL2_image-2.0.dylib")
+        set(_sdl_mixer_lib "${_prefix}/lib/libSDL2_mixer-2.0.dylib")
         set(_sdl_shared ON)
         set(_sdl_static OFF)
     else()
-        # Linux / other Unix
-        set(_sdl3_lib      "${_prefix}/lib/libSDL3.so")
-        set(_sdl_image_lib "${_prefix}/lib/libSDL3_image.so")
-        set(_sdl_mixer_lib "${_prefix}/lib/libSDL3_mixer.so")
+        # Linux / other Unix -- SDL2's own CMakeLists names the shared object
+        # "libSDL2-2.0.so" (SOVERSION 0), not "libSDL2.so" like SDL3 did.
+        set(_sdl2_lib      "${_prefix}/lib/libSDL2-2.0.so")
+        set(_sdl_image_lib "${_prefix}/lib/libSDL2_image-2.0.so")
+        set(_sdl_mixer_lib "${_prefix}/lib/libSDL2_mixer-2.0.so")
         set(_sdl_shared ON)
         set(_sdl_static OFF)
     endif()
@@ -95,70 +96,66 @@ function(cna_configure_vendored_sdl)
     # This runs only when the library is absent (first configure, or after manual
     # deletion of CNA_SDL_PREBUILT_ROOT). cmake --build --clean-first never
     # re-runs cmake configure, so SDL is guaranteed to survive a clean build.
-    if(NOT EXISTS "${_sdl3_lib}")
+    if(NOT EXISTS "${_sdl2_lib}")
         _cna_build_sdl_dep(
-            NAME     SDL3
+            NAME     SDL2
             SOURCE   "${_tp}/SDL"
             BUILDDIR "${CNA_SDL_PREBUILT_ROOT}/SDL/build"
             CMAKE_ARGS
                 -DSDL_SHARED=${_sdl_shared}
                 -DSDL_STATIC=${_sdl_static}
-                -DSDL_TESTS=OFF
-                -DSDL_EXAMPLES=OFF
+                -DSDL_TEST=OFF
         )
     endif()
 
     if(NOT EXISTS "${_sdl_image_lib}")
         _cna_build_sdl_dep(
-            NAME     SDL3_image
+            NAME     SDL2_image
             SOURCE   "${_tp}/SDL_image"
             BUILDDIR "${CNA_SDL_PREBUILT_ROOT}/SDL_image/build"
             CMAKE_ARGS
                 "-DCMAKE_PREFIX_PATH=${_prefix}"
-                "-DSDL3_DIR=${_cmake_dir}/SDL3"
-                -DSDLIMAGE_INSTALL=ON
-                -DSDLIMAGE_VENDORED=ON
-                -DSDLIMAGE_TESTS=OFF
-                -DSDLIMAGE_SAMPLES=OFF
-                -DSDLIMAGE_AVIF=OFF
-                -DSDLIMAGE_JXL=OFF
-                -DSDLIMAGE_TIF=OFF
-                -DSDLIMAGE_WEBP=OFF
-                -DSDLIMAGE_PNG_LIBPNG=OFF
+                "-DSDL2_DIR=${_cmake_dir}/SDL2"
+                -DSDL2IMAGE_INSTALL=ON
+                -DSDL2IMAGE_VENDORED=ON
+                -DSDL2IMAGE_TESTS=OFF
+                -DSDL2IMAGE_SAMPLES=OFF
+                -DSDL2IMAGE_AVIF=OFF
+                -DSDL2IMAGE_JXL=OFF
+                -DSDL2IMAGE_TIF=OFF
+                -DSDL2IMAGE_WEBP=OFF
         )
     endif()
 
     if(NOT EXISTS "${_sdl_mixer_lib}")
         _cna_build_sdl_dep(
-            NAME     SDL3_mixer
+            NAME     SDL2_mixer
             SOURCE   "${_tp}/SDL_mixer"
             BUILDDIR "${CNA_SDL_PREBUILT_ROOT}/SDL_mixer/build"
             CMAKE_ARGS
                 "-DCMAKE_PREFIX_PATH=${_prefix}"
-                "-DSDL3_DIR=${_cmake_dir}/SDL3"
-                -DSDLMIXER_INSTALL=ON
-                -DSDLMIXER_VENDORED=ON
-                -DSDLMIXER_TESTS=OFF
-                -DSDLMIXER_EXAMPLES=OFF
-                -DSDLMIXER_GME=OFF
-                -DSDLMIXER_MOD_XMP=OFF
-                -DSDLMIXER_MP3_MPG123=OFF
-                -DSDLMIXER_MIDI_FLUIDSYNTH=OFF
-                -DSDLMIXER_OPUS=OFF
-                -DSDLMIXER_VORBIS_VORBISFILE=OFF
-                -DSDLMIXER_VORBIS_TREMOR=OFF
-                -DSDLMIXER_WAVPACK=OFF
-                -DSDLMIXER_FLAC_LIBFLAC=OFF
+                "-DSDL2_DIR=${_cmake_dir}/SDL2"
+                -DSDL2MIXER_INSTALL=ON
+                -DSDL2MIXER_VENDORED=ON
+                -DSDL2MIXER_SAMPLES=OFF
+                -DSDL2MIXER_GME=OFF
+                -DSDL2MIXER_MOD=OFF
+                -DSDL2MIXER_MP3_MPG123=OFF
+                -DSDL2MIXER_MIDI_FLUIDSYNTH=OFF
+                -DSDL2MIXER_OPUS=OFF
+                -DSDL2MIXER_VORBIS=STB
+                -DSDL2MIXER_WAVPACK=OFF
+                -DSDL2MIXER_FLAC_LIBFLAC=OFF
         )
     endif()
 
     # SDL is now installed — let find_package set up the targets properly.
-    set(SDL3_DIR       "${_cmake_dir}/SDL3"       CACHE PATH "" FORCE)
-    set(SDL3_image_DIR "${_cmake_dir}/SDL3_image"  CACHE PATH "" FORCE)
-    set(SDL3_mixer_DIR "${_cmake_dir}/SDL3_mixer"  CACHE PATH "" FORCE)
-    find_package(SDL3       REQUIRED CONFIG)
-    find_package(SDL3_image REQUIRED CONFIG)
-    find_package(SDL3_mixer REQUIRED CONFIG)
+    set(SDL2_DIR       "${_cmake_dir}/SDL2"       CACHE PATH "" FORCE)
+    set(SDL2_image_DIR "${_cmake_dir}/SDL2_image"  CACHE PATH "" FORCE)
+    set(SDL2_mixer_DIR "${_cmake_dir}/SDL2_mixer"  CACHE PATH "" FORCE)
+    find_package(SDL2       REQUIRED CONFIG)
+    find_package(SDL2_image REQUIRED CONFIG)
+    find_package(SDL2_mixer REQUIRED CONFIG)
 endfunction()
 
 # ---------------------------------------------------------------------------
@@ -278,7 +275,7 @@ function(cna_copy_sdl_runtime target_name)
     if(EMSCRIPTEN OR ANDROID OR NOT WIN32)
         return()
     endif()
-    foreach(_dep_target IN ITEMS SDL3::SDL3 SDL3_image::SDL3_image SDL3_mixer::SDL3_mixer)
+    foreach(_dep_target IN ITEMS SDL2::SDL2 SDL2_image::SDL2_image SDL2_mixer::SDL2_mixer)
         if(TARGET ${_dep_target})
             add_custom_command(TARGET ${target_name} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different

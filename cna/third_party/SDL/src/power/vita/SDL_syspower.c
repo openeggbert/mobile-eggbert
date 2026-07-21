@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,14 +19,15 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_POWER_DISABLED
 #ifdef SDL_POWER_VITA
 
+#include "SDL_power.h"
 #include <psp2/power.h>
 
-bool SDL_GetPowerInfo_VITA(SDL_PowerState *state, int *seconds, int *percent)
+SDL_bool SDL_GetPowerInfo_VITA(SDL_PowerState *state, int *seconds, int *percent)
 {
     int battery = 1;
     int plugged = scePowerIsPowerOnline();
@@ -54,8 +55,10 @@ bool SDL_GetPowerInfo_VITA(SDL_PowerState *state, int *seconds, int *percent)
         *seconds = scePowerGetBatteryLifeTime() * 60;
     }
 
-    return true; // always the definitive answer on VITA.
+    return SDL_TRUE; /* always the definitive answer on VITA. */
 }
 
-#endif // SDL_POWER_VITA
-#endif // SDL_POWER_DISABLED
+#endif /* SDL_POWER_VITA */
+#endif /* SDL_POWER_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

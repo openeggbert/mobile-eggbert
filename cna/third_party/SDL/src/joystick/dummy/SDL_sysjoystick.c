@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,18 +18,19 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #if defined(SDL_JOYSTICK_DUMMY) || defined(SDL_JOYSTICK_DISABLED)
 
-// This is the dummy implementation of the SDL joystick API
+/* This is the dummy implementation of the SDL joystick API */
 
+#include "SDL_joystick.h"
 #include "../SDL_sysjoystick.h"
 #include "../SDL_joystick_c.h"
 
-static bool DUMMY_JoystickInit(void)
+static int DUMMY_JoystickInit(void)
 {
-    return true;
+    return 0;
 }
 
 static int DUMMY_JoystickGetCount(void)
@@ -39,11 +40,6 @@ static int DUMMY_JoystickGetCount(void)
 
 static void DUMMY_JoystickDetect(void)
 {
-}
-
-static bool DUMMY_JoystickIsDevicePresent(Uint16 vendor_id, Uint16 product_id, Uint16 version, const char *name)
-{
-    return false;
 }
 
 static const char *DUMMY_JoystickGetDeviceName(int device_index)
@@ -70,44 +66,49 @@ static void DUMMY_JoystickSetDevicePlayerIndex(int device_index, int player_inde
 {
 }
 
-static SDL_GUID DUMMY_JoystickGetDeviceGUID(int device_index)
+static SDL_JoystickGUID DUMMY_JoystickGetDeviceGUID(int device_index)
 {
-    SDL_GUID guid;
+    SDL_JoystickGUID guid;
     SDL_zero(guid);
     return guid;
 }
 
 static SDL_JoystickID DUMMY_JoystickGetDeviceInstanceID(int device_index)
 {
-    return 0;
+    return -1;
 }
 
-static bool DUMMY_JoystickOpen(SDL_Joystick *joystick, int device_index)
+static int DUMMY_JoystickOpen(SDL_Joystick *joystick, int device_index)
 {
     return SDL_SetError("Logic error: No joysticks available");
 }
 
-static bool DUMMY_JoystickRumble(SDL_Joystick *joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
+static int DUMMY_JoystickRumble(SDL_Joystick *joystick, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble)
 {
     return SDL_Unsupported();
 }
 
-static bool DUMMY_JoystickRumbleTriggers(SDL_Joystick *joystick, Uint16 left_rumble, Uint16 right_rumble)
+static int DUMMY_JoystickRumbleTriggers(SDL_Joystick *joystick, Uint16 left_rumble, Uint16 right_rumble)
 {
     return SDL_Unsupported();
 }
 
-static bool DUMMY_JoystickSetLED(SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue)
+static Uint32 DUMMY_JoystickGetCapabilities(SDL_Joystick *joystick)
+{
+    return 0;
+}
+
+static int DUMMY_JoystickSetLED(SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue)
 {
     return SDL_Unsupported();
 }
 
-static bool DUMMY_JoystickSendEffect(SDL_Joystick *joystick, const void *data, int size)
+static int DUMMY_JoystickSendEffect(SDL_Joystick *joystick, const void *data, int size)
 {
     return SDL_Unsupported();
 }
 
-static bool DUMMY_JoystickSetSensorsEnabled(SDL_Joystick *joystick, bool enabled)
+static int DUMMY_JoystickSetSensorsEnabled(SDL_Joystick *joystick, SDL_bool enabled)
 {
     return SDL_Unsupported();
 }
@@ -124,16 +125,15 @@ static void DUMMY_JoystickQuit(void)
 {
 }
 
-static bool DUMMY_JoystickGetGamepadMapping(int device_index, SDL_GamepadMapping *out)
+static SDL_bool DUMMY_JoystickGetGamepadMapping(int device_index, SDL_GamepadMapping *out)
 {
-    return false;
+    return SDL_FALSE;
 }
 
 SDL_JoystickDriver SDL_DUMMY_JoystickDriver = {
     DUMMY_JoystickInit,
     DUMMY_JoystickGetCount,
     DUMMY_JoystickDetect,
-    DUMMY_JoystickIsDevicePresent,
     DUMMY_JoystickGetDeviceName,
     DUMMY_JoystickGetDevicePath,
     DUMMY_JoystickGetDeviceSteamVirtualGamepadSlot,
@@ -144,6 +144,7 @@ SDL_JoystickDriver SDL_DUMMY_JoystickDriver = {
     DUMMY_JoystickOpen,
     DUMMY_JoystickRumble,
     DUMMY_JoystickRumbleTriggers,
+    DUMMY_JoystickGetCapabilities,
     DUMMY_JoystickSetLED,
     DUMMY_JoystickSendEffect,
     DUMMY_JoystickSetSensorsEnabled,
@@ -153,4 +154,6 @@ SDL_JoystickDriver SDL_DUMMY_JoystickDriver = {
     DUMMY_JoystickGetGamepadMapping
 };
 
-#endif // SDL_JOYSTICK_DUMMY || SDL_JOYSTICK_DISABLED
+#endif /* SDL_JOYSTICK_DUMMY || SDL_JOYSTICK_DISABLED */
+
+/* vi: set ts=4 sw=4 expandtab: */

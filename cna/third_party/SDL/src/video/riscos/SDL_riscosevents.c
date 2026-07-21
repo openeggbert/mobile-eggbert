@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,12 +18,13 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_RISCOS
 
 #include "../../events/SDL_events_c.h"
 
+#include "SDL_log.h"
 #include "SDL_riscosvideo.h"
 #include "SDL_riscosevents_c.h"
 #include "scancodes_riscos.h"
@@ -48,32 +49,32 @@ static SDL_Scancode SDL_RISCOS_translate_keycode(int keycode)
     return scancode;
 }
 
-void RISCOS_PollKeyboard(SDL_VideoDevice *_this)
+void RISCOS_PollKeyboard(_THIS)
 {
-    SDL_VideoData *internal = _this->internal;
+    SDL_VideoData *driverdata = (SDL_VideoData *)_this->driverdata;
     Uint8 key = 2;
     int i;
 
-    // Check for key releases
+    /* Check for key releases */
     for (i = 0; i < RISCOS_MAX_KEYS_PRESSED; i++) {
-        if (internal->key_pressed[i] != 255) {
-            if ((_kernel_osbyte(129, internal->key_pressed[i] ^ 0xff, 0xff) & 0xff) != 255) {
-                SDL_SendKeyboardKey(0, SDL_DEFAULT_KEYBOARD_ID, internal->key_pressed[i], SDL_RISCOS_translate_keycode(internal->key_pressed[i]), false);
-                internal->key_pressed[i] = 255;
+        if (driverdata->key_pressed[i] != 255) {
+            if ((_kernel_osbyte(129, driverdata->key_pressed[i] ^ 0xff, 0xff) & 0xff) != 255) {
+                SDL_SendKeyboardKey(SDL_RELEASED, SDL_RISCOS_translate_keycode(driverdata->key_pressed[i]));
+                driverdata->key_pressed[i] = 255;
             }
         }
     }
 
-    // Check for key presses
+    /* Check for key presses */
     while (key < 0xff) {
         key = _kernel_osbyte(121, key + 1, 0) & 0xff;
         switch (key) {
         case 255:
-        // Ignore mouse keys
+        /* Ignore mouse keys */
         case 9:
         case 10:
         case 11:
-        // Ignore keys with multiple INKEY codes
+        /* Ignore keys with multiple INKEY codes */
         case 24:
         case 40:
         case 71:
@@ -81,15 +82,15 @@ void RISCOS_PollKeyboard(SDL_VideoDevice *_this)
             break;
 
         default:
-            SDL_SendKeyboardKey(0, SDL_DEFAULT_KEYBOARD_ID, key, SDL_RISCOS_translate_keycode(key), true);
+            SDL_SendKeyboardKey(SDL_PRESSED, SDL_RISCOS_translate_keycode(key));
 
-            // Record the press so we can detect release later.
+            /* Record the press so we can detect release later. */
             for (i = 0; i < RISCOS_MAX_KEYS_PRESSED; i++) {
-                if (internal->key_pressed[i] == key) {
+                if (driverdata->key_pressed[i] == key) {
                     break;
                 }
-                if (internal->key_pressed[i] == 255) {
-                    internal->key_pressed[i] = key;
+                if (driverdata->key_pressed[i] == 255) {
+                    driverdata->key_pressed[i] = key;
                     break;
                 }
             }
@@ -108,15 +109,15 @@ static const Uint8 mouse_button_map[] = {
     SDL_BUTTON_X2 + 3
 };
 
-void RISCOS_PollMouse(SDL_VideoDevice *_this)
+void RISCOS_PollMouse(_THIS)
 {
-    SDL_VideoData *internal = _this->internal;
+    SDL_VideoData *driverdata = (SDL_VideoData *)_this->driverdata;
     SDL_Mouse *mouse = SDL_GetMouse();
     SDL_Rect rect;
     _kernel_swi_regs regs;
     int i, x, y, buttons;
 
-    if (!SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &rect)) {
+    if (SDL_GetDisplayBounds(0, &rect) < 0) {
         return;
     }
 
@@ -126,52 +127,53 @@ void RISCOS_PollMouse(SDL_VideoDevice *_this)
     buttons = regs.r[2];
 
     if (mouse->x != x || mouse->y != y) {
-        SDL_SendMouseMotion(0, mouse->focus, SDL_DEFAULT_MOUSE_ID, false, (float)x, (float)y);
+        SDL_SendMouseMotion(mouse->focus, mouse->mouseID, 0, x, y);
     }
 
-    if (internal->last_mouse_buttons != buttons) {
+    if (driverdata->last_mouse_buttons != buttons) {
         for (i = 0; i < SDL_arraysize(mouse_button_map); i++) {
-            bool down = ((buttons & (1 << i)) != 0);
-            SDL_SendMouseButton(0, mouse->focus, SDL_DEFAULT_MOUSE_ID, mouse_button_map[i], down);
+            SDL_SendMouseButton(mouse->focus, mouse->mouseID, (buttons & (1 << i)) ? SDL_PRESSED : SDL_RELEASED, mouse_button_map[i]);
         }
-        internal->last_mouse_buttons = buttons;
+        driverdata->last_mouse_buttons = buttons;
     }
 }
 
-bool RISCOS_InitEvents(SDL_VideoDevice *_this)
+int RISCOS_InitEvents(_THIS)
 {
-    SDL_VideoData *internal = _this->internal;
+    SDL_VideoData *driverdata = (SDL_VideoData *)_this->driverdata;
     _kernel_swi_regs regs;
     int i, status;
 
     for (i = 0; i < RISCOS_MAX_KEYS_PRESSED; i++) {
-        internal->key_pressed[i] = 255;
+        driverdata->key_pressed[i] = 255;
     }
 
     status = (_kernel_osbyte(202, 0, 255) & 0xFF);
-    SDL_ToggleModState(SDL_KMOD_NUM, (status & (1 << 2)) ? false : true);
-    SDL_ToggleModState(SDL_KMOD_CAPS, (status & (1 << 4)) ? false : true);
-    SDL_ToggleModState(SDL_KMOD_SCROLL, (status & (1 << 1)) ? true : false);
+    SDL_ToggleModState(KMOD_NUM, (status & (1 << 2)) ? SDL_FALSE : SDL_TRUE);
+    SDL_ToggleModState(KMOD_CAPS, (status & (1 << 4)) ? SDL_FALSE : SDL_TRUE);
+    SDL_ToggleModState(KMOD_SCROLL, (status & (1 << 1)) ? SDL_TRUE : SDL_FALSE);
 
     _kernel_swi(OS_Mouse, &regs, &regs);
-    internal->last_mouse_buttons = regs.r[2];
+    driverdata->last_mouse_buttons = regs.r[2];
 
-    // Disable escape.
+    /* Disable escape. */
     _kernel_osbyte(229, 1, 0);
 
-    return true;
+    return 0;
 }
 
-void RISCOS_PumpEvents(SDL_VideoDevice *_this)
+void RISCOS_PumpEvents(_THIS)
 {
     RISCOS_PollMouse(_this);
     RISCOS_PollKeyboard(_this);
 }
 
-void RISCOS_QuitEvents(SDL_VideoDevice *_this)
+void RISCOS_QuitEvents(_THIS)
 {
-    // Re-enable escape.
+    /* Re-enable escape. */
     _kernel_osbyte(229, 0, 0);
 }
 
-#endif // SDL_VIDEO_DRIVER_RISCOS
+#endif /* SDL_VIDEO_DRIVER_RISCOS */
+
+/* vi: set ts=4 sw=4 expandtab: */

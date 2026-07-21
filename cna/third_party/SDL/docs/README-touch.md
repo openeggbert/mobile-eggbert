@@ -14,10 +14,10 @@ Works out of box.
 Windows:
 Unfortunately there is no windows support as of yet. Support for Windows 7 is planned, but we currently have no way to test. If you have a Windows 7 WM_TOUCH supported device, and are willing to help test please contact me at jim.tla+sdl_touch@gmail.com
 
-
+===========================================================================
 Events
 ===========================================================================
-SDL_EVENT_FINGER_DOWN:
+SDL_FINGERDOWN:
 Sent when a finger (or stylus) is placed on a touch device.
 Fields:
 * event.tfinger.touchId  - the Id of the touch device.
@@ -26,19 +26,20 @@ Fields:
 * event.tfinger.y        - the y coordinate of the touch (0..1)
 * event.tfinger.pressure - the pressure of the touch (0..1)
 
-SDL_EVENT_FINGER_MOTION:
+SDL_FINGERMOTION:
 Sent when a finger (or stylus) is moved on the touch device.
 Fields:
-Same as SDL_EVENT_FINGER_DOWN but with additional:
+Same as SDL_FINGERDOWN but with additional:
 * event.tfinger.dx       - change in x coordinate during this motion event.
 * event.tfinger.dy       - change in y coordinate during this motion event.
 
-SDL_EVENT_FINGER_UP:
+SDL_FINGERUP:
 Sent when a finger (or stylus) is lifted from the touch device.
 Fields:
-Same as SDL_EVENT_FINGER_DOWN.
+Same as SDL_FINGERDOWN.
 
 
+===========================================================================
 Functions
 ===========================================================================
 SDL provides the ability to access the underlying SDL_Finger structures.
@@ -46,12 +47,11 @@ These structures should _never_ be modified.
 
 The following functions are included from SDL_touch.h
 
-Devices are tracked by instance ID, of type SDL_TouchID.
+To get a SDL_TouchID call SDL_GetTouchDevice(int index).
+This returns a SDL_TouchID.
+IMPORTANT: If the touch has been removed, or there is no touch with the given index, SDL_GetTouchDevice() will return 0. Be sure to check for this!
 
-To get a list of available device SDL_TouchID values, call SDL_GetTouchDevices().
-This returns an array of device IDs, terminated by a zero ID. Optionally, you can
-get a count of IDs by passing a non-NULL int* to SDL_GetTouchDevices() if you'd
-rather not iterate the whole array to get this number.
+The number of touch devices can be queried with SDL_GetNumTouchDevices().
 
 A SDL_TouchID may be used to get pointers to SDL_Finger.
 
@@ -66,7 +66,7 @@ The most common reason to access SDL_Finger is to query the fingers outside the 
 
 To get a SDL_Finger, call SDL_GetTouchFinger(SDL_TouchID touchID, int index), where touchID is a SDL_TouchID, and index is the requested finger.
 This returns a SDL_Finger *, or NULL if the finger does not exist, or has been removed.
-A SDL_Finger is guaranteed to be persistent for the duration of a touch, but it will be de-allocated as soon as the finger is removed. This occurs when the SDL_EVENT_FINGER_UP event is _added_ to the event queue, and thus _before_ the SDL_EVENT_FINGER_UP event is polled.
+A SDL_Finger is guaranteed to be persistent for the duration of a touch, but it will be de-allocated as soon as the finger is removed. This occurs when the SDL_FINGERUP event is _added_ to the event queue, and thus _before_ the SDL_FINGERUP event is polled.
 As a result, be very careful to check for NULL return values.
 
 A SDL_Finger has the following fields:
@@ -75,6 +75,11 @@ A SDL_Finger has the following fields:
 * pressure:
 	The pressure of the touch.
 
+
+===========================================================================
+Notes
+===========================================================================
+For a complete example see test/testgesture.c
 
 Please direct questions/comments to:
    jim.tla+sdl_touch@gmail.com

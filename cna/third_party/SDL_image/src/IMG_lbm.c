@@ -1,6 +1,6 @@
 /*
   SDL_image:  An example image loading library for use with SDL
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -30,8 +30,8 @@
    Buffer overflow fix in RLE decompression by David Raulo in January 2008.
 */
 
-#include <SDL3/SDL_endian.h>
-#include <SDL3_image/SDL_image.h>
+#include "SDL_endian.h"
+#include "SDL_image.h"
 
 #ifdef LOAD_LBM
 
@@ -55,32 +55,30 @@ typedef struct
     Sint16  Hpage;      /* height of the screen in pixels */
 } BMHD;
 
-bool IMG_isLBM(SDL_IOStream *src )
+int IMG_isLBM( SDL_RWops *src )
 {
     Sint64 start;
-    bool is_LBM;
+    int   is_LBM;
     Uint8 magic[4+4+4];
 
-    if (!src) {
-        return false;
-    }
-
-    start = SDL_TellIO(src);
-    is_LBM = false;
-    if (SDL_ReadIO( src, magic, sizeof(magic) ) == sizeof(magic) )
+    if ( !src )
+        return 0;
+    start = SDL_RWtell(src);
+    is_LBM = 0;
+    if ( SDL_RWread( src, magic, sizeof(magic), 1 ) )
     {
         if ( !SDL_memcmp( magic, "FORM", 4 ) &&
             ( !SDL_memcmp( magic + 8, "PBM ", 4 ) ||
               !SDL_memcmp( magic + 8, "ILBM", 4 ) ) )
         {
-            is_LBM = true;
+            is_LBM = 1;
         }
     }
-    SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
-    return is_LBM;
+    SDL_RWseek(src, start, RW_SEEK_SET);
+    return( is_LBM );
 }
 
-SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
+SDL_Surface *IMG_LoadLBM_RW( SDL_RWops *src )
 {
     Sint64 start;
     SDL_Surface *Image;
@@ -98,19 +96,19 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
     MiniBuf = NULL;
 
     if ( !src ) {
-        /* The error message has been set in SDL_IOFromFile */
+        /* The error message has been set in SDL_RWFromFile */
         return NULL;
     }
-    start = SDL_TellIO(src);
+    start = SDL_RWtell(src);
 
-    if (SDL_ReadIO( src, id, 4 ) != 4 )
+    if ( !SDL_RWread( src, id, 4, 1 ) )
     {
         error="error reading IFF chunk";
         goto done;
     }
 
     /* Should be the size of the file minus 4+4 ( 'FORM'+size ) */
-    if (SDL_ReadIO( src, &size, 4 ) != 4 )
+    if ( !SDL_RWread( src, &size, 4, 1 ) )
     {
         error="error reading IFF chunk size";
         goto done;
@@ -124,7 +122,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
         goto done;
     }
 
-    if (SDL_ReadIO( src, id, 4 ) != 4 )
+    if ( !SDL_RWread( src, id, 4, 1 ) )
     {
         error="error reading IFF chunk";
         goto done;
@@ -148,13 +146,13 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
 
     while ( SDL_memcmp( id, "BODY", 4 ) != 0 )
     {
-        if (SDL_ReadIO( src, id, 4 ) != 4 )
+        if ( !SDL_RWread( src, id, 4, 1 ) )
         {
             error="error reading IFF chunk";
             goto done;
         }
 
-        if (SDL_ReadIO( src, &size, 4 ) != 4 )
+        if ( !SDL_RWread( src, &size, 4, 1 ) )
         {
             error="error reading IFF chunk size";
             goto done;
@@ -162,11 +160,11 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
 
         bytesloaded = 0;
 
-        size = SDL_Swap32BE( size );
+        size = SDL_SwapBE32( size );
 
         if ( !SDL_memcmp( id, "BMHD", 4 ) ) /* Bitmap header */
         {
-            if (SDL_ReadIO( src, &bmhd, sizeof( BMHD ) ) != sizeof( BMHD ) )
+            if ( !SDL_RWread( src, &bmhd, sizeof( BMHD ), 1 ) )
             {
                 error="error reading BMHD chunk";
                 goto done;
@@ -174,13 +172,13 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
 
             bytesloaded = sizeof( BMHD );
 
-            bmhd.w      = SDL_Swap16BE( bmhd.w );
-            bmhd.h      = SDL_Swap16BE( bmhd.h );
-            bmhd.x      = SDL_Swap16BE( bmhd.x );
-            bmhd.y      = SDL_Swap16BE( bmhd.y );
-            bmhd.tcolor = SDL_Swap16BE( bmhd.tcolor );
-            bmhd.Lpage  = SDL_Swap16BE( bmhd.Lpage );
-            bmhd.Hpage  = SDL_Swap16BE( bmhd.Hpage );
+            bmhd.w      = SDL_SwapBE16( bmhd.w );
+            bmhd.h      = SDL_SwapBE16( bmhd.h );
+            bmhd.x      = SDL_SwapBE16( bmhd.x );
+            bmhd.y      = SDL_SwapBE16( bmhd.y );
+            bmhd.tcolor = SDL_SwapBE16( bmhd.tcolor );
+            bmhd.Lpage  = SDL_SwapBE16( bmhd.Lpage );
+            bmhd.Hpage  = SDL_SwapBE16( bmhd.Hpage );
         }
 
         if ( !SDL_memcmp( id, "CMAP", 4 ) ) /* palette ( Color Map ) */
@@ -190,7 +188,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
                 goto done;
             }
 
-            if (SDL_ReadIO( src, colormap, size ) != size )
+            if ( !SDL_RWread( src, colormap, size, 1 ) )
             {
                 error="error reading CMAP chunk";
                 goto done;
@@ -203,14 +201,14 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
         if ( !SDL_memcmp( id, "CAMG", 4 ) ) /* Amiga ViewMode  */
         {
             Uint32 viewmodes;
-            if (SDL_ReadIO( src, &viewmodes, sizeof(viewmodes) ) != sizeof(viewmodes) )
+            if ( !SDL_RWread( src, &viewmodes, sizeof(viewmodes), 1 ) )
             {
                 error="error reading CAMG chunk";
                 goto done;
             }
 
             bytesloaded = size;
-            viewmodes = SDL_Swap32BE( viewmodes );
+            viewmodes = SDL_SwapBE32( viewmodes );
             if ( viewmodes & 0x0800 )
                 flagHAM = 1;
             if ( viewmodes & 0x0080 )
@@ -222,7 +220,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
             if ( size & 1 ) ++size;     /* padding ! */
             size -= bytesloaded;
             /* skip the remaining bytes of this chunk */
-            if ( size ) SDL_SeekIO( src, size, SDL_IO_SEEK_CUR );
+            if ( size ) SDL_RWseek( src, size, RW_SEEK_CUR );
         }
     }
 
@@ -233,13 +231,6 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
     bytesperline = ( ( bmhd.w + 15 ) / 16 ) * 2;
 
     nbplanes = bmhd.planes;
-
-    /* Sanity check: nbplanes must not exceed 8 for paletted images.
-       Higher values cause 1<<nbplanes to exceed the 256-entry palette. */
-    if ( !pbm && nbplanes > 8 && nbplanes != 24 && flagHAM == 0 ) {
-        SDL_SetError("LBM: invalid number of bitplanes (%u)", nbplanes);
-        goto done;
-    }
 
     if ( pbm )                         /* File format : 'Packed Bitmap' */
     {
@@ -268,13 +259,13 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
           format = SDL_PIXELFORMAT_BGR24;
 #endif
        }
-        if ((Image = SDL_CreateSurface(width, bmhd.h, format)) == NULL){
+        if ((Image = SDL_CreateRGBSurfaceWithFormat(0, width, bmhd.h, 0, format)) == NULL){
             goto done;
         }
     }
 
     if ( bmhd.mask & 2 )               /* There is a transparent color */
-        SDL_SetSurfaceColorKey( Image, true, bmhd.tcolor );
+        SDL_SetColorKey( Image, SDL_TRUE, bmhd.tcolor );
 
     /* Update palette information */
 
@@ -282,20 +273,14 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
     if ( nbcolors>0 && flagHAM==0 )
     {
         /* FIXME: Should this include the stencil? See comment below */
-        SDL_Palette *palette;
         int nbrcolorsfinal = 1 << (nbplanes + stencil);
         ptr = &colormap[0];
 
-        palette = SDL_CreateSurfacePalette(Image);
-        if (!palette) {
-            goto done;
-        }
-
         for ( i=0; i<nbcolors; i++ )
         {
-            palette->colors[i].r = *ptr++;
-            palette->colors[i].g = *ptr++;
-            palette->colors[i].b = *ptr++;
+            Image->format->palette->colors[i].r = *ptr++;
+            Image->format->palette->colors[i].g = *ptr++;
+            Image->format->palette->colors[i].b = *ptr++;
         }
 
         /* Amiga EHB mode (Extra-Half-Bright) */
@@ -309,9 +294,9 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
             ptr = &colormap[0];
             for ( i=32; i<64; i++ )
             {
-                palette->colors[i].r = (*ptr++)/2;
-                palette->colors[i].g = (*ptr++)/2;
-                palette->colors[i].b = (*ptr++)/2;
+                Image->format->palette->colors[i].r = (*ptr++)/2;
+                Image->format->palette->colors[i].g = (*ptr++)/2;
+                Image->format->palette->colors[i].b = (*ptr++)/2;
             }
         }
 
@@ -322,12 +307,12 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
         }
         for ( i=nbcolors; i < (Uint32)nbrcolorsfinal; i++ )
         {
-            palette->colors[i].r = palette->colors[i%nbcolors].r;
-            palette->colors[i].g = palette->colors[i%nbcolors].g;
-            palette->colors[i].b = palette->colors[i%nbcolors].b;
+            Image->format->palette->colors[i].r = Image->format->palette->colors[i%nbcolors].r;
+            Image->format->palette->colors[i].g = Image->format->palette->colors[i%nbcolors].g;
+            Image->format->palette->colors[i].b = Image->format->palette->colors[i%nbcolors].b;
         }
         if ( !pbm )
-            palette->ncolors = nbrcolorsfinal;
+            Image->format->palette->ncolors = nbrcolorsfinal;
     }
 
     /* Get the bitmap */
@@ -346,7 +331,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
             {
                 do
                 {
-                    if (SDL_ReadIO( src, &count, 1 ) != 1 )
+                    if ( !SDL_RWread( src, &count, 1, 1 ) )
                     {
                         error="error reading BODY chunk";
                         goto done;
@@ -357,7 +342,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
                         count ^= 0xFF;
                         count += 2; /* now it */
 
-                        if ( ( count > remainingbytes ) || SDL_ReadIO( src, &color, 1 ) != 1 )
+                        if ( ( count > remainingbytes ) || !SDL_RWread( src, &color, 1, 1 ) )
                         {
                             error="error reading BODY chunk";
                             goto done;
@@ -368,7 +353,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
                     {
                         ++count;
 
-                        if ( ( count > remainingbytes ) || SDL_ReadIO( src, ptr, count ) != count )
+                        if ( ( count > remainingbytes ) || !SDL_RWread( src, ptr, count, 1 ) )
                         {
                            error="error reading BODY chunk";
                             goto done;
@@ -382,7 +367,7 @@ SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src )
             }
             else
             {
-                if (SDL_ReadIO( src, ptr, bytesperline ) != bytesperline )
+                if ( !SDL_RWread( src, ptr, bytesperline, 1 ) )
                 {
                     error="error reading BODY chunk";
                     goto done;
@@ -498,30 +483,32 @@ done:
 
     if ( error )
     {
-        SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
+        SDL_RWseek(src, start, RW_SEEK_SET);
         if ( Image ) {
-            SDL_DestroySurface( Image );
+            SDL_FreeSurface( Image );
             Image = NULL;
         }
-        SDL_SetError( "%s", error );
+        IMG_SetError( "%s", error );
     }
 
-    return Image;
+    return( Image );
 }
 
 #else /* LOAD_LBM */
+#if _MSC_VER >= 1300
+#pragma warning(disable : 4100) /* warning C4100: 'op' : unreferenced formal parameter */
+#endif
 
 /* See if an image is contained in a data source */
-bool IMG_isLBM(SDL_IOStream *src)
+int IMG_isLBM(SDL_RWops *src)
 {
-    return false;
+    return(0);
 }
 
 /* Load an IFF type image from an SDL datasource */
-SDL_Surface *IMG_LoadLBM_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadLBM_RW(SDL_RWops *src)
 {
-    SDL_SetError("SDL_image built without LBM support");
-    return NULL;
+    return(NULL);
 }
 
 #endif /* LOAD_LBM */

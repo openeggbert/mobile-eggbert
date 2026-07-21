@@ -1,6 +1,6 @@
 /*
   SDL_image:  An example image loading library for use with SDL
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,62 +21,72 @@
 
 /* This is a generic "format not supported" image framework */
 
-#include <SDL3_image/SDL_image.h>
+#include "SDL_image.h"
 
 #ifdef LOAD_XXX
 
 /* See if an image is contained in a data source */
-/* Remember to declare this procedure in IMG.h . */
-bool IMG_isXXX(SDL_IOStream *src)
+int IMG_isXXX(SDL_RWops *src)
 {
     int start;
-    bool is_XXX;
+    int is_XXX;
 
     if (!src) {
-        return false;
+        return 0;
     }
 
-    start = SDL_TellIO(src);
-    is_XXX = false;
+    start = SDL_RWtell(src);
+    is_XXX = 0;
 
     /* Detect the image here */
 
-    SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
+    SDL_RWseek(src, start, RW_SEEK_SET);
     return is_XXX;
 }
 
 /* Load an XXX type image from an SDL datasource */
-/* Remember to declare this procedure in IMG.h . */
-SDL_Surface *IMG_LoadXXX_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadXXX_RW(SDL_RWops *src)
 {
-    Sint64 start;
+    int start;
+    const char *error = NULL;
     SDL_Surface *surface = NULL;
 
     if (!src) {
-        SDL_InvalidParamError("src");
+        /* The error message has been set in SDL_RWFromFile */
         return NULL;
     }
 
-    start = SDL_TellIO(src);
+    start = SDL_RWtell(src);
 
     /* Load the image here */
 
-    if (!surface) {
-        SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
+    if (error) {
+        SDL_RWseek(src, start, RW_SEEK_SET);
+        if (surface) {
+            SDL_FreeSurface(surface);
+            surface = NULL;
+        }
+        IMG_SetError("%s", error);
     }
+
     return surface;
 }
 
 #else
 
-bool IMG_isXXX(SDL_IOStream *src)
+#if _MSC_VER >= 1300
+#pragma warning(disable : 4100) /* warning C4100: 'op' : unreferenced formal parameter */
+#endif
+
+int IMG_isXXX(SDL_RWops *src)
 {
-    return false;
+    (void) src;
+    return 0;
 }
 
-SDL_Surface *IMG_LoadXXX_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadXXX_RW(SDL_RWops *src)
 {
-    SDL_SetError("SDL_image built without XXX support");
+    (void) src;
     return NULL;
 }
 

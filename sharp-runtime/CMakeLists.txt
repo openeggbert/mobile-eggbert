@@ -20,7 +20,7 @@ add_library(SHARP_RUNTIME STATIC
 target_include_directories(SHARP_RUNTIME PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # On Android, StoragePaths.cpp uses SDL_GetPrefPath / SDL_GetAndroidInternalStoragePath
-# which require SDL3 headers and library.  SDL3 is provided by the parent project
+# which require SDL2 headers and library.  SDL2 is provided by the parent project
 # (CNA) via cna_configure_vendored_sdl() before this subdirectory is added.
 
 if(MSVC)
@@ -33,10 +33,10 @@ if(WIN32)
     target_link_libraries(SHARP_RUNTIME PRIVATE ws2_32)
 endif()
 
-if(ANDROID AND TARGET SDL3::SDL3)
-    target_link_libraries(SHARP_RUNTIME PRIVATE SDL3::SDL3)
-elseif(ANDROID AND TARGET SDL3::SDL3-static)
-    target_link_libraries(SHARP_RUNTIME PRIVATE SDL3::SDL3-static)
+if(ANDROID AND TARGET SDL2::SDL2)
+    target_link_libraries(SHARP_RUNTIME PRIVATE SDL2::SDL2)
+elseif(ANDROID AND TARGET SDL2::SDL2-static)
+    target_link_libraries(SHARP_RUNTIME PRIVATE SDL2::SDL2-static)
 endif()
 
 if(SHARP_RUNTIME_BUILD_TESTS)

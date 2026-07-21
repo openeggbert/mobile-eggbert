@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,15 +18,17 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #include "../../core/windows/SDL_windows.h"
 
-typedef SDL_Mutex *(*pfnSDL_CreateMutex)(void);
-typedef void (*pfnSDL_LockMutex)(SDL_Mutex *);
-typedef bool (*pfnSDL_TryLockMutex)(SDL_Mutex *);
-typedef void (*pfnSDL_UnlockMutex)(SDL_Mutex *);
-typedef void (*pfnSDL_DestroyMutex)(SDL_Mutex *);
+#include "SDL_mutex.h"
+
+typedef SDL_mutex * (*pfnSDL_CreateMutex)(void);
+typedef int (*pfnSDL_LockMutex)(SDL_mutex *);
+typedef int (*pfnSDL_TryLockMutex)(SDL_mutex *);
+typedef int (*pfnSDL_UnlockMutex)(SDL_mutex *);
+typedef void (*pfnSDL_DestroyMutex)(SDL_mutex *);
 
 typedef enum
 {
@@ -42,7 +44,7 @@ typedef struct SDL_mutex_impl_t
     pfnSDL_LockMutex Lock;
     pfnSDL_TryLockMutex TryLock;
     pfnSDL_UnlockMutex Unlock;
-    // Needed by SDL_Condition:
+    /* Needed by SDL_cond: */
     SDL_MutexType Type;
 } SDL_mutex_impl_t;
 
@@ -62,7 +64,7 @@ typedef struct _SRWLOCK
 typedef struct SDL_mutex_srw
 {
     SRWLOCK srw;
-    // SRW Locks are not recursive, that has to be handled by SDL:
+    /* SRW Locks are not recursive, that has to be handled by SDL: */
     DWORD count;
     DWORD owner;
 } SDL_mutex_srw;
@@ -71,3 +73,5 @@ typedef struct SDL_mutex_cs
 {
     CRITICAL_SECTION cs;
 } SDL_mutex_cs;
+
+/* vi: set ts=4 sw=4 expandtab: */

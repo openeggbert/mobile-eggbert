@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,57 +18,180 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_UIKIT
 
+#include "SDL_system.h"
 #include "SDL_uikitmodes.h"
 
 #include "../../events/SDL_events_c.h"
 
 #import <sys/utsname.h>
 
-@implementation SDL_UIKitDisplayData
+@implementation SDL_DisplayData
 
-#ifndef SDL_PLATFORM_VISIONOS
-- (instancetype)initWithScreen:(UIScreen *)screen
+- (instancetype)initWithScreen:(UIScreen*)screen
 {
     if (self = [super init]) {
+        NSDictionary* devices;
+        struct utsname systemInfo;
+        NSString* deviceName;
+        id foundDPI;
         self.uiscreen = screen;
+
+        /*
+         * A well up to date list of device info can be found here:
+         * https://github.com/lmirosevic/GBDeviceInfo/blob/master/GBDeviceInfo/GBDeviceInfo_iOS.m
+         */
+        devices = @{
+            @"iPhone1,1": @163,
+            @"iPhone1,2": @163,
+            @"iPhone2,1": @163,
+            @"iPhone3,1": @326,
+            @"iPhone3,2": @326,
+            @"iPhone3,3": @326,
+            @"iPhone4,1": @326,
+            @"iPhone5,1": @326,
+            @"iPhone5,2": @326,
+            @"iPhone5,3": @326,
+            @"iPhone5,4": @326,
+            @"iPhone6,1": @326,
+            @"iPhone6,2": @326,
+            @"iPhone7,1": @401,
+            @"iPhone7,2": @326,
+            @"iPhone8,1": @326,
+            @"iPhone8,2": @401,
+            @"iPhone8,4": @326,
+            @"iPhone9,1": @326,
+            @"iPhone9,2": @401,
+            @"iPhone9,3": @326,
+            @"iPhone9,4": @401,
+            @"iPhone10,1": @326,
+            @"iPhone10,2": @401,
+            @"iPhone10,3": @458,
+            @"iPhone10,4": @326,
+            @"iPhone10,5": @401,
+            @"iPhone10,6": @458,
+            @"iPhone11,2": @458,
+            @"iPhone11,4": @458,
+            @"iPhone11,6": @458,
+            @"iPhone11,8": @326,
+            @"iPhone12,1": @326,
+            @"iPhone12,3": @458,
+            @"iPhone12,5": @458,
+            @"iPad1,1": @132,
+            @"iPad2,1": @132,
+            @"iPad2,2": @132,
+            @"iPad2,3": @132,
+            @"iPad2,4": @132,
+            @"iPad2,5": @163,
+            @"iPad2,6": @163,
+            @"iPad2,7": @163,
+            @"iPad3,1": @264,
+            @"iPad3,2": @264,
+            @"iPad3,3": @264,
+            @"iPad3,4": @264,
+            @"iPad3,5": @264,
+            @"iPad3,6": @264,
+            @"iPad4,1": @264,
+            @"iPad4,2": @264,
+            @"iPad4,3": @264,
+            @"iPad4,4": @326,
+            @"iPad4,5": @326,
+            @"iPad4,6": @326,
+            @"iPad4,7": @326,
+            @"iPad4,8": @326,
+            @"iPad4,9": @326,
+            @"iPad5,1": @326,
+            @"iPad5,2": @326,
+            @"iPad5,3": @264,
+            @"iPad5,4": @264,
+            @"iPad6,3": @264,
+            @"iPad6,4": @264,
+            @"iPad6,7": @264,
+            @"iPad6,8": @264,
+            @"iPad6,11": @264,
+            @"iPad6,12": @264,
+            @"iPad7,1": @264,
+            @"iPad7,2": @264,
+            @"iPad7,3": @264,
+            @"iPad7,4": @264,
+            @"iPad7,5": @264,
+            @"iPad7,6": @264,
+            @"iPad7,11": @264,
+            @"iPad7,12": @264,
+            @"iPad8,1": @264,
+            @"iPad8,2": @264,
+            @"iPad8,3": @264,
+            @"iPad8,4": @264,
+            @"iPad8,5": @264,
+            @"iPad8,6": @264,
+            @"iPad8,7": @264,
+            @"iPad8,8": @264,
+            @"iPad11,1": @326,
+            @"iPad11,2": @326,
+            @"iPad11,3": @326,
+            @"iPad11,4": @326,
+            @"iPod1,1": @163,
+            @"iPod2,1": @163,
+            @"iPod3,1": @163,
+            @"iPod4,1": @326,
+            @"iPod5,1": @326,
+            @"iPod7,1": @326,
+            @"iPod9,1": @326,
+        };
+
+        uname(&systemInfo);
+        deviceName =
+            [NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding];
+        foundDPI = devices[deviceName];
+        if (foundDPI) {
+            self.screenDPI = (float)[foundDPI integerValue];
+        } else {
+            /*
+             * Estimate the DPI based on the screen scale multiplied by the base DPI for the device
+             * type (e.g. based on iPhone 1 and iPad 1)
+             */
+            float scale = (float)screen.nativeScale;
+            float defaultDPI;
+            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+                defaultDPI = 132.0f;
+            } else if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+                defaultDPI = 163.0f;
+            } else {
+                defaultDPI = 160.0f;
+            }
+            self.screenDPI = scale * defaultDPI;
+        }
     }
     return self;
 }
+
 @synthesize uiscreen;
-#endif
+@synthesize screenDPI;
 
 @end
 
-@implementation SDL_UIKitDisplayModeData
+@implementation SDL_DisplayModeData
 
-#ifndef SDL_PLATFORM_VISIONOS
 @synthesize uiscreenmode;
-#endif
 
 @end
 
 @interface SDL_DisplayWatch : NSObject
 @end
 
-#ifndef SDL_PLATFORM_VISIONOS
 @implementation SDL_DisplayWatch
 
 + (void)start
 {
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 
-    [center addObserver:self
-               selector:@selector(screenConnected:)
-                   name:UIScreenDidConnectNotification
-                 object:nil];
-    [center addObserver:self
-               selector:@selector(screenDisconnected:)
-                   name:UIScreenDidDisconnectNotification
-                 object:nil];
+    [center addObserver:self selector:@selector(screenConnected:)
+            name:UIScreenDidConnectNotification object:nil];
+    [center addObserver:self selector:@selector(screenDisconnected:)
+            name:UIScreenDidDisconnectNotification object:nil];
 }
 
 + (void)stop
@@ -76,37 +199,32 @@
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 
     [center removeObserver:self
-                      name:UIScreenDidConnectNotification
-                    object:nil];
+            name:UIScreenDidConnectNotification object:nil];
     [center removeObserver:self
-                      name:UIScreenDidDisconnectNotification
-                    object:nil];
+            name:UIScreenDidDisconnectNotification object:nil];
 }
 
-+ (void)screenConnected:(NSNotification *)notification
++ (void)screenConnected:(NSNotification*)notification
 {
     UIScreen *uiscreen = [notification object];
-    UIKit_AddDisplay(uiscreen, true);
+    UIKit_AddDisplay(uiscreen, SDL_TRUE);
 }
 
-+ (void)screenDisconnected:(NSNotification *)notification
++ (void)screenDisconnected:(NSNotification*)notification
 {
     UIScreen *uiscreen = [notification object];
-    UIKit_DelDisplay(uiscreen, true);
+    UIKit_DelDisplay(uiscreen);
 }
 
 @end
-#endif
 
-#ifndef SDL_PLATFORM_VISIONOS
-static bool UIKit_AllocateDisplayModeData(SDL_DisplayMode *mode,
-                                         UIScreenMode *uiscreenmode)
+static int UIKit_AllocateDisplayModeData(SDL_DisplayMode * mode, UIScreenMode * uiscreenmode)
 {
-    SDL_UIKitDisplayModeData *data = nil;
+    SDL_DisplayModeData *data = nil;
 
     if (uiscreenmode != nil) {
-        // Allocate the display mode data
-        data = [[SDL_UIKitDisplayModeData alloc] init];
+        /* Allocate the display mode data */
+        data = [[SDL_DisplayModeData alloc] init];
         if (!data) {
             return SDL_OutOfMemory();
         }
@@ -114,282 +232,188 @@ static bool UIKit_AllocateDisplayModeData(SDL_DisplayMode *mode,
         data.uiscreenmode = uiscreenmode;
     }
 
-    mode->internal = (void *)CFBridgingRetain(data);
+    mode->driverdata = (void *) CFBridgingRetain(data);
 
-    return true;
+    return 0;
 }
-#endif
 
-static void UIKit_FreeDisplayModeData(SDL_DisplayMode *mode)
+static void UIKit_FreeDisplayModeData(SDL_DisplayMode * mode)
 {
-    if (mode->internal != NULL) {
-        CFRelease(mode->internal);
-        mode->internal = NULL;
+    if (mode->driverdata != NULL) {
+        CFRelease(mode->driverdata);
+        mode->driverdata = NULL;
     }
 }
 
-#ifndef SDL_PLATFORM_VISIONOS
-static float UIKit_GetDisplayModeRefreshRate(UIScreen *uiscreen)
+static NSUInteger UIKit_GetDisplayModeRefreshRate(UIScreen *uiscreen)
 {
-    return (float)uiscreen.maximumFramesPerSecond;
+#ifdef __IPHONE_10_3
+    if ([uiscreen respondsToSelector:@selector(maximumFramesPerSecond)]) {
+        return uiscreen.maximumFramesPerSecond;
+    }
+#endif
+    return 0;
 }
 
-static bool UIKit_AddSingleDisplayMode(SDL_VideoDisplay *display, int w, int h,
-                                      UIScreen *uiscreen, UIScreenMode *uiscreenmode)
+static int UIKit_AddSingleDisplayMode(SDL_VideoDisplay * display, int w, int h, UIScreen * uiscreen, UIScreenMode * uiscreenmode)
 {
     SDL_DisplayMode mode;
-
     SDL_zero(mode);
-    if (!UIKit_AllocateDisplayModeData(&mode, uiscreenmode)) {
-        return false;
+
+    if (UIKit_AllocateDisplayModeData(&mode, uiscreenmode) < 0) {
+        return -1;
     }
 
+    mode.format = SDL_PIXELFORMAT_ABGR8888;
+    mode.refresh_rate = (int) UIKit_GetDisplayModeRefreshRate(uiscreen);
     mode.w = w;
     mode.h = h;
-    mode.pixel_density = uiscreen.nativeScale;
-    mode.refresh_rate = UIKit_GetDisplayModeRefreshRate(uiscreen);
-    mode.format = SDL_PIXELFORMAT_ABGR8888;
 
-    if (SDL_AddFullscreenDisplayMode(display, &mode)) {
-        return true;
+    if (SDL_AddDisplayMode(display, &mode)) {
+        return 0;
     } else {
         UIKit_FreeDisplayModeData(&mode);
-        return false;
+        return -1;
     }
 }
 
-static bool UIKit_AddDisplayMode(SDL_VideoDisplay *display, int w, int h,
-                                UIScreen *uiscreen, UIScreenMode *uiscreenmode, bool addRotation)
+static int UIKit_AddDisplayMode(SDL_VideoDisplay * display, int w, int h, UIScreen * uiscreen, UIScreenMode * uiscreenmode, SDL_bool addRotation)
 {
-    if (!UIKit_AddSingleDisplayMode(display, w, h, uiscreen, uiscreenmode)) {
-        return false;
+    if (UIKit_AddSingleDisplayMode(display, w, h, uiscreen, uiscreenmode) < 0) {
+        return -1;
     }
 
     if (addRotation) {
-        // Add the rotated version
-        if (!UIKit_AddSingleDisplayMode(display, h, w, uiscreen, uiscreenmode)) {
-            return false;
+        /* Add the rotated version */
+        if (UIKit_AddSingleDisplayMode(display, h, w, uiscreen, uiscreenmode) < 0) {
+            return -1;
         }
     }
 
-    return true;
+    return 0;
 }
 
-static CGSize GetUIScreenModeSize(UIScreen *uiscreen, UIScreenMode *mode)
-{
-    /* For devices such as iPhone 6/7/8 Plus, the UIScreenMode reported by iOS
-     * isn't the physical pixels of the display, but rather the point size times
-     * the scale. For example, on iOS 12.2 on iPhone 8 Plus the physical pixel
-     * resolution is 1080x1920, the size reported by mode.size is 1242x2208,
-     * the size in points is 414x736, the scale property is 3.0, and the
-     * nativeScale property is ~2.6087 (ie 1920.0 / 736.0).
-     *
-     * What we want for the mode size is the point size, and the pixel density
-     * is the native scale.
-     *
-     * Note that the iOS Simulator doesn't have this behavior for those devices.
-     * https://github.com/libsdl-org/SDL/issues/3220
-     */
-    CGSize size = mode.size;
-
-    size.width = SDL_round(size.width / uiscreen.scale);
-    size.height = SDL_round(size.height / uiscreen.scale);
-
-    return size;
-}
-
-bool UIKit_AddDisplay(UIScreen *uiscreen, bool send_event)
+int UIKit_AddDisplay(UIScreen *uiscreen, SDL_bool send_event)
 {
     UIScreenMode *uiscreenmode = uiscreen.currentMode;
-    CGSize size = GetUIScreenModeSize(uiscreen, uiscreenmode);
+    CGSize size = uiscreen.bounds.size;
     SDL_VideoDisplay display;
     SDL_DisplayMode mode;
+    SDL_DisplayData *data;
+    SDL_zero(mode);
 
-    // Make sure the width/height are oriented correctly
+    /* Make sure the width/height are oriented correctly */
     if (UIKit_IsDisplayLandscape(uiscreen) != (size.width > size.height)) {
         CGFloat height = size.width;
         size.width = size.height;
         size.height = height;
     }
 
-    SDL_zero(mode);
-    mode.w = (int)size.width;
-    mode.h = (int)size.height;
-    mode.pixel_density = uiscreen.nativeScale;
     mode.format = SDL_PIXELFORMAT_ABGR8888;
-    mode.refresh_rate = UIKit_GetDisplayModeRefreshRate(uiscreen);
+    mode.refresh_rate = (int) UIKit_GetDisplayModeRefreshRate(uiscreen);
+    mode.w = (int) size.width;
+    mode.h = (int) size.height;
 
-    if (!UIKit_AllocateDisplayModeData(&mode, uiscreenmode)) {
-        return false;
+    if (UIKit_AllocateDisplayModeData(&mode, uiscreenmode) < 0) {
+        return -1;
     }
 
     SDL_zero(display);
-#ifndef SDL_PLATFORM_TVOS
-    if (uiscreen == [UIScreen mainScreen]) {
-        // The natural orientation (used by sensors) is portrait
-        display.natural_orientation = SDL_ORIENTATION_PORTRAIT;
-    } else
-#endif
-    if (UIKit_IsDisplayLandscape(uiscreen)) {
-        display.natural_orientation = SDL_ORIENTATION_LANDSCAPE;
-    } else {
-        display.natural_orientation = SDL_ORIENTATION_PORTRAIT;
-    }
     display.desktop_mode = mode;
+    display.current_mode = mode;
 
-    display.HDR.SDR_white_level = 1.0f;
-    display.HDR.HDR_headroom = 1.0f;
-
-#ifndef SDL_PLATFORM_TVOS
-    if (@available(iOS 16.0, *)) {
-        if (uiscreen.currentEDRHeadroom > 1.0f) {
-            display.HDR.HDR_headroom = uiscreen.currentEDRHeadroom;
-        } else {
-            display.HDR.HDR_headroom = uiscreen.potentialEDRHeadroom;
-        }
-    }
-#endif // !SDL_PLATFORM_TVOS
-
-    // Allocate the display data
-#ifdef SDL_PLATFORM_VISIONOS
-    SDL_UIKitDisplayData *data = [[SDL_UIKitDisplayData alloc] init];
-#else
-    SDL_UIKitDisplayData *data = [[SDL_UIKitDisplayData alloc] initWithScreen:uiscreen];
-#endif
+    /* Allocate the display data */
+    data = [[SDL_DisplayData alloc] initWithScreen:uiscreen];
     if (!data) {
         UIKit_FreeDisplayModeData(&display.desktop_mode);
         return SDL_OutOfMemory();
     }
 
-    display.internal = (SDL_DisplayData *)CFBridgingRetain(data);
-    if (SDL_AddVideoDisplay(&display, send_event) == 0) {
-        return false;
-    }
-    return true;
+    display.driverdata = (void *) CFBridgingRetain(data);
+    SDL_AddVideoDisplay(&display, send_event);
+
+    return 0;
 }
-#endif
 
-#ifdef SDL_PLATFORM_VISIONOS
-bool UIKit_AddDisplay(bool send_event)
+void UIKit_DelDisplay(UIScreen *uiscreen)
 {
-    CGSize size = CGSizeMake(SDL_XR_SCREENWIDTH, SDL_XR_SCREENHEIGHT);
-    SDL_VideoDisplay display;
-    SDL_DisplayMode mode;
-
-    SDL_zero(mode);
-    mode.w = (int)size.width;
-    mode.h = (int)size.height;
-    mode.pixel_density = 2;
-    mode.format = SDL_PIXELFORMAT_ABGR8888;
-    mode.refresh_rate = 90.0f;
-
-    display.natural_orientation = SDL_ORIENTATION_LANDSCAPE;
-
-    display.desktop_mode = mode;
-
-    SDL_UIKitDisplayData *data = [[SDL_UIKitDisplayData alloc] init];
-
-    if (!data) {
-        UIKit_FreeDisplayModeData(&display.desktop_mode);
-        return SDL_OutOfMemory();
-    }
-
-    display.internal = (SDL_DisplayData *)CFBridgingRetain(data);
-    if (SDL_AddVideoDisplay(&display, send_event) == 0) {
-        return false;
-    }
-    return true;
-}
-#endif
-
-#ifndef SDL_PLATFORM_VISIONOS
-
-void UIKit_DelDisplay(UIScreen *uiscreen, bool send_event)
-{
-    SDL_DisplayID *displays;
     int i;
 
-    displays = SDL_GetDisplays(NULL);
-    if (displays) {
-        for (i = 0; displays[i]; ++i) {
-            SDL_VideoDisplay *display = SDL_GetVideoDisplay(displays[i]);
-            SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->internal;
+    for (i = 0; i < SDL_GetNumVideoDisplays(); ++i) {
+        SDL_DisplayData *data = (__bridge SDL_DisplayData *)SDL_GetDisplayDriverData(i);
 
-            if (data && data.uiscreen == uiscreen) {
-                CFRelease(display->internal);
-                display->internal = NULL;
-                SDL_DelVideoDisplay(displays[i], send_event);
-                break;
-            }
+        if (data && data.uiscreen == uiscreen) {
+            CFRelease(SDL_GetDisplayDriverData(i));
+            SDL_DelVideoDisplay(i);
+            return;
         }
-        SDL_free(displays);
     }
 }
 
-bool UIKit_IsDisplayLandscape(UIScreen *uiscreen)
+SDL_bool UIKit_IsDisplayLandscape(UIScreen *uiscreen)
 {
-#ifndef SDL_PLATFORM_TVOS
+#if !TARGET_OS_TV
     if (uiscreen == [UIScreen mainScreen]) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         return UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-#pragma clang diagnostic pop
     } else
-#endif // !SDL_PLATFORM_TVOS
+#endif /* !TARGET_OS_TV */
     {
         CGSize size = uiscreen.bounds.size;
         return (size.width > size.height);
     }
 }
-#endif
-bool UIKit_InitModes(SDL_VideoDevice *_this)
+
+int UIKit_InitModes(_THIS)
 {
     @autoreleasepool {
-#ifdef SDL_PLATFORM_VISIONOS
-        UIKit_AddDisplay(false);
-#else
         for (UIScreen *uiscreen in [UIScreen screens]) {
-            if (!UIKit_AddDisplay(uiscreen, false)) {
-                return false;
+            if (UIKit_AddDisplay(uiscreen, SDL_FALSE) < 0) {
+                return -1;
             }
         }
-#endif
-
-#if !defined(SDL_PLATFORM_TVOS) && !defined(SDL_PLATFORM_VISIONOS)
+#if !TARGET_OS_TV
         SDL_OnApplicationDidChangeStatusBarOrientation();
 #endif
 
-#ifndef SDL_PLATFORM_VISIONOS
         [SDL_DisplayWatch start];
-#endif
     }
 
-    return true;
+    return 0;
 }
 
-bool UIKit_GetDisplayModes(SDL_VideoDevice *_this, SDL_VideoDisplay *display)
+void UIKit_GetDisplayModes(_THIS, SDL_VideoDisplay * display)
 {
-#ifndef SDL_PLATFORM_VISIONOS
     @autoreleasepool {
-        SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->internal;
+        SDL_DisplayData *data = (__bridge SDL_DisplayData *) display->driverdata;
 
-        bool isLandscape = UIKit_IsDisplayLandscape(data.uiscreen);
-        bool addRotation = (data.uiscreen == [UIScreen mainScreen]);
+        SDL_bool isLandscape = UIKit_IsDisplayLandscape(data.uiscreen);
+        SDL_bool addRotation = (data.uiscreen == [UIScreen mainScreen]);
+        CGFloat scale = data.uiscreen.scale;
         NSArray *availableModes = nil;
 
-#ifdef SDL_PLATFORM_TVOS
-        addRotation = false;
-        availableModes = @[ data.uiscreen.currentMode ];
+#if TARGET_OS_TV
+        addRotation = SDL_FALSE;
+        availableModes = @[data.uiscreen.currentMode];
 #else
         availableModes = data.uiscreen.availableModes;
 #endif
 
         for (UIScreenMode *uimode in availableModes) {
-            CGSize size = GetUIScreenModeSize(data.uiscreen, uimode);
-            int w = (int)size.width;
-            int h = (int)size.height;
+            /* The size of a UIScreenMode is in pixels, but we deal exclusively
+             * in points (except in SDL_GL_GetDrawableSize.)
+             *
+             * For devices such as iPhone 6/7/8 Plus, the UIScreenMode reported
+             * by iOS is not in physical pixels of the display, but rather the
+             * point size times the scale.  For example, on iOS 12.2 on iPhone 8
+             * Plus the uimode.size is 1242x2208 and the uiscreen.scale is 3
+             * thus this will give the size in points which is 414x736. The code
+             * used to use the nativeScale, assuming UIScreenMode returned raw
+             * physical pixels (as suggested by its documentation, but in
+             * practice it is returning the retina pixels). */
+            int w = (int)(uimode.size.width / scale);
+            int h = (int)(uimode.size.height / scale);
 
-            // Make sure the width/height are oriented correctly
+            /* Make sure the width/height are oriented correctly */
             if (isLandscape != (w > h)) {
                 int tmp = w;
                 w = h;
@@ -399,18 +423,35 @@ bool UIKit_GetDisplayModes(SDL_VideoDevice *_this, SDL_VideoDisplay *display)
             UIKit_AddDisplayMode(display, w, h, data.uiscreen, uimode, addRotation);
         }
     }
-#endif
-    return true;
 }
 
-bool UIKit_SetDisplayMode(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
+int UIKit_GetDisplayDPI(_THIS, SDL_VideoDisplay * display, float * ddpi, float * hdpi, float * vdpi)
 {
-#ifndef SDL_PLATFORM_VISIONOS
     @autoreleasepool {
-        SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->internal;
+        SDL_DisplayData *data = (__bridge SDL_DisplayData *) display->driverdata;
+        float dpi = data.screenDPI;
 
-#ifndef SDL_PLATFORM_TVOS
-        SDL_UIKitDisplayModeData *modedata = (__bridge SDL_UIKitDisplayModeData *)mode->internal;
+        if (ddpi) {
+            *ddpi = dpi * (float)SDL_sqrt(2.0);
+        }
+        if (hdpi) {
+            *hdpi = dpi;
+        }
+        if (vdpi) {
+            *vdpi = dpi;
+        }
+    }
+
+    return 0;
+}
+
+int UIKit_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
+{
+    @autoreleasepool {
+        SDL_DisplayData *data = (__bridge SDL_DisplayData *) display->driverdata;
+
+#if !TARGET_OS_TV
+        SDL_DisplayModeData *modedata = (__bridge SDL_DisplayModeData *)mode->driverdata;
         [data.uiscreen setCurrentMode:modedata.uiscreenmode];
 #endif
 
@@ -429,105 +470,86 @@ bool UIKit_SetDisplayMode(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL
             }
         }
     }
-#endif
-    return true;
+
+    return 0;
 }
 
-bool UIKit_GetDisplayUsableBounds(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL_Rect *rect)
+int UIKit_GetDisplayUsableBounds(_THIS, SDL_VideoDisplay * display, SDL_Rect * rect)
 {
     @autoreleasepool {
-        SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->internal;
-#ifdef SDL_PLATFORM_VISIONOS
-        CGRect frame = CGRectMake(0, 0, SDL_XR_SCREENWIDTH, SDL_XR_SCREENHEIGHT);
-#else
+        int displayIndex = (int) (display - _this->displays);
+        SDL_DisplayData *data = (__bridge SDL_DisplayData *) display->driverdata;
         CGRect frame = data.uiscreen.bounds;
-#endif
 
         /* the default function iterates displays to make a fake offset,
          as if all the displays were side-by-side, which is fine for iOS. */
-        if (!SDL_GetDisplayBounds(display->id, rect)) {
-            return false;
+        if (SDL_GetDisplayBounds(displayIndex, rect) < 0) {
+            return -1;
         }
 
-        rect->x += (int)frame.origin.x;
-        rect->y += (int)frame.origin.y;
-        rect->w = (int)frame.size.width;
-        rect->h = (int)frame.size.height;
+        rect->x += frame.origin.x;
+        rect->y += frame.origin.y;
+        rect->w = frame.size.width;
+        rect->h = frame.size.height;
     }
 
-    return true;
+    return 0;
 }
 
-void UIKit_QuitModes(SDL_VideoDevice *_this)
+void UIKit_QuitModes(_THIS)
 {
-#ifndef SDL_PLATFORM_VISIONOS
-    [SDL_DisplayWatch stop];
-#endif
-
-    // Release Objective-C objects, so higher level doesn't free() them.
     int i, j;
+
+    [SDL_DisplayWatch stop];
+
+    /* Release Objective-C objects, so higher level doesn't free() them. */
     @autoreleasepool {
         for (i = 0; i < _this->num_displays; i++) {
-            SDL_VideoDisplay *display = _this->displays[i];
+            SDL_VideoDisplay *display = &_this->displays[i];
 
             UIKit_FreeDisplayModeData(&display->desktop_mode);
-            for (j = 0; j < display->num_fullscreen_modes; j++) {
-                SDL_DisplayMode *mode = &display->fullscreen_modes[j];
+            for (j = 0; j < display->num_display_modes; j++) {
+                SDL_DisplayMode *mode = &display->display_modes[j];
                 UIKit_FreeDisplayModeData(mode);
             }
 
-            if (display->internal != NULL) {
-                CFRelease(display->internal);
-                display->internal = NULL;
+            if (display->driverdata != NULL) {
+                CFRelease(display->driverdata);
+                display->driverdata = NULL;
             }
         }
     }
 }
 
-#if !defined(SDL_PLATFORM_TVOS) && !defined(SDL_PLATFORM_VISIONOS)
+#if !TARGET_OS_TV
 void SDL_OnApplicationDidChangeStatusBarOrientation(void)
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-#pragma clang diagnostic pop
-    SDL_VideoDisplay *display = SDL_GetVideoDisplay(SDL_GetPrimaryDisplay());
+    SDL_VideoDisplay *display = SDL_GetDisplay(0);
 
     if (display) {
-        SDL_DisplayMode *mode = &display->desktop_mode;
+        SDL_DisplayMode *desktopmode = &display->desktop_mode;
+        SDL_DisplayMode *currentmode = &display->current_mode;
         SDL_DisplayOrientation orientation = SDL_ORIENTATION_UNKNOWN;
-        int i;
 
         /* The desktop display mode should be kept in sync with the screen
          * orientation so that updating a window's fullscreen state to
-         * fullscreen desktop keeps the window dimensions in the
+         * SDL_WINDOW_FULLSCREEN_DESKTOP keeps the window dimensions in the
          * correct orientation. */
-        if (isLandscape != (mode->w > mode->h)) {
-            SDL_DisplayMode new_mode;
-            SDL_copyp(&new_mode, mode);
-            new_mode.w = mode->h;
-            new_mode.h = mode->w;
-
-            // Make sure we don't free the current display mode data
-            mode->internal = NULL;
-
-            SDL_SetDesktopDisplayMode(display, &new_mode);
+        if (isLandscape != (desktopmode->w > desktopmode->h)) {
+            int height = desktopmode->w;
+            desktopmode->w = desktopmode->h;
+            desktopmode->h = height;
         }
 
-        // Same deal with the fullscreen modes
-        for (i = 0; i < display->num_fullscreen_modes; ++i) {
-            mode = &display->fullscreen_modes[i];
-            if (isLandscape != (mode->w > mode->h)) {
-                int height = mode->w;
-                mode->w = mode->h;
-                mode->h = height;
-            }
+        /* Same deal with the current mode + SDL_GetCurrentDisplayMode. */
+        if (isLandscape != (currentmode->w > currentmode->h)) {
+            int height = currentmode->w;
+            currentmode->w = currentmode->h;
+            currentmode->h = height;
         }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         switch ([UIApplication sharedApplication].statusBarOrientation) {
-#pragma clang diagnostic pop
         case UIInterfaceOrientationPortrait:
             orientation = SDL_ORIENTATION_PORTRAIT;
             break;
@@ -535,19 +557,21 @@ void SDL_OnApplicationDidChangeStatusBarOrientation(void)
             orientation = SDL_ORIENTATION_PORTRAIT_FLIPPED;
             break;
         case UIInterfaceOrientationLandscapeLeft:
-            // Bug: UIInterfaceOrientationLandscapeLeft/Right are reversed - http://openradar.appspot.com/7216046
+            /* Bug: UIInterfaceOrientationLandscapeLeft/Right are reversed - http://openradar.appspot.com/7216046 */
             orientation = SDL_ORIENTATION_LANDSCAPE_FLIPPED;
             break;
         case UIInterfaceOrientationLandscapeRight:
-            // Bug: UIInterfaceOrientationLandscapeLeft/Right are reversed - http://openradar.appspot.com/7216046
+            /* Bug: UIInterfaceOrientationLandscapeLeft/Right are reversed - http://openradar.appspot.com/7216046 */
             orientation = SDL_ORIENTATION_LANDSCAPE;
             break;
         default:
             break;
         }
-        SDL_SendDisplayEvent(display, SDL_EVENT_DISPLAY_ORIENTATION, orientation, 0);
+        SDL_SendDisplayEvent(display, SDL_DISPLAYEVENT_ORIENTATION, orientation);
     }
 }
-#endif // !SDL_PLATFORM_TVOS
+#endif /* !TARGET_OS_TV */
 
-#endif // SDL_VIDEO_DRIVER_UIKIT
+#endif /* SDL_VIDEO_DRIVER_UIKIT */
+
+/* vi: set ts=4 sw=4 expandtab: */

@@ -99,7 +99,7 @@ if(CNA_BUILD_TESTS)
             CNA
             SHARP_RUNTIME
             gtest_main
-            SDL3::SDL3
+            SDL2::SDL2
     )
 
     if(CNA_ENABLE_NET)

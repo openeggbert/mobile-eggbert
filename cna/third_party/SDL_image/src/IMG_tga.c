@@ -1,6 +1,6 @@
 /*
   SDL_image:  An example image loading library for use with SDL
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,20 +19,26 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+#if !defined(__APPLE__) || defined(SDL_IMAGE_USE_COMMON_BACKEND)
+
 /* This is a Targa image file loading framework */
 
-#include <SDL3/SDL_endian.h>
+#include "SDL_endian.h"
 
-#include <SDL3_image/SDL_image.h>
+#include "SDL_image.h"
 
-#include "IMG.h"
+#ifdef LOAD_TGA
 
-// We will have TGA saving feature by default.
-#ifndef SAVE_TGA
-#define SAVE_TGA 1
-#endif /* SAVE_TGA */
+/*
+ * A TGA loader for the SDL library
+ * Supports: Reading 8, 15, 16, 24 and 32bpp images, with alpha or colourkey,
+ *           uncompressed or RLE encoded.
+ *
+ * 2000-06-10 Mattias Engdegård <f91-men@nada.kth.se>: initial version
+ * 2000-06-26 Mattias Engdegård <f91-men@nada.kth.se>: read greyscale TGAs
+ * 2000-08-09 Mattias Engdegård <f91-men@nada.kth.se>: alpha inversion removed
+ */
 
-#if defined(LOAD_TGA) || defined(SAVE_TGA)
 struct TGAheader {
     Uint8 infolen;      /* length of info field */
     Uint8 has_cmap;     /* 1 if image has colormap, 0 otherwise */
@@ -73,23 +79,9 @@ enum tga_type {
 /* read/write unaligned little-endian 16-bit ints */
 #define LE16(p) ((p)[0] + ((p)[1] << 8))
 #define SETLE16(p, v) ((p)[0] = (v), (p)[1] = (v) >> 8)
-#endif /* defined(LOAD_TGA) || defined(SAVE_TGA) */
-
-#if !defined(__APPLE__) || defined(SDL_IMAGE_USE_COMMON_BACKEND)
-#ifdef LOAD_TGA
-
-/*
- * A TGA loader for the SDL library
- * Supports: Reading 8, 15, 16, 24 and 32bpp images, with alpha or colourkey,
- *           uncompressed or RLE encoded.
- *
- * 2000-06-10 Mattias EngdegÃ¥rd <f91-men@nada.kth.se>: initial version
- * 2000-06-26 Mattias EngdegÃ¥rd <f91-men@nada.kth.se>: read greyscale TGAs
- * 2000-08-09 Mattias EngdegÃ¥rd <f91-men@nada.kth.se>: alpha inversion removed
- */
 
 /* Load a TGA type image from an SDL datasource */
-SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadTGA_RW(SDL_RWops *src)
 {
     Sint64 start;
     const char *error = NULL;
@@ -105,16 +97,16 @@ SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
     int i;
     int bpp;
     int lstep;
-    Uint32 pixelvalue;
+    Uint32 pixel;
     int count, rep;
 
     if ( !src ) {
-        /* The error message has been set in SDL_IOFromFile */
+        /* The error message has been set in SDL_RWFromFile */
         return NULL;
     }
-    start = SDL_TellIO(src);
+    start = SDL_RWtell(src);
 
-    if (SDL_ReadIO(src, &hdr, sizeof(hdr)) != sizeof(hdr)) {
+    if (!SDL_RWread(src, &hdr, sizeof(hdr), 1)) {
         error = "Error reading TGA data";
         goto error;
     }
@@ -163,7 +155,7 @@ SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
     case 16:
         /* 15 and 16bpp both seem to use 5 bits/plane. The extra alpha bit
            is ignored for now. */
-        format = SDL_PIXELFORMAT_XRGB1555;
+        format = SDL_PIXELFORMAT_RGB555;
         break;
 
     case 32:
@@ -182,40 +174,23 @@ SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
         goto unsupported;
     }
 
-    SDL_SeekIO(src, hdr.infolen, SDL_IO_SEEK_CUR); /* skip info field */
+    SDL_RWseek(src, hdr.infolen, RW_SEEK_CUR); /* skip info field */
 
     w = LE16(hdr.width);
     h = LE16(hdr.height);
-    if (w == 0 || h == 0) {
-        error = "TGA image with zero width or height";
-        goto error;
-    }
-    img = SDL_CreateSurface(w, h, format);
+    img = SDL_CreateRGBSurfaceWithFormat(0, w, h, 0, format);
     if (img == NULL) {
         error = "Out of memory";
         goto error;
     }
 
     if (hdr.has_cmap) {
-        size_t palsiz = ncols * ((hdr.cmap_bits + 7) >> 3);
+        int palsiz = ncols * ((hdr.cmap_bits + 7) >> 3);
         if (indexed && !grey) {
             Uint8 *pal = (Uint8 *)SDL_malloc(palsiz), *p = pal;
-            SDL_Palette *palette = SDL_CreateSurfacePalette(img);
-            if (!palette) {
-                error = "Couldn't create palette";
-                SDL_free(pal);
-                goto error;
-            }
-            if (SDL_ReadIO(src, pal, palsiz) != palsiz) {
-                error = "Error reading TGA data";
-                SDL_free(pal);
-                goto error;
-            }
-            if (ncols > palette->ncolors) {
-                ncols = palette->ncolors;
-            }
-            palette->ncolors = ncols;
-
+            SDL_Color *colors = img->format->palette->colors;
+            img->format->palette->ncolors = ncols;
+            SDL_RWread(src, pal, palsiz, 1);
             for(i = 0; i < ncols; i++) {
                 switch(hdr.cmap_bits) {
                 case 15:
@@ -223,41 +198,35 @@ SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
                     {
                     Uint16 c = p[0] + (p[1] << 8);
                     p += 2;
-                    palette->colors[i].r = (c >> 7) & 0xf8;
-                    palette->colors[i].g = (c >> 2) & 0xf8;
-                    palette->colors[i].b = c << 3;
+                    colors[i].r = (c >> 7) & 0xf8;
+                    colors[i].g = (c >> 2) & 0xf8;
+                    colors[i].b = c << 3;
                     }
                     break;
                 case 24:
                 case 32:
-                    palette->colors[i].b = *p++;
-                    palette->colors[i].g = *p++;
-                    palette->colors[i].r = *p++;
+                    colors[i].b = *p++;
+                    colors[i].g = *p++;
+                    colors[i].r = *p++;
                     if (hdr.cmap_bits == 32 && *p++ < 128)
-                        ckey = i;
+                    ckey = i;
                     break;
                 }
             }
             SDL_free(pal);
-
             if (ckey >= 0)
-                SDL_SetSurfaceColorKey(img, true, ckey);
+                SDL_SetColorKey(img, SDL_TRUE, ckey);
         } else {
             /* skip unneeded colormap */
-            SDL_SeekIO(src, palsiz, SDL_IO_SEEK_CUR);
+            SDL_RWseek(src, palsiz, RW_SEEK_CUR);
         }
     }
 
     if (grey) {
-        SDL_Palette *palette = SDL_CreateSurfacePalette(img);
-        SDL_Color *colors;
-        if (!palette) {
-            error = "Couldn't create palette";
-            goto error;
-        }
-        colors = palette->colors;
+        SDL_Color *colors = img->format->palette->colors;
         for(i = 0; i < 256; i++)
             colors[i].r = colors[i].g = colors[i].b = i;
+        img->format->palette->ncolors = 256;
     }
 
     if (hdr.flags & TGA_ORIGIN_UPPER) {
@@ -281,10 +250,7 @@ SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
                     int n = count;
                     if (n > w - x)
                         n = w - x;
-                    if (SDL_ReadIO(src, dst + x * bpp, n * bpp) != (size_t)(n * bpp)) {
-                        error = "Error reading TGA data";
-                        goto error;
-                    }
+                    SDL_RWread(src, dst + x * bpp, n * bpp, 1);
                     count -= n;
                     x += n;
                     if (x == w)
@@ -295,32 +261,23 @@ SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
                         n = w - x;
                     rep -= n;
                     while (n--) {
-                        SDL_memcpy(dst + x * bpp, &pixelvalue, bpp);
+                        SDL_memcpy(dst + x * bpp, &pixel, bpp);
                         x++;
                     }
                     if (x == w)
                         break;
                 }
 
-                if (SDL_ReadIO(src, &c, 1) != 1) {
-                    error = "Error reading TGA data";
-                    goto error;
-                }
+                SDL_RWread(src, &c, 1, 1);
                 if (c & 0x80) {
-                    if (SDL_ReadIO(src, &pixelvalue, bpp) != (size_t)bpp) {
-                        error = "Error reading TGA data";
-                        goto error;
-                    }
+                    SDL_RWread(src, &pixel, bpp, 1);
                     rep = (c & 0x7f) + 1;
                 } else {
                     count = c + 1;
                 }
             }
         } else {
-            if (SDL_ReadIO(src, dst, w * bpp) != (size_t)(w * bpp)) {
-                error = "Error reading TGA data";
-                goto error;
-            }
+            SDL_RWread(src, dst, w * bpp, 1);
         }
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
         if (bpp == 2) {
@@ -339,219 +296,25 @@ unsupported:
     error = "Unsupported TGA format";
 
 error:
-    SDL_SeekIO(src, start, SDL_IO_SEEK_SET);
+    SDL_RWseek(src, start, RW_SEEK_SET);
     if ( img ) {
-        SDL_DestroySurface(img);
+        SDL_FreeSurface(img);
     }
-    SDL_SetError("%s", error);
+    IMG_SetError("%s", error);
     return NULL;
 }
 
 #else
+#if _MSC_VER >= 1300
+#pragma warning(disable : 4100) /* warning C4100: 'op' : unreferenced formal parameter */
+#endif
 
 /* dummy TGA load routine */
-SDL_Surface *IMG_LoadTGA_IO(SDL_IOStream *src)
+SDL_Surface *IMG_LoadTGA_RW(SDL_RWops *src)
 {
-    SDL_SetError("SDL_image built without TGA support");
-    return NULL;
+    return(NULL);
 }
 
 #endif /* LOAD_TGA */
 
 #endif /* !defined(__APPLE__) || defined(SDL_IMAGE_USE_COMMON_BACKEND) */
-
-#if SAVE_TGA
-
-bool IMG_SaveTGA_IO(SDL_Surface *surface, SDL_IOStream *dst, bool closeio)
-{
-    Sint64 start = -1;
-    struct TGAheader hdr;
-    SDL_Palette *surface_palette = NULL;
-    SDL_Surface *temp_surface = NULL;
-    bool result = false;
-
-    if (!IMG_VerifyCanSaveSurface(surface)) {
-        goto done;
-    }
-    if (!dst) {
-        SDL_InvalidParamError("dst");
-        goto done;
-    }
-
-    start = SDL_TellIO(dst);
-
-    SDL_zero(hdr);
-
-    hdr.infolen = 0;
-    hdr.has_cmap = 0;
-    hdr.type = TGA_TYPE_RGB;
-    SETLE16(hdr.cmap_start, 0);
-    SETLE16(hdr.cmap_len, 0);
-    hdr.cmap_bits = 0;
-    SETLE16(hdr.xorigin, 0);
-    SETLE16(hdr.yorigin, 0);
-    SETLE16(hdr.width, surface->w);
-    SETLE16(hdr.height, surface->h);
-    hdr.flags = TGA_ORIGIN_UPPER;
-
-    const SDL_PixelFormatDetails *pixelFormatDetails = SDL_GetPixelFormatDetails(surface->format);
-    if (!pixelFormatDetails) {
-        goto done;
-    }
-
-    surface_palette = SDL_GetSurfacePalette(surface);
-
-    switch (surface->format) {
-    case SDL_PIXELFORMAT_INDEX8:
-        hdr.has_cmap = 1;
-        hdr.type = TGA_TYPE_INDEXED;
-        hdr.pixel_bits = 8;
-        if (surface_palette) {
-            SETLE16(hdr.cmap_len, surface_palette->ncolors);
-        } else {
-            SETLE16(hdr.cmap_len, 0);
-        }
-        hdr.cmap_bits = 24;
-        break;
-    case SDL_PIXELFORMAT_BGR24:
-    case SDL_PIXELFORMAT_RGB24:
-        hdr.type = TGA_TYPE_RGB;
-        hdr.pixel_bits = 24;
-        break;
-    case SDL_PIXELFORMAT_BGRA32:
-    case SDL_PIXELFORMAT_RGBA32:
-    case SDL_PIXELFORMAT_XRGB8888:
-        hdr.type = TGA_TYPE_RGB;
-        hdr.pixel_bits = 32;
-        hdr.flags |= 0x08;
-        break;
-    case SDL_PIXELFORMAT_XRGB1555:
-    case SDL_PIXELFORMAT_ARGB1555:
-        hdr.type = TGA_TYPE_RGB;
-        hdr.pixel_bits = 16;
-        if (surface->format == SDL_PIXELFORMAT_ARGB1555) {
-            hdr.flags |= 0x01;
-        }
-        break;
-    default:
-        SDL_SetError("Unsupported SDL_Surface format for TGA saving. Supported formats are INDEX8, BGR24, RGB24, BGRA32, RGBA32, XRGB8888, XRGB1555, ARGB1555.");
-        goto done;
-    }
-
-    if (SDL_WriteIO(dst, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-        goto done;
-    }
-
-    if (hdr.has_cmap && surface_palette) {
-        SDL_Color *colors = surface_palette->colors;
-        int ncolors = LE16(hdr.cmap_len);
-        Uint8 color_entry[4];
-        for (int i = 0; i < ncolors; ++i) {
-            switch (hdr.cmap_bits) {
-            case 24:
-                color_entry[0] = colors[i].b;
-                color_entry[1] = colors[i].g;
-                color_entry[2] = colors[i].r;
-                if (SDL_WriteIO(dst, color_entry, 3) != 3) {
-                    goto done;
-                }
-                break;
-            case 32:
-                color_entry[0] = colors[i].b;
-                color_entry[1] = colors[i].g;
-                color_entry[2] = colors[i].r;
-                color_entry[3] = colors[i].a;
-                if (SDL_WriteIO(dst, color_entry, 4) != 4) {
-                    goto done;
-                }
-                break;
-            default:
-                SDL_SetError("Unsupported TGA colormap bit depth for saving");
-                goto done;
-            }
-        }
-    }
-
-    Uint8 *pixels_to_write = (Uint8 *)surface->pixels;
-    int pitch_to_write = surface->pitch;
-    int bytes_per_pixel = pixelFormatDetails->bytes_per_pixel;
-    Uint32 target_format = SDL_PIXELFORMAT_UNKNOWN;
-
-    switch (surface->format) {
-    case SDL_PIXELFORMAT_RGB24:
-        target_format = SDL_PIXELFORMAT_BGR24;
-        break;
-    case SDL_PIXELFORMAT_RGBA32:
-    case SDL_PIXELFORMAT_XRGB8888:
-        target_format = SDL_PIXELFORMAT_BGRA32;
-        break;
-    case SDL_PIXELFORMAT_XRGB1555:
-    case SDL_PIXELFORMAT_ARGB1555:
-        target_format = SDL_PIXELFORMAT_XRGB1555;
-        break;
-    default:
-        break;
-    }
-
-    if (target_format != SDL_PIXELFORMAT_UNKNOWN && target_format != surface->format) {
-        temp_surface = SDL_ConvertSurface(surface, target_format);
-        if (!temp_surface) {
-            goto done;
-        }
-        pixels_to_write = (Uint8 *)temp_surface->pixels;
-        pitch_to_write = temp_surface->pitch;
-        const SDL_PixelFormatDetails *tempPixelFormatDetails = SDL_GetPixelFormatDetails(temp_surface->format);
-        if (tempPixelFormatDetails) {
-            bytes_per_pixel = tempPixelFormatDetails->bytes_per_pixel;
-        } else {
-            goto done;
-        }
-    }
-
-    for (int y = 0; y < surface->h; ++y) {
-        if (SDL_WriteIO(dst, pixels_to_write + y * pitch_to_write, (size_t)surface->w * bytes_per_pixel) != (size_t)(surface->w * bytes_per_pixel)) {
-            goto done;
-        }
-    }
-
-    result = true;
-
-done:
-    if (temp_surface) {
-        SDL_DestroySurface(temp_surface);
-    }
-    if (!result && !closeio && start != -1) {
-        SDL_SeekIO(dst, start, SDL_IO_SEEK_SET);
-    }
-    if (closeio) {
-        result &= SDL_CloseIO(dst);
-    }
-    return result;
-}
-
-bool IMG_SaveTGA(SDL_Surface *surface, const char *file)
-{
-    if (!IMG_VerifyCanSaveSurface(surface)) {
-        return false;
-    }
-    SDL_IOStream *dst = SDL_IOFromFile(file, "wb");
-    if (dst) {
-        return IMG_SaveTGA_IO(surface, dst, true);
-    } else {
-        return false;
-    }
-}
-
-#else
-
-bool IMG_SaveTGA_IO(SDL_Surface *surface, SDL_IOStream *dst, bool closeio)
-{
-    return SDL_SetError("SDL_image built without TGA save support");
-}
-
-bool IMG_SaveTGA(SDL_Surface *surface, const char *file)
-{
-    return SDL_SetError("SDL_image built without TGA save support");
-}
-
-#endif /* SAVE_TGA */

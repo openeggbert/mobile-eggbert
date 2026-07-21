@@ -13,5 +13,5 @@ target_link_libraries(${BACKEND_TARGET} PUBLIC cna_backend_graphics_common SHARP
 target_include_directories(${BACKEND_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 if(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
-    target_link_libraries(${BACKEND_TARGET} PRIVATE SDL3::SDL3)
+    target_link_libraries(${BACKEND_TARGET} PRIVATE SDL2::SDL2)
 endif()

@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_emscriptenvideo_h_
 #define SDL_emscriptenvideo_h_
@@ -28,34 +28,30 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 
-struct SDL_WindowData
+#ifdef SDL_VIDEO_OPENGL_EGL
+#include <EGL/egl.h>
+#endif
+
+typedef struct SDL_WindowData
 {
+#ifdef SDL_VIDEO_OPENGL_EGL
+    EGLSurface egl_surface;
+#endif
     SDL_Window *window;
     SDL_Surface *surface;
 
-    SDL_GLContext gl_context;
-
-    int non_fill_document_width;
-    int non_fill_document_height;
-
     char *canvas_id;
-    char *keyboard_element;
 
     float pixel_ratio;
 
-    bool external_size;
+    SDL_bool external_size;
 
-    Uint32 fullscreen_mode_flags;
-    bool fullscreen_resize;
-    bool fullscreen_change_in_progress;
+    int requested_fullscreen_mode;
+    SDL_bool fullscreen_resize;
 
-    bool has_pointer_lock;
+    SDL_bool has_pointer_lock;
+} SDL_WindowData;
 
-    bool mouse_focus_loss_pending;
-};
+#endif /* SDL_emscriptenvideo_h_ */
 
-extern SDL_Window *Emscripten_fill_document_window;
-
-bool Emscripten_ShouldSetSwapInterval(int interval);
-
-#endif // SDL_emscriptenvideo_h_
+/* vi: set ts=4 sw=4 expandtab: */

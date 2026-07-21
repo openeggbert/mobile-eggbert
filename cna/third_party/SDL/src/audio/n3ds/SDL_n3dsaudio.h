@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,22 +19,32 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SDL_n3dsaudio_h
-#define SDL_n3dsaudio_h
+#ifndef _SDL_n3dsaudio_h_
+#define _SDL_n3dsaudio_h_
 
 #include <3ds.h>
 
-#define NUM_BUFFERS 3 // -- Minimum 2!
+/* Hidden "this" pointer for the audio functions */
+#define _THIS SDL_AudioDevice *this
+
+#define NUM_BUFFERS 3 /* -- Minimum 2! */
 
 struct SDL_PrivateAudioData
 {
-    // Speaker data
+    /* Speaker data */
     Uint8 *mixbuf;
+    Uint32 mixlen;
+    Uint32 format;
+    Uint32 samplerate;
+    Uint32 channels;
+    Uint8 bytePerSample;
+    Uint32 isSigned;
     Uint32 nextbuf;
     ndspWaveBuf waveBuf[NUM_BUFFERS];
     LightLock lock;
     CondVar cv;
-    bool isCancelled;
+    SDL_bool isCancelled;
 };
 
-#endif // SDL_n3dsaudio_h
+#endif /* _SDL_n3dsaudio_h_ */
+/* vi: set sts=4 ts=4 sw=4 expandtab: */

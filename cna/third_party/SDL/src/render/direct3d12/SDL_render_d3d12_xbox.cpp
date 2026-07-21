@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,17 +20,23 @@
 */
 
 #include "../../SDL_internal.h"
-#if defined(SDL_VIDEO_RENDER_D3D12) && (defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES))
+#if SDL_VIDEO_RENDER_D3D12 && (defined(__XBOXONE__) || defined(__XBOXSERIES__))
 #include "SDL_render_d3d12_xbox.h"
 #include "../../core/windows/SDL_windows.h"
 #include <XGameRuntime.h>
+
+#if defined(_MSC_VER) && !defined(__clang__)
+#define SDL_COMPOSE_ERROR(str) __FUNCTION__ ", " str
+#else
+#define SDL_COMPOSE_ERROR(str) SDL_STRINGIFY_ARG(__FUNCTION__) ", " str
+#endif
 
 static const GUID SDL_IID_ID3D12Device1 = { 0x77acce80, 0x638e, 0x4e65, { 0x88, 0x95, 0xc1, 0xf2, 0x33, 0x86, 0x86, 0x3e } };
 static const GUID SDL_IID_ID3D12Resource = { 0x696442be, 0xa72e, 0x4059, { 0xbc, 0x79, 0x5b, 0x5c, 0x98, 0x04, 0x0f, 0xad } };
 static const GUID SDL_IID_IDXGIDevice1 = { 0x77db970f, 0x6276, 0x48ba, { 0xba, 0x28, 0x07, 0x01, 0x43, 0xb4, 0x39, 0x2c } };
 
-extern "C"
-HRESULT D3D12_XBOX_CreateDevice(ID3D12Device **device, bool createDebug)
+extern "C" HRESULT
+D3D12_XBOX_CreateDevice(ID3D12Device **device, SDL_bool createDebug)
 {
     HRESULT result;
     D3D12XBOX_CREATE_DEVICE_PARAMETERS params;
@@ -47,38 +53,38 @@ HRESULT D3D12_XBOX_CreateDevice(ID3D12Device **device, bool createDebug)
 
     result = D3D12XboxCreateDevice(NULL, &params, SDL_IID_ID3D12Device1, (void **) device);
     if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT("D3D12XboxCreateDevice", result);
+        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("[xbox] D3D12XboxCreateDevice"), result);
         goto done;
     }
 
     result = (*device)->QueryInterface(SDL_IID_IDXGIDevice1, (void **) &dxgiDevice);
     if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT("ID3D12Device to IDXGIDevice1", result);
+        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("[xbox] ID3D12Device to IDXGIDevice1"), result);
         goto done;
     }
 
     result = dxgiDevice->GetAdapter(&dxgiAdapter);
     if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT("dxgiDevice->GetAdapter", result);
+        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("[xbox] dxgiDevice->GetAdapter"), result);
         goto done;
     }
 
     result = dxgiAdapter->EnumOutputs(0, &dxgiOutput);
     if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT("dxgiAdapter->EnumOutputs", result);
+        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("[xbox] dxgiAdapter->EnumOutputs"), result);
         goto done;
     }
-
-    // Set frame interval
+    
+    /* Set frame interval */
     result = (*device)->SetFrameIntervalX(dxgiOutput, D3D12XBOX_FRAME_INTERVAL_60_HZ, 1, D3D12XBOX_FRAME_INTERVAL_FLAG_NONE);
     if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT("SetFrameIntervalX", result);
+        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("[xbox] SetFrameIntervalX"), result);
         goto done;
     }
 
     result = (*device)->ScheduleFrameEventX(D3D12XBOX_FRAME_EVENT_ORIGIN, 0, NULL, D3D12XBOX_SCHEDULE_FRAME_EVENT_FLAG_NONE);
     if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT("ScheduleFrameEventX", result);
+        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("[xbox] ScheduleFrameEventX"), result);
         goto done;
     }
 
@@ -86,8 +92,8 @@ done:
     return result;
 }
 
-extern "C"
-HRESULT D3D12_XBOX_CreateBackBufferTarget(ID3D12Device1 *device, int width, int height, void **resource)
+extern "C" HRESULT
+D3D12_XBOX_CreateBackBufferTarget(ID3D12Device1 *device, int width, int height, void **resource)
 {
 
     D3D12_HEAP_PROPERTIES heapProps;
@@ -123,15 +129,15 @@ HRESULT D3D12_XBOX_CreateBackBufferTarget(ID3D12Device1 *device, int width, int 
         );
 }
 
-extern "C"
-HRESULT D3D12_XBOX_StartFrame(ID3D12Device1 *device, UINT64 *outToken)
+extern "C" HRESULT
+D3D12_XBOX_StartFrame(ID3D12Device1 *device, UINT64 *outToken)
 {
     *outToken = D3D12XBOX_FRAME_PIPELINE_TOKEN_NULL;
     return device->WaitFrameEventX(D3D12XBOX_FRAME_EVENT_ORIGIN, INFINITE, NULL, D3D12XBOX_WAIT_FRAME_EVENT_FLAG_NONE, outToken);
 }
 
-extern "C"
-HRESULT D3D12_XBOX_PresentFrame(ID3D12CommandQueue *commandQueue, UINT64 token, ID3D12Resource *renderTarget)
+extern "C" HRESULT
+D3D12_XBOX_PresentFrame(ID3D12CommandQueue *commandQueue, UINT64 token, ID3D12Resource *renderTarget)
 {
     D3D12XBOX_PRESENT_PLANE_PARAMETERS planeParameters;
     SDL_zero(planeParameters);
@@ -141,8 +147,8 @@ HRESULT D3D12_XBOX_PresentFrame(ID3D12CommandQueue *commandQueue, UINT64 token, 
     return commandQueue->PresentX(1, &planeParameters, NULL);
 }
 
-extern "C"
-void D3D12_XBOX_GetResolution(Uint32 *width, Uint32 *height)
+extern "C" void
+D3D12_XBOX_GetResolution(Uint32 *width, Uint32 *height)
 {
     switch (XSystemGetDeviceType()) {
     case XSystemDeviceType::XboxScarlettLockhart:
@@ -165,4 +171,4 @@ void D3D12_XBOX_GetResolution(Uint32 *width, Uint32 *height)
     }
 }
 
-#endif // SDL_VIDEO_RENDER_D3D12 && (SDL_PLATFORM_XBOXONE || SDL_PLATFORM_XBOXSERIES)
+#endif

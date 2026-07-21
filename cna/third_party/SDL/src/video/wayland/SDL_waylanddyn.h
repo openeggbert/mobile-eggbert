@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,7 @@
 #ifndef SDL_waylanddyn_h_
 #define SDL_waylanddyn_h_
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 /* We can't include wayland-client.h here
  * but we need some structs from it
@@ -33,7 +33,7 @@ struct wl_display;
 struct wl_surface;
 struct wl_shm;
 
-// We also need some for libdecor
+/* We also need some for libdecor */
 struct wl_seat;
 struct wl_output;
 struct libdecor;
@@ -46,12 +46,13 @@ enum libdecor_resize_edge;
 enum libdecor_capabilities;
 enum libdecor_window_state;
 
+#include <stdint.h>
 #include "wayland-cursor.h"
 #include "wayland-util.h"
 #include "xkbcommon/xkbcommon.h"
 #include "xkbcommon/xkbcommon-compose.h"
 
-// Must be included before our #defines, see Bugzilla #4957
+/* Must be included before our #defines, see Bugzilla #4957 */
 #include "wayland-client-core.h"
 
 #define SDL_WAYLAND_CHECK_VERSION(x, y, z)                        \
@@ -59,24 +60,12 @@ enum libdecor_window_state;
      (WAYLAND_VERSION_MAJOR == x && WAYLAND_VERSION_MINOR > y) || \
      (WAYLAND_VERSION_MAJOR == x && WAYLAND_VERSION_MINOR == y && WAYLAND_VERSION_MICRO >= z))
 
-#define SDL_XKBCOMMON_CHECK_VERSION(x, y, z)                                  \
-    (SDL_XKBCOMMON_VERSION_MAJOR > x ||                                       \
-     (SDL_XKBCOMMON_VERSION_MAJOR == x && SDL_XKBCOMMON_VERSION_MINOR > y) || \
-     (SDL_XKBCOMMON_VERSION_MAJOR == x && SDL_XKBCOMMON_VERSION_MINOR == y && SDL_XKBCOMMON_VERSION_PATCH >= z))
-
-#ifdef HAVE_LIBDECOR_H
-#define SDL_LIBDECOR_CHECK_VERSION(x, y, z)                                 \
-    (SDL_LIBDECOR_VERSION_MAJOR > x ||                                      \
-     (SDL_LIBDECOR_VERSION_MAJOR == x && SDL_LIBDECOR_VERSION_MINOR > y) || \
-     (SDL_LIBDECOR_VERSION_MAJOR == x && SDL_LIBDECOR_VERSION_MINOR == y && SDL_LIBDECOR_VERSION_PATCH >= z))
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern bool SDL_WAYLAND_LoadSymbols(void);
-extern void SDL_WAYLAND_UnloadSymbols(void);
+int SDL_WAYLAND_LoadSymbols(void);
+void SDL_WAYLAND_UnloadSymbols(void);
 
 #define SDL_WAYLAND_MODULE(modname) extern int SDL_WAYLAND_HAVE_##modname;
 #define SDL_WAYLAND_SYM(rc, fn, params)        \
@@ -117,6 +106,22 @@ extern void SDL_WAYLAND_UnloadSymbols(void);
 #define wl_proxy_marshal_array_flags           (*WAYLAND_wl_proxy_marshal_array_flags)
 #define wl_display_reconnect                   (*WAYLAND_wl_display_reconnect)
 
+#define wl_seat_interface                (*WAYLAND_wl_seat_interface)
+#define wl_surface_interface             (*WAYLAND_wl_surface_interface)
+#define wl_shm_pool_interface            (*WAYLAND_wl_shm_pool_interface)
+#define wl_buffer_interface              (*WAYLAND_wl_buffer_interface)
+#define wl_registry_interface            (*WAYLAND_wl_registry_interface)
+#define wl_region_interface              (*WAYLAND_wl_region_interface)
+#define wl_pointer_interface             (*WAYLAND_wl_pointer_interface)
+#define wl_keyboard_interface            (*WAYLAND_wl_keyboard_interface)
+#define wl_compositor_interface          (*WAYLAND_wl_compositor_interface)
+#define wl_output_interface              (*WAYLAND_wl_output_interface)
+#define wl_shm_interface                 (*WAYLAND_wl_shm_interface)
+#define wl_data_device_interface         (*WAYLAND_wl_data_device_interface)
+#define wl_data_offer_interface          (*WAYLAND_wl_data_offer_interface)
+#define wl_data_source_interface         (*WAYLAND_wl_data_source_interface)
+#define wl_data_device_manager_interface (*WAYLAND_wl_data_device_manager_interface)
+
 /*
  * These must be included before libdecor.h, otherwise the libdecor header
  * pulls in the system Wayland protocol headers instead of ours.
@@ -125,7 +130,7 @@ extern void SDL_WAYLAND_UnloadSymbols(void);
 #include "wayland-egl.h"
 
 #ifdef HAVE_LIBDECOR_H
-// Must be included before our defines
+/* Must be included before our defines */
 #include <libdecor.h>
 
 #define libdecor_unref                          (*WAYLAND_libdecor_unref)
@@ -153,11 +158,8 @@ extern void SDL_WAYLAND_UnloadSymbols(void);
 #define libdecor_frame_is_visible               (*WAYLAND_libdecor_frame_is_visible)
 #define libdecor_frame_is_floating              (*WAYLAND_libdecor_frame_is_floating)
 #define libdecor_frame_set_parent               (*WAYLAND_libdecor_frame_set_parent)
-#define libdecor_frame_show_window_menu         (*WAYLAND_libdecor_frame_show_window_menu)
-#define libdecor_frame_get_wm_capabilities      (*WAYLAND_libdecor_frame_get_wm_capabilities)
 #define libdecor_frame_get_xdg_surface          (*WAYLAND_libdecor_frame_get_xdg_surface)
 #define libdecor_frame_get_xdg_toplevel         (*WAYLAND_libdecor_frame_get_xdg_toplevel)
-#define libdecor_frame_translate_coordinate     (*WAYLAND_libdecor_frame_translate_coordinate)
 #define libdecor_frame_map                      (*WAYLAND_libdecor_frame_map)
 #define libdecor_state_new                      (*WAYLAND_libdecor_state_new)
 #define libdecor_state_free                     (*WAYLAND_libdecor_state_free)
@@ -166,7 +168,7 @@ extern void SDL_WAYLAND_UnloadSymbols(void);
 #define libdecor_dispatch                       (*WAYLAND_libdecor_dispatch)
 #endif
 
-#else // SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC
+#else /* SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC */
 
 /*
  * These must be included before libdecor.h, otherwise the libdecor header
@@ -179,6 +181,8 @@ extern void SDL_WAYLAND_UnloadSymbols(void);
 #include <libdecor.h>
 #endif
 
-#endif // SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC
+#endif /* SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC */
 
-#endif // SDL_waylanddyn_h_
+#endif /* SDL_waylanddyn_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

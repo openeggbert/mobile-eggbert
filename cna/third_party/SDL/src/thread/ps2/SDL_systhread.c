@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,15 +18,17 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_THREAD_PS2
 
-// PS2 thread management routines for SDL
+/* PS2 thread management routines for SDL */
 
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "SDL_error.h"
+#include "SDL_thread.h"
 #include "../SDL_systhread.h"
 #include "../SDL_thread_c.h"
 #include <kernel.h>
@@ -54,9 +56,7 @@ static int childThread(void *arg)
     return res;
 }
 
-bool SDL_SYS_CreateThread(SDL_Thread *thread,
-                          SDL_FunctionPointer pfnBeginThread,
-                          SDL_FunctionPointer pfnEndThread)
+int SDL_SYS_CreateThread(SDL_Thread *thread)
 {
     ee_thread_status_t status;
     ee_thread_t eethread;
@@ -64,7 +64,7 @@ bool SDL_SYS_CreateThread(SDL_Thread *thread,
     size_t stack_size;
     int priority = 32;
 
-    // Set priority of new thread to the same as the current thread
+    /* Set priority of new thread to the same as the current thread */
     // status.size = sizeof(ee_thread_t);
     if (ReferThreadStatus(GetThreadId(), &status) == 0) {
         priority = status.current_priority;
@@ -72,7 +72,7 @@ bool SDL_SYS_CreateThread(SDL_Thread *thread,
 
     stack_size = thread->stacksize ? ((int)thread->stacksize) : 0x1800;
 
-    // Create EE Thread
+    /* Create EE Thread */
     eethread.attr = 0;
     eethread.option = 0;
     eethread.func = &childThread;
@@ -92,23 +92,17 @@ bool SDL_SYS_CreateThread(SDL_Thread *thread,
     sema.option = 0;
     thread->endfunc = (void *)CreateSema(&sema);
 
-    if (StartThread(thread->handle, thread) < 0) {
-        return SDL_SetError("StartThread() failed");
-    }
-
-    thread->threadid = (SDL_ThreadID) thread->handle;
-
-    return true;
+    return StartThread(thread->handle, thread);
 }
 
 void SDL_SYS_SetupThread(const char *name)
 {
-    // Do nothing.
+    /* Do nothing. */
 }
 
-SDL_ThreadID SDL_GetCurrentThreadID(void)
+SDL_threadID SDL_ThreadID(void)
 {
-    return (SDL_ThreadID)GetThreadId();
+    return (SDL_threadID)GetThreadId();
 }
 
 void SDL_SYS_WaitThread(SDL_Thread *thread)
@@ -120,10 +114,10 @@ void SDL_SYS_WaitThread(SDL_Thread *thread)
 
 void SDL_SYS_DetachThread(SDL_Thread *thread)
 {
-    // Do nothing.
+    /* Do nothing. */
 }
 
-bool SDL_SYS_SetThreadPriority(SDL_ThreadPriority priority)
+int SDL_SYS_SetThreadPriority(SDL_ThreadPriority priority)
 {
     int value;
 
@@ -137,10 +131,10 @@ bool SDL_SYS_SetThreadPriority(SDL_ThreadPriority priority)
         value = 50;
     }
 
-    if (ChangeThreadPriority(GetThreadId(), value) < 0) {
-        return SDL_SetError("ChangeThreadPriority() failed");
-    }
-    return true;
+    return ChangeThreadPriority(GetThreadId(), value);
 }
 
-#endif // SDL_THREAD_PS2
+#endif /* SDL_THREAD_PS2 */
+
+/* vim: ts=4 sw=4
+ */

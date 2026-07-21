@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,6 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
 
 /*
  * @author Wladimir J. van der Laan. Based on Jacob Lifshay's
@@ -26,35 +25,37 @@
  * the FSL demo framework.
  */
 
-#if defined(SDL_VIDEO_VULKAN) && defined(SDL_VIDEO_DRIVER_VIVANTE)
+#include "../../SDL_internal.h"
 
-#include "../SDL_vulkan_internal.h"
+#if defined(SDL_VIDEO_VULKAN) && defined(SDL_VIDEO_DRIVER_VIVANTE)
 
 #include "SDL_vivantevideo.h"
 
+#include "SDL_loadso.h"
 #include "SDL_vivantevulkan.h"
+#include "SDL_syswm.h"
 
-bool VIVANTE_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
+int VIVANTE_Vulkan_LoadLibrary(_THIS, const char *path)
 {
     VkExtensionProperties *extensions = NULL;
     Uint32 i, extensionCount = 0;
-    bool hasSurfaceExtension = false;
-    bool hasDisplayExtension = false;
+    SDL_bool hasSurfaceExtension = SDL_FALSE;
+    SDL_bool hasDisplayExtension = SDL_FALSE;
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = NULL;
     if (_this->vulkan_config.loader_handle) {
         return SDL_SetError("Vulkan already loaded");
     }
 
-    // Load the Vulkan loader library
+    /* Load the Vulkan loader library */
     if (!path) {
-        path = SDL_GetHint(SDL_HINT_VULKAN_LIBRARY);
+        path = SDL_getenv("SDL_VULKAN_LIBRARY");
     }
     if (!path) {
-        // If no path set, try Vivante fb vulkan driver explicitly
+        /* If no path set, try Vivante fb vulkan driver explicitly */
         path = "libvulkan-fb.so";
         _this->vulkan_config.loader_handle = SDL_LoadObject(path);
         if (!_this->vulkan_config.loader_handle) {
-            // If that couldn't be loaded, fall back to default name
+            /* If that couldn't be loaded, fall back to default name */
             path = "libvulkan.so";
             _this->vulkan_config.loader_handle = SDL_LoadObject(path);
         }
@@ -62,7 +63,7 @@ bool VIVANTE_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
         _this->vulkan_config.loader_handle = SDL_LoadObject(path);
     }
     if (!_this->vulkan_config.loader_handle) {
-        return false;
+        return -1;
     }
     SDL_strlcpy(_this->vulkan_config.loader_path, path,
                 SDL_arraysize(_this->vulkan_config.loader_path));
@@ -88,9 +89,9 @@ bool VIVANTE_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
     }
     for (i = 0; i < extensionCount; i++) {
         if (SDL_strcmp(VK_KHR_SURFACE_EXTENSION_NAME, extensions[i].extensionName) == 0) {
-            hasSurfaceExtension = true;
+            hasSurfaceExtension = SDL_TRUE;
         } else if (SDL_strcmp(VK_KHR_DISPLAY_EXTENSION_NAME, extensions[i].extensionName) == 0) {
-            hasDisplayExtension = true;
+            hasDisplayExtension = SDL_TRUE;
         }
     }
     SDL_free(extensions);
@@ -98,18 +99,18 @@ bool VIVANTE_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path)
         SDL_SetError("Installed Vulkan doesn't implement the " VK_KHR_SURFACE_EXTENSION_NAME " extension");
         goto fail;
     } else if (!hasDisplayExtension) {
-        SDL_SetError("Installed Vulkan doesn't implement the " VK_KHR_DISPLAY_EXTENSION_NAME " extension");
+        SDL_SetError("Installed Vulkan doesn't implement the " VK_KHR_DISPLAY_EXTENSION_NAME "extension");
         goto fail;
     }
-    return true;
+    return 0;
 
 fail:
     SDL_UnloadObject(_this->vulkan_config.loader_handle);
     _this->vulkan_config.loader_handle = NULL;
-    return false;
+    return -1;
 }
 
-void VIVANTE_Vulkan_UnloadLibrary(SDL_VideoDevice *_this)
+void VIVANTE_Vulkan_UnloadLibrary(_THIS)
 {
     if (_this->vulkan_config.loader_handle) {
         SDL_UnloadObject(_this->vulkan_config.loader_handle);
@@ -117,37 +118,35 @@ void VIVANTE_Vulkan_UnloadLibrary(SDL_VideoDevice *_this)
     }
 }
 
-char const * const *VIVANTE_Vulkan_GetInstanceExtensions(SDL_VideoDevice *_this, Uint32 *count)
+SDL_bool VIVANTE_Vulkan_GetInstanceExtensions(_THIS,
+                                              SDL_Window *window,
+                                              unsigned *count,
+                                              const char **names)
 {
     static const char *const extensionsForVivante[] = {
         VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_DISPLAY_EXTENSION_NAME
     };
-    if (count) {
-        *count = SDL_arraysize(extensionsForVivante);
+    if (!_this->vulkan_config.loader_handle) {
+        SDL_SetError("Vulkan is not loaded");
+        return SDL_FALSE;
     }
-    return extensionsForVivante;
+    return SDL_Vulkan_GetInstanceExtensions_Helper(
+        count, names, SDL_arraysize(extensionsForVivante),
+        extensionsForVivante);
 }
 
-bool VIVANTE_Vulkan_CreateSurface(SDL_VideoDevice *_this,
-                                 SDL_Window *window,
-                                 VkInstance instance,
-                                 const struct VkAllocationCallbacks *allocator,
-                                 VkSurfaceKHR *surface)
+SDL_bool VIVANTE_Vulkan_CreateSurface(_THIS,
+                                      SDL_Window *window,
+                                      VkInstance instance,
+                                      VkSurfaceKHR *surface)
 {
     if (!_this->vulkan_config.loader_handle) {
-        return SDL_SetError("Vulkan is not loaded");
+        SDL_SetError("Vulkan is not loaded");
+        return SDL_FALSE;
     }
-    return SDL_Vulkan_Display_CreateSurface(_this->vulkan_config.vkGetInstanceProcAddr, instance, allocator, surface);
-}
-
-void VIVANTE_Vulkan_DestroySurface(SDL_VideoDevice *_this,
-                                   VkInstance instance,
-                                   VkSurfaceKHR surface,
-                                   const struct VkAllocationCallbacks *allocator)
-{
-    if (_this->vulkan_config.loader_handle) {
-        SDL_Vulkan_DestroySurface_Internal(_this->vulkan_config.vkGetInstanceProcAddr, instance, surface, allocator);
-    }
+    return SDL_Vulkan_Display_CreateSurface(_this->vulkan_config.vkGetInstanceProcAddr, instance, surface);
 }
 
 #endif
+
+/* vi: set ts=4 sw=4 expandtab: */

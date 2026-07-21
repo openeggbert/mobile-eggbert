@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -11,14 +11,16 @@
 */
 /* Simple program:  Move N sprites around on the screen as fast as possible */
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
 
-#include "icon.h"
+#include "SDL.h"
+#include "testutils.h"
 
 #define WINDOW_WIDTH  640
 #define WINDOW_HEIGHT 480
@@ -26,39 +28,27 @@
 #define MAX_SPEED     1
 
 static SDL_Texture *sprite;
-static SDL_FRect positions[NUM_SPRITES];
-static SDL_FRect velocities[NUM_SPRITES];
+static SDL_Rect positions[NUM_SPRITES];
+static SDL_Rect velocities[NUM_SPRITES];
 static int sprite_w, sprite_h;
 
-static SDL_Renderer *renderer;
-static int done;
+SDL_Renderer *renderer;
+int done;
 
-static SDL_Texture *CreateTexture(SDL_Renderer *r, unsigned char *data, unsigned int len, int *w, int *h)
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
 {
-    SDL_Texture *texture = NULL;
-    SDL_Surface *surface;
-    SDL_IOStream *src = SDL_IOFromConstMem(data, len);
-    if (src) {
-        surface = SDL_LoadPNG_IO(src, true);
-        if (surface) {
-            /* Treat white as transparent */
-            SDL_SetSurfaceColorKey(surface, true, SDL_MapSurfaceRGB(surface, 255, 255, 255));
-
-            texture = SDL_CreateTextureFromSurface(r, surface);
-            *w = surface->w;
-            *h = surface->h;
-            SDL_DestroySurface(surface);
-        }
-    }
-    return texture;
+    SDL_Quit();
+    exit(rc);
 }
 
-static void MoveSprites(void)
+void MoveSprites(void)
 {
     int i;
     int window_w = WINDOW_WIDTH;
     int window_h = WINDOW_HEIGHT;
-    SDL_FRect *position, *velocity;
+    SDL_Rect *position, *velocity;
 
     /* Draw a gray background */
     SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
@@ -80,26 +70,25 @@ static void MoveSprites(void)
         }
 
         /* Blit the sprite onto the screen */
-        SDL_RenderTexture(renderer, sprite, NULL, position);
+        SDL_RenderCopy(renderer, sprite, NULL, position);
     }
 
     /* Update the screen! */
     SDL_RenderPresent(renderer);
 }
 
-static void loop(void)
+void loop(void)
 {
     SDL_Event event;
 
     /* Check for events */
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT ||
-            (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE)) {
+        if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN) {
             done = 1;
         }
     }
     MoveSprites();
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
     if (done) {
         emscripten_cancel_main_loop();
     }
@@ -108,59 +97,50 @@ static void loop(void)
 
 int main(int argc, char *argv[])
 {
-    SDL_Window *window = NULL;
-    int return_code = -1;
+    SDL_Window *window;
     int i;
 
-    if (argc > 1) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "USAGE: %s", argv[0]);
-        return_code = 1;
-        goto quit;
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    if (SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer) < 0) {
+        quit(2);
     }
 
-    if (!SDL_CreateWindowAndRenderer("testspriteminimal", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
-        return_code = 2;
-        goto quit;
-    }
-
-    SDL_SetRenderLogicalPresentation(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
-
-    sprite = CreateTexture(renderer, icon_png, icon_png_len, &sprite_w, &sprite_h);
+    sprite = LoadTexture(renderer, "icon.bmp", SDL_TRUE, &sprite_w, &sprite_h);
 
     if (!sprite) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture (%s)", SDL_GetError());
-        return_code = 3;
-        goto quit;
+        quit(2);
     }
 
     /* Initialize the sprite positions */
+    srand((unsigned int)time(NULL));
     for (i = 0; i < NUM_SPRITES; ++i) {
-        positions[i].x = (float)SDL_rand(WINDOW_WIDTH - sprite_w);
-        positions[i].y = (float)SDL_rand(WINDOW_HEIGHT - sprite_h);
-        positions[i].w = (float)sprite_w;
-        positions[i].h = (float)sprite_h;
-        velocities[i].x = 0.0f;
-        velocities[i].y = 0.0f;
-        while (velocities[i].x == 0.f && velocities[i].y == 0.f) {
-            velocities[i].x = (float)(SDL_rand(MAX_SPEED * 2 + 1) - MAX_SPEED);
-            velocities[i].y = (float)(SDL_rand(MAX_SPEED * 2 + 1) - MAX_SPEED);
+        positions[i].x = rand() % (WINDOW_WIDTH - sprite_w);
+        positions[i].y = rand() % (WINDOW_HEIGHT - sprite_h);
+        positions[i].w = sprite_w;
+        positions[i].h = sprite_h;
+        velocities[i].x = 0;
+        velocities[i].y = 0;
+        while (!velocities[i].x && !velocities[i].y) {
+            velocities[i].x = (rand() % (MAX_SPEED * 2 + 1)) - MAX_SPEED;
+            velocities[i].y = (rand() % (MAX_SPEED * 2 + 1)) - MAX_SPEED;
         }
     }
 
     /* Main render loop */
     done = 0;
 
-#ifdef SDL_PLATFORM_EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(loop, 0, 1);
 #else
     while (!done) {
         loop();
     }
 #endif
-    return_code = 0;
-quit:
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return return_code;
+    quit(0);
+
+    return 0; /* to prevent compiler warning */
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

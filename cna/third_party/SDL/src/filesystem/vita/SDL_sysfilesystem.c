@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,14 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_FILESYSTEM_VITA
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-// System dependent filesystem routines
-
-#include "../SDL_sysfilesystem.h"
+/* System dependent filesystem routines                                */
 
 #include <errno.h>
 #include <stdio.h>
@@ -36,45 +34,60 @@
 #include <limits.h>
 #include <fcntl.h>
 
-char *SDL_SYS_GetBasePath(void)
+#include "SDL_error.h"
+#include "SDL_stdinc.h"
+#include "SDL_filesystem.h"
+#include "SDL_rwops.h"
+
+char *SDL_GetBasePath(void)
 {
-    return SDL_strdup("app0:/");
+    const char *basepath = "app0:/";
+    char *retval = SDL_strdup(basepath);
+    return retval;
 }
 
-char *SDL_SYS_GetPrefPath(const char *org, const char *app)
+char *SDL_GetPrefPath(const char *org, const char *app)
 {
     const char *envr = "ux0:/data/";
-    char *result = NULL;
+    char *retval = NULL;
     char *ptr = NULL;
-    size_t len = SDL_strlen(envr) + SDL_strlen(org) + SDL_strlen(app) + 3;
-    result = (char *)SDL_malloc(len);
-    if (!result) {
+    size_t len = 0;
+
+    if (!app) {
+        SDL_InvalidParamError("app");
+        return NULL;
+    }
+    if (!org) {
+        org = "";
+    }
+
+    len = SDL_strlen(envr);
+
+    len += SDL_strlen(org) + SDL_strlen(app) + 3;
+    retval = (char *)SDL_malloc(len);
+    if (!retval) {
+        SDL_OutOfMemory();
         return NULL;
     }
 
     if (*org) {
-        SDL_snprintf(result, len, "%s%s/%s/", envr, org, app);
+        SDL_snprintf(retval, len, "%s%s/%s/", envr, org, app);
     } else {
-        SDL_snprintf(result, len, "%s%s/", envr, app);
+        SDL_snprintf(retval, len, "%s%s/", envr, app);
     }
 
-    for (ptr = result + 1; *ptr; ptr++) {
+    for (ptr = retval + 1; *ptr; ptr++) {
         if (*ptr == '/') {
             *ptr = '\0';
-            sceIoMkdir(result, 0777);
+            sceIoMkdir(retval, 0777);
             *ptr = '/';
         }
     }
-    sceIoMkdir(result, 0777);
+    sceIoMkdir(retval, 0777);
 
-    return result;
+    return retval;
 }
 
-// TODO
-char *SDL_SYS_GetUserFolder(SDL_Folder folder)
-{
-    SDL_Unsupported();
-    return NULL;
-}
+#endif /* SDL_FILESYSTEM_VITA */
 
-#endif // SDL_FILESYSTEM_VITA
+/* vi: set ts=4 sw=4 expandtab: */

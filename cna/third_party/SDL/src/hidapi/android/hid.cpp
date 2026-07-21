@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 2022 Valve Corporation
+  Copyright (C) 2021 Valve Corporation
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,13 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 // Purpose: A wrapper implementing "HID" API for Android
 //
 //          This layer glues the hidapi API to Android's USB and BLE stack.
 
-#include "hid.h"
 
 // Common to stub version and non-stub version of functions
 #include <jni.h>
@@ -51,36 +50,27 @@
 
 #ifndef SDL_HIDAPI_DISABLED
 
-extern "C" {
-#include "../SDL_hidapi_c.h"
-}
+#include "SDL_hints.h"
 #include "../../core/android/SDL_android.h"
 
-#define hid_close                    PLATFORM_hid_close
-#define hid_device                   PLATFORM_hid_device
-#define hid_device_                  PLATFORM_hid_device_
-#define hid_enumerate                PLATFORM_hid_enumerate
-#define hid_error                    PLATFORM_hid_error
-#define hid_exit                     PLATFORM_hid_exit
-#define hid_free_enumeration         PLATFORM_hid_free_enumeration
-#define hid_get_device_info          PLATFORM_hid_get_device_info
-#define hid_get_feature_report       PLATFORM_hid_get_feature_report
-#define hid_get_indexed_string       PLATFORM_hid_get_indexed_string
-#define hid_get_input_report         PLATFORM_hid_get_input_report
-#define hid_get_manufacturer_string  PLATFORM_hid_get_manufacturer_string
-#define hid_get_product_string       PLATFORM_hid_get_product_string
-#define hid_get_report_descriptor    PLATFORM_hid_get_report_descriptor
-#define hid_get_serial_number_string PLATFORM_hid_get_serial_number_string
-#define hid_init                     PLATFORM_hid_init
-#define hid_open_path                PLATFORM_hid_open_path
-#define hid_open                     PLATFORM_hid_open
-#define hid_read                     PLATFORM_hid_read
-#define hid_read_timeout             PLATFORM_hid_read_timeout
-#define hid_send_feature_report      PLATFORM_hid_send_feature_report
-#define hid_set_nonblocking          PLATFORM_hid_set_nonblocking
-#define hid_version                  PLATFORM_hid_version
-#define hid_version_str              PLATFORM_hid_version_str
-#define hid_write                    PLATFORM_hid_write
+#define hid_init                        PLATFORM_hid_init
+#define hid_exit                        PLATFORM_hid_exit
+#define hid_enumerate                   PLATFORM_hid_enumerate
+#define hid_free_enumeration            PLATFORM_hid_free_enumeration
+#define hid_open                        PLATFORM_hid_open
+#define hid_open_path                   PLATFORM_hid_open_path
+#define hid_write                       PLATFORM_hid_write
+#define hid_read_timeout                PLATFORM_hid_read_timeout
+#define hid_read                        PLATFORM_hid_read
+#define hid_set_nonblocking             PLATFORM_hid_set_nonblocking
+#define hid_send_feature_report         PLATFORM_hid_send_feature_report
+#define hid_get_feature_report          PLATFORM_hid_get_feature_report
+#define hid_close                       PLATFORM_hid_close
+#define hid_get_manufacturer_string     PLATFORM_hid_get_manufacturer_string
+#define hid_get_product_string          PLATFORM_hid_get_product_string
+#define hid_get_serial_number_string    PLATFORM_hid_get_serial_number_string
+#define hid_get_indexed_string          PLATFORM_hid_get_indexed_string
+#define hid_error                       PLATFORM_hid_error
 
 #include <pthread.h>
 #include <errno.h>	// For ETIMEDOUT and ECONNRESET
@@ -91,15 +81,15 @@ extern "C" {
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
-#define D0G_BLE2_PID        0x1106
-#define TRITON_BLE_PID      0x1303
-
 
 struct hid_device_
 {
 	int m_nId;
 	int m_nDeviceRefCount;
 };
+
+static JavaVM *g_JVM;
+static pthread_key_t g_ThreadKey;
 
 template<class T>
 class hid_device_ref
@@ -322,7 +312,7 @@ private:
 	hid_buffer_entry *m_pFree;
 };
 
-static jbyteArray NewByteArray( JNIEnv *env, const uint8_t *pData, size_t nDataLen )
+static jbyteArray NewByteArray( JNIEnv* env, const uint8_t *pData, size_t nDataLen )
 {
 	jbyteArray array = env->NewByteArray( (jsize)nDataLen );
 	jbyte *pBuf = env->GetByteArrayElements( array, NULL );
@@ -336,7 +326,7 @@ static char *CreateStringFromJString( JNIEnv *env, const jstring &sString )
 {
 	size_t nLength = env->GetStringUTFLength( sString );
 	const char *pjChars = env->GetStringUTFChars( sString, NULL );
-	char *psString = (char *)malloc( nLength + 1 );
+	char *psString = (char*)malloc( nLength + 1 );
 	SDL_memcpy( psString, pjChars, nLength );
 	psString[ nLength ] = '\0';
 	env->ReleaseStringUTFChars( sString, pjChars );
@@ -347,7 +337,7 @@ static wchar_t *CreateWStringFromJString( JNIEnv *env, const jstring &sString )
 {
 	size_t nLength = env->GetStringLength( sString );
 	const jchar *pjChars = env->GetStringChars( sString, NULL );
-	wchar_t *pwString = (wchar_t *)malloc( ( nLength + 1 ) * sizeof( wchar_t ) );
+	wchar_t *pwString = (wchar_t*)malloc( ( nLength + 1 ) * sizeof( wchar_t ) );
 	wchar_t *pwChars = pwString;
 	for ( size_t iIndex = 0; iIndex < nLength; ++iIndex )
 	{
@@ -361,7 +351,7 @@ static wchar_t *CreateWStringFromJString( JNIEnv *env, const jstring &sString )
 static wchar_t *CreateWStringFromWString( const wchar_t *pwSrc )
 {
 	size_t nLength = SDL_wcslen( pwSrc );
-	wchar_t *pwString = (wchar_t *)malloc( ( nLength + 1 ) * sizeof( wchar_t ) );
+	wchar_t *pwString = (wchar_t*)malloc( ( nLength + 1 ) * sizeof( wchar_t ) );
 	SDL_memcpy( pwString, pwSrc, nLength * sizeof( wchar_t ) );
 	pwString[ nLength ] = '\0';
 	return pwString;
@@ -391,8 +381,9 @@ static jclass  g_HIDDeviceManagerCallbackClass;
 static jobject g_HIDDeviceManagerCallbackHandler;
 static jmethodID g_midHIDDeviceManagerInitialize;
 static jmethodID g_midHIDDeviceManagerOpen;
-static jmethodID g_midHIDDeviceManagerWriteReport;
-static jmethodID g_midHIDDeviceManagerReadReport;
+static jmethodID g_midHIDDeviceManagerSendOutputReport;
+static jmethodID g_midHIDDeviceManagerSendFeatureReport;
+static jmethodID g_midHIDDeviceManagerGetFeatureReport;
 static jmethodID g_midHIDDeviceManagerClose;
 static bool g_initialized = false;
 
@@ -441,7 +432,8 @@ public:
 
 		// The Bluetooth Steam Controller needs special handling
 		const int VALVE_USB_VID	= 0x28DE;
-		if ( pInfo->vendor_id == VALVE_USB_VID && ( pInfo->product_id == D0G_BLE2_PID || pInfo->product_id == TRITON_BLE_PID ) )
+		const int D0G_BLE2_PID = 0x1106;
+		if ( pInfo->vendor_id == VALVE_USB_VID && pInfo->product_id == D0G_BLE2_PID )
 		{
 			m_bIsBLESteamController = true;
 		}
@@ -477,7 +469,7 @@ public:
 		return m_nId;
 	}
 
-	hid_device_info *GetDeviceInfo()
+	const hid_device_info *GetDeviceInfo()
 	{
 		return m_pInfo;
 	}
@@ -494,7 +486,10 @@ public:
 
 	bool BOpen()
 	{
-		JNIEnv *env = (JNIEnv *)SDL_GetAndroidJNIEnv();
+		// Make sure thread is attached to JVM/env
+		JNIEnv *env;
+		g_JVM->AttachCurrentThread( &env, NULL );
+		pthread_setspecific( g_ThreadKey, (void*)env );
 
 		if ( !g_HIDDeviceManagerCallbackHandler )
 		{
@@ -502,38 +497,46 @@ public:
 			return false;
 		}
 
+		m_bIsWaitingForOpen = false;
+		m_bOpenResult = env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerOpen, m_nId );
+		ExceptionCheck( env, "BOpen" );
+
 		if ( m_bIsWaitingForOpen )
 		{
-			SDL_SetError( "Waiting for permission" );
-			return false;
+			hid_mutex_guard cvl( &m_cvLock );
+
+			const int OPEN_TIMEOUT_SECONDS = 60;
+			struct timespec ts, endtime;
+			clock_gettime( CLOCK_REALTIME, &ts );
+			endtime = ts;
+			endtime.tv_sec += OPEN_TIMEOUT_SECONDS;
+			do
+			{
+				if ( pthread_cond_timedwait( &m_cv, &m_cvLock, &endtime ) != 0 )
+				{
+					break;
+				}
+			}
+			while ( m_bIsWaitingForOpen && get_timespec_ms( ts ) < get_timespec_ms( endtime ) );
 		}
 
 		if ( !m_bOpenResult )
 		{
-			m_bOpenResult = env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerOpen, m_nId );
-			ExceptionCheck( env, "BOpen" );
-
 			if ( m_bIsWaitingForOpen )
 			{
-				LOGV( "Device open waiting for permission" );
-				SDL_SetError( "Waiting for permission" );
-				m_bWasOpenPending = true;
-				return false;
+				LOGV( "Device open failed - timed out waiting for device permission" );
 			}
-
-			if ( !m_bOpenResult )
+			else
 			{
 				LOGV( "Device open failed" );
-				SDL_SetError( "Device open failed" );
-				return false;
 			}
+			return false;
 		}
 
 		m_pDevice = new hid_device;
 		m_pDevice->m_nId = m_nId;
 		m_pDevice->m_nDeviceRefCount = 1;
 		LOGD("Creating device %d (%p), refCount = 1\n", m_pDevice->m_nId, m_pDevice);
-
 		return true;
 	}
 
@@ -542,42 +545,14 @@ public:
 		m_bIsWaitingForOpen = true;
 	}
 
-	bool BOpenPending() const
-	{
-		return m_bIsWaitingForOpen;
-	}
-
-	void SetWasOpenPending( bool bState )
-	{
-		m_bWasOpenPending = bState;
-	}
-
-	bool BWasOpenPending() const
-	{
-		return m_bWasOpenPending;
-	}
-
 	void SetOpenResult( bool bResult )
 	{
 		if ( m_bIsWaitingForOpen )
 		{
 			m_bOpenResult = bResult;
 			m_bIsWaitingForOpen = false;
-
-			if ( m_bOpenResult )
-			{
-				LOGV( "Device open succeeded" );
-			}
-			else
-			{
-				LOGV( "Device open failed" );
-			}
+			pthread_cond_signal( &m_cv );
 		}
-	}
-
-	bool BOpenResult() const
-	{
-		return m_bOpenResult;
 	}
 
 	void ProcessInput( const uint8_t *pBuf, size_t nBufSize )
@@ -606,14 +581,7 @@ public:
 		size_t nDataLen = buffer.size() > length ? length : buffer.size();
 		if ( m_bIsBLESteamController )
 		{
-			if ( m_pInfo->product_id == TRITON_BLE_PID )
-			{
-				data[0] = 0x45;
-			}
-			else
-			{
-				data[0] = 0x03;
-			}
+			data[0] = 0x03;
 			SDL_memcpy( data + 1, buffer.data(), nDataLen );
 			++nDataLen;
 		}
@@ -631,70 +599,100 @@ public:
 		return (int)nDataLen;
 	}
 
-	int WriteReport( const unsigned char *pData, size_t nDataLen, bool bFeature )
+	int SendOutputReport( const unsigned char *pData, size_t nDataLen )
 	{
-		JNIEnv *env = (JNIEnv *)SDL_GetAndroidJNIEnv();
+		// Make sure thread is attached to JVM/env
+		JNIEnv *env;
+		g_JVM->AttachCurrentThread( &env, NULL );
+		pthread_setspecific( g_ThreadKey, (void*)env );
 
-		if ( !g_HIDDeviceManagerCallbackHandler )
+		int nRet = -1;
+		if ( g_HIDDeviceManagerCallbackHandler )
 		{
-			LOGV( "WriteReport without callback handler" );
-			return -1;
+			jbyteArray pBuf = NewByteArray( env, pData, nDataLen );
+			nRet = env->CallIntMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerSendOutputReport, m_nId, pBuf );
+			ExceptionCheck( env, "SendOutputReport" );
+			env->DeleteLocalRef( pBuf );
 		}
-
-		jbyteArray pBuf = NewByteArray( env, pData, nDataLen );
-		int nRet = env->CallIntMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerWriteReport, m_nId, pBuf, bFeature );
-		ExceptionCheck( env, "WriteReport" );
-		env->DeleteLocalRef( pBuf );
+		else
+		{
+			LOGV( "SendOutputReport without callback handler" );
+		}
 		return nRet;
 	}
 
-	void ProcessReportResponse( const uint8_t *pBuf, size_t nBufSize )
+	int SendFeatureReport( const unsigned char *pData, size_t nDataLen )
+	{
+		// Make sure thread is attached to JVM/env
+		JNIEnv *env;
+		g_JVM->AttachCurrentThread( &env, NULL );
+		pthread_setspecific( g_ThreadKey, (void*)env );
+
+		int nRet = -1;
+		if ( g_HIDDeviceManagerCallbackHandler )
+		{
+			jbyteArray pBuf = NewByteArray( env, pData, nDataLen );
+			nRet = env->CallIntMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerSendFeatureReport, m_nId, pBuf );
+			ExceptionCheck( env, "SendFeatureReport" );
+			env->DeleteLocalRef( pBuf );
+		}
+		else
+		{
+			LOGV( "SendFeatureReport without callback handler" );
+		}
+		return nRet;
+	}
+
+	void ProcessFeatureReport( const uint8_t *pBuf, size_t nBufSize )
 	{
 		hid_mutex_guard cvl( &m_cvLock );
-		if ( m_bIsWaitingForReportResponse )
+		if ( m_bIsWaitingForFeatureReport )
 		{
-			m_reportResponse.assign( pBuf, nBufSize );
+			m_featureReport.assign( pBuf, nBufSize );
 
-			m_bIsWaitingForReportResponse = false;
-			m_nReportResponseError = 0;
+			m_bIsWaitingForFeatureReport = false;
+			m_nFeatureReportError = 0;
 			pthread_cond_signal( &m_cv );
 		}
 	}
 
-	int ReadReport( unsigned char *pData, size_t nDataLen, bool bFeature )
+	int GetFeatureReport( unsigned char *pData, size_t nDataLen )
 	{
-		JNIEnv *env = (JNIEnv *)SDL_GetAndroidJNIEnv();
+		// Make sure thread is attached to JVM/env
+		JNIEnv *env;
+		g_JVM->AttachCurrentThread( &env, NULL );
+		pthread_setspecific( g_ThreadKey, (void*)env );
 
 		if ( !g_HIDDeviceManagerCallbackHandler )
 		{
-			LOGV( "ReadReport without callback handler" );
+			LOGV( "GetFeatureReport without callback handler" );
 			return -1;
 		}
 
 		{
 			hid_mutex_guard cvl( &m_cvLock );
-			if ( m_bIsWaitingForReportResponse )
+			if ( m_bIsWaitingForFeatureReport )
 			{
 				LOGV( "Get feature report already ongoing... bail" );
 				return -1; // Read already ongoing, we currently do not serialize, TODO
 			}
-			m_bIsWaitingForReportResponse = true;
+			m_bIsWaitingForFeatureReport = true;
 		}
 
 		jbyteArray pBuf = NewByteArray( env, pData, nDataLen );
-		int nRet = env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerReadReport, m_nId, pBuf, bFeature ) ? 0 : -1;
-		ExceptionCheck( env, "ReadReport" );
+		int nRet = env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerGetFeatureReport, m_nId, pBuf ) ? 0 : -1;
+		ExceptionCheck( env, "GetFeatureReport" );
 		env->DeleteLocalRef( pBuf );
 		if ( nRet < 0 )
 		{
-			LOGV( "ReadReport failed" );
-			m_bIsWaitingForReportResponse = false;
+			LOGV( "GetFeatureReport failed" );
+			m_bIsWaitingForFeatureReport = false;
 			return -1;
 		}
 
 		{
 			hid_mutex_guard cvl( &m_cvLock );
-			if ( m_bIsWaitingForReportResponse )
+			if ( m_bIsWaitingForFeatureReport )
 			{
 				LOGV("=== Going to sleep" );
 				// Wait in CV until we are no longer waiting for a feature report.
@@ -710,43 +708,25 @@ public:
 						break;
 					}
 				}
-				while ( m_bIsWaitingForReportResponse && get_timespec_ms( ts ) < get_timespec_ms( endtime ) );
+				while ( m_bIsWaitingForFeatureReport && get_timespec_ms( ts ) < get_timespec_ms( endtime ) );
 
 				// We are back
-				if ( m_bIsWaitingForReportResponse )
+				if ( m_bIsWaitingForFeatureReport )
 				{
-					m_nReportResponseError = -ETIMEDOUT;
-					m_bIsWaitingForReportResponse = false;
+					m_nFeatureReportError = -ETIMEDOUT;
+					m_bIsWaitingForFeatureReport = false;
 				}
-				LOGV( "=== Got feature report err=%d", m_nReportResponseError );
-				if ( m_nReportResponseError != 0 )
+				LOGV( "=== Got feature report err=%d", m_nFeatureReportError );
+				if ( m_nFeatureReportError != 0 )
 				{
-					return m_nReportResponseError;
-				}
-			}
-
-			size_t uBytesToCopy = 0;
-
-			if ( m_reportResponse.size() > 0 )
-			{
-				// Make sure we preserve the report value if it isn't already in the report.
-				bool bHasReportAlready = ( *pData == *m_reportResponse.data() );
-
-				// Make sure we only copy as much as will fit, deducting one byte for the report if we need to leave it intact.
-				size_t nSafeDataLen = nDataLen - ( bHasReportAlready ? 0 : 1 );
-				uBytesToCopy = m_reportResponse.size() < nSafeDataLen ? m_reportResponse.size() : nSafeDataLen;
-
-				SDL_memcpy( pData + ( bHasReportAlready ? 0 : 1 ), m_reportResponse.data(), uBytesToCopy );
-				m_reportResponse.clear();
-
-				if ( !bHasReportAlready )
-				{
-					// Add the report byte back on to return the real length.
-					uBytesToCopy++;
+					return m_nFeatureReportError;
 				}
 			}
 
-			LOGV( "=== Got %zu bytes", uBytesToCopy );
+			size_t uBytesToCopy = m_featureReport.size() > nDataLen ? nDataLen : m_featureReport.size();
+			SDL_memcpy( pData, m_featureReport.data(), uBytesToCopy );
+			m_featureReport.clear();
+			LOGV( "=== Got %u bytes", uBytesToCopy );
 
 			return (int)uBytesToCopy;
 		}
@@ -754,15 +734,15 @@ public:
 
 	void Close( bool bDeleteDevice )
 	{
-		JNIEnv *env = (JNIEnv *)SDL_GetAndroidJNIEnv();
+		// Make sure thread is attached to JVM/env
+		JNIEnv *env;
+		g_JVM->AttachCurrentThread( &env, NULL );
+		pthread_setspecific( g_ThreadKey, (void*)env );
 
 		if ( g_HIDDeviceManagerCallbackHandler )
 		{
-			if ( !m_bIsWaitingForOpen && m_bOpenResult )
-			{
-				env->CallVoidMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerClose, m_nId );
-				ExceptionCheck( env, "Close" );
-			}
+			env->CallVoidMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerClose, m_nId );
+			ExceptionCheck( env, "Close" );
 		}
 
 		hid_mutex_guard dataLock( &m_dataLock );
@@ -770,12 +750,10 @@ public:
 
 		// Clean and release pending feature report reads
 		hid_mutex_guard cvLock( &m_cvLock );
-		m_reportResponse.clear();
-		m_bIsWaitingForReportResponse = false;
-		m_nReportResponseError = -ECONNRESET;
+		m_featureReport.clear();
+		m_bIsWaitingForFeatureReport = false;
+		m_nFeatureReportError = -ECONNRESET;
 		pthread_cond_broadcast( &m_cv );
-
-		m_bOpenResult = false;
 
 		if ( bDeleteDevice )
 		{
@@ -799,11 +777,10 @@ private:
 	pthread_mutex_t m_cvLock = PTHREAD_MUTEX_INITIALIZER; // This lock has to be held to access any variables below
 	pthread_cond_t m_cv = PTHREAD_COND_INITIALIZER;
 	bool m_bIsWaitingForOpen = false;
-	bool m_bWasOpenPending = false;
 	bool m_bOpenResult = false;
-	bool m_bIsWaitingForReportResponse = false;
-	int m_nReportResponseError = 0;
-	hid_buffer m_reportResponse;
+	bool m_bIsWaitingForFeatureReport = false;
+	int m_nFeatureReportError = 0;
+	hid_buffer m_featureReport;
 
 public:
 	hid_device_ref<CHIDDevice> next;
@@ -829,6 +806,16 @@ static hid_device_ref<CHIDDevice> FindDevice( int nDeviceId )
 	return pDevice;
 }
 
+static void ThreadDestroyed(void* value)
+{
+	/* The thread is being destroyed, detach it from the Java VM and set the g_ThreadKey value to NULL as required */
+	JNIEnv *env = (JNIEnv*) value;
+	if (env != NULL) {
+		g_JVM->DetachCurrentThread();
+		pthread_setspecific(g_ThreadKey, NULL);
+	}
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceRegisterCallback)(JNIEnv *env, jobject thiz);
@@ -837,28 +824,38 @@ extern "C"
 JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReleaseCallback)(JNIEnv *env, jobject thiz);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, jint nDeviceID, jstring sIdentifier, jint nVendorId, jint nProductId, jstring sSerialNumber, jint nReleaseNumber, jstring sManufacturer, jstring sProduct, jint nInterface, jint nInterfaceClass, jint nInterfaceSubclass, jint nInterfaceProtocol, jboolean bBluetooth );
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, int nDeviceID, jstring sIdentifier, int nVendorId, int nProductId, jstring sSerialNumber, int nReleaseNumber, jstring sManufacturer, jstring sProduct, int nInterface, int nInterfaceClass, int nInterfaceSubclass, int nInterfaceProtocol );
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, jint nDeviceID);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, int nDeviceID);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, jint nDeviceID, jboolean bOpened);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, int nDeviceID, bool bOpened);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, jint nDeviceID);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, int nDeviceID);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReportResponse)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceFeatureReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value);
 
 
 extern "C"
 JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceRegisterCallback)(JNIEnv *env, jobject thiz )
 {
 	LOGV( "HIDDeviceRegisterCallback()");
+
+	env->GetJavaVM( &g_JVM );
+
+	/*
+	 * Create mThreadKey so we can keep track of the JNIEnv assigned to each thread
+	 * Refer to http://developer.android.com/guide/practices/design/jni.html for the rationale behind this
+	 */
+	if (pthread_key_create(&g_ThreadKey, ThreadDestroyed) != 0) {
+		__android_log_print(ANDROID_LOG_ERROR, TAG, "Error initializing pthread key");
+	}
 
 	if ( g_HIDDeviceManagerCallbackHandler != NULL )
 	{
@@ -883,13 +880,18 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceRegisterCallba
 		{
 			__android_log_print(ANDROID_LOG_ERROR, TAG, "HIDDeviceRegisterCallback: callback class missing openDevice" );
 		}
-		g_midHIDDeviceManagerWriteReport = env->GetMethodID( g_HIDDeviceManagerCallbackClass, "writeReport", "(I[BZ)I" );
-		if ( !g_midHIDDeviceManagerWriteReport )
+		g_midHIDDeviceManagerSendOutputReport = env->GetMethodID( g_HIDDeviceManagerCallbackClass, "sendOutputReport", "(I[B)I" );
+		if ( !g_midHIDDeviceManagerSendOutputReport )
 		{
-			__android_log_print(ANDROID_LOG_ERROR, TAG, "HIDDeviceRegisterCallback: callback class missing writeReport" );
+			__android_log_print(ANDROID_LOG_ERROR, TAG, "HIDDeviceRegisterCallback: callback class missing sendOutputReport" );
 		}
-		g_midHIDDeviceManagerReadReport = env->GetMethodID( g_HIDDeviceManagerCallbackClass, "readReport", "(I[BZ)Z" );
-		if ( !g_midHIDDeviceManagerReadReport )
+		g_midHIDDeviceManagerSendFeatureReport = env->GetMethodID( g_HIDDeviceManagerCallbackClass, "sendFeatureReport", "(I[B)I" );
+		if ( !g_midHIDDeviceManagerSendFeatureReport )
+		{
+			__android_log_print(ANDROID_LOG_ERROR, TAG, "HIDDeviceRegisterCallback: callback class missing sendFeatureReport" );
+		}
+		g_midHIDDeviceManagerGetFeatureReport = env->GetMethodID( g_HIDDeviceManagerCallbackClass, "getFeatureReport", "(I[B)Z" );
+		if ( !g_midHIDDeviceManagerGetFeatureReport )
 		{
 			__android_log_print(ANDROID_LOG_ERROR, TAG, "HIDDeviceRegisterCallback: callback class missing getFeatureReport" );
 		}
@@ -917,7 +919,7 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReleaseCallbac
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, jint nDeviceID, jstring sIdentifier, jint nVendorId, jint nProductId, jstring sSerialNumber, jint nReleaseNumber, jstring sManufacturer, jstring sProduct, jint nInterface, jint nInterfaceClass, jint nInterfaceSubclass, jint nInterfaceProtocol, jboolean bBluetooth )
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, int nDeviceID, jstring sIdentifier, int nVendorId, int nProductId, jstring sSerialNumber, int nReleaseNumber, jstring sManufacturer, jstring sProduct, int nInterface, int nInterfaceClass, int nInterfaceSubclass, int nInterfaceProtocol )
 {
 	LOGV( "HIDDeviceConnected() id=%d VID/PID = %.4x/%.4x, interface %d\n", nDeviceID, nVendorId, nProductId, nInterface );
 
@@ -934,14 +936,6 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNI
 	pInfo->interface_class = nInterfaceClass;
 	pInfo->interface_subclass = nInterfaceSubclass;
 	pInfo->interface_protocol = nInterfaceProtocol;
-	if ( bBluetooth )
-	{
-		pInfo->bus_type = HID_API_BUS_BLUETOOTH;
-	}
-	else
-	{
-		pInfo->bus_type = HID_API_BUS_USB;
-	}
 
 	hid_device_ref<CHIDDevice> pDevice( new CHIDDevice( nDeviceID, pInfo ) );
 
@@ -962,7 +956,7 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNI
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, jint nDeviceID)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, int nDeviceID)
 {
 	LOGV( "HIDDeviceOpenPending() id=%d\n", nDeviceID );
 	hid_device_ref<CHIDDevice> pDevice = FindDevice( nDeviceID );
@@ -973,7 +967,7 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(J
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, jint nDeviceID, jboolean bOpened)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, int nDeviceID, bool bOpened)
 {
 	LOGV( "HIDDeviceOpenResult() id=%d, result=%s\n", nDeviceID, bOpened ? "true" : "false" );
 	hid_device_ref<CHIDDevice> pDevice = FindDevice( nDeviceID );
@@ -984,7 +978,7 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JN
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, jint nDeviceID)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, int nDeviceID)
 {
 	LOGV( "HIDDeviceDisconnected() id=%d\n", nDeviceID );
 	hid_device_ref<CHIDDevice> pDevice;
@@ -1015,7 +1009,7 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value)
 {
 	jbyte *pBuf = env->GetByteArrayElements(value, NULL);
 	jsize nBufSize = env->GetArrayLength(value);
@@ -1024,23 +1018,23 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(J
 	hid_device_ref<CHIDDevice> pDevice = FindDevice( nDeviceID );
 	if ( pDevice )
 	{
-		pDevice->ProcessInput( reinterpret_cast< const uint8_t * >( pBuf ), nBufSize );
+		pDevice->ProcessInput( reinterpret_cast< const uint8_t* >( pBuf ), nBufSize );
 	}
 
 	env->ReleaseByteArrayElements(value, pBuf, 0);
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReportResponse)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceFeatureReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value)
 {
 	jbyte *pBuf = env->GetByteArrayElements(value, NULL);
 	jsize nBufSize = env->GetArrayLength(value);
 
-	LOGV( "HIDDeviceReportResponse() id=%d len=%u\n", nDeviceID, nBufSize );
+	LOGV( "HIDDeviceFeatureReport() id=%d len=%u\n", nDeviceID, nBufSize );
 	hid_device_ref<CHIDDevice> pDevice = FindDevice( nDeviceID );
 	if ( pDevice )
 	{
-		pDevice->ProcessReportResponse( reinterpret_cast< const uint8_t * >( pBuf ), nBufSize );
+		pDevice->ProcessFeatureReport( reinterpret_cast< const uint8_t* >( pBuf ), nBufSize );
 	}
 
 	env->ReleaseByteArrayElements(value, pBuf, 0);
@@ -1053,43 +1047,34 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReportResponse
 extern "C"
 {
 
-static void SDLCALL RequestBluetoothPermissionCallback( void *userdata, const char *permission, bool granted )
-{
-	SDL_Log( "Bluetooth permission %s", granted ? "granted" : "denied" );
-
-	if ( granted && g_HIDDeviceManagerCallbackHandler )
-	{
-		JNIEnv *env = (JNIEnv *)SDL_GetAndroidJNIEnv();
-
-		env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerInitialize, false, true );
-	}
-}
-
 int hid_init(void)
 {
-	if ( !g_initialized && g_HIDDeviceManagerCallbackHandler )
+	if ( !g_initialized )
 	{
 		// HIDAPI doesn't work well with Android < 4.3
-		if ( SDL_GetAndroidSDKVersion() >= 18 )
-		{
-			JNIEnv *env = (JNIEnv *)SDL_GetAndroidJNIEnv();
+		if (SDL_GetAndroidSDKVersion() >= 18) {
+			// Make sure thread is attached to JVM/env
+			JNIEnv *env;
+			g_JVM->AttachCurrentThread( &env, NULL );
+			pthread_setspecific( g_ThreadKey, (void*)env );
 
-			env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerInitialize, true, false );
+			if ( !g_HIDDeviceManagerCallbackHandler )
+			{
+				LOGV( "hid_init() without callback handler" );
+				return -1;
+			}
 
 			// Bluetooth is currently only used for Steam Controllers, so check that hint
 			// before initializing Bluetooth, which will prompt the user for permission.
-			if ( SDL_GetHintBoolean( SDL_HINT_JOYSTICK_HIDAPI_STEAM, false ) )
-			{
-				if ( SDL_GetAndroidSDKVersion() < 31 )
-				{
-					env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerInitialize, false, true );
-				}
-				else
-				{
-					SDL_Log( "Requesting Bluetooth permission" );
-					SDL_RequestAndroidPermission( "android.permission.BLUETOOTH_CONNECT", RequestBluetoothPermissionCallback, NULL );
+			bool init_usb = true;
+			bool init_bluetooth = false;
+			if (SDL_GetHintBoolean(SDL_HINT_JOYSTICK_HIDAPI_STEAM, SDL_FALSE)) {
+				if (SDL_GetAndroidSDKVersion() < 31 ||
+					Android_JNI_RequestPermission("android.permission.BLUETOOTH_CONNECT")) {
+					init_bluetooth = true;
 				}
 			}
+			env->CallBooleanMethod( g_HIDDeviceManagerCallbackHandler, g_midHIDDeviceManagerInitialize, init_usb, init_bluetooth );
 			ExceptionCheck( env, NULL, "hid_init" );
 		}
 		g_initialized = true;	// Regardless of result, so it's only called once
@@ -1100,27 +1085,21 @@ int hid_init(void)
 struct hid_device_info HID_API_EXPORT * HID_API_CALL hid_enumerate(unsigned short vendor_id, unsigned short product_id)
 {
 	struct hid_device_info *root = NULL;
+	const char *hint = SDL_GetHint(SDL_HINT_HIDAPI_IGNORE_DEVICES);
 
 	hid_mutex_guard l( &g_DevicesMutex );
 	for ( hid_device_ref<CHIDDevice> pDevice = g_Devices; pDevice; pDevice = pDevice->next )
 	{
-		// Don't enumerate devices that are currently being opened, we'll re-enumerate them when we're done
-		// Make sure we skip them at least once, so they get removed and then re-added to the caller's device list
-		if ( pDevice->BWasOpenPending() )
-		{
-			// Don't enumerate devices that failed to open, otherwise the application might try to keep prompting for access
-			if ( !pDevice->BOpenPending() && pDevice->BOpenResult() )
-			{
-				pDevice->SetWasOpenPending( false );
-			}
-			continue;
-		}
-
 		const hid_device_info *info = pDevice->GetDeviceInfo();
 
 		/* See if there are any devices we should skip in enumeration */
-		if (SDL_HIDAPI_ShouldIgnoreDevice(HID_API_BUS_UNKNOWN, info->vendor_id, info->product_id, 0, 0, false)) {
-			continue;
+		if (hint) {
+			char vendor_match[16], product_match[16];
+			SDL_snprintf(vendor_match, sizeof(vendor_match), "0x%.4x/0x0000", info->vendor_id);
+			SDL_snprintf(product_match, sizeof(product_match), "0x%.4x/0x%.4x", info->vendor_id, info->product_id);
+			if (SDL_strcasestr(hint, vendor_match) || SDL_strcasestr(hint, product_match)) {
+				continue;
+			}
 		}
 
 		if ( ( vendor_id == 0x0 || info->vendor_id == vendor_id ) &&
@@ -1150,7 +1129,7 @@ HID_API_EXPORT hid_device * HID_API_CALL hid_open(unsigned short vendor_id, unsi
 	return NULL;
 }
 
-HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path)
+HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path, int bExclusive)
 {
 	LOGV( "hid_open_path( %s )", path );
 
@@ -1176,12 +1155,7 @@ HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path)
 			}
 		}
 	}
-	if ( !pDevice )
-	{
-		SDL_SetError( "Couldn't find device with path %s", path );
-		return NULL;
-	}
-	if ( pDevice->BOpen() )
+	if ( pDevice && pDevice->BOpen() )
 	{
 		return pDevice->GetDevice();
 	}
@@ -1192,11 +1166,11 @@ int  HID_API_EXPORT HID_API_CALL hid_write(hid_device *device, const unsigned ch
 {
 	if ( device )
 	{
-//		LOGV( "hid_write id=%d length=%zu", device->m_nId, length );
+		LOGV( "hid_write id=%d length=%u", device->m_nId, length );
 		hid_device_ref<CHIDDevice> pDevice = FindDevice( device->m_nId );
 		if ( pDevice )
 		{
-			return pDevice->WriteReport( data, length, false );
+			return pDevice->SendOutputReport( data, length );
 		}
 	}
 	return -1; // Controller was disconnected
@@ -1256,7 +1230,7 @@ int HID_API_EXPORT HID_API_CALL hid_read_timeout(hid_device *device, unsigned ch
 // TODO: Implement blocking
 int  HID_API_EXPORT HID_API_CALL hid_read(hid_device *device, unsigned char *data, size_t length)
 {
-//	LOGV( "hid_read id=%d length=%zu", device->m_nId, length );
+	LOGV( "hid_read id=%d length=%u", device->m_nId, length );
 	return hid_read_timeout( device, data, length, 0 );
 }
 
@@ -1270,11 +1244,11 @@ int HID_API_EXPORT HID_API_CALL hid_send_feature_report(hid_device *device, cons
 {
 	if ( device )
 	{
-		LOGV( "hid_send_feature_report id=%d length=%zu", device->m_nId, length );
+		LOGV( "hid_send_feature_report id=%d length=%u", device->m_nId, length );
 		hid_device_ref<CHIDDevice> pDevice = FindDevice( device->m_nId );
 		if ( pDevice )
 		{
-			return pDevice->WriteReport( data, length, true );
+			return pDevice->SendFeatureReport( data, length );
 		}
 	}
 	return -1; // Controller was disconnected
@@ -1286,27 +1260,11 @@ int HID_API_EXPORT HID_API_CALL hid_get_feature_report(hid_device *device, unsig
 {
 	if ( device )
 	{
-		LOGV( "hid_get_feature_report id=%d length=%zu", device->m_nId, length );
+		LOGV( "hid_get_feature_report id=%d length=%u", device->m_nId, length );
 		hid_device_ref<CHIDDevice> pDevice = FindDevice( device->m_nId );
 		if ( pDevice )
 		{
-			return pDevice->ReadReport( data, length, true );
-		}
-	}
-	return -1; // Controller was disconnected
-}
-
-
-// Synchronous operation. Will block until completed.
-int HID_API_EXPORT HID_API_CALL hid_get_input_report(hid_device *device, unsigned char *data, size_t length)
-{
-	if ( device )
-	{
-		LOGV( "hid_get_input_report id=%d length=%zu", device->m_nId, length );
-		hid_device_ref<CHIDDevice> pDevice = FindDevice( device->m_nId );
-		if ( pDevice )
-		{
-			return pDevice->ReadReport( data, length, false );
+			return pDevice->GetFeatureReport( data, length );
 		}
 	}
 	return -1; // Controller was disconnected
@@ -1383,26 +1341,7 @@ int HID_API_EXPORT_CALL hid_get_indexed_string(hid_device *device, int string_in
 	return -1;
 }
 
-struct hid_device_info *hid_get_device_info(hid_device *device)
-{
-	if ( device )
-	{
-		hid_device_ref<CHIDDevice> pDevice = FindDevice( device->m_nId );
-		if ( pDevice )
-		{
-            return pDevice->GetDeviceInfo();
-		}
-	}
-	return NULL;
-}
-
-int hid_get_report_descriptor(hid_device *device, unsigned char *buf, size_t buf_size)
-{
-    // Not implemented
-    return -1;
-}
-
-HID_API_EXPORT const wchar_t * HID_API_CALL hid_error(hid_device *device)
+HID_API_EXPORT const wchar_t* HID_API_CALL hid_error(hid_device *device)
 {
 	return NULL;
 }
@@ -1423,22 +1362,22 @@ extern "C"
 JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReleaseCallback)(JNIEnv *env, jobject thiz);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, jint nDeviceID, jstring sIdentifier, jint nVendorId, jint nProductId, jstring sSerialNumber, jint nReleaseNumber, jstring sManufacturer, jstring sProduct, jint nInterface, jint nInterfaceClass, jint nInterfaceSubclass, jint nInterfaceProtocol, jboolean bBluetooth );
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, int nDeviceID, jstring sIdentifier, int nVendorId, int nProductId, jstring sSerialNumber, int nReleaseNumber, jstring sManufacturer, jstring sProduct, int nInterface, int nInterfaceClass, int nInterfaceSubclass, int nInterfaceProtocol );
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, jint nDeviceID);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, int nDeviceID);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, jint nDeviceID, jboolean bOpened);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, int nDeviceID, bool bOpened);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, jint nDeviceID);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, int nDeviceID);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value);
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReportResponse)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value);
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceFeatureReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value);
 
 
 extern "C"
@@ -1454,51 +1393,39 @@ JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReleaseCallbac
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, jint nDeviceID, jstring sIdentifier, jint nVendorId, jint nProductId, jstring sSerialNumber, jint nReleaseNumber, jstring sManufacturer, jstring sProduct, jint nInterface, jint nInterfaceClass, jint nInterfaceSubclass, jint nInterfaceProtocol, jboolean bBluetooth )
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected)(JNIEnv *env, jobject thiz, int nDeviceID, jstring sIdentifier, int nVendorId, int nProductId, jstring sSerialNumber, int nReleaseNumber, jstring sManufacturer, jstring sProduct, int nInterface, int nInterfaceClass, int nInterfaceSubclass, int nInterfaceProtocol )
 {
 	LOGV("Stub HIDDeviceConnected() id=%d VID/PID = %.4x/%.4x, interface %d\n", nDeviceID, nVendorId, nProductId, nInterface);
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, jint nDeviceID)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending)(JNIEnv *env, jobject thiz, int nDeviceID)
 {
 	LOGV("Stub HIDDeviceOpenPending() id=%d\n", nDeviceID);
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, jint nDeviceID, jboolean bOpened)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult)(JNIEnv *env, jobject thiz, int nDeviceID, bool bOpened)
 {
 	LOGV("Stub HIDDeviceOpenResult() id=%d, result=%s\n", nDeviceID, bOpened ? "true" : "false");
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, jint nDeviceID)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected)(JNIEnv *env, jobject thiz, int nDeviceID)
 {
 	LOGV("Stub HIDDeviceDisconnected() id=%d\n", nDeviceID);
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value)
 {
-	LOGV("Stub HIDDeviceInput() id=%d len=%u\n", nDeviceID, env->GetArrayLength(value));
+	LOGV("Stub HIDDeviceInput() id=%d len=%u\n", nDeviceID, nBufSize);
 }
 
 extern "C"
-JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReportResponse)(JNIEnv *env, jobject thiz, jint nDeviceID, jbyteArray value)
+JNIEXPORT void JNICALL HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceFeatureReport)(JNIEnv *env, jobject thiz, int nDeviceID, jbyteArray value)
 {
-	LOGV("Stub HIDDeviceReportResponse() id=%d len=%u\n", nDeviceID, env->GetArrayLength(value));
+	LOGV("Stub HIDDeviceFeatureReport() id=%d len=%u\n", nDeviceID, nBufSize);
 }
 
 #endif /* SDL_HIDAPI_DISABLED */
-
-extern "C"
-JNINativeMethod HIDDeviceManager_tab[8] = {
-        { "HIDDeviceRegisterCallback", "()V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceRegisterCallback) },
-        { "HIDDeviceReleaseCallback", "()V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReleaseCallback) },
-        { "HIDDeviceConnected", "(ILjava/lang/String;IILjava/lang/String;ILjava/lang/String;Ljava/lang/String;IIIIZ)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceConnected) },
-        { "HIDDeviceOpenPending", "(I)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenPending) },
-        { "HIDDeviceOpenResult", "(IZ)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceOpenResult) },
-        { "HIDDeviceDisconnected", "(I)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceDisconnected) },
-        { "HIDDeviceInputReport", "(I[B)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceInputReport) },
-        { "HIDDeviceReportResponse", "(I[B)V", (void*)HID_DEVICE_MANAGER_JAVA_INTERFACE(HIDDeviceReportResponse) }
-};

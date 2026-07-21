@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,31 +18,33 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_COCOA
 
+#include "SDL_events.h"
+#include "SDL_timer.h"
+#include "SDL_messagebox.h"
 #include "SDL_cocoavideo.h"
 
-@interface SDL3MessageBoxPresenter : NSObject
-{
-  @public
+@interface SDLMessageBoxPresenter : NSObject {
+@public
     NSInteger clicked;
     NSWindow *nswindow;
 }
 - (id)initWithParentWindow:(SDL_Window *)window;
 @end
 
-@implementation SDL3MessageBoxPresenter
-- (id)initWithParentWindow:(SDL_Window *)window
+@implementation SDLMessageBoxPresenter
+- (id) initWithParentWindow:(SDL_Window *)window
 {
     self = [super init];
     if (self) {
         clicked = -1;
 
-        // Retain the NSWindow because we'll show the alert later on the main thread
+        /* Retain the NSWindow because we'll show the alert later on the main thread */
         if (window) {
-            nswindow = ((__bridge SDL_CocoaWindowData *)window->internal).nswindow;
+            nswindow = ((__bridge SDL_WindowData *) window->driverdata).nswindow;
         } else {
             nswindow = nil;
         }
@@ -51,7 +53,7 @@
     return self;
 }
 
-- (void)showAlert:(NSAlert *)alert
+- (void)showAlert:(NSAlert*)alert
 {
     if (nswindow) {
         [alert beginSheetModalForWindow:nswindow
@@ -66,11 +68,12 @@
 }
 @end
 
-static void Cocoa_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, int *buttonID, bool *result)
+
+static void Cocoa_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, int *buttonid, int *returnValue)
 {
-    NSAlert *alert;
+    NSAlert* alert;
     const SDL_MessageBoxButtonData *buttons = messageboxdata->buttons;
-    SDL3MessageBoxPresenter *presenter;
+    SDLMessageBoxPresenter* presenter;
     NSInteger clicked;
     int i;
     Cocoa_RegisterApp();
@@ -108,7 +111,7 @@ static void Cocoa_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, i
         }
     }
 
-    presenter = [[SDL3MessageBoxPresenter alloc] initWithParentWindow:messageboxdata->window];
+    presenter = [[SDLMessageBoxPresenter alloc] initWithParentWindow:messageboxdata->window];
 
     [presenter showAlert:alert];
 
@@ -118,28 +121,27 @@ static void Cocoa_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, i
         if (messageboxdata->flags & SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT) {
             clicked = messageboxdata->numbuttons - 1 - clicked;
         }
-        *buttonID = buttons[clicked].buttonID;
-        *result = true;
+        *buttonid = buttons[clicked].buttonid;
+        *returnValue = 0;
     } else {
-        *result = SDL_SetError("Did not get a valid `clicked button' id: %ld", (long)clicked);
+        *returnValue = SDL_SetError("Did not get a valid `clicked button' id: %ld", (long)clicked);
     }
 }
 
-// Display a Cocoa message box
-bool Cocoa_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonID)
+/* Display a Cocoa message box */
+int Cocoa_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *buttonid)
+{ @autoreleasepool
 {
-    @autoreleasepool {
-        __block bool result = 0;
+    __block int returnValue = 0;
 
-        if ([NSThread isMainThread]) {
-            Cocoa_ShowMessageBoxImpl(messageboxdata, buttonID, &result);
-        } else {
-            dispatch_sync(dispatch_get_main_queue(), ^{
-              Cocoa_ShowMessageBoxImpl(messageboxdata, buttonID, &result);
-            });
-        }
-        return result;
+    if ([NSThread isMainThread]) {
+        Cocoa_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue);
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), ^{ Cocoa_ShowMessageBoxImpl(messageboxdata, buttonid, &returnValue); });
     }
-}
+    return returnValue;
+}}
 
-#endif // SDL_VIDEO_DRIVER_COCOA
+#endif /* SDL_VIDEO_DRIVER_COCOA */
+
+/* vi: set ts=4 sw=4 expandtab: */

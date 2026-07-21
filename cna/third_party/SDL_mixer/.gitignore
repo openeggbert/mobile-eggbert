@@ -1,5 +1,4 @@
 build*
-!build-scripts/
 aclocal.m4
 autom4te*
 config.cache
@@ -22,8 +21,7 @@ Release
 .DS_Store
 xcuserdata
 *.xcworkspace
+SDL2_mixer.pc
+SDL2_mixer.spec
 .vs
 .vscode
-Xcode/build.xcconfig
-cmake-build
-buildbot

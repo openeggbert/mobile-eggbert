@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,33 +27,22 @@
 
 #include <UIKit/UIKit.h>
 
-@interface SDL_UIKitVideoData : NSObject
+@interface SDL_VideoData : NSObject
 
-@property(nonatomic, assign) id pasteboardObserver;
-
-@property(nonatomic, assign) bool setting_clipboard;
+@property (nonatomic, assign) id pasteboardObserver;
 
 @end
 
-#ifdef SDL_PLATFORM_VISIONOS
-extern CGRect UIKit_ComputeViewFrame(SDL_Window *window);
-#else
-extern CGRect UIKit_ComputeViewFrame(SDL_Window *window, UIScreen *screen);
-#endif
+CGRect UIKit_ComputeViewFrame(SDL_Window *window, UIScreen *screen);
 
-extern API_AVAILABLE(ios(13.0)) UIWindowScene *UIKit_GetActiveWindowScene(void);
+#endif /* __OBJC__ */
 
-extern void UIKit_SetGameControllerInteraction(bool enabled);
-extern void UIKit_SetViewGameControllerInteraction(UIView *view, bool enabled);
+void UIKit_SuspendScreenSaver(_THIS);
 
-#endif // __OBJC__
+void UIKit_ForceUpdateHomeIndicator(void);
 
-extern bool UIKit_SuspendScreenSaver(SDL_VideoDevice *_this);
+SDL_bool UIKit_IsSystemVersionAtLeast(double version);
 
-extern void UIKit_ForceUpdateHomeIndicator(void);
+#endif /* SDL_uikitvideo_h_ */
 
-extern bool UIKit_IsSystemVersionAtLeast(double version);
-
-extern SDL_SystemTheme UIKit_GetSystemTheme(void);
-
-#endif // SDL_uikitvideo_h_
+/* vi: set ts=4 sw=4 expandtab: */

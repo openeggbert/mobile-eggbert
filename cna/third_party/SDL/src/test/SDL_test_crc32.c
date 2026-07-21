@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,16 +25,19 @@
  Original source code contributed by A. Schiffler for GSOC project.
 
 */
-#include <SDL3/SDL_test.h>
 
-bool SDLTest_Crc32Init(SDLTest_Crc32Context *crcContext)
+#include "SDL_config.h"
+
+#include "SDL_test.h"
+
+int SDLTest_Crc32Init(SDLTest_Crc32Context *crcContext)
 {
     int i, j;
     CrcUint32 c;
 
     /* Sanity check context pointer */
     if (!crcContext) {
-        return SDL_InvalidParamError("crcContext");
+        return -1;
     }
 
     /*
@@ -61,35 +64,35 @@ bool SDLTest_Crc32Init(SDLTest_Crc32Context *crcContext)
     }
 #endif
 
-    return true;
+    return 0;
 }
 
 /* Complete CRC32 calculation on a memory block */
-bool SDLTest_Crc32Calc(SDLTest_Crc32Context *crcContext, CrcUint8 *inBuf, CrcUint32 inLen, CrcUint32 *crc32)
+int SDLTest_Crc32Calc(SDLTest_Crc32Context *crcContext, CrcUint8 *inBuf, CrcUint32 inLen, CrcUint32 *crc32)
 {
-    if (!SDLTest_Crc32CalcStart(crcContext, crc32)) {
-        return false;
+    if (SDLTest_Crc32CalcStart(crcContext, crc32)) {
+        return -1;
     }
 
-    if (!SDLTest_Crc32CalcBuffer(crcContext, inBuf, inLen, crc32)) {
-        return false;
+    if (SDLTest_Crc32CalcBuffer(crcContext, inBuf, inLen, crc32)) {
+        return -1;
     }
 
-    if (!SDLTest_Crc32CalcEnd(crcContext, crc32)) {
-        return false;
+    if (SDLTest_Crc32CalcEnd(crcContext, crc32)) {
+        return -1;
     }
 
-    return true;
+    return 0;
 }
 
 /* Start crc calculation */
 
-bool SDLTest_Crc32CalcStart(SDLTest_Crc32Context *crcContext, CrcUint32 *crc32)
+int SDLTest_Crc32CalcStart(SDLTest_Crc32Context *crcContext, CrcUint32 *crc32)
 {
     /* Sanity check pointers */
     if (!crcContext) {
         *crc32 = 0;
-        return SDL_InvalidParamError("crcContext");
+        return -1;
     }
 
     /*
@@ -97,17 +100,17 @@ bool SDLTest_Crc32CalcStart(SDLTest_Crc32Context *crcContext, CrcUint32 *crc32)
      */
     *crc32 = 0xffffffff;
 
-    return true;
+    return 0;
 }
 
 /* Finish crc calculation */
 
-bool SDLTest_Crc32CalcEnd(SDLTest_Crc32Context *crcContext, CrcUint32 *crc32)
+int SDLTest_Crc32CalcEnd(SDLTest_Crc32Context *crcContext, CrcUint32 *crc32)
 {
     /* Sanity check pointers */
     if (!crcContext) {
         *crc32 = 0;
-        return SDL_InvalidParamError("crcContext");
+        return -1;
     }
 
     /*
@@ -115,23 +118,23 @@ bool SDLTest_Crc32CalcEnd(SDLTest_Crc32Context *crcContext, CrcUint32 *crc32)
      */
     *crc32 = (~(*crc32));
 
-    return true;
+    return 0;
 }
 
 /* Include memory block in crc */
 
-bool SDLTest_Crc32CalcBuffer(SDLTest_Crc32Context *crcContext, CrcUint8 *inBuf, CrcUint32 inLen, CrcUint32 *crc32)
+int SDLTest_Crc32CalcBuffer(SDLTest_Crc32Context *crcContext, CrcUint8 *inBuf, CrcUint32 inLen, CrcUint32 *crc32)
 {
     CrcUint8 *p;
     register CrcUint32 crc;
 
     if (!crcContext) {
         *crc32 = 0;
-        return SDL_InvalidParamError("crcContext");
+        return -1;
     }
 
     if (!inBuf) {
-        return SDL_InvalidParamError("inBuf");
+        return -1;
     }
 
     /*
@@ -147,14 +150,16 @@ bool SDLTest_Crc32CalcBuffer(SDLTest_Crc32Context *crcContext, CrcUint8 *inBuf, 
     }
     *crc32 = crc;
 
-    return true;
+    return 0;
 }
 
-bool SDLTest_Crc32Done(SDLTest_Crc32Context *crcContext)
+int SDLTest_Crc32Done(SDLTest_Crc32Context *crcContext)
 {
     if (!crcContext) {
-        return SDL_InvalidParamError("crcContext");
+        return -1;
     }
 
-    return true;
+    return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

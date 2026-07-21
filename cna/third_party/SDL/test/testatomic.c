@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -9,10 +9,9 @@
   including commercial applications, and to alter it and redistribute it
   freely.
 */
+#include <stdio.h>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <SDL3/SDL_test.h>
+#include "SDL.h"
 
 /*
   Absolutely basic tests just to see if we get the expected value
@@ -20,7 +19,7 @@
 */
 
 static const char *
-tf(bool _tf)
+tf(SDL_bool _tf)
 {
     static const char *t = "TRUE";
     static const char *f = "FALSE";
@@ -37,46 +36,42 @@ static void RunBasicTest(void)
     int value;
     SDL_SpinLock lock = 0;
 
-    SDL_AtomicInt v;
-    bool tfret = false;
+    SDL_atomic_t v;
+    SDL_bool tfret = SDL_FALSE;
 
-    SDL_Log("%s", "");
-    SDL_Log("spin lock---------------------------------------");
-    SDL_Log("%s", "");
+    SDL_Log("\nspin lock---------------------------------------\n\n");
 
-    SDL_LockSpinlock(&lock);
-    SDL_Log("AtomicLock                   lock=%d", lock);
-    SDL_UnlockSpinlock(&lock);
-    SDL_Log("AtomicUnlock                 lock=%d", lock);
+    SDL_AtomicLock(&lock);
+    SDL_Log("AtomicLock                   lock=%d\n", lock);
+    SDL_AtomicUnlock(&lock);
+    SDL_Log("AtomicUnlock                 lock=%d\n", lock);
 
-    SDL_Log("%s", "");
-    SDL_Log("atomic -----------------------------------------");
-    SDL_Log("%s", "");
+    SDL_Log("\natomic -----------------------------------------\n\n");
 
-    SDL_SetAtomicInt(&v, 0);
-    tfret = SDL_SetAtomicInt(&v, 10) == 0;
-    SDL_Log("AtomicSet(10)        tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
-    tfret = SDL_AddAtomicInt(&v, 10) == 10;
-    SDL_Log("AtomicAdd(10)        tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
+    SDL_AtomicSet(&v, 0);
+    tfret = SDL_AtomicSet(&v, 10) == 0 ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicSet(10)        tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
+    tfret = SDL_AtomicAdd(&v, 10) == 10 ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicAdd(10)        tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
 
-    SDL_SetAtomicInt(&v, 0);
+    SDL_AtomicSet(&v, 0);
     SDL_AtomicIncRef(&v);
-    tfret = (SDL_GetAtomicInt(&v) == 1);
-    SDL_Log("AtomicIncRef()       tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
+    tfret = (SDL_AtomicGet(&v) == 1) ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicIncRef()       tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
     SDL_AtomicIncRef(&v);
-    tfret = (SDL_GetAtomicInt(&v) == 2);
-    SDL_Log("AtomicIncRef()       tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
-    tfret = (SDL_AtomicDecRef(&v) == false);
-    SDL_Log("AtomicDecRef()       tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
-    tfret = (SDL_AtomicDecRef(&v) == true);
-    SDL_Log("AtomicDecRef()       tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
+    tfret = (SDL_AtomicGet(&v) == 2) ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicIncRef()       tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
+    tfret = (SDL_AtomicDecRef(&v) == SDL_FALSE) ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicDecRef()       tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
+    tfret = (SDL_AtomicDecRef(&v) == SDL_TRUE) ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicDecRef()       tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
 
-    SDL_SetAtomicInt(&v, 10);
-    tfret = (SDL_CompareAndSwapAtomicInt(&v, 0, 20) == false);
-    SDL_Log("AtomicCAS()          tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
-    value = SDL_GetAtomicInt(&v);
-    tfret = (SDL_CompareAndSwapAtomicInt(&v, value, 20) == true);
-    SDL_Log("AtomicCAS()          tfret=%s val=%d", tf(tfret), SDL_GetAtomicInt(&v));
+    SDL_AtomicSet(&v, 10);
+    tfret = (SDL_AtomicCAS(&v, 0, 20) == SDL_FALSE) ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicCAS()          tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
+    value = SDL_AtomicGet(&v);
+    tfret = (SDL_AtomicCAS(&v, value, 20) == SDL_TRUE) ? SDL_TRUE : SDL_FALSE;
+    SDL_Log("AtomicCAS()          tfret=%s val=%d\n", tf(tfret), SDL_AtomicGet(&v));
 }
 
 /**************************************************************************/
@@ -101,7 +96,7 @@ static void RunBasicTest(void)
 #define VALBITS  (sizeof(atomicValue) * 8)
 
 #define atomicValue int
-#define CountTo     ((atomicValue)((1u << (VALBITS - 1)) - 1))
+#define CountTo     ((atomicValue)((unsigned int)(1 << (VALBITS - 1)) - 1))
 #define NInter      (CountTo / CountInc / NThreads)
 #define Expect      (CountTo - NInter * CountInc * NThreads)
 
@@ -111,53 +106,51 @@ enum
 };
 SDL_COMPILE_TIME_ASSERT(size, CountTo_GreaterThanZero); /* check for rollover */
 
-static SDL_AtomicInt good = { 42 };
+static SDL_atomic_t good = { 42 };
+
 static atomicValue bad = 42;
-static SDL_AtomicInt threadsRunning;
-static SDL_Semaphore *threadDone;
+
+static SDL_atomic_t threadsRunning;
+
+static SDL_sem *threadDone;
 
 static int SDLCALL adder(void *junk)
 {
     unsigned long N = NInter;
-    SDL_Log("Thread subtracting %d %lu times", CountInc, N);
+    SDL_Log("Thread subtracting %d %lu times\n", CountInc, N);
     while (N--) {
-        SDL_AddAtomicInt(&good, -CountInc);
+        SDL_AtomicAdd(&good, -CountInc);
         bad -= CountInc;
     }
-    SDL_AddAtomicInt(&threadsRunning, -1);
-    SDL_SignalSemaphore(threadDone);
+    SDL_AtomicAdd(&threadsRunning, -1);
+    SDL_SemPost(threadDone);
     return 0;
 }
 
 static void runAdder(void)
 {
-    Uint64 start, end;
-    int i;
-    SDL_Thread *threads[NThreads];
+    Uint32 start, end;
+    int T = NThreads;
 
-    start = SDL_GetTicksNS();
+    start = SDL_GetTicks();
 
     threadDone = SDL_CreateSemaphore(0);
 
-    SDL_SetAtomicInt(&threadsRunning, NThreads);
+    SDL_AtomicSet(&threadsRunning, NThreads);
 
-    for (i = 0; i < NThreads; i++) {
-        threads[i] = SDL_CreateThread(adder, "Adder", NULL);
+    while (T--) {
+        SDL_CreateThread(adder, "Adder", NULL);
     }
 
-    while (SDL_GetAtomicInt(&threadsRunning) > 0) {
-        SDL_WaitSemaphore(threadDone);
-    }
-
-    for (i = 0; i < NThreads; i++) {
-        SDL_WaitThread(threads[i], NULL);
+    while (SDL_AtomicGet(&threadsRunning) > 0) {
+        SDL_SemWait(threadDone);
     }
 
     SDL_DestroySemaphore(threadDone);
 
-    end = SDL_GetTicksNS();
+    end = SDL_GetTicks();
 
-    SDL_Log("Finished in %f sec", (end - start) / 1000000000.0);
+    SDL_Log("Finished in %f sec\n", (end - start) / 1000.f);
 }
 
 static void RunEpicTest(void)
@@ -165,83 +158,81 @@ static void RunEpicTest(void)
     int b;
     atomicValue v;
 
-    SDL_Log("%s", "");
-    SDL_Log("epic test---------------------------------------");
-    SDL_Log("%s", "");
+    SDL_Log("\nepic test---------------------------------------\n\n");
 
-    SDL_Log("Size asserted to be >= 32-bit");
+    SDL_Log("Size asserted to be >= 32-bit\n");
     SDL_assert(sizeof(atomicValue) >= 4);
 
-    SDL_Log("Check static initializer");
-    v = SDL_GetAtomicInt(&good);
+    SDL_Log("Check static initializer\n");
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == 42);
 
     SDL_assert(bad == 42);
 
-    SDL_Log("Test negative values");
-    SDL_SetAtomicInt(&good, -5);
-    v = SDL_GetAtomicInt(&good);
+    SDL_Log("Test negative values\n");
+    SDL_AtomicSet(&good, -5);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == -5);
 
-    SDL_Log("Verify maximum value");
-    SDL_SetAtomicInt(&good, CountTo);
-    v = SDL_GetAtomicInt(&good);
+    SDL_Log("Verify maximum value\n");
+    SDL_AtomicSet(&good, CountTo);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == CountTo);
 
-    SDL_Log("Test compare and exchange");
+    SDL_Log("Test compare and exchange\n");
 
-    b = SDL_CompareAndSwapAtomicInt(&good, 500, 43);
+    b = SDL_AtomicCAS(&good, 500, 43);
     SDL_assert(!b); /* no swap since CountTo!=500 */
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == CountTo); /* ensure no swap */
 
-    b = SDL_CompareAndSwapAtomicInt(&good, CountTo, 44);
+    b = SDL_AtomicCAS(&good, CountTo, 44);
     SDL_assert(!!b); /* will swap */
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == 44);
 
-    SDL_Log("Test Add");
+    SDL_Log("Test Add\n");
 
-    v = SDL_AddAtomicInt(&good, 1);
+    v = SDL_AtomicAdd(&good, 1);
     SDL_assert(v == 44);
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == 45);
 
-    v = SDL_AddAtomicInt(&good, 10);
+    v = SDL_AtomicAdd(&good, 10);
     SDL_assert(v == 45);
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == 55);
 
-    SDL_Log("Test Add (Negative values)");
+    SDL_Log("Test Add (Negative values)\n");
 
-    v = SDL_AddAtomicInt(&good, -20);
+    v = SDL_AtomicAdd(&good, -20);
     SDL_assert(v == 55);
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == 35);
 
-    v = SDL_AddAtomicInt(&good, -50); /* crossing zero down */
+    v = SDL_AtomicAdd(&good, -50); /* crossing zero down */
     SDL_assert(v == 35);
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == -15);
 
-    v = SDL_AddAtomicInt(&good, 30); /* crossing zero up */
+    v = SDL_AtomicAdd(&good, 30); /* crossing zero up */
     SDL_assert(v == -15);
-    v = SDL_GetAtomicInt(&good);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == 15);
 
-    SDL_Log("Reset before count down test");
-    SDL_SetAtomicInt(&good, CountTo);
-    v = SDL_GetAtomicInt(&good);
+    SDL_Log("Reset before count down test\n");
+    SDL_AtomicSet(&good, CountTo);
+    v = SDL_AtomicGet(&good);
     SDL_assert(v == CountTo);
 
     bad = CountTo;
     SDL_assert(bad == CountTo);
 
-    SDL_Log("Counting down from %d, Expect %d remaining", CountTo, Expect);
+    SDL_Log("Counting down from %d, Expect %d remaining\n", CountTo, Expect);
     runAdder();
 
-    v = SDL_GetAtomicInt(&good);
-    SDL_Log("Atomic %d Non-Atomic %d", v, bad);
+    v = SDL_AtomicGet(&good);
+    SDL_Log("Atomic %d Non-Atomic %d\n", v, bad);
     SDL_assert(v == Expect);
     /* We can't guarantee that bad != Expect, this would happen on a single core system, for example. */
     /*SDL_assert(bad != Expect);*/
@@ -268,7 +259,7 @@ static void RunEpicTest(void)
 
 typedef struct
 {
-    SDL_AtomicInt sequence;
+    SDL_atomic_t sequence;
     SDL_Event event;
 } SDL_EventQueueEntry;
 
@@ -278,26 +269,26 @@ typedef struct
 
     char cache_pad1[SDL_CACHELINE_SIZE - ((sizeof(SDL_EventQueueEntry) * MAX_ENTRIES) % SDL_CACHELINE_SIZE)];
 
-    SDL_AtomicInt enqueue_pos;
+    SDL_atomic_t enqueue_pos;
 
-    char cache_pad2[SDL_CACHELINE_SIZE - sizeof(SDL_AtomicInt)];
+    char cache_pad2[SDL_CACHELINE_SIZE - sizeof(SDL_atomic_t)];
 
-    SDL_AtomicInt dequeue_pos;
+    SDL_atomic_t dequeue_pos;
 
-    char cache_pad3[SDL_CACHELINE_SIZE - sizeof(SDL_AtomicInt)];
+    char cache_pad3[SDL_CACHELINE_SIZE - sizeof(SDL_atomic_t)];
 
 #ifdef TEST_SPINLOCK_FIFO
     SDL_SpinLock lock;
-    SDL_AtomicInt rwcount;
-    SDL_AtomicInt watcher;
+    SDL_atomic_t rwcount;
+    SDL_atomic_t watcher;
 
-    char cache_pad4[SDL_CACHELINE_SIZE - sizeof(SDL_SpinLock) - 2 * sizeof(SDL_AtomicInt)];
+    char cache_pad4[SDL_CACHELINE_SIZE - sizeof(SDL_SpinLock) - 2 * sizeof(SDL_atomic_t)];
 #endif
 
-    SDL_AtomicInt active;
+    SDL_atomic_t active;
 
     /* Only needed for the mutex test */
-    SDL_Mutex *mutex;
+    SDL_mutex *mutex;
 
 } SDL_EventQueue;
 
@@ -306,56 +297,56 @@ static void InitEventQueue(SDL_EventQueue *queue)
     int i;
 
     for (i = 0; i < MAX_ENTRIES; ++i) {
-        SDL_SetAtomicInt(&queue->entries[i].sequence, i);
+        SDL_AtomicSet(&queue->entries[i].sequence, i);
     }
-    SDL_SetAtomicInt(&queue->enqueue_pos, 0);
-    SDL_SetAtomicInt(&queue->dequeue_pos, 0);
+    SDL_AtomicSet(&queue->enqueue_pos, 0);
+    SDL_AtomicSet(&queue->dequeue_pos, 0);
 #ifdef TEST_SPINLOCK_FIFO
     queue->lock = 0;
-    SDL_SetAtomicInt(&queue->rwcount, 0);
-    SDL_SetAtomicInt(&queue->watcher, 0);
+    SDL_AtomicSet(&queue->rwcount, 0);
+    SDL_AtomicSet(&queue->watcher, 0);
 #endif
-    SDL_SetAtomicInt(&queue->active, 1);
+    SDL_AtomicSet(&queue->active, 1);
 }
 
-static bool EnqueueEvent_LockFree(SDL_EventQueue *queue, const SDL_Event *event)
+static SDL_bool EnqueueEvent_LockFree(SDL_EventQueue *queue, const SDL_Event *event)
 {
     SDL_EventQueueEntry *entry;
     unsigned queue_pos;
     unsigned entry_seq;
     int delta;
-    bool status;
+    SDL_bool status;
 
 #ifdef TEST_SPINLOCK_FIFO
     /* This is a gate so an external thread can lock the queue */
-    SDL_LockSpinlock(&queue->lock);
-    SDL_assert(SDL_GetAtomicInt(&queue->watcher) == 0);
+    SDL_AtomicLock(&queue->lock);
+    SDL_assert(SDL_AtomicGet(&queue->watcher) == 0);
     SDL_AtomicIncRef(&queue->rwcount);
-    SDL_UnlockSpinlock(&queue->lock);
+    SDL_AtomicUnlock(&queue->lock);
 #endif
 
-    queue_pos = (unsigned)SDL_GetAtomicInt(&queue->enqueue_pos);
+    queue_pos = (unsigned)SDL_AtomicGet(&queue->enqueue_pos);
     for (;;) {
         entry = &queue->entries[queue_pos & WRAP_MASK];
-        entry_seq = (unsigned)SDL_GetAtomicInt(&entry->sequence);
+        entry_seq = (unsigned)SDL_AtomicGet(&entry->sequence);
 
         delta = (int)(entry_seq - queue_pos);
         if (delta == 0) {
             /* The entry and the queue position match, try to increment the queue position */
-            if (SDL_CompareAndSwapAtomicInt(&queue->enqueue_pos, (int)queue_pos, (int)(queue_pos + 1))) {
+            if (SDL_AtomicCAS(&queue->enqueue_pos, (int)queue_pos, (int)(queue_pos + 1))) {
                 /* We own the object, fill it! */
                 entry->event = *event;
-                SDL_SetAtomicInt(&entry->sequence, (int)(queue_pos + 1));
-                status = true;
+                SDL_AtomicSet(&entry->sequence, (int)(queue_pos + 1));
+                status = SDL_TRUE;
                 break;
             }
         } else if (delta < 0) {
             /* We ran into an old queue entry, which means it still needs to be dequeued */
-            status = false;
+            status = SDL_FALSE;
             break;
         } else {
             /* We ran into a new queue entry, get the new queue position */
-            queue_pos = (unsigned)SDL_GetAtomicInt(&queue->enqueue_pos);
+            queue_pos = (unsigned)SDL_AtomicGet(&queue->enqueue_pos);
         }
     }
 
@@ -365,44 +356,44 @@ static bool EnqueueEvent_LockFree(SDL_EventQueue *queue, const SDL_Event *event)
     return status;
 }
 
-static bool DequeueEvent_LockFree(SDL_EventQueue *queue, SDL_Event *event)
+static SDL_bool DequeueEvent_LockFree(SDL_EventQueue *queue, SDL_Event *event)
 {
     SDL_EventQueueEntry *entry;
     unsigned queue_pos;
     unsigned entry_seq;
     int delta;
-    bool status;
+    SDL_bool status;
 
 #ifdef TEST_SPINLOCK_FIFO
     /* This is a gate so an external thread can lock the queue */
-    SDL_LockSpinlock(&queue->lock);
-    SDL_assert(SDL_GetAtomicInt(&queue->watcher) == 0);
+    SDL_AtomicLock(&queue->lock);
+    SDL_assert(SDL_AtomicGet(&queue->watcher) == 0);
     SDL_AtomicIncRef(&queue->rwcount);
-    SDL_UnlockSpinlock(&queue->lock);
+    SDL_AtomicUnlock(&queue->lock);
 #endif
 
-    queue_pos = (unsigned)SDL_GetAtomicInt(&queue->dequeue_pos);
+    queue_pos = (unsigned)SDL_AtomicGet(&queue->dequeue_pos);
     for (;;) {
         entry = &queue->entries[queue_pos & WRAP_MASK];
-        entry_seq = (unsigned)SDL_GetAtomicInt(&entry->sequence);
+        entry_seq = (unsigned)SDL_AtomicGet(&entry->sequence);
 
         delta = (int)(entry_seq - (queue_pos + 1));
         if (delta == 0) {
             /* The entry and the queue position match, try to increment the queue position */
-            if (SDL_CompareAndSwapAtomicInt(&queue->dequeue_pos, (int)queue_pos, (int)(queue_pos + 1))) {
+            if (SDL_AtomicCAS(&queue->dequeue_pos, (int)queue_pos, (int)(queue_pos + 1))) {
                 /* We own the object, fill it! */
                 *event = entry->event;
-                SDL_SetAtomicInt(&entry->sequence, (int)(queue_pos + MAX_ENTRIES));
-                status = true;
+                SDL_AtomicSet(&entry->sequence, (int)(queue_pos + MAX_ENTRIES));
+                status = SDL_TRUE;
                 break;
             }
         } else if (delta < 0) {
             /* We ran into an old queue entry, which means we've hit empty */
-            status = false;
+            status = SDL_FALSE;
             break;
         } else {
             /* We ran into a new queue entry, get the new queue position */
-            queue_pos = (unsigned)SDL_GetAtomicInt(&queue->dequeue_pos);
+            queue_pos = (unsigned)SDL_AtomicGet(&queue->dequeue_pos);
         }
     }
 
@@ -412,13 +403,13 @@ static bool DequeueEvent_LockFree(SDL_EventQueue *queue, SDL_Event *event)
     return status;
 }
 
-static bool EnqueueEvent_Mutex(SDL_EventQueue *queue, const SDL_Event *event)
+static SDL_bool EnqueueEvent_Mutex(SDL_EventQueue *queue, const SDL_Event *event)
 {
     SDL_EventQueueEntry *entry;
     unsigned queue_pos;
     unsigned entry_seq;
     int delta;
-    bool status = false;
+    SDL_bool status = SDL_FALSE;
 
     SDL_LockMutex(queue->mutex);
 
@@ -433,11 +424,11 @@ static bool EnqueueEvent_Mutex(SDL_EventQueue *queue, const SDL_Event *event)
         /* We own the object, fill it! */
         entry->event = *event;
         entry->sequence.value = (int)(queue_pos + 1);
-        status = true;
+        status = SDL_TRUE;
     } else if (delta < 0) {
         /* We ran into an old queue entry, which means it still needs to be dequeued */
     } else {
-        SDL_Log("ERROR: mutex failed!");
+        SDL_Log("ERROR: mutex failed!\n");
     }
 
     SDL_UnlockMutex(queue->mutex);
@@ -445,13 +436,13 @@ static bool EnqueueEvent_Mutex(SDL_EventQueue *queue, const SDL_Event *event)
     return status;
 }
 
-static bool DequeueEvent_Mutex(SDL_EventQueue *queue, SDL_Event *event)
+static SDL_bool DequeueEvent_Mutex(SDL_EventQueue *queue, SDL_Event *event)
 {
     SDL_EventQueueEntry *entry;
     unsigned queue_pos;
     unsigned entry_seq;
     int delta;
-    bool status = false;
+    SDL_bool status = SDL_FALSE;
 
     SDL_LockMutex(queue->mutex);
 
@@ -466,11 +457,11 @@ static bool DequeueEvent_Mutex(SDL_EventQueue *queue, SDL_Event *event)
         /* We own the object, fill it! */
         *event = entry->event;
         entry->sequence.value = (int)(queue_pos + MAX_ENTRIES);
-        status = true;
+        status = SDL_TRUE;
     } else if (delta < 0) {
         /* We ran into an old queue entry, which means we've hit empty */
     } else {
-        SDL_Log("ERROR: mutex failed!");
+        SDL_Log("ERROR: mutex failed!\n");
     }
 
     SDL_UnlockMutex(queue->mutex);
@@ -484,8 +475,8 @@ typedef struct
     int index;
     char padding1[SDL_CACHELINE_SIZE - (sizeof(SDL_EventQueue *) + sizeof(int)) % SDL_CACHELINE_SIZE];
     int waits;
-    bool lock_free;
-    char padding2[SDL_CACHELINE_SIZE - sizeof(int) - sizeof(bool)];
+    SDL_bool lock_free;
+    char padding2[SDL_CACHELINE_SIZE - sizeof(int) - sizeof(SDL_bool)];
     SDL_Thread *thread;
 } WriterData;
 
@@ -494,8 +485,8 @@ typedef struct
     SDL_EventQueue *queue;
     int counters[NUM_WRITERS];
     int waits;
-    bool lock_free;
-    char padding[SDL_CACHELINE_SIZE - (sizeof(SDL_EventQueue *) + sizeof(int) * NUM_WRITERS + sizeof(int) + sizeof(bool)) % SDL_CACHELINE_SIZE];
+    SDL_bool lock_free;
+    char padding[SDL_CACHELINE_SIZE - (sizeof(SDL_EventQueue *) + sizeof(int) * NUM_WRITERS + sizeof(int) + sizeof(SDL_bool)) % SDL_CACHELINE_SIZE];
     SDL_Thread *thread;
 } ReaderData;
 
@@ -506,7 +497,7 @@ static int SDLCALL FIFO_Writer(void *_data)
     int i;
     SDL_Event event;
 
-    event.type = SDL_EVENT_USER;
+    event.type = SDL_USEREVENT;
     event.user.windowID = 0;
     event.user.code = 0;
     event.user.data1 = data;
@@ -543,7 +534,7 @@ static int SDLCALL FIFO_Reader(void *_data)
             if (DequeueEvent_LockFree(queue, &event)) {
                 WriterData *writer = (WriterData *)event.user.data1;
                 ++data->counters[writer->index];
-            } else if (SDL_GetAtomicInt(&queue->active)) {
+            } else if (SDL_AtomicGet(&queue->active)) {
                 ++data->waits;
                 SDL_Delay(0);
             } else {
@@ -556,7 +547,7 @@ static int SDLCALL FIFO_Reader(void *_data)
             if (DequeueEvent_Mutex(queue, &event)) {
                 WriterData *writer = (WriterData *)event.user.data1;
                 ++data->counters[writer->index];
-            } else if (SDL_GetAtomicInt(&queue->active)) {
+            } else if (SDL_AtomicGet(&queue->active)) {
                 ++data->waits;
                 SDL_Delay(0);
             } else {
@@ -574,15 +565,15 @@ static int SDLCALL FIFO_Watcher(void *_data)
 {
     SDL_EventQueue *queue = (SDL_EventQueue *)_data;
 
-    while (SDL_GetAtomicInt(&queue->active)) {
-        SDL_LockSpinlock(&queue->lock);
+    while (SDL_AtomicGet(&queue->active)) {
+        SDL_AtomicLock(&queue->lock);
         SDL_AtomicIncRef(&queue->watcher);
-        while (SDL_GetAtomicInt(&queue->rwcount) > 0) {
+        while (SDL_AtomicGet(&queue->rwcount) > 0) {
             SDL_Delay(0);
         }
         /* Do queue manipulation here... */
         (void)SDL_AtomicDecRef(&queue->watcher);
-        SDL_UnlockSpinlock(&queue->lock);
+        SDL_AtomicUnlock(&queue->lock);
 
         /* Wait a bit... */
         SDL_Delay(1);
@@ -591,22 +582,20 @@ static int SDLCALL FIFO_Watcher(void *_data)
 }
 #endif /* TEST_SPINLOCK_FIFO */
 
-static void RunFIFOTest(bool lock_free)
+static void RunFIFOTest(SDL_bool lock_free)
 {
     SDL_EventQueue queue;
     SDL_Thread *fifo_thread = NULL;
     WriterData writerData[NUM_WRITERS];
     ReaderData readerData[NUM_READERS];
-    Uint64 start, end;
+    Uint32 start, end;
     int i, j;
     int grand_total;
     char textBuffer[1024];
     size_t len;
 
-    SDL_Log("%s", "");
-    SDL_Log("FIFO test---------------------------------------");
-    SDL_Log("%s", "");
-    SDL_Log("Mode: %s", lock_free ? "LockFree" : "Mutex");
+    SDL_Log("\nFIFO test---------------------------------------\n\n");
+    SDL_Log("Mode: %s\n", lock_free ? "LockFree" : "Mutex");
 
     SDL_memset(&queue, 0xff, sizeof(queue));
 
@@ -615,7 +604,7 @@ static void RunFIFOTest(bool lock_free)
         queue.mutex = SDL_CreateMutex();
     }
 
-    start = SDL_GetTicksNS();
+    start = SDL_GetTicks();
 
 #ifdef TEST_SPINLOCK_FIFO
     /* Start a monitoring thread */
@@ -625,7 +614,7 @@ static void RunFIFOTest(bool lock_free)
 #endif
 
     /* Start the readers first */
-    SDL_Log("Starting %d readers", NUM_READERS);
+    SDL_Log("Starting %d readers\n", NUM_READERS);
     SDL_zeroa(readerData);
     for (i = 0; i < NUM_READERS; ++i) {
         char name[64];
@@ -636,7 +625,7 @@ static void RunFIFOTest(bool lock_free)
     }
 
     /* Start up the writers */
-    SDL_Log("Starting %d writers", NUM_WRITERS);
+    SDL_Log("Starting %d writers\n", NUM_WRITERS);
     SDL_zeroa(writerData);
     for (i = 0; i < NUM_WRITERS; ++i) {
         char name[64];
@@ -653,14 +642,14 @@ static void RunFIFOTest(bool lock_free)
     }
 
     /* Shut down the queue so readers exit */
-    SDL_SetAtomicInt(&queue.active, 0);
+    SDL_AtomicSet(&queue.active, 0);
 
     /* Wait for the readers */
     for (i = 0; i < NUM_READERS; ++i) {
         SDL_WaitThread(readerData[i].thread, NULL);
     }
 
-    end = SDL_GetTicksNS();
+    end = SDL_GetTicks();
 
     /* Wait for the FIFO thread */
     if (fifo_thread) {
@@ -671,16 +660,16 @@ static void RunFIFOTest(bool lock_free)
         SDL_DestroyMutex(queue.mutex);
     }
 
-    SDL_Log("Finished in %f sec", (end - start) / 1000000000.0);
+    SDL_Log("Finished in %f sec\n", (end - start) / 1000.f);
 
-    SDL_Log("%s", "");
+    SDL_Log("\n");
     for (i = 0; i < NUM_WRITERS; ++i) {
-        SDL_Log("Writer %d wrote %d events, had %d waits", i, EVENTS_PER_WRITER, writerData[i].waits);
+        SDL_Log("Writer %d wrote %d events, had %d waits\n", i, EVENTS_PER_WRITER, writerData[i].waits);
     }
-    SDL_Log("Writers wrote %d total events", NUM_WRITERS * EVENTS_PER_WRITER);
+    SDL_Log("Writers wrote %d total events\n", NUM_WRITERS * EVENTS_PER_WRITER);
 
     /* Print a breakdown of which readers read messages from which writer */
-    SDL_Log("%s", "");
+    SDL_Log("\n");
     grand_total = 0;
     for (i = 0; i < NUM_READERS; ++i) {
         int total = 0;
@@ -688,7 +677,7 @@ static void RunFIFOTest(bool lock_free)
             total += readerData[i].counters[j];
         }
         grand_total += total;
-        SDL_Log("Reader %d read %d events, had %d waits", i, total, readerData[i].waits);
+        SDL_Log("Reader %d read %d events, had %d waits\n", i, total, readerData[i].waits);
         (void)SDL_snprintf(textBuffer, sizeof(textBuffer), "  { ");
         for (j = 0; j < NUM_WRITERS; ++j) {
             if (j > 0) {
@@ -702,7 +691,7 @@ static void RunFIFOTest(bool lock_free)
         (void)SDL_snprintf(textBuffer + len, sizeof(textBuffer) - len, " }\n");
         SDL_Log("%s", textBuffer);
     }
-    SDL_Log("Readers read %d total events", grand_total);
+    SDL_Log("Readers read %d total events\n", grand_total);
 }
 
 /* End FIFO test */
@@ -710,55 +699,23 @@ static void RunFIFOTest(bool lock_free)
 
 int main(int argc, char *argv[])
 {
-    SDLTest_CommonState *state;
-    int i;
-    bool enable_threads = true;
-
-    /* Initialize test framework */
-    state = SDLTest_CommonCreateState(argv, 0);
-    if (!state) {
-        return 1;
-    }
-
-    /* Parse commandline */
-    for (i = 1; i < argc;) {
-        int consumed;
-
-        consumed = SDLTest_CommonArg(state, i);
-        if (consumed == 0) {
-            consumed = -1;
-            if (SDL_strcasecmp(argv[i], "--no-threads") == 0) {
-                enable_threads = false;
-                consumed = 1;
-            }
-        }
-        if (consumed < 0) {
-            static const char *options[] = {
-                "[--no-threads]",
-                NULL
-            };
-            SDLTest_CommonLogUsage(state, argv[0], options);
-            return 1;
-        }
-        i += consumed;
-    }
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
     RunBasicTest();
 
-    if (SDL_GetEnvironmentVariable(SDL_GetEnvironment(), "SDL_TESTS_QUICK") != NULL) {
+    if (SDL_getenv("SDL_TESTS_QUICK") != NULL) {
         SDL_Log("Not running slower tests");
         return 0;
     }
 
-    if (enable_threads) {
-        RunEpicTest();
-    }
+    RunEpicTest();
 /* This test is really slow, so don't run it by default */
 #if 0
-    RunFIFOTest(false);
+    RunFIFOTest(SDL_FALSE);
 #endif
-    RunFIFOTest(true);
-    SDL_Quit();
-    SDLTest_CommonDestroyState(state);
+    RunFIFOTest(SDL_TRUE);
     return 0;
 }
+
+/* vi: set ts=4 sw=4 expandtab: */

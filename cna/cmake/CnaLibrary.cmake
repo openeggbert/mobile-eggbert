@@ -84,10 +84,10 @@ target_link_libraries(CNA
         SHARP_RUNTIME
         ${BACKEND_TARGET}
         PRIVATE
-        SDL3::SDL3
-        SDL3_image::SDL3_image
-        SDL3_mixer::SDL3_mixer
-#        SDL3_ttf::SDL3_ttf
+        SDL2::SDL2
+        SDL2_image::SDL2_image
+        SDL2_mixer::SDL2_mixer
+#        SDL2_ttf::SDL2_ttf
 )
 
 # D3D11's/D3D12's SpriteBatch backend (plan_dx.md DX-70/DX-71) calls back into
@@ -169,7 +169,7 @@ if(CNA_ENABLE_NET)
         PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
-    # Guide.cpp calls SDL3 directly (message box); this was previously only compiling by
-    # accident on hosts with a stray system-wide SDL3 install on the default include path.
-    target_link_libraries(CNA_GamerServices PUBLIC CNA PRIVATE SDL3::SDL3)
+    # Guide.cpp calls SDL2 directly (message box); this was previously only compiling by
+    # accident on hosts with a stray system-wide SDL2 install on the default include path.
+    target_link_libraries(CNA_GamerServices PUBLIC CNA PRIVATE SDL2::SDL2)
 endif()

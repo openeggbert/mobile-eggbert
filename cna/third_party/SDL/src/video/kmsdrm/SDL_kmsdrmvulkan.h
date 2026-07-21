@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,28 +24,30 @@
  * Based on Jacob Lifshay's SDL_x11vulkan.c.
  */
 
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifndef SDL_kmsdrm_vulkan_h_
 #define SDL_kmsdrm_vulkan_h_
 
-#include <SDL3/SDL_vulkan.h>
+#include "../SDL_vulkan_internal.h"
+#include "../SDL_sysvideo.h"
 
 #if defined(SDL_VIDEO_VULKAN) && defined(SDL_VIDEO_DRIVER_KMSDRM)
 
-extern bool KMSDRM_Vulkan_LoadLibrary(SDL_VideoDevice *_this, const char *path);
-extern void KMSDRM_Vulkan_UnloadLibrary(SDL_VideoDevice *_this);
-extern char const * const *KMSDRM_Vulkan_GetInstanceExtensions(SDL_VideoDevice *_this, Uint32 *count);
-extern bool KMSDRM_Vulkan_CreateSurface(SDL_VideoDevice *_this,
-                                SDL_Window *window,
-                                VkInstance instance,
-                                const struct VkAllocationCallbacks *allocator,
-                                VkSurfaceKHR *surface);
-extern void KMSDRM_Vulkan_DestroySurface(SDL_VideoDevice *_this,
-                                  VkInstance instance,
-                                  VkSurfaceKHR surface,
-                                  const struct VkAllocationCallbacks *allocator);
+int KMSDRM_Vulkan_LoadLibrary(_THIS, const char *path);
+void KMSDRM_Vulkan_UnloadLibrary(_THIS);
+SDL_bool KMSDRM_Vulkan_GetInstanceExtensions(_THIS,
+                                             SDL_Window *window,
+                                             unsigned *count,
+                                             const char **names);
+void KMSDRM_Vulkan_GetDrawableSize(_THIS, SDL_Window *window, int *w, int *h);
+SDL_bool KMSDRM_Vulkan_CreateSurface(_THIS,
+                                     SDL_Window *window,
+                                     VkInstance instance,
+                                     VkSurfaceKHR *surface);
 
 #endif
 
-#endif // SDL_kmsdrm_vulkan_h_
+#endif /* SDL_kmsdrm_vulkan_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */

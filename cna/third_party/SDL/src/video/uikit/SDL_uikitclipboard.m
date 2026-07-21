@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,7 +18,7 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
+#include "../../SDL_internal.h"
 
 #ifdef SDL_VIDEO_DRIVER_UIKIT
 
@@ -27,28 +27,21 @@
 
 #import <UIKit/UIPasteboard.h>
 
-bool UIKit_SetClipboardText(SDL_VideoDevice *_this, const char *text)
+int UIKit_SetClipboardText(_THIS, const char *text)
 {
-#ifdef SDL_PLATFORM_TVOS
+#if TARGET_OS_TV
     return SDL_SetError("The clipboard is not available on tvOS");
 #else
     @autoreleasepool {
-        SDL_UIKitVideoData *data = (__bridge SDL_UIKitVideoData *)_this->internal;
-        data.setting_clipboard = true;
-        if (text && *text) {
-            [UIPasteboard generalPasteboard].string = @(text);
-        } else {
-            [UIPasteboard generalPasteboard].string = nil;
-        }
-        data.setting_clipboard = false;
-        return true;
+        [UIPasteboard generalPasteboard].string = @(text);
+        return 0;
     }
 #endif
 }
 
-char *UIKit_GetClipboardText(SDL_VideoDevice *_this)
+char *UIKit_GetClipboardText(_THIS)
 {
-#ifdef SDL_PLATFORM_TVOS
+#if TARGET_OS_TV
     return SDL_strdup(""); // Unsupported.
 #else
     @autoreleasepool {
@@ -64,45 +57,41 @@ char *UIKit_GetClipboardText(SDL_VideoDevice *_this)
 #endif
 }
 
-bool UIKit_HasClipboardText(SDL_VideoDevice *_this)
+SDL_bool UIKit_HasClipboardText(_THIS)
 {
     @autoreleasepool {
-#ifndef SDL_PLATFORM_TVOS
-        if ([UIPasteboard generalPasteboard].hasStrings) {
-            return true;
+#if !TARGET_OS_TV
+        if ([UIPasteboard generalPasteboard].string != nil) {
+            return SDL_TRUE;
         }
 #endif
-        return false;
+        return SDL_FALSE;
     }
 }
 
-void UIKit_InitClipboard(SDL_VideoDevice *_this)
+void UIKit_InitClipboard(_THIS)
 {
-#ifndef SDL_PLATFORM_TVOS
+#if !TARGET_OS_TV
     @autoreleasepool {
-        SDL_UIKitVideoData *data = (__bridge SDL_UIKitVideoData *)_this->internal;
+        SDL_VideoData *data = (__bridge SDL_VideoData *) _this->driverdata;
         NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 
         id observer = [center addObserverForName:UIPasteboardChangedNotification
-                                          object:nil
-                                           queue:nil
-                                      usingBlock:^(NSNotification *note) {
-                                        if (!data.setting_clipboard) {
-                                            // TODO: compute mime types
-                                            SDL_SendClipboardUpdate(false, NULL, 0);
-                                        }
-                                      }];
+                                         object:nil
+                                          queue:nil
+                                     usingBlock:^(NSNotification *note) {
+                                         SDL_SendClipboardUpdate();
+                                     }];
 
         data.pasteboardObserver = observer;
-        data.setting_clipboard = false;
     }
 #endif
 }
 
-void UIKit_QuitClipboard(SDL_VideoDevice *_this)
+void UIKit_QuitClipboard(_THIS)
 {
     @autoreleasepool {
-        SDL_UIKitVideoData *data = (__bridge SDL_UIKitVideoData *)_this->internal;
+        SDL_VideoData *data = (__bridge SDL_VideoData *) _this->driverdata;
 
         if (data.pasteboardObserver != nil) {
             [[NSNotificationCenter defaultCenter] removeObserver:data.pasteboardObserver];
@@ -112,4 +101,6 @@ void UIKit_QuitClipboard(SDL_VideoDevice *_this)
     }
 }
 
-#endif // SDL_VIDEO_DRIVER_UIKIT
+#endif /* SDL_VIDEO_DRIVER_UIKIT */
+
+/* vi: set ts=4 sw=4 expandtab: */

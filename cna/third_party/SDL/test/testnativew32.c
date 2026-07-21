@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -13,8 +13,6 @@
 #include "testnative.h"
 
 #ifdef TEST_NATIVE_WINDOWS
-
-#include <windows.h>
 
 static void *CreateWindowNative(int w, int h);
 static void DestroyWindowNative(void *window);
@@ -56,20 +54,20 @@ CreateWindowNative(int w, int h)
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = TEXT("SDL Test");
+    wc.lpszClassName = "SDL Test";
 
     if (!RegisterClass(&wc)) {
-        MessageBox(NULL, TEXT("Window Registration Failed!"), TEXT("Error!"),
+        MessageBox(NULL, "Window Registration Failed!", "Error!",
                    MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
 
     hwnd =
-        CreateWindow(TEXT("SDL Test"), TEXT(""), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+        CreateWindow("SDL Test", "", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
                      CW_USEDEFAULT, w, h, NULL, NULL, GetModuleHandle(NULL),
                      NULL);
     if (!hwnd) {
-        MessageBox(NULL, TEXT("Window Creation Failed!"), TEXT("Error!"),
+        MessageBox(NULL, "Window Creation Failed!", "Error!",
                    MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
