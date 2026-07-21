@@ -12,14 +12,7 @@ namespace Microsoft::Xna::Framework::Content
 
     /**
      * @brief NOXNA abstract base for type-specific loose-file asset loaders used by
-     *        ContentManager's `.cnj`/native-extension loading scheme (see cnj.md).
-     *
-     * Renamed 2026-07-16 from `ContentTypeReader<T>` (which this class was originally called)
-     * to free that name for the real, binary-protocol-shaped `Microsoft.Xna.Framework.Content.
-     * ContentTypeReader`/`ContentTypeReader<T>` FNA API class (`Read(ContentReader&, T)`,
-     * see plan_xnb.md XNB-14) -- this class's shape (`Read(const std::string& path,
-     * ContentManager&)`) is a CNA-original design for loose-file/`.cnj` loading, not an XNA-faithful
-     * port, so it does not belong under the real API's name.
+     *        ContentManager's native-extension loading scheme.
      *
      * @tparam T The asset type this reader produces.
      */

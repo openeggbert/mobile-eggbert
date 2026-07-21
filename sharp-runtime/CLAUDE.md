@@ -152,7 +152,7 @@ Every `.hpp` and `.cpp` file starts with:
 - **Complex types:** `.hpp` declaration + `.cpp` body. Move bodies to `.cpp` when a header grows unwieldy.
 - **Simple types:** header-only is fine.
 - **CMake:** `GLOB_RECURSE` auto-discovers `src/*.cpp` — no manual registration needed.
-- **Vendored libs:** GoogleTest, nlohmann/json, tinyxml2, miniz, all under `vendor/`. Never commit binaries. Files under `vendor/` are third-party source unmodified from upstream and are exempt from this project's SPDX-header, doc-comment, and `getXxxProperty()`/namespace-syntax naming rules — those rules apply only to `include/`, `src/`, and `tests/`.
+- **Vendored libs:** none, in this mobile-eggbert vendored+pruned copy — GoogleTest, nlohmann/json, tinyxml2, and miniz were all removed (see mobile-eggbert's `plan_lite.md`) once the code that used them (`System::Xml`, `System::IO::Compression`, the test suite) was pruned as unused by mobile-eggbert. If restored in some other context, files under `vendor/` are third-party source unmodified from upstream and are exempt from this project's SPDX-header, doc-comment, and `getXxxProperty()`/namespace-syntax naming rules — those rules apply only to `include/`, `src/`, and `tests/`.
 - **Templates:** deferred `inline` definitions after forward declarations to resolve circular includes.
 
 ---

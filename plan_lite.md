@@ -1,4 +1,8 @@
-# Plan: Vendor CNA + SharpRuntime, prune, strip backends, downgrade to SDL 1.2 / C++98
+# Plan: Vendor CNA + SharpRuntime, prune, strip backends, downgrade to SDL 2 / C++98
+
+**2026-07-21 update**: target changed from SDL 1.2 to **SDL 2** (user decision) — see the revised
+Phase 4 below. All original SDL-1.2-specific analysis is kept struck through/annotated rather than
+deleted, so the reasoning trail stays visible.
 
 Branch: `claude/mobile-eggbert-refactor-pz57pn` (this repo only — `cna` and `sharp-runtime`
 are read from their own GitHub repos as source, but no changes are pushed back to them).
@@ -28,13 +32,18 @@ are read from their own GitHub repos as source, but no changes are pushed back t
 - `mobile-eggbert` directly includes 47 distinct headers from `CNA/`, `Microsoft/`, `System/`,
   `SharpRuntime/` — that's the seed set for the transitive used-API analysis in Phase 2, not the
   full set (each of those headers pulls in more).
-- **Architecture mismatch for Phase 4**: `cna`'s `SdlRenderer` backend is built on **SDL3**'s
+- ~~**Architecture mismatch for Phase 4**: `cna`'s `SdlRenderer` backend is built on **SDL3**'s
   `SDL_Renderer`/`SDL_Texture` GPU-accelerated 2D API. **SDL 1.2 has no renderer/texture API at
   all** — it only offers `SDL_Surface` + `SDL_BlitSurface` software blitting, plus a completely
   different event/window/audio/joystick API (no gamepad API, no touch input, no hi-DPI, single
   window only). Phase 4 is therefore not a search-and-replace of SDL3 calls — it is a rewrite of
-  the backend's rendering strategy on top of a much smaller, older API. Flagging this now so
-  scope is clear before work starts.
+  the backend's rendering strategy on top of a much smaller, older API.~~ **Superseded**: target
+  is now SDL 2, not SDL 1.2 (see Phase 4 below) — SDL2 has `SDL_Renderer`/`SDL_Texture` (SDL3's
+  2D API is a direct descendant of SDL2's, mostly renamed/reshuffled, not conceptually new),
+  `SDL_GameController`/`SDL_Joystick`, and `SDL_TouchFingerEvent`, so the rewrite-from-scratch risk
+  called out here for SDL 1.2 does not apply — Phase 4 against SDL2 is much closer to a real
+  search-and-replace/API-diff exercise. Kept struck through rather than deleted so the earlier
+  reasoning stays on record.
 
 ## Phases
 
@@ -82,17 +91,27 @@ are read from their own GitHub repos as source, but no changes are pushed back t
 - Build + smoke-run with `SDL_RENDERER` to confirm nothing regressed.
 - Commit + push.
 
-### Phase 4 — Migrate SDL3 → SDL 1.2
-- Replace vendored SDL3/SDL3_image/SDL3_mixer in `cna/third_party/` with SDL 1.2 /
-  SDL_image 1.2 / SDL_mixer 1.2.
-- Rewrite `SdlGraphicsBackend` (and anything else under
-  `src/CNA/Internal/Backends/SdlRenderer/`) from the `SDL_Renderer`/`SDL_Texture` model to
-  `SDL_Surface`/`SDL_BlitSurface` software rendering — this is the architecturally invasive part
-  called out above, not a mechanical API swap.
-- Rework window/event loop, keyboard/mouse state, and joystick input (SDL 1.2 predates the
-  gamepad API) to SDL 1.2 equivalents; touch input (used by `InputPad` per CLAUDE.md) has no
-  SDL 1.2 equivalent and needs a fallback strategy — Open Question 4.
-- Rework audio playback (`Sound`/`ISound`) onto SDL_mixer 1.2's API.
+### Phase 4 — Migrate SDL3 → SDL 2 (target changed from SDL 1.2, 2026-07-21 user decision)
+- Replace vendored SDL3/SDL3_image/SDL3_mixer in `cna/third_party/` with SDL2 / SDL2_image /
+  SDL2_mixer.
+- Adapt `SdlGraphicsBackend` (and anything else under `src/CNA/Internal/Backends/SdlRenderer/`)
+  from SDL3's `SDL_Renderer`/`SDL_Texture` calls to SDL2's — both APIs are the same
+  renderer/texture model (SDL3's 2D API is SDL2's, evolved, not replaced), so this is expected to
+  be close to a real API-diff/rename pass, not a rendering-strategy rewrite. Known SDL2-vs-SDL3
+  API differences to work through as they're hit: `SDL_Init`/`SDL_CreateWindow`/
+  `SDL_CreateRenderer` signature and flag differences, `SDL_RenderCopy` (SDL2) vs
+  `SDL_RenderTexture` (SDL3), `int`-returning-`0`-on-success (SDL2) vs `bool`-returning-`true`-on-
+  success (SDL3) for most calls, `SDL_bool` vs `bool`, `SDL_Keycode`/`SDL_Scancode` table
+  differences, `SDL_GetTicks()` return type (`Uint32` in SDL2 vs `Uint64` in SDL3), pixel format
+  enum renames.
+- Rework window/event loop and keyboard/mouse state onto SDL2's event API (`SDL_PollEvent` shape
+  differs from SDL3's). Joystick/gamepad input maps onto SDL2's `SDL_Joystick`/
+  `SDL_GameController` (SDL3 renamed this to `SDL_Gamepad`, otherwise conceptually the same).
+  Touch input (used by `InputPad` per CLAUDE.md) has a real SDL2 equivalent
+  (`SDL_TouchFingerEvent`/`SDL_GetTouchFinger`) — Open Question 4 (below) is resolved by the
+  SDL2 switch: no fallback strategy needed, this is a normal API adaptation.
+- Rework audio playback (`Sound`/`ISound`) onto SDL2_mixer's API (mostly the same shape as
+  SDL3_mixer, some function/constant renames).
 - Build + smoke-run.
 - Commit + push, likely in several sub-steps (window/event, then rendering, then input, then
   audio) rather than one commit, given the size.
@@ -106,7 +125,8 @@ are read from their own GitHub repos as source, but no changes are pushed back t
   (`unique_ptr`/`shared_ptr`) → manual `new`/`delete` or a pre-C++11 owning-pointer helper,
   move semantics/rvalue refs, variadic templates, `static_assert`, uniform initialization
   (`{}`), `<unordered_map>`/`<unordered_set>` → `<map>`/`<set>` (TR1 not guaranteed), `<thread>`/
-  `<atomic>`/`<mutex>` → SDL 1.2 threading primitives, `<chrono>` → SDL/`time.h`, trailing
+  `<atomic>`/`<mutex>` → SDL2 threading primitives (`SDL_Thread`/`SDL_mutex`/`SDL_atomic.h`),
+  `<chrono>` → SDL2's `SDL_GetTicks()`/`time.h`, trailing
   return types, `constexpr if`, structured bindings, string formatting beyond `iostream`/
   `sprintf`.
 - `CMakeLists.txt`: `CMAKE_CXX_STANDARD 23` → `98` in mobile-eggbert and the vendored `cna`/
@@ -124,8 +144,9 @@ are read from their own GitHub repos as source, but no changes are pushed back t
    EasyGL SdlGpu Vulkan WebGPU`) are still removed — recheck `D3DCommon` isn't a shared dep of
    the 3 kept backends before deleting it.
 3. **Phasing**: proceed through Phases 1-3 continuously, commit+push throughout. **Stop before
-   Phase 4** (SDL 1.2 migration) and check in before starting it — Phase 5 (C++98) follows the
-   same stop, revisited once Phase 4's scope/approach is agreed.
+   Phase 4** (SDL migration — target changed to SDL 2, see top of file) and check in before
+   starting it — Phase 5 (C++98) follows the same stop, revisited once Phase 4's scope/approach
+   is agreed.
 
 ## Phase 1 status: done (this commit)
 
@@ -289,16 +310,99 @@ are read from their own GitHub repos as source, but no changes are pushed back t
 - `cna` size: 144M → 115M. `sharp-runtime`: 7M → 2.9M (`vendor/googletest` placeholder was the
   bulk of what was left to remove there after Phase 2).
 
+## Phase 2.5 status: done (this commit, 2026-07-21, user-requested deeper cleanup)
+
+User asked, after reviewing Phase 1-3: verify the build still works, delete CNJ too, and switch
+the Phase 4 target from SDL 1.2 to SDL 2 (the latter handled above).
+
+**Round 1 — CNJ/XNB/glTF removal from `ContentManager`.** Investigated why CNJ/`Xnb` remnants
+survived Phase 2 (see Open Question 6's correction above): `ContentManager.cpp` genuinely used
+(loads `Texture2D`/`SoundEffect`), but internally supported many more content types/formats than
+mobile-eggbert's actual `Content/` (`.png`/`.wav` only) ever needs. Dispatched a sub-agent to
+strip it down to just `Texture2D`'s native-image path and `SoundEffect`'s native-audio path.
+Deleted (27 files): the whole CNJ/glTF subsystem (`cnj.md`, `plan_cnj.md`, `CnjEnvelope.hpp`,
+`CnjSourceFile.hpp`, `GltfImport/GltfImportCore.{hpp,cpp}`, `MorphTargetEXT.{hpp,cpp}`,
+`Internal/Json.hpp`), the whole `.xnb` binary-format subsystem (`ContentReader.{hpp,cpp}`,
+`ContentTypeReaderManager.{hpp,cpp}`, `ContentTypeReader.hpp`, `ContentManifestEntry.hpp`,
+`Internal/Xnb/{XnbHeader,XnbTypeReaderTable,XnbTypeName,XnbReadLimits,XnbDecompression,
+LzxDecoder}.*`), and the now-orphaned vendored `third_party/{cgltf,stb}`. Edited
+`ContentManager.cpp` 2977→269 lines and `ContentManager.hpp` 568→265 lines down to only the
+`Texture2D`/`SoundEffect` readers; updated `cna/cmake/CnaLibrary.cmake`/`UnitTests.cmake` to drop
+the now-gone `cgltf`/`stb` include dirs.
+
+**Round 2 — cascade cleanup.** Re-ran Phase 2's reachability script after Round 1 landed (exactly
+the follow-up the user asked for: whole-file reachability alone couldn't see that `ContentManager`
+pulling in `Model`/`Curve`/`SpriteFont`/etc. was itself the problem — once those readers were
+gone, everything *they* pulled in became newly unreachable). Found 61 newly-dead files (7 already
+excluded `Backends/`), including confirmation of the user's own **`BoundingBox` example**: it was
+reachable only via `ModelMesh.hpp` → gone once `Model`'s reader was deleted (this round deleted
+`BoundingBox`/`Ray`/`Plane`/`BoundingSphere`/`BoundingFrustum` too — verified `Plane` has one
+other real consumer, `Matrix::CreateShadow`/`CreateReflection`, but nothing else in the cluster
+does). Deleted 54 non-backend files: `Model`/`ModelMesh`/`ModelBone`/`ModelMeshPart`/collections,
+`Curve`/`CurveKey`/collections, the 3D-only Effects (`AlphaTestEffect`, `DualTextureEffect`,
+`EnvironmentMapEffect`, `PbrEffect`, `ShaderEffect`, `SkinnedEffect`, `SkinnedPbrEffect`,
+`SkinnedModelEXT`), `AnimationPlayer`, `Video`/`VideoPlayer`/`VideoDecoder`, `BoundingBox`/`Ray`/
+`Plane`/`BoundingSphere`/`BoundingFrustum`, and `sharp-runtime`'s `BinaryReader`/
+`EndOfStreamException` (only used by the now-gone XNB reader). Looped the script again after
+deleting these — **0 further non-backend files found (fixed point)**.
+
+**sharp-runtime vendor cleanup** (user's other question, same session): confirmed via grep that
+`miniz`/`nlohmann`/`tinyxml2` (System::IO::Compression/System::Xml's only consumers, both deleted
+in Phase 2) and `zlib` (miniz's only reason for existing) had zero remaining references anywhere
+in reachable `cna`/`sharp-runtime` code. Deleted `sharp-runtime/vendor/{miniz,nlohmann,tinyxml2}`
+and the corresponding `add_library`/`find_package(ZLIB)`/`target_link_libraries` lines from
+`sharp-runtime/CMakeLists.txt`.
+
+**A real hazard hit and fixed during this phase**: dispatched the Round-1 sub-agent to edit
+`ContentManager.cpp` while *also* directly editing/deleting files in the same `cna/`/
+`sharp-runtime/` tree myself (the vendor cleanup above) — a genuine concurrency bug, not a tooling
+glitch. The sub-agent ran its own verification builds against the same working tree; when it hit
+files I had legitimately deleted (my sharp-runtime vendor cleanup, and later my own Round-2
+cascade deletions racing against its final verification pass), it had no way to know those were
+intentional and `git checkout --`'d them back from HEAD, silently undoing real work multiple
+times (this is why the stop-hook fired on uncommitted changes several times before this was
+resolved — the tree was genuinely mid-flight, not safe to commit). Fixed by waiting for the
+sub-agent to fully finish (confirmed via its completion notification) before redoing the Round-2
+cascade cleanup single-actor, with no other agent touching the same paths concurrently. Lesson
+for later phases: never run a sub-agent against `cna/`/`sharp-runtime/` at the same time as direct
+edits in this session against the same trees, even on "different" files — shared build state
+(the `.sdl-prebuilt-*/` cache) and the sub-agent's own build-and-fix loop can both step on
+unrelated concurrent changes.
+
+**Final verification** (single clean pass, no concurrency): full configure+build of
+`WindowsPhoneSpeedyBlupi` — 187 translation units (down from 212 after Round 1, 225 after Phase
+3), 0 failures, links clean. Smoke-test output byte-for-byte consistent with the known-good
+baseline (window/renderer/audio-mixer init logs, no new errors). `cna`: 115M → 113M (third_party
+still dominates — SDL/SDL_image/SDL_mixer source, untouched). `sharp-runtime`: 2.9M → 1.3M.
+Combined `.hpp`/`.cpp` count across both vendored copies: 940 (Phase 1 baseline) → 666 (Phase 2)
+→ 459 (Phase 2.5, this commit).
+
+**Scope note for the user**: this phase found and removed *whole classes* that were reachable
+only as dead weight (Model, Curve, the 3D effects, BoundingBox, etc.) — but did **not** attempt
+method-level pruning *within* classes that remain genuinely used. Concrete example found during
+Round 2: `Matrix` is definitely used, but two of its ~15 static factory methods
+(`Matrix::CreateShadow`, `Matrix::CreateReflection`) take a `Plane` parameter that mobile-eggbert
+never actually calls — going further and trimming individual unused methods out of still-used
+classes (`Matrix`, `Vector2`, `Color`, `GraphicsDevice`, etc., potentially across all 459
+remaining files) is a materially larger, slower, and more error-prone undertaking than this
+phase's whole-file/whole-class cuts, and changes what this vendored copy *is* (a hand-trimmed,
+mobile-eggbert-specific stub library vs. a pruned-but-API-complete XNA framework fork). Flagged
+back to the user rather than assumed — see chat for the actual question asked.
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
    `THIRD_PARTY_NOTICES.md` were kept as-is inside the vendored `cna/` subdirectory (satisfies
    Ms-PL's redistribution terms for that code, doesn't relicense mobile-eggbert's own MIT code).
 6. ~~Scope check for Phase 2~~ — resolved empirically by Phase 2's reachability analysis: `Net`
-   confirmed entirely unused and deleted; `Xnb` confirmed entirely unused and deleted; `Media`
-   mostly unused and deleted (video/picture/playlist library — `Sound`/`ISound` audio playback,
-   which mobile-eggbert does use, lives in a different subsystem and was untouched).
-   `GltfImport` — not called out separately above because it turned out to already be
-   `cna`-internal-only wiring with no direct mobile-eggbert include; not specifically verified
-   file-by-file beyond what the reachability script decided, flagging here in case it matters.
-4. **Touch input on SDL 1.2** — deferred to the Phase 4 check-in.
+   confirmed entirely unused and deleted; `Media` mostly unused and deleted (video/picture/
+   playlist library — `Sound`/`ISound` audio playback, which mobile-eggbert does use, lives in a
+   different subsystem and was untouched). **Correction (2026-07-21, see Phase 2.5 below)**:
+   `Xnb` and `GltfImport` were *not* fully deleted by Phase 2 — small remnants stayed reachable
+   because `ContentManager.cpp` (genuinely used — it's how `Texture2D`/`SoundEffect` get loaded)
+   `#include`s them for its `.xnb`/`.cnj`-loading branches. File-level reachability isn't fine
+   enough to see that those specific branches inside an otherwise-used file are themselves dead
+   for this project's actual content (`Content/` has only `.png`/`.wav`, never `.xnb`/`.cnj`).
+   The user caught this and asked for `.cnj` specifically to be removed too — see Phase 2.5.
+4. **Touch input on SDL 1.2** — resolved: target is SDL2 now (see top of file), which has a real
+   touch API, so no fallback strategy is needed here after all.
