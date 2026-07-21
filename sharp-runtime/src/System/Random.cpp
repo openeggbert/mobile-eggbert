@@ -103,12 +103,6 @@ namespace System {
         return d;
     }
 
-    uint64_t Random::nextUInt64() {
-        return (static_cast<uint64_t>(static_cast<uint32_t>(Next(1 << 22)))) |
-               (static_cast<uint64_t>(static_cast<uint32_t>(Next(1 << 22))) << 22) |
-               (static_cast<uint64_t>(static_cast<uint32_t>(Next(1 << 20))) << 44);
-    }
-
     // -----------------------------------------------------------------------
     // Construction
     // -----------------------------------------------------------------------
@@ -153,125 +147,6 @@ namespace System {
             return static_cast<intcs>(prngSample() * static_cast<double>(range)) + minValue;
         }
         return static_cast<intcs>(static_cast<int64_t>(getSampleForLargeRange() * static_cast<double>(range)) + minValue);
-    }
-
-    double Random::NextDouble()
-    {
-        return prngSample();
-    }
-
-    float Random::NextSingle()
-    {
-        for (;;)
-        {
-            float f = static_cast<float>(prngSample());
-            if (f < 1.0f) return f; // reject 1.0f, which is rare but possible due to rounding
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Int64
-    // -----------------------------------------------------------------------
-
-    longcs Random::NextInt64()
-    {
-        for (;;)
-        {
-            // Get top 63 bits to get a value in [0, long.MaxValue], but retry if it's actually
-            // long.MaxValue, since this method is defined to return a value in [0, long.MaxValue).
-            uint64_t result = nextUInt64() >> 1;
-            if (result != static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
-                return static_cast<longcs>(result);
-        }
-    }
-
-    longcs Random::NextInt64(longcs maxValue)
-    {
-        if (maxValue < 0)
-            throw ArgumentOutOfRangeException("maxValue");
-        return NextInt64(0LL, maxValue);
-    }
-
-    longcs Random::NextInt64(longcs minValue, longcs maxValue)
-    {
-        if (minValue > maxValue)
-            throw ArgumentOutOfRangeException("minValue");
-
-        // Computed entirely in unsigned space to avoid signed-overflow UB when the range
-        // spans more than half of intcs's representable values (e.g. minValue near
-        // LONGCS_MIN, maxValue near LONGCS_MAX) -- matches C#'s `(ulong)(maxValue - minValue)`,
-        // which relies on defined-in-C# (but UB in C++ if done in signed arithmetic) wraparound.
-        uint64_t exclusiveRange = static_cast<uint64_t>(maxValue) - static_cast<uint64_t>(minValue);
-
-        if (exclusiveRange > 1)
-        {
-            // Narrow down to the smallest range [0, 2^bits] that contains maxValue - minValue,
-            // then repeatedly generate a value in that outer range until one falls in the inner
-            // range.
-            int bits = 0;
-            {
-                uint64_t v = exclusiveRange - 1;
-                while (v > 0) { ++bits; v >>= 1; }
-                if (bits == 0) bits = 1;
-            }
-            for (;;)
-            {
-                uint64_t result = nextUInt64() >> (64 - bits);
-                if (result < exclusiveRange)
-                    return static_cast<longcs>(result + static_cast<uint64_t>(minValue));
-            }
-        }
-
-        return minValue;
-    }
-
-    // -----------------------------------------------------------------------
-    // Byte buffers
-    // -----------------------------------------------------------------------
-
-    void Random::NextBytes(std::vector<bytecs>& buffer)
-    {
-        for (auto& b : buffer)
-            b = static_cast<bytecs>(internalSample());
-    }
-
-    void Random::NextBytes(Span<bytecs> buffer)
-    {
-        for (intcs i = 0; i < buffer.getLengthProperty(); ++i)
-            buffer[i] = static_cast<bytecs>(internalSample());
-    }
-
-    Random& Random::getSharedProperty()
-    {
-        static Random instance;
-        return instance;
-    }
-
-    std::string Random::GetString(const std::string& choices, intcs length)
-    {
-        if (choices.empty()) throw ArgumentException("Span may not be empty.", "choices");
-        if (length < 0) throw ArgumentOutOfRangeException("length", "'length' must be a non-negative value.");
-        if (length == 0) return {};
-
-        std::string result(static_cast<std::size_t>(length), '\0');
-        GetItems(ReadOnlySpan<char>(choices.data(), static_cast<intcs>(choices.size())),
-                 Span<char>(result.data(), length));
-        return result;
-    }
-
-    std::string Random::GetHexString(intcs stringLength, bool lowercase)
-    {
-        static constexpr const char* upper = "0123456789ABCDEF";
-        static constexpr const char* lower = "0123456789abcdef";
-        return GetString(lowercase ? lower : upper, stringLength);
-    }
-
-    void Random::GetHexString(Span<char> destination, bool lowercase)
-    {
-        static constexpr const char* upper = "0123456789ABCDEF";
-        static constexpr const char* lower = "0123456789abcdef";
-        const char* chars = lowercase ? lower : upper;
-        GetItems(ReadOnlySpan<char>(chars, 16), destination);
     }
 
 } // namespace System
