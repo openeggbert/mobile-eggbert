@@ -470,6 +470,75 @@ units compiled for `WindowsPhoneSpeedyBlupi`: 526 (pre-Phase-2) → 225 (end of 
 of Phase 2.5) → 142 (end of this series). Verified via a final from-scratch clean configure+build+
 smoke-test after the last commit: 0 failures, output matches the known-good baseline throughout.
 
+## Phase 4 pre-analysis: SDL3 → SDL2 feasibility (2026-07-21, requested by user before starting Phase 4)
+
+Surveyed the actual SDL3 API surface remaining after Phases 1-3 and the Phase 2.6 method-pruning
+series (i.e. against the current, already-heavily-pruned tree, not the original upstream `cna`) to
+answer: is rewriting this to SDL2 realistic? **Verdict: yes, no hard blocker.** Every SDL3 API
+actually used has either a direct SDL2 equivalent or a well-scoped manual reimplementation path —
+nothing requires a capability SDL2 fundamentally lacks (unlike the original SDL 1.2 target, which
+would have needed a full rendering-model rewrite — see the struck-through analysis near the top of
+this file).
+
+**Blast radius**: 31 of the 337 remaining `cna`/`sharp-runtime` files `#include <SDL3/...>`
+directly (~9%) — grep-verified via `grep -rl "#include <SDL3" cna/include cna/src sharp-runtime`.
+Three files carry most of the real complexity:
+- `cna/src+include/CNA/Internal/Backends/SdlRenderer/SdlGraphicsBackend.{cpp,hpp}` (~1000 lines) —
+  the rendering backend.
+- `cna/src/CNA/Internal/Input/SdlInputBridge.cpp` (1430 lines) — keyboard/mouse/touch/gamepad via
+  SDL events.
+- `cna/src/CNA/Internal/Input/InputManager.cpp` (472 lines) — input orchestration.
+- `cna/include+src/CNA/Internal/Audio/AudioMixer.{hpp,cpp}` — audio.
+
+The other ~27 files (window creation, sensors/accelerometer, storage paths, logger, title
+container) are thin, mechanical call sites.
+
+**Transfers cleanly** (direct SDL2 equivalents, confirmed by inspecting actual call sites):
+- The `SDL_Renderer`/`SDL_Texture` model itself — SDL2 has had this since 2.0.0, unlike SDL 1.2's
+  surface-blit-only model. `SDL_RenderClear`/`SDL_RenderPresent`/`SDL_CreateTexture`/
+  `SDL_UpdateTexture`/`SDL_SetTextureBlendMode` all have direct SDL2 counterparts.
+- Float-based rects/points (`SDL_FRect`/`SDL_FPoint`) — SDL2 added float renderer variants
+  (`SDL_RenderCopyF` etc.) in 2.0.10+, so this isn't SDL3-only.
+- `SDL_sensor.h` (accelerometer) — SDL2 has had this since 2.0.9, same conceptual API
+  (`SDL_SensorOpen`/`SDL_SensorGetData`).
+- `SDL_CreateWindow` — SDL3 dropped the x/y position params SDL2 requires (typically
+  `SDL_WINDOWPOS_UNDEFINED`); trivial signature change.
+- Environment: `libsdl2-dev` (2.30.0+dfsg-1ubuntu3.1) is directly `apt`-installable in this
+  container (confirmed via `apt-cache policy`) — no toolchain/environment blocker for Phase 4
+  builds.
+
+**Needs real reimplementation, not just renaming** (the actual engineering cost of this phase):
+1. **`SDL_RenderTextureAffine`** — an SDL3-only function (arbitrary 3-corner affine texture
+   mapping), used by `SdlGraphicsBackend.cpp` specifically for `SpriteBatch.Begin(transformMatrix)`
+   (camera/world transforms — see the file's own Task 675 comment). SDL2 has no equivalent; the
+   fix is `SDL_RenderGeometry` (available since SDL2 2.0.18) fed with manually-computed quad
+   corners — a genuine small reimplementation of one function, not a rename.
+2. **`SDL_SetRenderLogicalPresentation`** — SDL3 exposes 4 modes (`CnaPresentationMode::{Letterbox,
+   Overscan,Stretch,NativeBackBuffer}`, all 4 confirmed in active use by
+   `SdlGraphicsBackend.cpp`'s `toSdlPresentationMode`/`toSdlPresentationModeString`). SDL2's
+   `SDL_RenderSetLogicalSize` only covers letterbox-style integer-scaled presentation — `Overscan`
+   and `Stretch` need manual viewport math on top of it.
+3. **`AudioMixer` — the single biggest item.** Confirmed via grep that this uses SDL3_mixer 3.x's
+   **new `MIX_*` track-based API** (`MIX_CreateTrack`/`MIX_PlayTrack`/`MIX_PROP_PLAY_*` properties)
+   — a ground-up redesign from classic SDL2_mixer's channel-based `Mix_*` API
+   (`Mix_Chunk`/`Mix_PlayChannel`/`Mix_Volume`). This is not a rename job, it's a real (if
+   well-precedented and low-risk — SDL2_mixer is mature and thoroughly documented) rewrite of the
+   mixer backend onto a channel-allocation model.
+4. **`bool` vs `int`/pointer return convention** — SDL3 mostly returns `bool` (`true`=success);
+   SDL2 mostly returns `int` (`0`=success) or a pointer. Mechanical but touches essentially every
+   SDL call site across all 31 files (call-site count in the hundreds) — tedious, not risky (the
+   compiler catches most mismatches immediately), but real line-count work.
+5. **Input event details** — `SDL_Gamepad` → `SDL_GameController` rename, event timestamp width
+   (`Uint64` → `Uint32`), minor event-struct field differences. Volume-wise the largest surface
+   (~1900 lines across `InputManager.cpp`/`SdlInputBridge.cpp`), but no capability gap — SDL2 fully
+   supports gamepad/touch/keyboard/mouse.
+
+**Recommended approach when Phase 4 actually starts** (not yet executed): same methodology as
+every phase so far — vendor SDL2/SDL2_image/SDL2_mixer into `cna/third_party/`, migrate file by
+file starting with the 3 hot files (`AudioMixer` first, since it's the most self-contained
+rewrite; then `SdlGraphicsBackend`; then the input pair), full rebuild + smoke-test after each
+file, commit per logical unit, not one giant diff.
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
