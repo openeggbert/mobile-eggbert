@@ -389,6 +389,87 @@ phase's whole-file/whole-class cuts, and changes what this vendored copy *is* (a
 mobile-eggbert-specific stub library vs. a pruned-but-API-complete XNA framework fork). Flagged
 back to the user rather than assumed — see chat for the actual question asked.
 
+## Phase 2.6 status: done (2026-07-21) — method-level pruning series
+
+The user answered Phase 2.5's scope question: yes, go further into method-level pruning within
+still-used classes, not just whole-file/whole-class cuts. Executed as 5 sequential batches (one
+subagent at a time, foreground, fully waited-for before the next started or before this session
+touched `cna`/`sharp-runtime` itself — see the concurrency-hazard note below for why sequential-
+only, not parallel), each: grep every reachable call site across mobile-eggbert + `cna` +
+`sharp-runtime` for every public method/operator/constant in its assigned files, delete zero-call-
+site ones, verify with a full rebuild (restore anything that turns out load-bearing), re-run the
+file-level reachability script afterward to catch newly-orphaned whole files, loop until 0 new
+findings, then commit+push as its own checkpoint.
+
+**Batch 1 — core math/framework types** (Vector2/3/4, Matrix, Quaternion, Rectangle, Color,
+MathHelper, etc.): confirmed the `Matrix::CreateShadow`/`CreateReflection` example from Phase
+2.5 — removing those 2 (of ~15) factory methods cascaded `Plane`/`BoundingBox`/`BoundingSphere`/
+`BoundingFrustum`/`Ray` out entirely. Trimmed `Quaternion` to almost nothing, most of Vector2/3/4's
+uncommon XNA math helpers, `Rectangle`/`Color`/`MathHelper` down to what's actually called.
+
+**Batch 2 — Graphics** (`cna`'s largest subsystem, 79 files): mobile-eggbert is `SpriteBatch`-
+only — deleted the entire custom-Effect infrastructure (`BasicEffect`, `Effect`, `EffectParameter`/
+`Pass`/`Technique`, `IEffectFog`/`Lights`/`Matrices`) and the entire 3D/advanced-buffer cluster
+(`Texture3D`, `TextureCube`, `RenderTarget2D`/`Cube`, `VertexBuffer`/`IndexBuffer`, all
+`VertexPositionXxx` formats) — 35 whole files gone. Pruned `GraphicsDevice` down to its
+`SpriteBatch`-relevant surface (removed the entire non-SpriteBatch draw API, buffer/render-target
+binding). Caught one false-positive (`VertexElement` looked dead by grep but `IGraphicsBackend.hpp`,
+outside the batch, declares `SetVertexDeclaration(const std::vector<VertexElement>&)` — restored).
+
+**Batch 3 — Input**: gamepad support turned out to be almost entirely unreachable (touchscreen
+game); a large fraction of the rest was `*ForTests` infrastructure dead now that this pruned copy
+has no `tests/` dir. `SdlGamepadBackend`'s interface shrunk from 25 virtual methods to 3. Caught
+two name-collision false positives (`GamePadButtons::getAProperty` vs `Color::getAProperty`;
+`GamePadState::getIsConnectedProperty` vs `TouchPanelCapabilities`' own) and one operator-syntax
+near-miss (`TouchCollection::operator[]`, called via bracket syntax the grep missed).
+
+**Batch 4 — Audio/Media/Sensors/Joysticks**: 3D positional audio, microphone input, and music/
+video streaming all turned out entirely unreachable (mobile-eggbert only plays fire-and-forget
+`SoundEffect`s and reads the accelerometer) — `AudioEmitter`/`AudioListener`/`SongCollection`/
+`VisualizationData`/`VisualizationCapture`/`VisualizationFFT` deleted. Kept
+`DynamicSoundEffectInstance` whole despite zero callers — `FrameworkDispatcher.cpp` (outside the
+batch) names the type directly in a `std::vector` and calls methods on it, so it's real reachable
+API surface even though never exercised by this specific game today.
+
+**Batch 5 (a/b/c) — sharp-runtime's remaining ~130 files**: hit a real process failure here — the
+first attempt at this batch spawned its own unsupervised sub-agents to parallelize research, then
+reported completion before their results were checked/applied, leaving the tree in a half-edited
+state (only `System::Random` had actually landed). Redone properly in 3 follow-up commits, each a
+single agent working directly with no further delegation:
+- **5a (`Random`)**: trimmed to `Next()`/`Next(int)`/`Next(int,int)` — the entire surface
+  `Decor.cpp` calls.
+- **5b (Text/Threading/DateTime/String)**: only `Encoding::UTF8()` is ever called anywhere —
+  deleted `ASCIIEncoding`/`Latin1Encoding`/`UTF32Encoding`/`UTF7Encoding`/`UnicodeEncoding`
+  entirely. `System::String` cut ~90% (712+893 lines → 62+102) — only 5 of ~35 method names (one
+  overload each) are ever called anywhere in the reachable tree, the biggest single win of the
+  whole series. Traced `DateTime`/`DateTimeOffset`/`TimeSpan`'s actual reachable call graph
+  (rooted at `DateTimeOffset::getUtcNowProperty()`, called from the Sensors subsystem) rather than
+  pruning each file in isolation.
+- **5c (exceptions/Math/IO/IsolatedStorage/misc)**: `Math` cut from ~50 members to `PI`/`Sin`/
+  `Cos`/`Min`/`Max` (confirmed `cna` itself never calls `Math::` at all — only mobile-eggbert's own
+  `Misc.cpp`/`Pixmap.cpp`/`Slider.cpp`/`GameData.cpp` do). `Int128`/`Type`/`DivideByZeroException`
+  deleted via cascade (each only reachable through another already-dead method). `IsolatedStorage*`
+  trimmed to the narrow subset `Worlds.cpp`'s save-game persistence actually uses. Exception
+  hierarchy trimmed to the ctor overloads verified against real `throw` sites, not just method
+  presence.
+
+**Concurrency hazard, confirmed and worked around twice**: dispatching a sub-agent to edit
+`cna`/`sharp-runtime` while *this session* also directly edits/deletes files in the same trees is
+unsafe — the sub-agent's own verification builds see the direct edits as unexplained missing
+files and "fix" them with `git checkout --`, silently reverting real work (happened once between
+Phase 2.5 and this phase, and the lesson — wait for full agent completion before touching the
+same trees — held for the rest of the series). Separately, a sub-agent spawning *its own*
+unsupervised sub-agents and reporting done before they finish is a second, independent failure
+mode (batch 5's first attempt) — fixed by explicitly forbidding further delegation in every
+subsequent prompt.
+
+**Final numbers**: combined `cna`+`sharp-runtime` `.hpp`/`.cpp` file count: 940 (Phase 1) → 666
+(Phase 2) → 459 (Phase 2.5) → 337 (end of this series) — combined line count across what remains:
+~44,000. `sharp-runtime` checkout size: 15M (Phase 1) → 2.9M (Phase 2.5) → 780K (now). Translation
+units compiled for `WindowsPhoneSpeedyBlupi`: 526 (pre-Phase-2) → 225 (end of Phase 3) → 187 (end
+of Phase 2.5) → 142 (end of this series). Verified via a final from-scratch clean configure+build+
+smoke-test after the last commit: 0 failures, output matches the known-good baseline throughout.
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
