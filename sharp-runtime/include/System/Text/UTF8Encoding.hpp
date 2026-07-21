@@ -32,8 +32,6 @@ namespace System::Text {
         [[nodiscard]] std::string GetString(const SharpRuntime::bytecs* data,
                                             SharpRuntime::intcs index,
                                             SharpRuntime::intcs count) const override;
-        /** Returns the encoding name "utf-8". */
-        [[nodiscard]] std::string getEncodingNameProperty() const override { return "utf-8"; }
     };
 
 } // namespace System::Text

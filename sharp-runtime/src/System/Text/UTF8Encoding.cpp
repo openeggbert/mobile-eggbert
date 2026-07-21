@@ -9,10 +9,7 @@ namespace System::Text {
 namespace {
 
     // Returns the byte length (1-4) of a well-formed UTF-8 sequence starting at data[i] within
-    // [i, end), or 0 if the byte at i does not begin (or complete) a well-formed sequence --
-    // same conformance rules (continuation-byte, overlong-encoding, surrogate, and out-of-range
-    // rejection) as the decodeUtf8 helper duplicated across ASCIIEncoding.cpp/UnicodeEncoding.hpp/
-    // UTF32Encoding.hpp, but reporting a validity length instead of substituting a code point --
+    // [i, end), or 0 if the byte at i does not begin (or complete) a well-formed sequence.
     // UTF8Encoding's well-formed bytes pass through unchanged (source and destination are both
     // UTF-8), so there's no re-encoding step to fold the substitution into.
     size_t wellFormedUtf8Length(const SharpRuntime::bytecs* data, size_t i, size_t end) {
