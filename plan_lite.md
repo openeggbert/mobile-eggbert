@@ -168,12 +168,71 @@ are read from their own GitHub repos as source, but no changes are pushed back t
   from `cna/CLAUDE.md`, also a Phase 2 pruning candidate if mobile-eggbert never uses
   `VideoPlayer`).
 
+## Phase 2 status: done (this commit)
+
+- Wrote a file-reachability script (`#include`-graph BFS from mobile-eggbert's own 50 source
+  files, through `cna/{include,src}` and `sharp-runtime/{include,src}`, treating a reached
+  header's same-path `.cpp` as reachable too, matching this project's strict 1-`.hpp`-1-`.cpp`
+  convention). `Internal/Backends/**` was excluded from the analysis entirely and left completely
+  untouched — backend selection is wired through CMake target selection, not the `#include`
+  graph, so it's out of scope for a reachability cut and is Phase 3's job instead.
+- Of 2133 candidate `.hpp`/`.cpp` files outside `Backends/`, **1467 were unreachable** and
+  deleted; 666 remain. Spot-checked before deleting: core types (`Vector2`, `Rectangle`, `Color`,
+  `Texture2D`, `SpriteBatch`, `Game`, `GameTime`, `SharpRuntimeHelper`, `Prop`) all correctly
+  reachable; `Accelerometer` (used by `InputPad`) reachable while `Compass`/`Gyroscope`/`Motion`
+  (not used) correctly unreachable; zero reachable file references `System::Collections` at all
+  (mobile-eggbert/cna's reachable subset uses `std::` containers directly, confirmed by grep, not
+  a script bug).
+- Deleted subsystems this resolved as fully unused, confirming Phase 1's open question 6:
+  `Microsoft::Xna::Framework::Net` / `CNA::Internal::Net` (never linked — `CNA_Net` wasn't in
+  mobile-eggbert's `target_link_libraries` to begin with), `CNA::Internal::Xnb` (the XNB
+  content-pipeline reader classes — this also removes the pre-existing upstream build failure
+  noted in Phase 1, since the broken files are gone rather than fixed), most of `CNA::Internal::
+  Media` (video/picture/playlist library — `VideoDecoder`/`VideoPlayer` unused), most of
+  `CNA::Devices`/`Microsoft::Devices` (camera, clipboard, file dialog, message box, system tray,
+  URL launcher, power/display/locale/system info — none used), and all of `sharp-runtime`'s
+  `System::Net`, `System::Xml`, `System::Collections`, most of `System::IO`/`Threading`/`Text`/
+  `Security`/`Globalization`/`Diagnostics`/`Buffers`/`Runtime`/`Numerics`/`ComponentModel`.
+- `cna/cmake/CnaLibrary.cmake`: removed the `CNA_Net` `add_library` block (its source dir is now
+  empty — `add_library` with zero sources is a hard CMake error) and decoupled `CNA_GamerServices`
+  from the same `CNA_ENABLE_NET` flag's Net half (`GamerServices` has no dependency on Net/ENet;
+  it was only ever bundled with Net by the flag's naming, not by an actual code dependency).
+  Updated the option's help text accordingly (`cna/CMakeLists.txt`).
+- Also deleted, as pure dev-only tooling never built or used by mobile-eggbert:
+  `cna/tests/` (401 files), `sharp-runtime/tests/` (376 files), and the now-pointless empty
+  `vendor/googletest` submodule placeholders in both (neither repo's main build wires googletest
+  in when `CNA_BUILD_TESTS`/`SHARP_RUNTIME_BUILD_TESTS` are off, and mobile-eggbert's documented
+  build commands never passed `-DCNA_BUILD_TESTS=ON`). Flipped `cna/CMakeLists.txt`'s
+  `CNA_BUILD_TESTS` option default from `ON` to `OFF` to match — it already defaulted to `ON`
+  before this change while `vendor/googletest` was never populated in mobile-eggbert's checkout
+  either, so a plain default build was already latently broken on this point pre-Phase-2; this
+  makes the default consistent with what actually ships now instead of just leaving it broken.
+- **Verified via full configure+build with zero manual CMake overrides** (the exact command
+  from `README.md`'s "Linux native build" section, i.e. no `-DCNA_BUILD_TESTS=OFF` needed
+  anymore): 225 translation units (down from 526 pre-Phase-2), **zero build failures**, binary
+  links successfully. Smoke-ran it for 5s with `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` (no
+  real display in this container) — no crash, no missing-symbol/dynamic-link errors.
+- `third_party/`/`vendor/` third-party library trees (SDL/SDL_image/SDL_mixer/cgltf/stb/enet in
+  `cna`, miniz/nlohmann/tinyxml2 in `sharp-runtime`) were **deliberately left untouched** in this
+  phase — they're not cna/sharp-runtime's own classes/methods, and pruning them (e.g. `enet` is
+  now plausibly dead weight since `Net`/`ENet` usage was just deleted) is a reasonable follow-up
+  but was kept out of this phase to keep it reviewable and scoped to the literal "unused classes
+  and methods" ask.
+- `cna` size: 144M → still 144M (third_party untouched, as above — the 1467-file deletion was
+  entirely within `include/`+`src/`, a small fraction of the checkout's bytes vs. vendored SDL
+  source). `sharp-runtime`: 15M → 7M (its vendor libs are tiny single-file deps, so the
+  `include/`+`src/` cut shows up directly in checkout size).
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
-3. **Ms-PL attribution for vendored `cna`**: default plan is to keep `cna`'s `LICENSE` (Ms-PL)
-   and `THIRD_PARTY_NOTICES.md` inside the vendored `cna/` subdirectory as-is (satisfies Ms-PL's
-   redistribution terms for that code, doesn't relicense mobile-eggbert's own MIT code).
-6. **Scope check for Phase 2**: default plan is to determine `Net`/`Media`/`GltfImport`/`Xnb`
-   usage empirically via the reachability analysis itself (not assume upfront) and delete
-   whatever comes back unreachable.
+3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
+   `THIRD_PARTY_NOTICES.md` were kept as-is inside the vendored `cna/` subdirectory (satisfies
+   Ms-PL's redistribution terms for that code, doesn't relicense mobile-eggbert's own MIT code).
+6. ~~Scope check for Phase 2~~ — resolved empirically by Phase 2's reachability analysis: `Net`
+   confirmed entirely unused and deleted; `Xnb` confirmed entirely unused and deleted; `Media`
+   mostly unused and deleted (video/picture/playlist library — `Sound`/`ISound` audio playback,
+   which mobile-eggbert does use, lives in a different subsystem and was untouched).
+   `GltfImport` — not called out separately above because it turned out to already be
+   `cna`-internal-only wiring with no direct mobile-eggbert include; not specifically verified
+   file-by-file beyond what the reachability script decided, flagging here in case it matters.
 4. **Touch input on SDL 1.2** — deferred to the Phase 4 check-in.

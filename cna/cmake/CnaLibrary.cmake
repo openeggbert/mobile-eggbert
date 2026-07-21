@@ -161,7 +161,11 @@ if(CNA_FFMPEG_AVAILABLE)
     )
 endif()
 
-# --- GamerServices + Net ---
+# --- GamerServices ---
+# Net (Microsoft::Xna::Framework::Net / CNA::Internal::Net) was removed: mobile-eggbert never
+# linked the CNA_Net target and no reachable header included it (see mobile-eggbert's
+# plan_lite.md Phase 2). GamerServices has no dependency on Net/ENet, so it no longer needs
+# gating behind the same flag that used to also gate the networking build.
 if(CNA_ENABLE_NET)
     file(GLOB_RECURSE CNA_GAMERSERVICES_SOURCES CONFIGURE_DEPENDS
         "src/Microsoft/Xna/Framework/GamerServices/*.cpp"
@@ -175,19 +179,4 @@ if(CNA_ENABLE_NET)
     # Guide.cpp calls SDL3 directly (message box); this was previously only compiling by
     # accident on hosts with a stray system-wide SDL3 install on the default include path.
     target_link_libraries(CNA_GamerServices PUBLIC CNA PRIVATE SDL3::SDL3)
-
-    file(GLOB_RECURSE CNA_NET_SOURCES CONFIGURE_DEPENDS
-        "src/Microsoft/Xna/Framework/Net/*.cpp"
-        "src/CNA/Internal/Net/*.cpp"
-    )
-    add_library(CNA_Net STATIC ${CNA_NET_SOURCES})
-    target_include_directories(CNA_Net
-        PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-    target_link_libraries(CNA_Net
-        PUBLIC
-        CNA_GamerServices
-        enet
-    )
 endif()
