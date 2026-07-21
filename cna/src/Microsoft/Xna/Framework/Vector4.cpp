@@ -9,7 +9,6 @@
 #include <stdexcept>
 
 #include "Microsoft/Xna/Framework/Matrix.hpp"
-#include "Microsoft/Xna/Framework/Quaternion.hpp"
 
 namespace Microsoft::Xna::Framework
 {
@@ -21,50 +20,6 @@ namespace Microsoft::Xna::Framework
             static_assert(sizeof(bits) == sizeof(value));
             std::memcpy(&bits, &value, sizeof(value));
             return static_cast<int>(bits);
-        }
-
-        float ClampScalar(float value, float minValue, float maxValue)
-        {
-            return std::min(std::max(value, minValue), maxValue);
-        }
-
-        float LerpScalar(float value1, float value2, float amount)
-        {
-            return value1 + ((value2 - value1) * amount);
-        }
-
-        float BarycentricScalar(float value1, float value2, float value3, float amount1, float amount2)
-        {
-            return value1 + ((value2 - value1) * amount1) + ((value3 - value1) * amount2);
-        }
-
-        float CatmullRomScalar(float value1, float value2, float value3, float value4, float amount)
-        {
-            const float amountSquared = amount * amount;
-            const float amountCubed = amountSquared * amount;
-            return 0.5f * (
-                (2.0f * value2) +
-                ((-value1 + value3) * amount) +
-                (((2.0f * value1) - (5.0f * value2) + (4.0f * value3) - value4) * amountSquared) +
-                ((-value1 + (3.0f * value2) - (3.0f * value3) + value4) * amountCubed)
-            );
-        }
-
-        float HermiteScalar(float value1, float tangent1, float value2, float tangent2, float amount)
-        {
-            const float amountSquared = amount * amount;
-            const float amountCubed = amountSquared * amount;
-            const float h1 = (2.0f * amountCubed) - (3.0f * amountSquared) + 1.0f;
-            const float h2 = (-2.0f * amountCubed) + (3.0f * amountSquared);
-            const float h3 = amountCubed - (2.0f * amountSquared) + amount;
-            const float h4 = amountCubed - amountSquared;
-            return (value1 * h1) + (value2 * h2) + (tangent1 * h3) + (tangent2 * h4);
-        }
-
-        float SmoothStepScalar(float value1, float value2, float amount)
-        {
-            amount = ClampScalar(amount, 0.0f, 1.0f);
-            return HermiteScalar(value1, 0.0f, value2, 0.0f, amount);
         }
 
         void CheckArrayRange(std::size_t sourceSize, int sourceIndex, std::size_t destinationSize, int destinationIndex,
@@ -167,63 +122,6 @@ namespace Microsoft::Xna::Framework
         result.W = value1.W + value2.W;
     }
 
-    Vector4 Vector4::Barycentric(Vector4 value1, Vector4 value2, Vector4 value3, float amount1, float amount2)
-    {
-        return Vector4(BarycentricScalar(value1.X, value2.X, value3.X, amount1, amount2),
-                       BarycentricScalar(value1.Y, value2.Y, value3.Y, amount1, amount2),
-                       BarycentricScalar(value1.Z, value2.Z, value3.Z, amount1, amount2),
-                       BarycentricScalar(value1.W, value2.W, value3.W, amount1, amount2));
-    }
-
-    void Vector4::Barycentric(const Vector4& value1, const Vector4& value2, const Vector4& value3, float amount1,
-                              float amount2, Vector4& result)
-    {
-        result = Barycentric(value1, value2, value3, amount1, amount2);
-    }
-
-    Vector4 Vector4::CatmullRom(Vector4 value1, Vector4 value2, Vector4 value3, Vector4 value4, float amount)
-    {
-        return Vector4(CatmullRomScalar(value1.X, value2.X, value3.X, value4.X, amount),
-                       CatmullRomScalar(value1.Y, value2.Y, value3.Y, value4.Y, amount),
-                       CatmullRomScalar(value1.Z, value2.Z, value3.Z, value4.Z, amount),
-                       CatmullRomScalar(value1.W, value2.W, value3.W, value4.W, amount));
-    }
-
-    void Vector4::CatmullRom(const Vector4& value1, const Vector4& value2, const Vector4& value3, const Vector4& value4,
-                             float amount, Vector4& result)
-    {
-        result = CatmullRom(value1, value2, value3, value4, amount);
-    }
-
-    Vector4 Vector4::Clamp(Vector4 value1, Vector4 min, Vector4 max)
-    {
-        return Vector4(ClampScalar(value1.X, min.X, max.X), ClampScalar(value1.Y, min.Y, max.Y),
-                       ClampScalar(value1.Z, min.Z, max.Z), ClampScalar(value1.W, min.W, max.W));
-    }
-
-    void Vector4::Clamp(const Vector4& value1, const Vector4& min, const Vector4& max, Vector4& result)
-    {
-        result = Clamp(value1, min, max);
-    }
-
-    float Vector4::Distance(Vector4 value1, Vector4 value2) { return std::sqrt(DistanceSquared(value1, value2)); }
-
-    void Vector4::Distance(const Vector4& value1, const Vector4& value2, float& result)
-    {
-        result = Distance(value1, value2);
-    }
-
-    float Vector4::DistanceSquared(Vector4 value1, Vector4 value2)
-    {
-        return ((value1.W - value2.W) * (value1.W - value2.W)) + ((value1.X - value2.X) * (value1.X - value2.X)) + ((
-            value1.Y - value2.Y) * (value1.Y - value2.Y)) + ((value1.Z - value2.Z) * (value1.Z - value2.Z));
-    }
-
-    void Vector4::DistanceSquared(const Vector4& value1, const Vector4& value2, float& result)
-    {
-        result = DistanceSquared(value1, value2);
-    }
-
     Vector4 Vector4::Divide(Vector4 value1, Vector4 value2)
     {
         value1.X /= value2.X;
@@ -257,54 +155,6 @@ namespace Microsoft::Xna::Framework
         result.Z = value1.Z / divider;
         result.W = value1.W / divider;
     }
-
-    float Vector4::Dot(Vector4 value1, Vector4 value2)
-    {
-        return (value1.X * value2.X) + (value1.Y * value2.Y) + (value1.Z * value2.Z) + (value1.W * value2.W);
-    }
-
-    void Vector4::Dot(const Vector4& value1, const Vector4& value2, float& result) { result = Dot(value1, value2); }
-
-    Vector4 Vector4::Hermite(Vector4 value1, Vector4 tangent1, Vector4 value2, Vector4 tangent2, float amount)
-    {
-        return Vector4(HermiteScalar(value1.X, tangent1.X, value2.X, tangent2.X, amount),
-                       HermiteScalar(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount),
-                       HermiteScalar(value1.Z, tangent1.Z, value2.Z, tangent2.Z, amount),
-                       HermiteScalar(value1.W, tangent1.W, value2.W, tangent2.W, amount));
-    }
-
-    void Vector4::Hermite(const Vector4& value1, const Vector4& tangent1, const Vector4& value2,
-                          const Vector4& tangent2, float amount, Vector4& result)
-    {
-        result = Hermite(value1, tangent1, value2, tangent2, amount);
-    }
-
-    Vector4 Vector4::Lerp(Vector4 value1, Vector4 value2, float amount)
-    {
-        return Vector4(LerpScalar(value1.X, value2.X, amount), LerpScalar(value1.Y, value2.Y, amount),
-                       LerpScalar(value1.Z, value2.Z, amount), LerpScalar(value1.W, value2.W, amount));
-    }
-
-    void Vector4::Lerp(const Vector4& value1, const Vector4& value2, float amount, Vector4& result)
-    {
-        result = Lerp(value1, value2, amount);
-    }
-
-    Vector4 Vector4::Max(Vector4 value1, Vector4 value2)
-    {
-        return Vector4(std::max(value1.X, value2.X), std::max(value1.Y, value2.Y), std::max(value1.Z, value2.Z),
-                       std::max(value1.W, value2.W));
-    }
-
-    void Vector4::Max(const Vector4& value1, const Vector4& value2, Vector4& result) { result = Max(value1, value2); }
-
-    Vector4 Vector4::Min(Vector4 value1, Vector4 value2)
-    {
-        return Vector4(std::min(value1.X, value2.X), std::min(value1.Y, value2.Y), std::min(value1.Z, value2.Z),
-                       std::min(value1.W, value2.W));
-    }
-
-    void Vector4::Min(const Vector4& value1, const Vector4& value2, Vector4& result) { result = Min(value1, value2); }
 
     Vector4 Vector4::Multiply(Vector4 value1, Vector4 value2)
     {
@@ -350,17 +200,6 @@ namespace Microsoft::Xna::Framework
     }
 
     void Vector4::Normalize(const Vector4& value, Vector4& result) { result = Normalize(value); }
-
-    Vector4 Vector4::SmoothStep(Vector4 value1, Vector4 value2, float amount)
-    {
-        return Vector4(SmoothStepScalar(value1.X, value2.X, amount), SmoothStepScalar(value1.Y, value2.Y, amount),
-                       SmoothStepScalar(value1.Z, value2.Z, amount), SmoothStepScalar(value1.W, value2.W, amount));
-    }
-
-    void Vector4::SmoothStep(const Vector4& value1, const Vector4& value2, float amount, Vector4& result)
-    {
-        result = SmoothStep(value1, value2, amount);
-    }
 
     Vector4 Vector4::Subtract(Vector4 value1, Vector4 value2)
     {
@@ -443,64 +282,6 @@ namespace Microsoft::Xna::Framework
     {
         CheckArrayRange(sourceArray.size(), sourceIndex, destinationArray.size(), destinationIndex, length);
         for (int i = 0; i < length; ++i) Transform(sourceArray[sourceIndex + i], matrix,
-                                                   destinationArray[destinationIndex + i]);
-    }
-
-    Vector4 Vector4::Transform(Vector2 value, const Quaternion& rotation)
-    {
-        Vector4 result;
-        Transform(value, rotation, result);
-        return result;
-    }
-
-    Vector4 Vector4::Transform(Vector3 value, const Quaternion& rotation)
-    {
-        Vector4 result;
-        Transform(value, rotation, result);
-        return result;
-    }
-
-    Vector4 Vector4::Transform(Vector4 value, const Quaternion& rotation)
-    {
-        Vector4 result;
-        Transform(value, rotation, result);
-        return result;
-    }
-
-    void Vector4::Transform(const Vector2& value, const Quaternion& rotation, Vector4& result)
-    {
-        Vector3 temp(value.X, value.Y, 0.0f);
-        Vector3 transformed;
-        Vector3::Transform(temp, rotation, transformed);
-        result = Vector4(transformed, 1.0f);
-    }
-
-    void Vector4::Transform(const Vector3& value, const Quaternion& rotation, Vector4& result)
-    {
-        Vector3 transformed;
-        Vector3::Transform(value, rotation, transformed);
-        result = Vector4(transformed, 1.0f);
-    }
-
-    void Vector4::Transform(const Vector4& value, const Quaternion& rotation, Vector4& result)
-    {
-        Vector3 temp(value.X, value.Y, value.Z);
-        Vector3 transformed;
-        Vector3::Transform(temp, rotation, transformed);
-        result = Vector4(transformed, value.W);
-    }
-
-    void Vector4::Transform(const std::vector<Vector4>& sourceArray, const Quaternion& rotation,
-                            std::vector<Vector4>& destinationArray)
-    {
-        Transform(sourceArray, 0, rotation, destinationArray, 0, static_cast<int>(sourceArray.size()));
-    }
-
-    void Vector4::Transform(const std::vector<Vector4>& sourceArray, int sourceIndex, const Quaternion& rotation,
-                            std::vector<Vector4>& destinationArray, int destinationIndex, int length)
-    {
-        CheckArrayRange(sourceArray.size(), sourceIndex, destinationArray.size(), destinationIndex, length);
-        for (int i = 0; i < length; ++i) Transform(sourceArray[sourceIndex + i], rotation,
                                                    destinationArray[destinationIndex + i]);
     }
 

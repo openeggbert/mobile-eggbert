@@ -336,28 +336,6 @@ namespace Microsoft::Xna::Framework
         return packedValue == other.packedValue;
     }
 
-    Vector3 Color::ToVector3() const
-    {
-        return Vector3(
-            static_cast<float>(ToInt(getRProperty())) / 255.0f,
-            static_cast<float>(ToInt(getGProperty())) / 255.0f,
-            static_cast<float>(ToInt(getBProperty())) / 255.0f);
-    }
-
-    Vector4 Color::ToVector4() const
-    {
-        return Vector4(
-            static_cast<float>(ToInt(getRProperty())) / 255.0f,
-            static_cast<float>(ToInt(getGProperty())) / 255.0f,
-            static_cast<float>(ToInt(getBProperty())) / 255.0f,
-            static_cast<float>(ToInt(getAProperty())) / 255.0f);
-    }
-
-    std::size_t Color::GetHashCode() const
-    {
-        return static_cast<std::size_t>(packedValue);
-    }
-
     std::string Color::ToString() const
     {
         std::ostringstream stream;
@@ -373,33 +351,6 @@ namespace Microsoft::Xna::Framework
     // Public static methods
     // ------------------------------------------------------------------
 
-    Color Color::Lerp(const Color& value1, const Color& value2, float amount)
-    {
-        amount = MathHelper::Clamp(amount, 0.0f, 1.0f);
-        return Color(
-            static_cast<intcs>(MathHelper::Lerp(
-                static_cast<float>(ToInt(value1.getRProperty())),
-                static_cast<float>(ToInt(value2.getRProperty())), amount)),
-            static_cast<intcs>(MathHelper::Lerp(
-                static_cast<float>(ToInt(value1.getGProperty())),
-                static_cast<float>(ToInt(value2.getGProperty())), amount)),
-            static_cast<intcs>(MathHelper::Lerp(
-                static_cast<float>(ToInt(value1.getBProperty())),
-                static_cast<float>(ToInt(value2.getBProperty())), amount)),
-            static_cast<intcs>(MathHelper::Lerp(
-                static_cast<float>(ToInt(value1.getAProperty())),
-                static_cast<float>(ToInt(value2.getAProperty())), amount)));
-    }
-
-    Color Color::FromNonPremultiplied(const Vector4& vector)
-    {
-        return Color(
-            vector.X * vector.W,
-            vector.Y * vector.W,
-            vector.Z * vector.W,
-            vector.W);
-    }
-
     Color Color::FromNonPremultiplied(intcs r, intcs g, intcs b, intcs a)
     {
         return Color(
@@ -407,15 +358,6 @@ namespace Microsoft::Xna::Framework
             static_cast<intcs>(g * a / ByteMax),
             static_cast<intcs>(b * a / ByteMax),
             a);
-    }
-
-    Color Color::Multiply(const Color& value, float scale)
-    {
-        return Color(
-            static_cast<intcs>(static_cast<float>(ToInt(value.getRProperty())) * scale),
-            static_cast<intcs>(static_cast<float>(ToInt(value.getGProperty())) * scale),
-            static_cast<intcs>(static_cast<float>(ToInt(value.getBProperty())) * scale),
-            static_cast<intcs>(static_cast<float>(ToInt(value.getAProperty())) * scale));
     }
 
     // ------------------------------------------------------------------
@@ -442,15 +384,5 @@ namespace Microsoft::Xna::Framework
     bool operator!=(const Color& a, const Color& b)
     {
         return !(a == b);
-    }
-
-    Color operator*(const Color& value, float scale)
-    {
-        return Color::Multiply(value, scale);
-    }
-
-    Color operator*(float scale, const Color& value)
-    {
-        return Color::Multiply(value, scale);
     }
 } // namespace Microsoft::Xna::Framework

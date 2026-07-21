@@ -20,11 +20,6 @@ namespace Microsoft::Xna::Framework
     {
     }
 
-    Point Point::getZeroProperty()
-    {
-        return Zero;
-    }
-
     bool Point::Equals(const Point& other) const
     {
         return X == other.X && Y == other.Y;

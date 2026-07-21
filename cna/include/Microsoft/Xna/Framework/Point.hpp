@@ -34,13 +34,6 @@ namespace Microsoft::Xna::Framework
         Point(intcs x, intcs y);
 
         /**
-         * @brief Gets the zero point.
-         *
-         * @return A point with X = 0 and Y = 0.
-         */
-        [[nodiscard]] static Point getZeroProperty();
-
-        /**
          * @brief Returns true when both coordinates match another point.
          *
          * @param other The point to compare against.

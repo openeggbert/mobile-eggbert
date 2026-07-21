@@ -11,7 +11,6 @@
 namespace Microsoft::Xna::Framework
 {
     struct Matrix;
-    struct Quaternion;
 
     /** @brief Describes a four-component floating point vector. */
     struct Vector4
@@ -133,114 +132,6 @@ namespace Microsoft::Xna::Framework
         static void Add(const Vector4& value1, const Vector4& value2, Vector4& result);
 
         /**
-         * @brief Converts barycentric coordinates to a point inside a triangle.
-         *
-         * @param value1 The first vertex of the triangle.
-         * @param value2 The second vertex of the triangle.
-         * @param value3 The third vertex of the triangle.
-         * @param amount1 Barycentric scalar b2 that represents a weighting toward vertex 2.
-         * @param amount2 Barycentric scalar b3 that represents a weighting toward vertex 3.
-         * @return The Cartesian translation of the barycentric coordinates.
-         */
-        [[nodiscard]] static Vector4 Barycentric(Vector4 value1, Vector4 value2, Vector4 value3, float amount1,
-                                                 float amount2);
-
-        /**
-         * @brief Stores the barycentric result in an output parameter.
-         *
-         * @param value1 The first vertex of the triangle.
-         * @param value2 The second vertex of the triangle.
-         * @param value3 The third vertex of the triangle.
-         * @param amount1 Barycentric scalar b2.
-         * @param amount2 Barycentric scalar b3.
-         * @param result Output vector that receives the result.
-         */
-        static void Barycentric(const Vector4& value1, const Vector4& value2, const Vector4& value3, float amount1,
-                                float amount2, Vector4& result);
-
-        /**
-         * @brief Performs Catmull-Rom interpolation between vectors.
-         *
-         * @param value1 The first position in the interpolation.
-         * @param value2 The second position in the interpolation.
-         * @param value3 The third position in the interpolation.
-         * @param value4 The fourth position in the interpolation.
-         * @param amount Weighting factor.
-         * @return A vector that is the result of the Catmull-Rom interpolation.
-         */
-        [[nodiscard]] static Vector4 CatmullRom(Vector4 value1, Vector4 value2, Vector4 value3, Vector4 value4,
-                                                float amount);
-
-        /**
-         * @brief Stores the Catmull-Rom result in an output parameter.
-         *
-         * @param value1 The first position in the interpolation.
-         * @param value2 The second position in the interpolation.
-         * @param value3 The third position in the interpolation.
-         * @param value4 The fourth position in the interpolation.
-         * @param amount Weighting factor.
-         * @param result Output vector that receives the result.
-         */
-        static void CatmullRom(const Vector4& value1, const Vector4& value2, const Vector4& value3,
-                               const Vector4& value4, float amount, Vector4& result);
-
-        /**
-         * @brief Clamps each component between the matching minimum and maximum component.
-         *
-         * @param value1 The vector to clamp.
-         * @param min Minimum value vector.
-         * @param max Maximum value vector.
-         * @return The clamped vector.
-         */
-        [[nodiscard]] static Vector4 Clamp(Vector4 value1, Vector4 min, Vector4 max);
-
-        /**
-         * @brief Stores the clamped result in an output parameter.
-         *
-         * @param value1 The vector to clamp.
-         * @param min Minimum value vector.
-         * @param max Maximum value vector.
-         * @param result Output vector that receives the clamped result.
-         */
-        static void Clamp(const Vector4& value1, const Vector4& min, const Vector4& max, Vector4& result);
-
-        /**
-         * @brief Returns the distance between two vectors.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @return The distance between the vectors.
-         */
-        [[nodiscard]] static float Distance(Vector4 value1, Vector4 value2);
-
-        /**
-         * @brief Stores the distance between two vectors in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @param result Output scalar that receives the distance.
-         */
-        static void Distance(const Vector4& value1, const Vector4& value2, float& result);
-
-        /**
-         * @brief Returns the squared distance between two vectors.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @return The squared distance between the vectors.
-         */
-        [[nodiscard]] static float DistanceSquared(Vector4 value1, Vector4 value2);
-
-        /**
-         * @brief Stores the squared distance between two vectors in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @param result Output scalar that receives the squared distance.
-         */
-        static void DistanceSquared(const Vector4& value1, const Vector4& value2, float& result);
-
-        /**
          * @brief Divides a vector component-wise by another vector.
          *
          * @param value1 Source vector.
@@ -275,106 +166,6 @@ namespace Microsoft::Xna::Framework
          * @param result Output vector that receives the result.
          */
         static void Divide(const Vector4& value1, float divider, Vector4& result);
-
-        /**
-         * @brief Returns the dot product of two vectors.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @return The dot product of the two vectors.
-         */
-        [[nodiscard]] static float Dot(Vector4 value1, Vector4 value2);
-
-        /**
-         * @brief Stores the dot product of two vectors in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @param result Output scalar that receives the dot product.
-         */
-        static void Dot(const Vector4& value1, const Vector4& value2, float& result);
-
-        /**
-         * @brief Performs Hermite spline interpolation.
-         *
-         * @param value1 Source position vector.
-         * @param tangent1 Source tangent vector.
-         * @param value2 Destination position vector.
-         * @param tangent2 Destination tangent vector.
-         * @param amount Weighting factor.
-         * @return The result of the Hermite spline interpolation.
-         */
-        [[nodiscard]] static Vector4 Hermite(Vector4 value1, Vector4 tangent1, Vector4 value2, Vector4 tangent2,
-                                             float amount);
-
-        /**
-         * @brief Stores the Hermite spline result in an output parameter.
-         *
-         * @param value1 Source position vector.
-         * @param tangent1 Source tangent vector.
-         * @param value2 Destination position vector.
-         * @param tangent2 Destination tangent vector.
-         * @param amount Weighting factor.
-         * @param result Output vector that receives the result.
-         */
-        static void Hermite(const Vector4& value1, const Vector4& tangent1, const Vector4& value2,
-                            const Vector4& tangent2, float amount, Vector4& result);
-
-        /**
-         * @brief Linearly interpolates between two vectors.
-         *
-         * @param value1 Source vector.
-         * @param value2 Destination vector.
-         * @param amount Value between 0 and 1 indicating the interpolation weight.
-         * @return The interpolated vector.
-         */
-        [[nodiscard]] static Vector4 Lerp(Vector4 value1, Vector4 value2, float amount);
-
-        /**
-         * @brief Stores the linearly interpolated vector in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Destination vector.
-         * @param amount Interpolation weight.
-         * @param result Output vector that receives the result.
-         */
-        static void Lerp(const Vector4& value1, const Vector4& value2, float amount, Vector4& result);
-
-        /**
-         * @brief Returns the component-wise maximum.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @return A vector whose components are the per-component maximum of the two inputs.
-         */
-        [[nodiscard]] static Vector4 Max(Vector4 value1, Vector4 value2);
-
-        /**
-         * @brief Stores the component-wise maximum in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @param result Output vector that receives the per-component maximum.
-         */
-        static void Max(const Vector4& value1, const Vector4& value2, Vector4& result);
-
-        /**
-         * @brief Returns the component-wise minimum.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @return A vector whose components are the per-component minimum of the two inputs.
-         */
-        [[nodiscard]] static Vector4 Min(Vector4 value1, Vector4 value2);
-
-        /**
-         * @brief Stores the component-wise minimum in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Source vector.
-         * @param result Output vector that receives the per-component minimum.
-         */
-        static void Min(const Vector4& value1, const Vector4& value2, Vector4& result);
 
         /**
          * @brief Multiplies vectors component-wise.
@@ -443,26 +234,6 @@ namespace Microsoft::Xna::Framework
          * @param result Output vector that receives the normalized result.
          */
         static void Normalize(const Vector4& value, Vector4& result);
-
-        /**
-         * @brief Performs smooth Hermite interpolation between two vectors.
-         *
-         * @param value1 Source vector.
-         * @param value2 Destination vector.
-         * @param amount Weighting value between 0 and 1.
-         * @return The smooth-stepped interpolation result.
-         */
-        [[nodiscard]] static Vector4 SmoothStep(Vector4 value1, Vector4 value2, float amount);
-
-        /**
-         * @brief Stores the smooth-step result in an output parameter.
-         *
-         * @param value1 Source vector.
-         * @param value2 Destination vector.
-         * @param amount Weighting value.
-         * @param result Output vector that receives the result.
-         */
-        static void SmoothStep(const Vector4& value1, const Vector4& value2, float amount, Vector4& result);
 
         /**
          * @brief Subtracts one vector from another.
@@ -557,83 +328,6 @@ namespace Microsoft::Xna::Framework
          * @param length Number of elements to transform.
          */
         static void Transform(const std::vector<Vector4>& sourceArray, int sourceIndex, const Matrix& matrix,
-                              std::vector<Vector4>& destinationArray, int destinationIndex, int length);
-
-        /**
-         * @brief Transforms a Vector2 by a quaternion rotation, producing a Vector4.
-         *
-         * @param value Source Vector2.
-         * @param rotation The quaternion rotation to apply.
-         * @return The rotated Vector4.
-         */
-        [[nodiscard]] static Vector4 Transform(Vector2 value, const Quaternion& rotation);
-
-        /**
-         * @brief Transforms a Vector3 by a quaternion rotation, producing a Vector4.
-         *
-         * @param value Source Vector3.
-         * @param rotation The quaternion rotation to apply.
-         * @return The rotated Vector4.
-         */
-        [[nodiscard]] static Vector4 Transform(Vector3 value, const Quaternion& rotation);
-
-        /**
-         * @brief Transforms a Vector4 by a quaternion rotation.
-         *
-         * @param value Source Vector4.
-         * @param rotation The quaternion rotation to apply.
-         * @return The rotated Vector4.
-         */
-        [[nodiscard]] static Vector4 Transform(Vector4 value, const Quaternion& rotation);
-
-        /**
-         * @brief Stores the quaternion-rotated Vector2 result in an output parameter.
-         *
-         * @param value Source Vector2.
-         * @param rotation The quaternion rotation to apply.
-         * @param result Output Vector4 that receives the result.
-         */
-        static void Transform(const Vector2& value, const Quaternion& rotation, Vector4& result);
-
-        /**
-         * @brief Stores the quaternion-rotated Vector3 result in an output parameter.
-         *
-         * @param value Source Vector3.
-         * @param rotation The quaternion rotation to apply.
-         * @param result Output Vector4 that receives the result.
-         */
-        static void Transform(const Vector3& value, const Quaternion& rotation, Vector4& result);
-
-        /**
-         * @brief Stores the quaternion-rotated Vector4 result in an output parameter.
-         *
-         * @param value Source Vector4.
-         * @param rotation The quaternion rotation to apply.
-         * @param result Output Vector4 that receives the result.
-         */
-        static void Transform(const Vector4& value, const Quaternion& rotation, Vector4& result);
-
-        /**
-         * @brief Transforms an array of Vector4 values by a quaternion rotation.
-         *
-         * @param sourceArray Source array of vectors.
-         * @param rotation The quaternion rotation to apply.
-         * @param destinationArray Output array that receives the rotated vectors.
-         */
-        static void Transform(const std::vector<Vector4>& sourceArray, const Quaternion& rotation,
-                              std::vector<Vector4>& destinationArray);
-
-        /**
-         * @brief Transforms a range of Vector4 values in an array by a quaternion rotation.
-         *
-         * @param sourceArray Source array of vectors.
-         * @param sourceIndex Starting index in the source array.
-         * @param rotation The quaternion rotation to apply.
-         * @param destinationArray Output array that receives the rotated vectors.
-         * @param destinationIndex Starting index in the destination array.
-         * @param length Number of elements to transform.
-         */
-        static void Transform(const std::vector<Vector4>& sourceArray, int sourceIndex, const Quaternion& rotation,
                               std::vector<Vector4>& destinationArray, int destinationIndex, int length);
 
         /**

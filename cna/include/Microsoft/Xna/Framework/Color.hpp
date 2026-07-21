@@ -464,27 +464,6 @@ namespace Microsoft::Xna::Framework
         [[nodiscard]] bool Equals(const Color& other) const override;
 
         /**
-         * @brief Gets a Vector3 representation for this object.
-         *
-         * @return A Vector3 representation for this object.
-         */
-        [[nodiscard]] Vector3 ToVector3() const;
-
-        /**
-         * @brief Gets a Vector4 representation for this object.
-         *
-         * @return A Vector4 representation for this object.
-         */
-        [[nodiscard]] Vector4 ToVector4() const;
-
-        /**
-         * @brief Gets the hash code of this Color.
-         *
-         * @return Hash code of this Color.
-         */
-        [[nodiscard]] std::size_t GetHashCode() const;
-
-        /**
          * @brief Returns a string representation of this Color in the format:
          * {R:[red] G:[green] B:[blue] A:[alpha]}
          *
@@ -497,26 +476,6 @@ namespace Microsoft::Xna::Framework
         // ------------------------------------------------------------------
 
         /**
-         * @brief Performs linear interpolation of Color.
-         *
-         * The @p amount is clamped to [0,1].
-         *
-         * @param value1 Source Color.
-         * @param value2 Destination Color.
-         * @param amount Interpolation factor.
-         * @return Interpolated Color.
-         */
-        static Color Lerp(const Color& value1, const Color& value2, float amount);
-
-        /**
-         * @brief Translates a non-premultiplied alpha Color to a Color that contains premultiplied alpha.
-         *
-         * @param vector A Vector4 representing color.
-         * @return A Color which contains premultiplied alpha data.
-         */
-        static Color FromNonPremultiplied(const Vector4& vector);
-
-        /**
          * @brief Translates a non-premultiplied alpha Color to a Color that contains premultiplied alpha.
          *
          * @param r Red component value.
@@ -526,15 +485,6 @@ namespace Microsoft::Xna::Framework
          * @return A Color which contains premultiplied alpha data.
          */
         static Color FromNonPremultiplied(intcs r, intcs g, intcs b, intcs a);
-
-        /**
-         * @brief Multiplies a Color by a scalar value.
-         *
-         * @param value Source Color.
-         * @param scale Multiplicator.
-         * @return Multiplication result.
-         */
-        static Color Multiply(const Color& value, float scale);
 
         // ------------------------------------------------------------------
         // IPackedVector member  (non-generic interface)
@@ -578,24 +528,4 @@ namespace Microsoft::Xna::Framework
      * @return @c true if the instances are not equal; @c false otherwise.
      */
     [[nodiscard]] bool operator!=(const Color& a, const Color& b);
-
-    /**
-     * @brief Multiplies a Color by a scalar value.
-     *
-     * @param value Source Color.
-     * @param scale Multiplicator.
-     * @return Multiplication result.
-     */
-    [[nodiscard]] Color operator*(const Color& value, float scale);
-
-    /**
-     * @brief Multiplies a Color by a scalar value.
-     *
-     * @param scale Multiplicator.
-     * @param value Source Color.
-     * @return Multiplication result.
-     *
-     * @note NOXNA — commutative form not present in XNA 4.0 / FNA. CNA convenience overload.
-     */
-    NOXNA [[nodiscard]] Color operator*(float scale, const Color& value);
 } // namespace Microsoft::Xna::Framework
