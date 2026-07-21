@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Audio/Microphone.hpp"
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.hpp"
-#include "System/ArgumentException.hpp"
-#include "System/ArgumentOutOfRangeException.hpp"
 
 #ifdef SOUND_ENABLED
 #include <SDL3/SDL.h>
@@ -10,16 +8,7 @@
 
 namespace Microsoft::Xna::Framework::Audio
 {
-    std::vector<std::unique_ptr<Microphone>> Microphone::microphoneStorage_;
     std::vector<Microphone*>* Microphone::micList = nullptr;
-
-    Microphone::Microphone(SharpRuntime::uintcs id, std::string name)
-        : Name(std::move(name)),
-          bufferDuration_(System::TimeSpan::FromSeconds(1.0)),
-          handle_(id),
-          state_(MicrophoneState::Stopped)
-    {
-    }
 
     Microphone::~Microphone()
     {
@@ -31,188 +20,14 @@ namespace Microsoft::Xna::Framework::Audio
 #endif
     }
 
-    const std::vector<Microphone*>& Microphone::getAllProperty()
-    {
-        if (micList == nullptr)
-        {
-            microphoneStorage_.clear();
-
-#ifdef SOUND_ENABLED
-            SDL_InitSubSystem(SDL_INIT_AUDIO);
-
-            int numDev = 0;
-            SDL_AudioDeviceID* devices = SDL_GetAudioRecordingDevices(&numDev);
-            if (numDev >= 1)
-            {
-                // FNA (SDL3_FNAPlatform.GetMicrophones) always leads with a synthetic "Default
-                // Device" entry bound to the SDL default-recording sentinel. Unlike FNA, no
-                // device is opened here: CNA opens capture devices lazily in Start() (matching
-                // AudioMixer's lazy-open convention for playback), not at enumeration time.
-                microphoneStorage_.push_back(std::unique_ptr<Microphone>(
-                    new Microphone(SDL_AUDIO_DEVICE_DEFAULT_RECORDING, "Default Device")));
-
-                for (int i = 0; i < numDev; ++i)
-                {
-                    const char* name = SDL_GetAudioDeviceName(devices[i]);
-                    microphoneStorage_.push_back(std::unique_ptr<Microphone>(
-                        new Microphone(devices[i], name != nullptr ? name : "")));
-                }
-            }
-            SDL_free(devices);
-#endif
-
-            static std::vector<Microphone*> list;
-            list.clear();
-            for (const auto& microphone : microphoneStorage_)
-            {
-                list.push_back(microphone.get());
-            }
-
-            micList = &list;
-        }
-
-        return *micList;
-    }
-
-    Microphone* Microphone::getDefaultProperty()
-    {
-        const auto& all = getAllProperty();
-        if (all.empty())
-        {
-            return nullptr;
-        }
-
-        return all[0];
-    }
-
-    System::TimeSpan Microphone::getBufferDurationProperty() const
-    {
-        return bufferDuration_;
-    }
-
-    void Microphone::setBufferDurationProperty(System::TimeSpan value)
-    {
-        const auto milliseconds = value.getMillisecondsProperty();
-
-        // getMillisecondsProperty() is the sub-second component, bounded to [-999, 999], so the
-        // "> 1000" branch below can never be true; kept as-is to match FNA (Microphone.cs:60).
-        if (milliseconds < 100 || milliseconds > 1000 || milliseconds % 10 != 0)
-        {
-            throw System::ArgumentOutOfRangeException("BufferDuration");
-        }
-
-        bufferDuration_ = value;
-    }
-
-    bool Microphone::getIsHeadsetProperty() const
-    {
-        return false;
-    }
-
     SharpRuntime::intcs Microphone::getSampleRateProperty() const
     {
         return SAMPLERATE;
     }
 
-    MicrophoneState Microphone::getStateProperty() const
-    {
-        return state_;
-    }
-
-    SharpRuntime::intcs Microphone::GetData(std::vector<SharpRuntime::bytecs>& buffer)
-    {
-        return GetData(buffer, 0, static_cast<SharpRuntime::intcs>(buffer.size()));
-    }
-
-    SharpRuntime::intcs Microphone::GetData(
-        std::vector<SharpRuntime::bytecs>& buffer,
-        SharpRuntime::intcs offset,
-        SharpRuntime::intcs count
-    )
-    {
-        if (offset < 0 || offset > static_cast<SharpRuntime::intcs>(buffer.size()))
-        {
-            throw System::ArgumentException("offset");
-        }
-
-        // P9-AUDIT-002: offset+count must never be computed as a plain intcs addition -- the same
-        // int32-overflow class P9-VALIDATION-003 already fixed in SoundEffect's buffer/range ctor
-        // and DynamicSoundEffectInstance::SubmitBuffer/SubmitFloatBufferEXT, just missed here
-        // since this file wasn't in that task's named scope. FNA gets away without this check
-        // (Microphone.cs: `(offset + count) > buffer.Length`) because C#'s array bounds checking
-        // is the real safety net there; C++ has none, so this has to be exact.
-        const auto off = static_cast<std::size_t>(offset);
-        const auto cnt = static_cast<std::size_t>(count);
-        if (count <= 0 || cnt > buffer.size() - off)
-        {
-            throw System::ArgumentException("count");
-        }
-
-#ifdef SOUND_ENABLED
-        if (captureStream_ != nullptr)
-        {
-            const int read = SDL_GetAudioStreamData(captureStream_, buffer.data() + offset, count);
-            if (read > 0)
-            {
-                return static_cast<SharpRuntime::intcs>(read);
-            }
-        }
-#endif
-
-        // No capture stream open, nothing available yet, or an SDL error: report 0 bytes read
-        // and leave the buffer untouched, matching FNA (Microphone.GetData delegates straight to
-        // the platform read with no fallback zeroing of unread bytes).
-        return 0;
-    }
-
     System::TimeSpan Microphone::GetSampleDuration(SharpRuntime::intcs sizeInBytes) const
     {
         return SoundEffect::GetSampleDuration(sizeInBytes, getSampleRateProperty(), AudioChannels::Mono);
-    }
-
-    SharpRuntime::intcs Microphone::GetSampleSizeInBytes(System::TimeSpan duration) const
-    {
-        return SoundEffect::GetSampleSizeInBytes(duration, getSampleRateProperty(), AudioChannels::Mono);
-    }
-
-    void Microphone::Start()
-    {
-#ifdef SOUND_ENABLED
-        if (captureStream_ == nullptr)
-        {
-            SDL_InitSubSystem(SDL_INIT_AUDIO);
-
-            SDL_AudioSpec want{};
-            want.format = SDL_AUDIO_S16;
-            want.channels = static_cast<int>(AudioChannels::Mono);
-            want.freq = SAMPLERATE;
-
-            // FNA opens the device (and a bound stream) once, up front, at enumeration time
-            // (SDL3_FNAPlatform.GetMicrophones). CNA defers that to here to keep enumeration
-            // free of side effects; a failed open is tolerated silently, matching FNA, which
-            // never checks FNAPlatform.StartMicrophone's result either.
-            captureStream_ = SDL_OpenAudioDeviceStream(handle_, &want, nullptr, nullptr);
-            if (captureStream_ != nullptr)
-            {
-                SDL_ResumeAudioStreamDevice(captureStream_);
-            }
-        }
-#endif
-
-        state_ = MicrophoneState::Started;
-    }
-
-    void Microphone::Stop()
-    {
-#ifdef SOUND_ENABLED
-        if (captureStream_ != nullptr)
-        {
-            SDL_DestroyAudioStream(captureStream_);
-            captureStream_ = nullptr;
-        }
-#endif
-
-        state_ = MicrophoneState::Stopped;
     }
 
     void Microphone::CheckBuffer()

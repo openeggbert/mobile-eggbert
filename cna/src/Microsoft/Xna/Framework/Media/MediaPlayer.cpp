@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Media/MediaPlayer.hpp"
 
-#include <algorithm>
-#include <array>
 #include <atomic>
-#include <stdexcept>
-
-#include "CNA/Internal/Media/VisualizationCapture.hpp"
-#include "CNA/Internal/Media/VisualizationFFT.hpp"
 
 #ifdef SOUND_ENABLED
 #include <SDL3/SDL.h>
@@ -30,24 +24,6 @@ namespace Microsoft::Xna::Framework::Media
     MediaQueue   MediaPlayer::queue_;
     std::mt19937 MediaPlayer::random_(std::random_device{}());
 
-    // Visualization capture state (plan_media.md MEDIA-186/188). Kept outside the SOUND_ENABLED
-    // guard so IsVisualizationEnabled still round-trips in a no-audio build; only the actual
-    // post-mix tap below is audio-backend specific.
-    namespace
-    {
-        bool g_visualizationEnabled = false;
-
-        // Whether a post-mix callback is ACTUALLY installed right now. Tracked separately from
-        // g_visualizationEnabled because the two can legitimately disagree: if uninstalling fails,
-        // the user-visible flag goes false (the caller asked for off, and no data is served) while
-        // a live callback is still writing. Without this, the early-return guard in the setter
-        // would see "already false" and never retry the uninstall, leaving the tap installed
-        // forever (found by external code review, plan_media.md MEDIA-226).
-        bool g_visualizationTapInstalled = false;
-
-        CNA::Internal::Media::VisualizationCapture g_visualizationCapture;
-    }
-
     bool         MediaPlayer::timerRunning_          = false;
     std::chrono::steady_clock::time_point MediaPlayer::timerStart_;
     std::chrono::duration<double> MediaPlayer::accumulatedTime_ =
@@ -65,16 +41,6 @@ namespace Microsoft::Xna::Framework::Media
         {
             // Called from the audio thread — only set a flag.
             g_songEnded.store(true, std::memory_order_relaxed);
-        }
-
-        // Runs on the AUDIO THREAD for every mixed buffer: must stay real-time safe (no
-        // allocation, no locking, no exceptions). VisualizationCapture::Push is written to that
-        // contract. SDL3_mixer hands us float32 PCM directly, so no format conversion is needed --
-        // only a downmix to mono (plan_media.md MEDIA-186).
-        void SDLCALL OnPostMix(void* /*userdata*/, MIX_Mixer* /*mixer*/,
-                                const SDL_AudioSpec* spec, float* pcm, int samples)
-        {
-            g_visualizationCapture.Push(pcm, samples, spec != nullptr ? spec->channels : 1);
         }
 
         void DestroyMusicAudio()
@@ -108,54 +74,6 @@ namespace Microsoft::Xna::Framework::Media
 
     // --- properties ---
 
-    bool MediaPlayer::getGameHasControlProperty()
-    {
-        return true;
-    }
-
-    bool MediaPlayer::getIsMutedProperty()
-    {
-        return isMuted_;
-    }
-
-    void MediaPlayer::setIsMutedProperty(bool value)
-    {
-        isMuted_ = value;
-#ifdef SOUND_ENABLED
-        ApplyMusicVolume(volume_, isMuted_);
-#endif
-    }
-
-    bool MediaPlayer::getIsRepeatingProperty()
-    {
-        return isRepeating_;
-    }
-
-    void MediaPlayer::setIsRepeatingProperty(bool value)
-    {
-        isRepeating_ = value;
-    }
-
-    bool MediaPlayer::getIsShuffledProperty()
-    {
-        return isShuffled_;
-    }
-
-    void MediaPlayer::setIsShuffledProperty(bool value)
-    {
-        isShuffled_ = value;
-    }
-
-    System::TimeSpan MediaPlayer::getPlayPositionProperty()
-    {
-        return TimerElapsed();
-    }
-
-    MediaQueue& MediaPlayer::getQueueProperty()
-    {
-        return queue_;
-    }
-
     MediaState MediaPlayer::getStateProperty()
     {
         return state_;
@@ -170,181 +88,11 @@ namespace Microsoft::Xna::Framework::Media
         }
     }
 
-    float MediaPlayer::getVolumeProperty()
-    {
-        return volume_;
-    }
-
-    void MediaPlayer::setVolumeProperty(float value)
-    {
-        volume_ = Microsoft::Xna::Framework::MathHelper::Clamp(value, 0.0f, 1.0f);
-#ifdef SOUND_ENABLED
-        ApplyMusicVolume(volume_, isMuted_);
-#endif
-    }
-
-    bool MediaPlayer::getIsVisualizationEnabledProperty()
-    {
-        return g_visualizationEnabled;
-    }
-
-    void MediaPlayer::setIsVisualizationEnabledProperty(bool value)
-    {
-        // Early-out only when the request is genuinely already satisfied. Checking the flag alone
-        // was not enough: after a FAILED uninstall the flag is false while a callback is still
-        // installed, and a later set(false) would return here and never retry it (plan_media.md
-        // MEDIA-226).
-        if (g_visualizationEnabled == value && g_visualizationTapInstalled == value)
-        {
-            return;
-        }
-
-        // The flag is assigned only from what ACTUALLY happened, never up front. An earlier version
-        // set it before even obtaining the mixer, so a GetMixer() failure left
-        // IsVisualizationEnabled reporting true with no mixer and no callback (plan_media.md
-        // MEDIA-222).
-#ifdef SOUND_ENABLED
-        try
-        {
-            MIX_Mixer* mixer = CNA::Internal::Audio::GetMixer();
-
-            if (!value)
-            {
-                // Disabling always ends with the user-visible flag false: the caller asked for off
-                // and no data will be served either way.
-                g_visualizationEnabled = false;
-
-                if (mixer == nullptr)
-                {
-                    // No mixer exists, so no callback can be running.
-                    g_visualizationTapInstalled = false;
-                    g_visualizationCapture.Reset();
-                    return;
-                }
-                if (MIX_SetPostMixCallback(mixer, nullptr, nullptr))
-                {
-                    // Uninstall confirmed -- nothing can be writing, so clearing is safe.
-                    g_visualizationTapInstalled = false;
-                    g_visualizationCapture.Reset();
-                }
-                // Uninstall FAILED: the callback may still be live, so deliberately do NOT Reset()
-                // -- zeroing a buffer another thread is writing is the exact race MEDIA-216 fixed.
-                // g_visualizationTapInstalled stays true so a later call retries this.
-                return;
-            }
-
-            // Enabling: only report enabled once a tap is genuinely installed.
-            if (mixer == nullptr)
-            {
-                return; // flag stays false
-            }
-            // Clear BEFORE installing: once the callback is live the audio thread owns the buffer.
-            g_visualizationCapture.Reset();
-            if (MIX_SetPostMixCallback(mixer, OnPostMix, nullptr))
-            {
-                g_visualizationTapInstalled = true;
-                g_visualizationEnabled = true;
-            }
-            // Install failed -> both stay false, matching reality.
-        }
-        catch (const std::exception&)
-        {
-            // GetMixer() throws when no audio device can be created at all (e.g. a headless
-            // machine). No callback was ever installed, so clearing is safe -- but enabling must
-            // NOT be reported as successful.
-            g_visualizationCapture.Reset();
-            g_visualizationTapInstalled = false;
-            g_visualizationEnabled = false;
-        }
-#else
-        // No audio backend compiled in: there is no audio thread, so the flag round-trips and the
-        // buffer simply stays empty.
-        g_visualizationEnabled = value;
-        g_visualizationTapInstalled = false;
-        g_visualizationCapture.Reset();
-#endif
-    }
-
     // --- public methods ---
 
     void MediaPlayer::MoveNext()
     {
         NextSong(1);
-    }
-
-    void MediaPlayer::MovePrevious()
-    {
-        NextSong(-1);
-    }
-
-    void MediaPlayer::Pause()
-    {
-        if (getStateProperty() != MediaState::Playing || queue_.getActiveSongProperty() == nullptr)
-        {
-            return;
-        }
-
-#ifdef SOUND_ENABLED
-        if (g_musicTrack)
-        {
-            MIX_PauseTrack(g_musicTrack);
-        }
-#endif
-        TimerStop();
-        setStateProperty(MediaState::Paused);
-    }
-
-    void MediaPlayer::Play(Song* song)
-    {
-        Song* previousSong = queue_.getCountProperty() > 0 ? queue_[0] : nullptr;
-
-        queue_.Clear();
-        numSongsInQueuePlayed_ = 0;
-        LoadSong(song);
-        queue_.setActiveSongIndexProperty(0);
-
-        PlaySong(song);
-
-        if (previousSong != song)
-        {
-            Microsoft::Xna::Framework::FrameworkDispatcher::ActiveSongChanged = true;
-        }
-    }
-
-    void MediaPlayer::Play(const SongCollection& songs)
-    {
-        Play(songs, 0);
-    }
-
-    void MediaPlayer::Play(const SongCollection& songs, SharpRuntime::intcs index)
-    {
-        queue_.Clear();
-        numSongsInQueuePlayed_ = 0;
-
-        for (Song* song : songs)
-        {
-            LoadSong(song);
-        }
-
-        queue_.setActiveSongIndexProperty(index);
-        PlaySong(queue_.getActiveSongProperty());
-    }
-
-    void MediaPlayer::Resume()
-    {
-        if (getStateProperty() != MediaState::Paused)
-        {
-            return;
-        }
-
-#ifdef SOUND_ENABLED
-        if (g_musicTrack)
-        {
-            MIX_ResumeTrack(g_musicTrack);
-        }
-#endif
-        TimerStart();
-        setStateProperty(MediaState::Playing);
     }
 
     void MediaPlayer::Stop()
@@ -371,35 +119,6 @@ namespace Microsoft::Xna::Framework::Media
         }
 
         setStateProperty(MediaState::Stopped);
-    }
-
-    void MediaPlayer::GetVisualizationData(VisualizationData& data)
-    {
-        // XNA only produces visualization data while it is switched on; with it off (or with
-        // nothing captured yet) the arrays stay zeroed, matching VisualizationData's own
-        // zero-initialized construction rather than throwing (plan_media.md MEDIA-189).
-        if (!g_visualizationEnabled || !g_visualizationCapture.HasData())
-        {
-            data.samp.fill(0.0f);
-            data.freq.fill(0.0f);
-            return;
-        }
-
-        // Sample domain: the most recent VisualizationData::Size mono samples.
-        g_visualizationCapture.Read(data.samp.data(), data.samp.size());
-
-        // Frequency domain: FFT over a larger window ending at the same point, so the 256 bins
-        // XNA exposes come from a 512-sample transform rather than a needlessly short one.
-        std::array<float, CNA::Internal::Media::VisualizationFFT::InputSize> window{};
-        g_visualizationCapture.Read(window.data(), window.size());
-
-        std::array<float, CNA::Internal::Media::VisualizationFFT::BinCount> bins{};
-        CNA::Internal::Media::VisualizationFFT::ComputeMagnitudes(window, bins);
-
-        static_assert(CNA::Internal::Media::VisualizationFFT::BinCount ==
-                        static_cast<std::size_t>(VisualizationData::Size),
-                        "FFT bin count must match VisualizationData::Size");
-        std::copy(bins.begin(), bins.end(), data.freq.begin());
     }
 
     bool MediaPlayer::DetectSongEndedByElapsedTime(Song* activeSong, System::TimeSpan elapsed)
@@ -458,28 +177,7 @@ namespace Microsoft::Xna::Framework::Media
         MediaStateChanged.Raise(nullptr, System::EventArgs::Empty);
     }
 
-    void MediaPlayer::ProgramExit()
-    {
-        if (initialized_)
-        {
-#ifdef SOUND_ENABLED
-            DestroyMusicTrack();
-            DestroyMusicAudio();
-#endif
-            initialized_ = false;
-        }
-    }
-
     // --- private helpers ---
-
-    void MediaPlayer::LoadSong(Song* song)
-    {
-        if (song == nullptr)
-        {
-            return;
-        }
-        queue_.Add(new Song(song->getHandle(), song->getNameProperty()));
-    }
 
     void MediaPlayer::NextSong(SharpRuntime::intcs direction)
     {

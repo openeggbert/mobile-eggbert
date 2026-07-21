@@ -63,16 +63,6 @@ namespace Microsoft::Xna::Framework::Media
          */
         [[nodiscard]] Song* operator[](SharpRuntime::intcs index) const;
 
-        /**
-         * @brief Adds a song to the end of the queue. The queue takes ownership of the pointer.
-         *
-         * @param song Song to add.
-         */
-        NOXNA void Add(Song* song);
-
-        /** @brief Clears all songs from the queue and resets the active index. */
-        NOXNA void Clear();
-
         /** @brief Returns the fully-qualified .NET type name. */
         NOXNA [[nodiscard]] const std::string& GetTypeName() const override;
 

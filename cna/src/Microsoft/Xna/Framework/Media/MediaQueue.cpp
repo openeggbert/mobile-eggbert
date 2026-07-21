@@ -49,17 +49,6 @@ namespace Microsoft::Xna::Framework::Media
         return songs_[static_cast<std::size_t>(index)].get();
     }
 
-    void MediaQueue::Add(Song* song)
-    {
-        songs_.emplace_back(song);
-    }
-
-    void MediaQueue::Clear()
-    {
-        songs_.clear();
-        activeSongIndex_ = -1;
-    }
-
     const std::string& MediaQueue::GetTypeName() const
     {
         static const std::string typeName = "Microsoft.Xna.Framework.Media.MediaQueue";

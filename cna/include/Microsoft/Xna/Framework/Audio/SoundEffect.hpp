@@ -2,7 +2,6 @@
 #pragma once
 
 #include <cstddef>
-#include <istream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,26 +20,18 @@ namespace Microsoft::Xna::Framework::Audio
     class SoundEffect final : public System::Object, public System::IDisposable
     {
         friend class SoundEffectInstance;
-        NOXNA friend struct SoundEffectTestAccess;
 
     private:
         class Impl;
         std::shared_ptr<Impl> impl_;
 
         static float MasterVolume_;
-        static float DistanceScale_;
-        static float DopplerScale_;
-        static float SpeedOfSound_;
 
-        std::string name_;
         bool isDisposed_ = false;
         SharpRuntime::uintcs loopStart_ = 0;
         SharpRuntime::uintcs loopLength_ = 0;
 
         [[nodiscard]] void* getNativeAudioHandle() const;
-
-        /** @brief Internal constructor that wraps a preloaded Impl. */
-        explicit SoundEffect(std::shared_ptr<Impl> impl, std::string name = {});
 
         // Instance-tracking + Dispose cascade (T-3G, matches FNA's SoundEffect.Instances):
         // SoundEffectInstance registers itself here on construction against the type-erased
@@ -50,12 +41,6 @@ namespace Microsoft::Xna::Framework::Audio
         // to unregister itself long after the original SoundEffect object is gone.
         static void RegisterInstance(const std::shared_ptr<void>& keepAlive, SoundEffectInstance* instance);
         static void UnregisterInstance(const std::shared_ptr<void>& keepAlive, SoundEffectInstance* instance);
-
-        // AUD-15-005: test-only introspection into Impl::instances' real size, so a stress test
-        // can directly verify the live-instance registry actually shrinks back down instead of
-        // only inferring it indirectly (e.g. via wall-clock timing, which turned out not to
-        // reliably catch a deliberately-broken UnregisterInstance() at a few thousand entries).
-        [[nodiscard]] std::size_t GetLiveInstanceCountInternal() const;
 
     public:
         /**
@@ -128,39 +113,6 @@ namespace Microsoft::Xna::Framework::Audio
         /** @brief Move-assigns a SoundEffect, transferring ownership of the underlying resource. */
         SoundEffect& operator=(SoundEffect&&) noexcept = default;
 
-        // --- Properties ---
-
-        /**
-         * @brief Gets the playback duration of this sound effect.
-         *
-         * @return Duration as a TimeSpan.
-         */
-        [[nodiscard]] System::TimeSpan getDurationProperty() const;
-
-        /**
-         * @brief Gets whether this sound effect has been disposed.
-         *
-         * @return true if disposed; otherwise false.
-         */
-        [[nodiscard]] bool getIsDisposedProperty() const;
-
-        /**
-         * @brief Gets the display name of this sound effect.
-         *
-         * @return Name string.
-         */
-        [[nodiscard]] const std::string& getNameProperty() const;
-
-        /**
-         * @brief Sets the display name of this sound effect.
-         *
-         * @param value New name.
-         */
-        void setNameProperty(const std::string& value);
-
-        /** @brief Sets the display name of this sound effect (move overload). */
-        NOXNA void setNameProperty(std::string&& value);
-
         // --- Static properties ---
 
         /**
@@ -181,56 +133,6 @@ namespace Microsoft::Xna::Framework::Audio
 
         /** @brief Sets the global master volume (move overload). */
         NOXNA static void setMasterVolumeProperty(float&& v);
-
-        /**
-         * @brief Gets the distance scaling factor used in Apply3D attenuation approximations.
-         *
-         * SDL3_mixer does not implement full 3D audio; this value is used in Apply3D only.
-         *
-         * @return Distance scale factor.
-         */
-        [[nodiscard]] static float getDistanceScaleProperty();
-
-        /**
-         * @brief Sets the distance scaling factor used in Apply3D attenuation approximations.
-         *
-         * @param value New distance scale.
-         */
-        static void setDistanceScaleProperty(float value);
-
-        /**
-         * @brief Gets the Doppler effect scale factor.
-         *
-         * Applied as a real closed-form pitch-shift factor in Apply3D (matches FAudio's
-         * F3DAudio.c CalculateDoppler exactly), not a native SDL3_mixer Doppler feature.
-         *
-         * @return Doppler scale factor.
-         */
-        [[nodiscard]] static float getDopplerScaleProperty();
-
-        /**
-         * @brief Sets the Doppler effect scale factor.
-         *
-         * @param value New Doppler scale.
-         */
-        static void setDopplerScaleProperty(float value);
-
-        /**
-         * @brief Gets the speed of sound used in Doppler calculations.
-         *
-         * Applied as a real closed-form pitch-shift factor in Apply3D (matches FAudio's
-         * F3DAudio.c CalculateDoppler exactly), not a native SDL3_mixer Doppler feature.
-         *
-         * @return Speed of sound in units per second.
-         */
-        [[nodiscard]] static float getSpeedOfSoundProperty();
-
-        /**
-         * @brief Sets the speed of sound used in Doppler calculations.
-         *
-         * @param value New speed of sound.
-         */
-        static void setSpeedOfSoundProperty(float value);
 
         // --- Methods ---
 
@@ -289,14 +191,6 @@ namespace Microsoft::Xna::Framework::Audio
             System::TimeSpan duration,
             SharpRuntime::intcs sampleRate,
             AudioChannels channels);
-
-        /**
-         * @brief Loads a SoundEffect from a WAV stream. The caller owns the returned object.
-         *
-         * @param stream Input stream containing WAV audio data.
-         * @return Pointer to the newly created SoundEffect.
-         */
-        [[nodiscard]] static SoundEffect* FromStream(std::istream& stream);
 
         GetTypeNameHPP()
     };

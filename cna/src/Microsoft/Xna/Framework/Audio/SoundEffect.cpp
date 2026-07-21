@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
-#include <istream>
 #include <vector>
 
 #include "Microsoft/Xna/Framework/Audio/NoAudioHardwareException.hpp"
@@ -52,17 +51,9 @@ namespace Microsoft::Xna::Framework::Audio
         v.erase(std::remove(v.begin(), v.end(), instance), v.end());
     }
 
-    std::size_t SoundEffect::GetLiveInstanceCountInternal() const
-    {
-        return impl_ ? impl_->instances.size() : 0;
-    }
-
     // --- static members ---
 
     float SoundEffect::MasterVolume_   = 1.0f;
-    float SoundEffect::DistanceScale_  = 1.0f;
-    float SoundEffect::DopplerScale_   = 1.0f;
-    float SoundEffect::SpeedOfSound_   = 343.5f;
 
     // --- internal helpers ---
 
@@ -249,13 +240,6 @@ namespace Microsoft::Xna::Framework::Audio
     }
 #endif
 
-    // --- private constructor ---
-
-    SoundEffect::SoundEffect(std::shared_ptr<Impl> impl, std::string name)
-        : impl_(std::move(impl)), name_(std::move(name))
-    {
-    }
-
     // --- public constructors ---
 
     SoundEffect::SoundEffect(const std::string& assetName)
@@ -385,43 +369,6 @@ namespace Microsoft::Xna::Framework::Audio
 
     // --- properties ---
 
-    System::TimeSpan SoundEffect::getDurationProperty() const
-    {
-#ifdef SOUND_ENABLED
-        if (impl_ && impl_->audio && impl_->sampleRate > 0)
-        {
-            Sint64 frames = MIX_GetAudioDuration(impl_->audio.get());
-            if (frames > 0)
-            {
-                return System::TimeSpan::FromSeconds(
-                    static_cast<double>(frames) / impl_->sampleRate
-                );
-            }
-        }
-#endif
-        return System::TimeSpan::Zero;
-    }
-
-    bool SoundEffect::getIsDisposedProperty() const
-    {
-        return isDisposed_;
-    }
-
-    const std::string& SoundEffect::getNameProperty() const
-    {
-        return name_;
-    }
-
-    void SoundEffect::setNameProperty(const std::string& value)
-    {
-        name_ = value;
-    }
-
-    void SoundEffect::setNameProperty(std::string&& value)
-    {
-        name_ = std::move(value);
-    }
-
     float SoundEffect::getMasterVolumeProperty()
     {
 #ifdef SOUND_ENABLED
@@ -450,44 +397,6 @@ namespace Microsoft::Xna::Framework::Audio
     void SoundEffect::setMasterVolumeProperty(float&& v)
     {
         setMasterVolumeProperty(v);
-    }
-
-    float SoundEffect::getDistanceScaleProperty()
-    {
-        return DistanceScale_;
-    }
-
-    void SoundEffect::setDistanceScaleProperty(float value)
-    {
-        if (value <= 0.0f)
-        {
-            throw System::ArgumentOutOfRangeException("value <= 0.0f");
-        }
-        DistanceScale_ = value;
-    }
-
-    float SoundEffect::getDopplerScaleProperty()
-    {
-        return DopplerScale_;
-    }
-
-    void SoundEffect::setDopplerScaleProperty(float value)
-    {
-        if (value < 0.0f)
-        {
-            throw System::ArgumentOutOfRangeException("value < 0.0f");
-        }
-        DopplerScale_ = value;
-    }
-
-    float SoundEffect::getSpeedOfSoundProperty()
-    {
-        return SpeedOfSound_;
-    }
-
-    void SoundEffect::setSpeedOfSoundProperty(float value)
-    {
-        SpeedOfSound_ = value;
     }
 
     // --- methods ---
@@ -659,115 +568,6 @@ namespace Microsoft::Xna::Framework::Audio
             static_cast<int>(channels) *
             2 // 16-bit PCM
         );
-    }
-
-    namespace
-    {
-        // CP-17: FNA's FromStream hand-parses the WAV file and scans for an optional "smpl"
-        // chunk (RIFF metadata, not audio data) to recover an authored loop region. CNA's
-        // FromStream instead delegates the actual audio decode to MIX_LoadAudio_IO, but the
-        // smpl chunk still needs this small, independent, SDL-free scan to recover
-        // loopStart/loopLength for SoundEffectInstance::Play() to apply. Returns false (leaving
-        // loopStart/loopLength untouched) if the stream isn't a WAV file or has no smpl chunk.
-        bool TryParseWavSmplChunk(const std::vector<char>& bytes,
-                                   SharpRuntime::uintcs& loopStart,
-                                   SharpRuntime::uintcs& loopLength)
-        {
-            auto u32At = [&](std::size_t offset) -> uint32_t
-            {
-                uint32_t v;
-                std::memcpy(&v, bytes.data() + offset, 4);
-                return v;
-            };
-
-            if (bytes.size() < 12) return false;
-            if (std::memcmp(bytes.data(), "RIFF", 4) != 0) return false;
-            if (std::memcmp(bytes.data() + 8, "WAVE", 4) != 0) return false;
-
-            std::size_t pos = 12;
-            while (pos + 8 <= bytes.size())
-            {
-                const char* chunkId = bytes.data() + pos;
-                const uint32_t chunkSize = u32At(pos + 4);
-                const std::size_t chunkDataStart = pos + 8;
-
-                if (std::memcmp(chunkId, "smpl", 4) == 0)
-                {
-                    // Sampler chunk: 7 x u32 (Manufacturer..SMPTEOffset) + numSampleLoops +
-                    // samplerData = 36 bytes, then numSampleLoops x 24-byte loop entries.
-                    if (chunkDataStart + 36 > bytes.size()) return false;
-                    const uint32_t numSampleLoops = u32At(chunkDataStart + 28);
-                    if (numSampleLoops == 0) return false;
-
-                    const std::size_t firstLoopOffset = chunkDataStart + 36;
-                    if (firstLoopOffset + 24 > bytes.size()) return false;
-
-                    // Loop entry: CuePointID(4), Type(4), Start(4), End(4), Fraction(4),
-                    // PlayCount(4) -- only the first entry's Start/End matter (matches FNA).
-                    const uint32_t start = u32At(firstLoopOffset + 8);
-                    const uint32_t end   = u32At(firstLoopOffset + 12);
-                    if (end <= start) return false;
-
-                    loopStart  = static_cast<SharpRuntime::uintcs>(start);
-                    loopLength = static_cast<SharpRuntime::uintcs>(end - start);
-                    return true;
-                }
-
-                if (chunkDataStart + chunkSize > bytes.size()) return false;
-                pos = chunkDataStart + chunkSize + (chunkSize & 1u); // chunks are word-aligned
-            }
-            return false;
-        }
-    }
-
-    SoundEffect* SoundEffect::FromStream(std::istream& stream)
-    {
-        // Read all bytes from the stream.
-        std::vector<char> bytes(
-            (std::istreambuf_iterator<char>(stream)),
-            std::istreambuf_iterator<char>()
-        );
-
-        if (bytes.empty())
-        {
-            throw System::NotSupportedException("SoundEffect::FromStream: empty stream");
-        }
-
-#ifdef SOUND_ENABLED
-        SDL_IOStream* io = SDL_IOFromConstMem(bytes.data(), bytes.size());
-        if (!io)
-        {
-            throw System::NotSupportedException(
-                std::string("SoundEffect::FromStream: SDL_IOFromConstMem failed: ") + SDL_GetError()
-            );
-        }
-
-        MIX_Mixer* mixer = GetMixerOrThrowXna();
-        MIX_Audio* raw   = MIX_LoadAudio_IO(mixer, io, true, true); // predecode=true, closeio=true
-        if (!raw)
-        {
-            throw System::NotSupportedException(
-                std::string("SoundEffect::FromStream: MIX_LoadAudio_IO failed: ") + SDL_GetError()
-            );
-        }
-
-        auto implPtr = std::make_shared<Impl>();
-        implPtr->audio = {raw, [](MIX_Audio* p) { if (p) MIX_DestroyAudio(p); }};
-
-        SDL_AudioSpec spec{};
-        if (MIX_GetAudioFormat(raw, &spec))
-        {
-            implPtr->sampleRate = spec.freq;
-            implPtr->channels   = static_cast<SharpRuntime::uintcs>(spec.channels);
-        }
-
-        auto* result = new SoundEffect(std::move(implPtr));
-        TryParseWavSmplChunk(bytes, result->loopStart_, result->loopLength_); // best-effort (CP-17)
-        return result;
-#else
-        (void)bytes;
-        return new SoundEffect(std::make_shared<Impl>());
-#endif
     }
 
     GetTypeNameCPP(SoundEffect, "Microsoft.Xna.Framework.Audio.SoundEffect")

@@ -1,19 +1,14 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Audio/SoundEffectInstance.hpp"
-#include "Microsoft/Xna/Framework/Audio/AudioEmitter.hpp"
-#include "Microsoft/Xna/Framework/Audio/AudioListener.hpp"
 #include "Microsoft/Xna/Framework/Audio/SoundEffect.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <exception>
-#include <numbers>
 #include <utility>
 
-#include "System/ArgumentNullException.hpp"
 #include "System/ArgumentOutOfRangeException.hpp"
 #include "System/InvalidOperationException.hpp"
-#include "System/NotSupportedException.hpp"
 #include "System/ObjectDisposedException.hpp"
 
 #ifdef SOUND_ENABLED
@@ -42,15 +37,6 @@ namespace Microsoft::Xna::Framework::Audio
         Kind  kind        = Kind::None;
         float frequency   = 0.0f;
         float oneOverQ    = 1.0f;
-        // P10-FILTER-002/003: the filter's own base (XACT-authored, or explicitly-set) frequency/
-        // oneOverQ, distinct from the two fields above (the CURRENTLY effective, possibly RPC-
-        // overridden values the mixing thread actually reads) -- matches FAudio's
-        // `activeWave.baseFrequency`/`baseQFactor` fallback (FACT_internal.c) for whichever axis
-        // has no RPC curve targeting it on a given tick. Set once, alongside `frequency`/
-        // `oneOverQ`, by whichever INTERNAL_apply*Filter first establishes this filter; never
-        // written by INTERNAL_applyRpcFilterOverride.
-        float baseFrequency = 0.0f;
-        float baseOneOverQ  = 1.0f;
         float yl[2]       = {0.0f, 0.0f};
         float yb[2]       = {0.0f, 0.0f};
         // P11-PAN-001: current stereo pan, range [-1,1], matching Pan_/Apply3D's own pan. 0.0f
@@ -119,51 +105,6 @@ namespace Microsoft::Xna::Framework::Audio
 
             const float ratio = ComputePitchRatio(pitch) * doppler;
             MIX_SetTrackFrequencyRatio(track, ratio < 0.01f ? 0.01f : ratio);
-        }
-
-        // P9-3D-005: matches FAudio's F3DAudio.c CalculateDoppler exactly -- a relative-velocity
-        // frequency-ratio formula computed purely from Position/Velocity (both already exposed on
-        // AudioListener/AudioEmitter), needing no native 3D audio API. Unlike stereo crossfeed
-        // panning (CP-19) or true elevation/HRTF, real Doppler doesn't need anything SDL3_mixer
-        // can't already do (MIX_SetTrackFrequencyRatio already exists for the Pitch property).
-        // `toListener*` is the emitter-to-listener direction vector (FAudio's own naming);
-        // `dopplerScaler` is the per-emitter AudioEmitter.DopplerScale (distinct from the global
-        // SoundEffect.DopplerScale multiplier applied by the caller afterward).
-        float ComputeDopplerFactor(
-            float speedOfSound, float dopplerScaler,
-            float toListenerX, float toListenerY, float toListenerZ, float distance,
-            const Microsoft::Xna::Framework::Vector3& listenerVelocity,
-            const Microsoft::Xna::Framework::Vector3& emitterVelocity)
-        {
-            if (dopplerScaler <= 0.0f) return 1.0f;
-
-            float listenerVelComponent = 0.0f;
-            float emitterVelComponent  = 0.0f;
-            if (distance != 0.0f)
-            {
-                listenerVelComponent = (
-                    toListenerX * listenerVelocity.X +
-                    toListenerY * listenerVelocity.Y +
-                    toListenerZ * listenerVelocity.Z
-                ) / distance;
-                emitterVelComponent = (
-                    toListenerX * emitterVelocity.X +
-                    toListenerY * emitterVelocity.Y +
-                    toListenerZ * emitterVelocity.Z
-                ) / distance;
-            }
-
-            const float scaledSpeedOfSound = speedOfSound / dopplerScaler;
-            listenerVelComponent = std::min(listenerVelComponent, scaledSpeedOfSound);
-            emitterVelComponent  = std::min(emitterVelComponent, scaledSpeedOfSound);
-
-            float dopplerFactor = (speedOfSound - dopplerScaler * listenerVelComponent) /
-                                   (speedOfSound - dopplerScaler * emitterVelComponent);
-            if (std::isnan(dopplerFactor)) dopplerFactor = 1.0f;
-
-            // "Limit the pitch shifting to 2 octaves up and 1 octave down" (F3DAudio.c's own
-            // comment).
-            return std::clamp(dopplerFactor, 0.5f, 4.0f);
         }
 
         // AUD-04-008/009: trackGeneration is the CNA::Internal::Audio::GetMixerGeneration() value
@@ -644,147 +585,6 @@ namespace Microsoft::Xna::Framework::Audio
         }
     }
 
-    void SoundEffectInstance::Pause()
-    {
-#ifdef SOUND_ENABLED
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
-        if (track && getStateProperty() == SoundState::Playing)
-        {
-            MIX_PauseTrack(track);
-            State_   = SoundState::Paused;
-            playing_ = false;
-        }
-#endif
-    }
-
-    void SoundEffectInstance::Resume()
-    {
-#ifdef SOUND_ENABLED
-        MIX_Track* track = AsTrack(GetLiveTrackHandle());
-        if (!track)
-        {
-            // P9-VALIDATION-010: matches FNA (SoundEffectInstance.cs Resume(): "XNA4 just plays
-            // if we've not started yet") -- when there's no active voice/track, Resume() calls
-            // Play() instead of being a no-op. In CNA's model this covers both "never played"
-            // (track_ starts null) and "disposed" (Dispose() nulls track_): for a disposed
-            // instance this makes Resume() surface Play()'s own ObjectDisposedException instead
-            // of silently doing nothing, which is safer than FNA's real behavior (FNA's Play()
-            // has no disposed guard at all, so it would silently resurrect a disposed instance).
-            Play();
-            return;
-        }
-        if (getStateProperty() == SoundState::Paused)
-        {
-            MIX_ResumeTrack(track);
-            State_   = SoundState::Playing;
-            playing_ = true;
-        }
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_applyReverb(float /*rvGain*/)
-    {
-        // SDL3_mixer has no aux-send/return bus; documented no-op (T-4C, see the declaration's
-        // comment in SoundEffectInstance.hpp for why this matches FNA's own dead-code status).
-    }
-
-    void SoundEffectInstance::INTERNAL_applyLowPassFilter(float cutoff, float oneOverQ)
-    {
-#ifdef SOUND_ENABLED
-        // P14-ORDER-002: was `if (!track_) return;` -- now establishes/updates the pending filter
-        // state regardless of whether a live track exists yet, so a caller (Cue::Play()) can wire
-        // a filter before or after inst->Play() with an identical final result.
-        // EnsureTrackDspState()/INTERNAL_applyComposedTrackProperties() (called from Play()) picks
-        // up whatever kind/frequency/oneOverQ is already sitting in filterState_ from a call like
-        // this one and registers the real SDL3_mixer callback once a track actually exists.
-        MIX_Mixer* mixer = TryGetMixer();
-        if (!mixer) return; // no audio hardware -- matches the prior no-track no-op exactly
-
-        if (!filterState_) filterState_ = std::make_unique<FilterState>();
-
-        MIX_LockMixer(mixer);
-        filterState_->kind         = FilterState::Kind::LowPass;
-        filterState_->frequency    = cutoff;
-        filterState_->oneOverQ     = oneOverQ;
-        filterState_->baseFrequency = cutoff;
-        filterState_->baseOneOverQ  = oneOverQ;
-        MIX_UnlockMixer(mixer);
-
-        // Only registers the real callback once there's a track to attach it to (matches
-        // MIX_SetTrackCookedCallback's own "may be called... at any time" contract) -- otherwise
-        // this is deferred to EnsureTrackDspState(), called from Play() once a track is created.
-        if (MIX_Track* liveTrack = AsTrack(GetLiveTrackHandle())) MIX_SetTrackCookedCallback(liveTrack, FilterMixCallback, filterState_.get());
-#else
-        (void)cutoff; (void)oneOverQ;
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_applyHighPassFilter(float cutoff, float oneOverQ)
-    {
-#ifdef SOUND_ENABLED
-        // P14-ORDER-002: see INTERNAL_applyLowPassFilter's identical comment above.
-        MIX_Mixer* mixer = TryGetMixer();
-        if (!mixer) return;
-
-        if (!filterState_) filterState_ = std::make_unique<FilterState>();
-
-        MIX_LockMixer(mixer);
-        filterState_->kind         = FilterState::Kind::HighPass;
-        filterState_->frequency    = cutoff;
-        filterState_->oneOverQ     = oneOverQ;
-        filterState_->baseFrequency = cutoff;
-        filterState_->baseOneOverQ  = oneOverQ;
-        MIX_UnlockMixer(mixer);
-
-        if (MIX_Track* liveTrack = AsTrack(GetLiveTrackHandle())) MIX_SetTrackCookedCallback(liveTrack, FilterMixCallback, filterState_.get());
-#else
-        (void)cutoff; (void)oneOverQ;
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_applyBandPassFilter(float center, float oneOverQ)
-    {
-#ifdef SOUND_ENABLED
-        // P14-ORDER-002: see INTERNAL_applyLowPassFilter's identical comment above.
-        MIX_Mixer* mixer = TryGetMixer();
-        if (!mixer) return;
-
-        if (!filterState_) filterState_ = std::make_unique<FilterState>();
-
-        MIX_LockMixer(mixer);
-        filterState_->kind         = FilterState::Kind::BandPass;
-        filterState_->frequency    = center;
-        filterState_->oneOverQ     = oneOverQ;
-        filterState_->baseFrequency = center;
-        filterState_->baseOneOverQ  = oneOverQ;
-        MIX_UnlockMixer(mixer);
-
-        if (MIX_Track* liveTrack = AsTrack(GetLiveTrackHandle())) MIX_SetTrackCookedCallback(liveTrack, FilterMixCallback, filterState_.get());
-#else
-        (void)center; (void)oneOverQ;
-#endif
-    }
-
-    float SoundEffectInstance::INTERNAL_calculateFilterCutoff(float frequencyHz, float sampleRate)
-    {
-        // Matches FAudio's FACT_INTERNAL_CalculateFilterFrequency (FACT_internal.c) exactly: the
-        // min() guards against the formula behaving badly as the cutoff approaches the sample
-        // rate (their comment credits @Woflox).
-        if (sampleRate <= 0.0f) return 0.0f;
-        return 2.0f * std::sin(
-            std::numbers::pi_v<float> * std::min(frequencyHz / sampleRate, 0.5f));
-    }
-
-    float SoundEffectInstance::INTERNAL_calculateFilterOneOverQ(uint8_t qfactorRaw)
-    {
-        // Matches FAudio's inline `1.0f / (track->qfactor / 3.0f)` at the SOUND_FLAG_COMPLEX
-        // track-init site (FACT_internal.c), clamped to at most 1.0f (their own comment: "the
-        // 0.67 Q Factor causes problems ... just clamp it for now"). qfactorRaw == 0 would
-        // divide by zero -- FAudio never emits that from real XACT tool output, but guard it here
-        // by falling back to the same default as "no filter" (OneOverQ = 1.0f).
-        if (qfactorRaw == 0) return 1.0f;
-        return std::min(3.0f / static_cast<float>(qfactorRaw), 1.0f);
-    }
 
     float SoundEffectInstance::INTERNAL_calculatePitchRatio(float pitch)
     {
@@ -795,36 +595,6 @@ namespace Microsoft::Xna::Framework::Audio
         return ComputePitchRatio(pitch);
     }
 
-    Microsoft::Xna::Framework::Vector3 SoundEffectInstance::INTERNAL_calculateListenerRight(
-        const Microsoft::Xna::Framework::Vector3& forward,
-        const Microsoft::Xna::Framework::Vector3& up)
-    {
-        using Microsoft::Xna::Framework::Vector3;
-
-        // P9-3D-010: matches F3DAudio.c's listenerBasis.right construction (Cross of the
-        // listener's own orientation vectors), verified against XNA's own Vector3.Right constant
-        // for the default orientation (Forward=(0,0,-1), Up=(0,1,0)): Cross(Forward, Up) reduces
-        // to exactly (1,0,0) in that case. Falls back to world Vector3.Right if Forward/Up are
-        // degenerate (parallel or zero-length) rather than dividing by a near-zero length --
-        // malformed orientation input is undefined in real X3DAudio too (its VECTOR_BASE_CHECK
-        // assertion requires an orthonormal basis), so this is purely a defensive guard against
-        // NaN, not an attempt to define new real behavior for invalid input.
-        const Vector3 right = Vector3::Cross(forward, up);
-        const float len = right.Length();
-        return (len > 1e-6f) ? (right / len) : Vector3::Right;
-    }
-
-    float SoundEffectInstance::INTERNAL_calculatePan(float rightDisplacement, float distance)
-    {
-        // A simplified linear pan approximation (SDL3_mixer has no true angular panning/HRTF):
-        // only the listener-relative rightward displacement matters (Apply3D projects the
-        // emitter's position onto the listener's own Forward/Up-derived right axis before
-        // calling this, P9-3D-010), normalized by distance and clamped to the Pan property's own
-        // [-1,1] range. `distance == 0` (same position) has no meaningful direction, so it
-        // centers (0.0f) rather than dividing by zero.
-        return (distance > 0.0f) ? std::clamp(rightDisplacement / distance, -1.0f, 1.0f) : 0.0f;
-    }
-
     void SoundEffectInstance::INTERNAL_calculatePanCrossfeedMatrix(
         float pan, float& ll, float& rl, float& lr, float& rr)
     {
@@ -832,103 +602,6 @@ namespace Microsoft::Xna::Framework::Audio
         // single canonical implementation, shared with the real-time mixing callback
         // (ApplyPanCrossfeed) so there is exactly one copy of this math to keep in sync with FNA.
         ComputePanCrossfeedMatrix(pan, ll, rl, lr, rr);
-    }
-
-    void SoundEffectInstance::INTERNAL_applyXactTrackFilter(
-        uint8_t filterType, float frequencyHz, uint8_t qfactorRaw)
-    {
-#ifdef SOUND_ENABLED
-        // P14-ORDER-002: was `if (!track_) return;` -- the mixer's own format (sample rate) is a
-        // device-level property, available as soon as the mixer exists, independent of whether
-        // this particular instance has a track yet; see INTERNAL_applyLowPassFilter's comment for
-        // why the underlying filter state itself is now order-independent too.
-        MIX_Mixer* mixer = TryGetMixer();
-        if (!mixer) return;
-
-        SDL_AudioSpec spec{};
-        if (!MIX_GetMixerFormat(mixer, &spec) || spec.freq <= 0) return;
-
-        const float cutoff   = INTERNAL_calculateFilterCutoff(frequencyHz, static_cast<float>(spec.freq));
-        const float oneOverQ = INTERNAL_calculateFilterOneOverQ(qfactorRaw);
-
-        switch (filterType)
-        {
-            case 0: INTERNAL_applyLowPassFilter(cutoff, oneOverQ); break;
-            case 1: INTERNAL_applyBandPassFilter(cutoff, oneOverQ); break;
-            case 2: INTERNAL_applyHighPassFilter(cutoff, oneOverQ); break;
-            default: break; // Not reachable via XactParser.cpp's bit-decode; defensive only.
-        }
-#else
-        (void)filterType; (void)frequencyHz; (void)qfactorRaw;
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_applyEffectVariationFilter(
-        uint8_t filterType, float frequencyHz, float oneOverQ)
-    {
-#ifdef SOUND_ENABLED
-        // P14-ORDER-002: see INTERNAL_applyXactTrackFilter's identical comment above.
-        MIX_Mixer* mixer = TryGetMixer();
-        if (!mixer) return;
-
-        SDL_AudioSpec spec{};
-        if (!MIX_GetMixerFormat(mixer, &spec) || spec.freq <= 0) return;
-
-        const float cutoff = INTERNAL_calculateFilterCutoff(frequencyHz, static_cast<float>(spec.freq));
-
-        switch (filterType)
-        {
-            case 0: INTERNAL_applyLowPassFilter(cutoff, oneOverQ); break;
-            case 1: INTERNAL_applyBandPassFilter(cutoff, oneOverQ); break;
-            case 2: INTERNAL_applyHighPassFilter(cutoff, oneOverQ); break;
-            default: break; // Not reachable via XactParser.cpp's bit-decode; defensive only.
-        }
-#else
-        (void)filterType; (void)frequencyHz; (void)oneOverQ;
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_applyRpcFilterOverride(float rpcFrequencyHz, float rpcQFactor)
-    {
-#ifdef SOUND_ENABLED
-        // Matches FAudio's own guard (FACT_internal.c: `if (sound->sound->tracks[i].filter !=
-        // 0xFF)`) -- an RPC targeting filter frequency/Q is a no-op for a track with no filter
-        // at all, same as this method's caller (Cue::ReconcileState()) applying it uniformly to
-        // every active wave reference regardless of whether that particular one has a filter.
-        // P14-ORDER-002: `!track_` removed from this guard -- an RPC override can now update the
-        // pending filter state before a track exists too, the same as the base filter above; a
-        // non-`None` kind already implies a base filter was established (which itself requires the
-        // mixer to already exist), so this is safe to apply regardless of `track_`.
-        if (!filterState_ || filterState_->kind == FilterState::Kind::None) return;
-
-        MIX_Mixer* mixer = TryGetMixer();
-        if (!mixer) return;
-
-        // rpcFrequencyHz needs the real device sample rate to convert Hz -> SDL3_mixer's
-        // normalized cutoff domain (same conversion INTERNAL_applyXactTrackFilter uses); if the
-        // mixer format can't be read, fall back to the base frequency for this tick rather than
-        // silently misinterpreting a raw Hz value as an already-normalized one.
-        float frequency = filterState_->baseFrequency;
-        if (rpcFrequencyHz >= 0.0f)
-        {
-            SDL_AudioSpec spec{};
-            if (MIX_GetMixerFormat(mixer, &spec) && spec.freq > 0)
-                frequency = INTERNAL_calculateFilterCutoff(rpcFrequencyHz, static_cast<float>(spec.freq));
-        }
-
-        // Matches FAudio's `data->rpcFilterQFactor = 1.0f / rpcResult;` (FACT_internal.c) --
-        // direct reciprocal, no clamp (unlike INTERNAL_calculateFilterOneOverQ's raw-byte-decode
-        // clamp, which only applies to XACT-authored per-track filter data, not an RPC curve's
-        // own already-in-Q-units output).
-        const float oneOverQ = (rpcQFactor >= 0.0f) ? (1.0f / rpcQFactor) : filterState_->baseOneOverQ;
-
-        MIX_LockMixer(mixer);
-        filterState_->frequency = frequency;
-        filterState_->oneOverQ  = oneOverQ;
-        MIX_UnlockMixer(mixer);
-#else
-        (void)rpcFrequencyHz; (void)rpcQFactor;
-#endif
     }
 
     void SoundEffectInstance::EnsureTrackDspState()
@@ -953,160 +626,9 @@ namespace Microsoft::Xna::Framework::Audio
 #endif
     }
 
-    void SoundEffectInstance::ProcessFilterSamplesForTest(float* pcm, int channels, int samples)
-    {
-#ifdef SOUND_ENABLED
-        if (filterState_) ProcessFilterState(*filterState_, pcm, channels, samples);
-#else
-        (void)pcm; (void)channels; (void)samples;
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_getFilterStateForTest(
-        int& kind, float& frequency, float& oneOverQ) const
-    {
-#ifdef SOUND_ENABLED
-        if (!filterState_)
-        {
-            kind = static_cast<int>(FilterState::Kind::None);
-            frequency = 0.0f;
-            oneOverQ  = 1.0f;
-            return;
-        }
-        kind      = static_cast<int>(filterState_->kind);
-        frequency = filterState_->frequency;
-        oneOverQ  = filterState_->oneOverQ;
-#else
-        kind = 0; frequency = 0.0f; oneOverQ = 1.0f;
-#endif
-    }
-
-    void SoundEffectInstance::INTERNAL_setPanStateForTest(float pan)
-    {
-#ifdef SOUND_ENABLED
-        if (!filterState_) filterState_ = std::make_unique<FilterState>();
-        filterState_->pan = pan;
-#else
-        (void)pan;
-#endif
-    }
-
-    float SoundEffectInstance::INTERNAL_getPanStateForTest() const
-    {
-#ifdef SOUND_ENABLED
-        return filterState_ ? filterState_->pan : 0.0f;
-#else
-        return 0.0f;
-#endif
-    }
-
-    void SoundEffectInstance::Apply3D(const AudioListener& listener, const AudioEmitter& emitter)
-    {
-        if (isDisposed_)
-        {
-            throw System::ObjectDisposedException("SoundEffectInstance");
-        }
-
-        is3D_ = true; // CP-20: latches setPanProperty() out of writing the real track output
-
-        // SDL3_mixer does not support full 3D spatial audio (HRTF, orientation/cone). Pan and
-        // distance attenuation are simplified linear approximations; Doppler pitch shift
-        // (P9-3D-005) is computed exactly, since it doesn't need any native 3D audio API.
-
-        const auto& lp = listener.getPositionProperty();
-        const auto& ep = emitter.getPositionProperty();
-
-        const float dx = ep.X - lp.X;
-        const float dy = ep.Y - lp.Y;
-        const float dz = ep.Z - lp.Z;
-        const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-
-        // P9-3D-003: matches FAudio's F3DAudio.c ComputeDistanceAttenuation's no-custom-curve
-        // branch exactly ("the default (if emitter is NULL) volume curve is a *computed*
-        // inverse law"): full volume (no attenuation at all) for any distance within
-        // CurveDistanceScaler (XNA's DistanceScale), inverse-distance falloff only beyond it --
-        // NOT a continuous falloff starting at distance 0. The previous `1/(1+x)` formula
-        // attenuated far too aggressively close to the listener (e.g. already at half volume
-        // exactly at distance == DistanceScale, where real XNA/FNA is still at full volume).
-        const float distScale = SoundEffect::getDistanceScaleProperty();
-        const float normalizedDistance = distance / (distScale > 0.0f ? distScale : 1.0f);
-        const float atten = (normalizedDistance >= 1.0f)
-            ? std::clamp(1.0f / normalizedDistance, 0.0f, 1.0f)
-            : 1.0f;
-
-        // P9-3D-010: project the emitter's relative position onto the listener's own right axis
-        // (Forward x Up) instead of raw world-space X, so pan correctly reflects which way the
-        // listener is actually facing, not an assumption that they always face -Z. Matches
-        // F3DAudio.c's own ComputeEmitterChannelCoefficients, which projects the emitter-relative
-        // vector onto listenerBasis.right (itself derived from OrientFront/OrientTop) before
-        // computing azimuth -- same idea, without F3DAudio's own multi-speaker energy-diffusion
-        // math, which has no equivalent in SDL3_mixer's single stereo-gain-pair model anyway
-        // (already an accepted deviation, CHECKLIST.md CP-19). Verified against XNA's own
-        // Vector3.Right constant: for the default orientation (Forward=(0,0,-1), Up=(0,1,0)),
-        // Cross(Forward, Up) reduces to exactly (1,0,0), so this is a strict generalization of
-        // the previous world-X-only approximation -- an unrotated listener (the common case,
-        // and the only case the old code handled) gets bit-identical pan values to before.
-        const auto right = INTERNAL_calculateListenerRight(
-            listener.getForwardProperty(), listener.getUpProperty());
-        const float rightDisplacement = dx * right.X + dy * right.Y + dz * right.Z;
-
-        const float pan = INTERNAL_calculatePan(rightDisplacement, distance);
-
-        // P9-3D-005: matches FNA's UpdatePitch() exactly ("doppler = dspSettings.DopplerFactor *
-        // dopplerScale" when the global SoundEffect.DopplerScale is nonzero, else 1.0f/no-op).
-        // dx/dy/dz above are emitter-minus-listener; ComputeDopplerFactor wants the
-        // emitter-to-listener direction (FAudio's own naming), i.e. the negation.
-        const float globalDopplerScale = SoundEffect::getDopplerScaleProperty();
-        const float doppler = (globalDopplerScale != 0.0f)
-            ? ComputeDopplerFactor(
-                  SoundEffect::getSpeedOfSoundProperty(),
-                  emitter.getDopplerScaleProperty(),
-                  -dx, -dy, -dz, distance,
-                  listener.getVelocityProperty(),
-                  emitter.getVelocityProperty()) * globalDopplerScale
-            : 1.0f;
-
-        // AUDIO-001: persist the derived spatial state (was applied directly and only here,
-        // "one-shot" -- lost entirely on the very next Play()/Volume/Pitch call, and silently
-        // dropped altogether if there was no live track yet for this call to write into). Matches
-        // FNA's own persistent dspSettings/is3D state (SoundEffectInstance.cs), which Play() and
-        // UpdatePitch() both read back from on every later call, not just the Apply3D() call that
-        // first computed it. Combined multiplicatively with Volume_/Pitch_ by
-        // INTERNAL_applyComposedTrackProperties(), the same routine Play()/the setters now share,
-        // so this survives every one of those calls instead of being overwritten by whichever
-        // runs next.
-        attenuation_   = atten;
-        dopplerFactor_ = doppler;
-        spatialPan_    = pan;
-
-#ifdef SOUND_ENABLED
-        INTERNAL_applyComposedTrackProperties();
-#endif
-    }
-
-    void SoundEffectInstance::Apply3D(const AudioListener* listeners, int listenerCount,
-                                      const AudioEmitter& emitter)
-    {
-        if (listeners == nullptr)
-        {
-            throw System::ArgumentNullException("listeners");
-        }
-        if (listenerCount == 1)
-        {
-            Apply3D(listeners[0], emitter);
-            return;
-        }
-        throw System::NotSupportedException("Only one listener is supported.");
-    }
-
     bool SoundEffectInstance::getIsDisposedProperty() const
     {
         return isDisposed_;
-    }
-
-    float SoundEffectInstance::getVolumeProperty() const
-    {
-        return Volume_;
     }
 
     void SoundEffectInstance::setVolumeProperty(const float& volume)
@@ -1123,11 +645,6 @@ namespace Microsoft::Xna::Framework::Audio
     void SoundEffectInstance::setVolumeProperty(float&& volume)
     {
         setVolumeProperty(volume);
-    }
-
-    float SoundEffectInstance::getPanProperty() const
-    {
-        return Pan_;
     }
 
     void SoundEffectInstance::setPanProperty(const float& pan)
@@ -1161,11 +678,6 @@ namespace Microsoft::Xna::Framework::Audio
     void SoundEffectInstance::setPanProperty(float&& pan)
     {
         setPanProperty(pan);
-    }
-
-    float SoundEffectInstance::getPitchProperty() const
-    {
-        return Pitch_;
     }
 
     void SoundEffectInstance::setPitchProperty(const float& pitch)

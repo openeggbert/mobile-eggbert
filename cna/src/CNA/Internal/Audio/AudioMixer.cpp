@@ -24,11 +24,6 @@ namespace CNA::Internal::Audio
         std::mutex g_mixerMutex;
         MIX_Mixer* g_mixer = nullptr;
 
-        // AUD-04-004: test-only override for the spec requested below. Guarded by the same
-        // mutex as g_mixer since it is read/written from the same lazy-init sequence.
-        bool g_hasSpecOverride = false;
-        SDL_AudioSpec g_specOverride{};
-
         // AUD-04-008/009: bumped by DestroyMixer() below, read (lock-free) by
         // SoundEffectInstance::GetLiveTrackHandle() from any thread that touches a track --
         // an atomic, not the mutex above, so instance code never needs to take g_mixerMutex
@@ -47,19 +42,6 @@ namespace CNA::Internal::Audio
         // streams, ...), so destroying its own mixer must never be what fully deinitializes the
         // subsystem those depend on.
         bool g_audioSubsystemPinned = false;
-    }
-
-    void SetMixerSpecOverrideForTests(const SDL_AudioSpec& spec)
-    {
-        std::lock_guard<std::mutex> lock(g_mixerMutex);
-        g_hasSpecOverride = true;
-        g_specOverride = spec;
-    }
-
-    void ClearMixerSpecOverrideForTests()
-    {
-        std::lock_guard<std::mutex> lock(g_mixerMutex);
-        g_hasSpecOverride = false;
     }
 
     MIX_Mixer* GetMixer()
@@ -83,16 +65,9 @@ namespace CNA::Internal::Audio
             }
 
             SDL_AudioSpec spec{};
-            if (g_hasSpecOverride)
-            {
-                spec = g_specOverride;
-            }
-            else
-            {
-                spec.format = SDL_AUDIO_S16;
-                spec.channels = 2;
-                spec.freq = 44100;
-            }
+            spec.format = SDL_AUDIO_S16;
+            spec.channels = 2;
+            spec.freq = 44100;
 
             g_mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
             if (!g_mixer)
