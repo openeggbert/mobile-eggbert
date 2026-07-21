@@ -2,7 +2,7 @@
 
 #include "Microsoft/Xna/Framework/GameWindow.hpp"
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <stdexcept>
 #include <string>
@@ -62,10 +62,8 @@ namespace Microsoft::Xna::Framework
 
         if (window_ != nullptr)
         {
-            if (!SDL_SetWindowResizable(window_, value))
-            {
-                throw makeSdlError("SDL_SetWindowResizable");
-            }
+            // SDL2's SDL_SetWindowResizable returns void (unlike SDL3's bool-returning version).
+            SDL_SetWindowResizable(window_, value ? SDL_TRUE : SDL_FALSE);
         }
     }
 
@@ -129,10 +127,8 @@ namespace Microsoft::Xna::Framework
 
         if (window_ != nullptr)
         {
-            if (!SDL_SetWindowBordered(window_, !value))
-            {
-                throw makeSdlError("SDL_SetWindowBordered");
-            }
+            // SDL2's SDL_SetWindowBordered returns void (unlike SDL3's bool-returning version).
+            SDL_SetWindowBordered(window_, !value ? SDL_TRUE : SDL_FALSE);
         }
     }
 
@@ -140,10 +136,8 @@ namespace Microsoft::Xna::Framework
     {
         if (window_ != nullptr)
         {
-            if (!SDL_MinimizeWindow(window_))
-            {
-                throw makeSdlError("SDL_MinimizeWindow");
-            }
+            // SDL2's SDL_MinimizeWindow returns void (unlike SDL3's bool-returning version).
+            SDL_MinimizeWindow(window_);
         }
     }
 
@@ -151,10 +145,8 @@ namespace Microsoft::Xna::Framework
     {
         if (window_ != nullptr)
         {
-            if (!SDL_RestoreWindow(window_))
-            {
-                throw makeSdlError("SDL_RestoreWindow");
-            }
+            // SDL2's SDL_RestoreWindow returns void (unlike SDL3's bool-returning version).
+            SDL_RestoreWindow(window_);
         }
     }
 
@@ -174,16 +166,19 @@ namespace Microsoft::Xna::Framework
             if (clientWidth > 0 && clientHeight > 0)
             {
 #ifndef __ANDROID__
-                if (!SDL_SetWindowSize(window_, clientWidth, clientHeight))
-                {
-                    throw makeSdlError("SDL_SetWindowSize");
-                }
+                // SDL2's SDL_SetWindowSize returns void (unlike SDL3's bool-returning version).
+                SDL_SetWindowSize(window_, clientWidth, clientHeight);
 #endif
             }
 
             if (hasPendingScreenDeviceChange_)
             {
-                if (!SDL_SetWindowFullscreen(window_, pendingFullScreen_))
+                // SDL2's SDL_SetWindowFullscreen takes a window-flags value (0 or
+                // SDL_WINDOW_FULLSCREEN_DESKTOP), not SDL3's plain bool -- desktop-fullscreen
+                // (borderless, matching the display's current mode) rather than exclusive
+                // fullscreen, matching this codebase's existing windowing behavior.
+                if (SDL_SetWindowFullscreen(
+                        window_, pendingFullScreen_ ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) != 0)
                 {
                     throw makeSdlError("SDL_SetWindowFullscreen");
                 }
@@ -277,10 +272,8 @@ namespace Microsoft::Xna::Framework
             return;
         }
 
-        if (!SDL_SetWindowTitle(window_, title.c_str()))
-        {
-            throw makeSdlError("SDL_SetWindowTitle");
-        }
+        // SDL2's SDL_SetWindowTitle returns void (unlike SDL3's bool-returning version).
+        SDL_SetWindowTitle(window_, title.c_str());
     }
 
     void GameWindow::setWindowInternal(SDL_Window* window)
@@ -363,10 +356,8 @@ namespace Microsoft::Xna::Framework
         int width = clientBounds_.Width;
         int height = clientBounds_.Height;
 
-        if (!SDL_GetWindowSize(window_, &width, &height))
-        {
-            throw makeSdlError("SDL_GetWindowSize");
-        }
+        // SDL2's SDL_GetWindowSize returns void (unlike SDL3's bool-returning version).
+        SDL_GetWindowSize(window_, &width, &height);
 
         return Rectangle(0, 0, width, height);
     }
@@ -378,13 +369,15 @@ namespace Microsoft::Xna::Framework
             return screenDeviceName_;
         }
 
-        const SDL_DisplayID displayId = SDL_GetDisplayForWindow(window_);
-        if (displayId == 0)
+        // SDL2 identifies displays by a plain zero-based index (SDL_GetWindowDisplayIndex),
+        // not SDL3's opaque SDL_DisplayID -- a negative return means failure (SDL3 used 0).
+        const int displayIndex = SDL_GetWindowDisplayIndex(window_);
+        if (displayIndex < 0)
         {
             return screenDeviceName_;
         }
 
-        const char* displayName = SDL_GetDisplayName(displayId);
+        const char* displayName = SDL_GetDisplayName(displayIndex);
         return displayName != nullptr ? String(displayName) : String();
     }
 

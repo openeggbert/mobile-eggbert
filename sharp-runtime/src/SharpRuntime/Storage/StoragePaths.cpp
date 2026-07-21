@@ -9,7 +9,7 @@
 #endif
 
 #if defined(__ANDROID__)
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 namespace SharpRuntime::Storage

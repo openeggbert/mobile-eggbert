@@ -19,7 +19,7 @@
 #include "System/NotSupportedException.hpp"
 #include "System/Threading/EventWaitHandle.hpp"
 #include <algorithm>
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 namespace Microsoft::Xna::Framework::GamerServices
 {
@@ -334,7 +334,7 @@ namespace Microsoft::Xna::Framework::GamerServices
 
     bool Guide::getIsScreenSaverEnabledProperty()
     {
-        return SDL_ScreenSaverEnabled();
+        return SDL_IsScreenSaverEnabled() != SDL_FALSE;
     }
 
     void Guide::setIsScreenSaverEnabledProperty(bool value)

@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include "CNA/Logger.hpp"
 #include "Microsoft/Xna/Framework/TitleLocation.hpp"

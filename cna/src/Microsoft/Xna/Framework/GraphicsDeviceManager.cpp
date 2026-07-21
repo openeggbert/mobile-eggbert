@@ -2,7 +2,7 @@
 
 #include "Microsoft/Xna/Framework/GraphicsDeviceManager.hpp"
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <algorithm>
 #include <stdexcept>

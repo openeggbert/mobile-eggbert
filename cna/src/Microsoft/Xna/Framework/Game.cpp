@@ -2,11 +2,12 @@
 
 #include "Microsoft/Xna/Framework/Game.hpp"
 
+#include "CNA/Internal/Audio/AudioMixer.hpp"
 #include "CNA/Internal/Input/SdlInputBridge.hpp"
 #include "CNA/Logger.hpp"
 
-#include <SDL3/SDL.h>
-#include <SDL3_mixer/SDL_mixer.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 
 #include <algorithm>
 #include <stdexcept>
@@ -26,17 +27,18 @@ namespace Microsoft::Xna::Framework
         void InitAudio()
         {
 #ifdef SOUND_ENABLED
-            if (!MIX_Init())
-            {
-                throw std::runtime_error(std::string("MIX_Init failed: ") + SDL_GetError());
-            }
+            // AudioMixer::GetMixer() (called lazily by the first SoundEffect/MediaPlayer use)
+            // does the real Mix_Init()/Mix_OpenAudio() work; this just makes sure it has run
+            // before the game loop starts, matching the pre-migration SDL3_mixer implementation's
+            // own eager-init-at-startup behavior.
+            CNA::Internal::Audio::GetMixer();
 #endif
         }
 
         void ShutdownAudio()
         {
 #ifdef SOUND_ENABLED
-            MIX_Quit();
+            CNA::Internal::Audio::DestroyMixer();
 #endif
         }
 
@@ -249,12 +251,9 @@ namespace Microsoft::Xna::Framework
 
         if (GraphicsDevice_.GetWindowInternal() != nullptr)
         {
-            if (value) {
-                SDL_ShowCursor();
-            } else
-            {
-                SDL_HideCursor();
-            }
+            // SDL2's SDL_ShowCursor takes an explicit toggle argument (1=show, 0=hide), unlike
+            // SDL3's argument-less SDL_ShowCursor()/SDL_HideCursor() pair.
+            SDL_ShowCursor(value ? SDL_ENABLE : SDL_DISABLE);
         }
     }
 
@@ -893,43 +892,54 @@ namespace Microsoft::Xna::Framework
 
             switch (event.type)
             {
-                case SDL_EVENT_QUIT:
+                case SDL_QUIT:
                     Exit();
                     break;
 
-                case SDL_EVENT_KEY_DOWN:
+                case SDL_KEYDOWN:
                     if (!event.key.repeat)
                     {
-                        if (event.key.key == SDLK_F9)
+                        if (event.key.keysym.sym == SDLK_F9)
                             GraphicsDevice_.GetBackend().DebugSimulateContextLoss();
-                        else if (event.key.key == SDLK_F10)
+                        else if (event.key.keysym.sym == SDLK_F10)
                             GraphicsDevice_.GetBackend().DebugRestoreContext();
                     }
                     break;
 
-                case SDL_EVENT_WINDOW_RESIZED:
-                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-                    Window_.updateFromSDL();
+                // SDL2 folds every window sub-event (resize, focus, ...) under one SDL_WINDOWEVENT
+                // top-level type, distinguished by event.window.event -- unlike SDL3's own
+                // top-level SDL_EVENT_WINDOW_* constants.
+                case SDL_WINDOWEVENT:
+                    switch (event.window.event)
+                    {
+                        case SDL_WINDOWEVENT_RESIZED:
+                        case SDL_WINDOWEVENT_SIZE_CHANGED:
+                            Window_.updateFromSDL();
+                            break;
+
+                        // Desktop focus switch (e.g. Alt-Tab), as opposed to the mobile-style
+                        // background/foreground events below. Matches FNA's SDL3 platform loop,
+                        // which sets game.IsActive = false/true on these same two events
+                        // (SDL3_FNAPlatform.cs:1006-1037). Keyboard/mouse state is intentionally
+                        // NOT cleared here — see DEC-15 in docs/input-fna-fidelity.md.
+                        case SDL_WINDOWEVENT_FOCUS_LOST:
+                            setIsActiveProperty(false);
+                            break;
+
+                        case SDL_WINDOWEVENT_FOCUS_GAINED:
+                            setIsActiveProperty(true);
+                            break;
+
+                        default:
+                            break;
+                    }
                     break;
 
-                case SDL_EVENT_WILL_ENTER_BACKGROUND:
+                case SDL_APP_WILLENTERBACKGROUND:
                     setIsActiveProperty(false);
                     break;
 
-                case SDL_EVENT_DID_ENTER_FOREGROUND:
-                    setIsActiveProperty(true);
-                    break;
-
-                // Desktop focus switch (e.g. Alt-Tab), as opposed to the mobile-style
-                // background/foreground events above. Matches FNA's SDL3 platform loop, which sets
-                // game.IsActive = false/true on these same two events
-                // (SDL3_FNAPlatform.cs:1006-1037). Keyboard/mouse state is intentionally NOT
-                // cleared here — see DEC-15 in docs/input-fna-fidelity.md.
-                case SDL_EVENT_WINDOW_FOCUS_LOST:
-                    setIsActiveProperty(false);
-                    break;
-
-                case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                case SDL_APP_DIDENTERFOREGROUND:
                     setIsActiveProperty(true);
                     break;
 

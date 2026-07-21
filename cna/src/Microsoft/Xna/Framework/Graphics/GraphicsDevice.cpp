@@ -12,7 +12,7 @@
 #endif
 
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -60,7 +60,7 @@ namespace Microsoft::Xna::Framework::Graphics
                 return;
             }
 
-            const SDL_WindowFlags flags = SDL_GetWindowFlags(window);
+            const Uint32 flags = SDL_GetWindowFlags(window);
             const bool borderless = (flags & SDL_WINDOW_BORDERLESS) != 0;
             const bool fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
 
@@ -73,9 +73,11 @@ namespace Microsoft::Xna::Framework::Graphics
             );
         }
 
-        [[nodiscard]] SDL_WindowFlags getBackendWindowFlags()
+        // SDL2 has no SDL_WindowFlags type (window flags are plain Uint32 with SDL_WINDOW_*
+        // macros), unlike SDL3's dedicated enum type.
+        [[nodiscard]] Uint32 getBackendWindowFlags()
         {
-            SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE;
+            Uint32 windowFlags = SDL_WINDOW_RESIZABLE;
 
 #ifdef CNA_BACKEND_EASYGL
             windowFlags |= SDL_WINDOW_OPENGL;
@@ -153,7 +155,7 @@ namespace Microsoft::Xna::Framework::Graphics
         // device run with no display server at all, not merely without a visible window.
         if (!presentationParameters_.getHeadlessEXTProperty())
         {
-            if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
+            if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
             {
                 throw makeSdlError("SDL_InitSubSystem(SDL_INIT_VIDEO)");
             }
@@ -507,7 +509,7 @@ namespace Microsoft::Xna::Framework::Graphics
             return;
         }
 
-        SDL_WindowFlags windowFlags = getBackendWindowFlags();
+        Uint32 windowFlags = getBackendWindowFlags();
 
         const int width = presentationParameters_.getBackBufferWidthProperty() > 0
                               ? presentationParameters_.getBackBufferWidthProperty()
@@ -517,7 +519,11 @@ namespace Microsoft::Xna::Framework::Graphics
                                ? presentationParameters_.getBackBufferHeightProperty()
                                : 768;
 
-        window_ = SDL_CreateWindow("Game", width, height, windowFlags);
+        // SDL2's SDL_CreateWindow requires explicit x/y position arguments (unlike SDL3, which
+        // dropped them) -- SDL_WINDOWPOS_UNDEFINED lets the window manager choose, matching SDL3's
+        // own default placement behavior.
+        window_ = SDL_CreateWindow("Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                    width, height, windowFlags);
         if (window_ == nullptr)
         {
             throw makeSdlError("SDL_CreateWindow");
@@ -709,8 +715,11 @@ namespace Microsoft::Xna::Framework::Graphics
         // backend that cannot actually switch fullscreen still has the correct stored state --
         // matches GraphicsDeviceManager::applyToExistingBackend()'s identical non-fatal handling
         // (Task 224), which this method now supersedes as the single fullscreen-application path.
+        // SDL2's SDL_SetWindowFullscreen takes a window-flags value (0 or
+        // SDL_WINDOW_FULLSCREEN_DESKTOP), not SDL3's plain bool -- see GameWindow.cpp's identical
+        // note for the same call.
         const bool fullScreen = presentationParameters_.getIsFullScreenProperty();
-        if (!SDL_SetWindowFullscreen(window_, fullScreen))
+        if (SDL_SetWindowFullscreen(window_, fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) != 0)
         {
             SDL_ClearError();
         }
@@ -720,11 +729,8 @@ namespace Microsoft::Xna::Framework::Graphics
         if (width > 0 && height > 0)
         {
 #ifndef __ANDROID__
-
-            if (!SDL_SetWindowSize(window_, width, height))
-            {
-                throw makeSdlError("SDL_SetWindowSize");
-            }
+            // SDL2's SDL_SetWindowSize returns void (unlike SDL3's bool-returning version).
+            SDL_SetWindowSize(window_, width, height);
 #endif
         }
     }

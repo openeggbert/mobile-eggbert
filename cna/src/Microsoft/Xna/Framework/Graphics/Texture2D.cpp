@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include "CNA/Logger.hpp"
 #include "CNA/Internal/Graphics/DxtUtil.hpp"
@@ -33,6 +33,68 @@ namespace Microsoft::Xna::Framework::Graphics
     // -----------------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------------
+
+    namespace
+    {
+        // SDL2 has no equivalent of SDL3's SDL_IOFromDynamicMem (an auto-growing in-memory write
+        // sink) -- classic SDL_RWops only offers fixed-size SDL_RWFromMem. A minimal custom
+        // write-only, sequential (no seek) RWops backed by a std::vector is the standard SDL2
+        // technique for capturing IMG_SavePNG_RW/IMG_SaveJPG_RW output in memory instead of a
+        // file. Only used by the Stream*-overload SaveAsPng/SaveAsJpeg below, which mobile-eggbert
+        // itself never calls (only the filename overloads are exercised) -- see plan_lite.md's
+        // Phase 4 status.
+        struct DynamicMemBuffer
+        {
+            std::vector<Uint8> data;
+        };
+
+        Sint64 SDLCALL DynMemSize(SDL_RWops* ctx)
+        {
+            return static_cast<Sint64>(static_cast<DynamicMemBuffer*>(ctx->hidden.unknown.data1)->data.size());
+        }
+
+        Sint64 SDLCALL DynMemSeek(SDL_RWops* /*ctx*/, Sint64 /*offset*/, int /*whence*/)
+        {
+            return -1; // write-only, sequential -- matches this helper's documented scope.
+        }
+
+        size_t SDLCALL DynMemRead(SDL_RWops* /*ctx*/, void* /*ptr*/, size_t /*size*/, size_t /*maxnum*/)
+        {
+            return 0; // write-only.
+        }
+
+        size_t SDLCALL DynMemWrite(SDL_RWops* ctx, const void* ptr, size_t size, size_t num)
+        {
+            auto* buf = static_cast<DynamicMemBuffer*>(ctx->hidden.unknown.data1);
+            const auto* bytes = static_cast<const Uint8*>(ptr);
+            buf->data.insert(buf->data.end(), bytes, bytes + (size * num));
+            return num;
+        }
+
+        int SDLCALL DynMemClose(SDL_RWops* ctx)
+        {
+            if (ctx)
+            {
+                delete static_cast<DynamicMemBuffer*>(ctx->hidden.unknown.data1);
+                SDL_FreeRW(ctx);
+            }
+            return 0;
+        }
+
+        SDL_RWops* CreateDynamicMemRWops(DynamicMemBuffer*& outBuf)
+        {
+            SDL_RWops* rw = SDL_AllocRW();
+            if (!rw) { outBuf = nullptr; return nullptr; }
+            outBuf = new DynamicMemBuffer();
+            rw->size  = DynMemSize;
+            rw->seek  = DynMemSeek;
+            rw->read  = DynMemRead;
+            rw->write = DynMemWrite;
+            rw->close = DynMemClose;
+            rw->hidden.unknown.data1 = outBuf;
+            return rw;
+        }
+    }
 
 #ifdef CNA_BACKEND_D3D9
     // D9-103: a HiDef-only size requested on a Reach device (or a size exceeding even HiDef's own
@@ -556,10 +618,10 @@ namespace Microsoft::Xna::Framework::Graphics
     {
         ImageData img = DecodeStreamToImageData(stream);
 
-        SDL_Surface* surface = SDL_CreateSurfaceFrom(
-            img.width, img.height, SDL_PIXELFORMAT_RGBA32, img.pixels.data(), img.width * 4);
+        SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            img.pixels.data(), img.width, img.height, 32, img.width * 4, SDL_PIXELFORMAT_RGBA32);
         if (!surface)
-            throw std::runtime_error(std::string("SDL_CreateSurfaceFrom failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_CreateRGBSurfaceWithFormatFrom failed: ") + SDL_GetError());
 
         // Mirrors FNA3D_Image_Load's forceW/forceH/zoom resize-and-crop logic.
         const bool scaleWidth = zoom ? (surface->w < surface->h) : (surface->w > surface->h);
@@ -593,29 +655,33 @@ namespace Microsoft::Xna::Framework::Graphics
             finalH = static_cast<int>(surface->h * scale);
         }
 
-        SDL_Surface* scaled = SDL_CreateSurface(finalW, finalH, SDL_PIXELFORMAT_RGBA32);
+        SDL_Surface* scaled = SDL_CreateRGBSurfaceWithFormat(0, finalW, finalH, 32, SDL_PIXELFORMAT_RGBA32);
         if (!scaled)
         {
-            SDL_DestroySurface(surface);
-            throw std::runtime_error(std::string("SDL_CreateSurface failed: ") + SDL_GetError());
+            SDL_FreeSurface(surface);
+            throw std::runtime_error(std::string("SDL_CreateRGBSurfaceWithFormat failed: ") + SDL_GetError());
         }
         SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
-        const bool blitOk = zoom
-            ? SDL_BlitSurfaceScaled(surface, &crop, scaled, nullptr, SDL_SCALEMODE_LINEAR)
-            : SDL_BlitSurfaceScaled(surface, nullptr, scaled, nullptr, SDL_SCALEMODE_LINEAR);
-        if (!blitOk)
+        // SDL2's SDL_SoftStretchLinear is the closest equivalent to SDL3's
+        // SDL_BlitSurfaceScaled(..., SDL_SCALEMODE_LINEAR) -- both surfaces must already share a
+        // format (guaranteed here, both RGBA32) and dstrect==nullptr means "the whole surface",
+        // matching SDL_BlitSurfaceScaled's own convention.
+        const int blitOk = zoom
+            ? SDL_SoftStretchLinear(surface, &crop, scaled, nullptr)
+            : SDL_SoftStretchLinear(surface, nullptr, scaled, nullptr);
+        if (blitOk != 0)
         {
-            SDL_DestroySurface(scaled);
-            SDL_DestroySurface(surface);
-            throw std::runtime_error(std::string("SDL_BlitSurfaceScaled failed: ") + SDL_GetError());
+            SDL_FreeSurface(scaled);
+            SDL_FreeSurface(surface);
+            throw std::runtime_error(std::string("SDL_SoftStretchLinear failed: ") + SDL_GetError());
         }
 
         std::vector<uint8_t> finalPixels(
             static_cast<uint8_t*>(scaled->pixels),
             static_cast<uint8_t*>(scaled->pixels) + static_cast<std::size_t>(finalW) * finalH * 4);
 
-        SDL_DestroySurface(scaled);
-        SDL_DestroySurface(surface);
+        SDL_FreeSurface(scaled);
+        SDL_FreeSurface(surface);
 
         return MakeTextureFromPixels(graphicsDevice, finalW, finalH, std::move(finalPixels));
     }
@@ -631,55 +697,51 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!cpuPixels_ || cpuPixels_->empty())
             throw std::runtime_error("Texture2D::SaveAsPng: no CPU-side pixel data available");
 
-        SDL_Surface* surface = SDL_CreateSurfaceFrom(
-            width, height, SDL_PIXELFORMAT_RGBA32,
-            const_cast<uint8_t*>(cpuPixels_->data()), width * 4);
+        SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            const_cast<uint8_t*>(cpuPixels_->data()), width, height, 32, width * 4, SDL_PIXELFORMAT_RGBA32);
         if (!surface)
-            throw std::runtime_error(std::string("SDL_CreateSurfaceFrom failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_CreateRGBSurfaceWithFormatFrom failed: ") + SDL_GetError());
 
         SDL_Surface* src = surface;
         SDL_Surface* scaled = nullptr;
         if (targetWidth != width || targetHeight != height)
         {
-            scaled = SDL_ScaleSurface(surface, targetWidth, targetHeight, SDL_SCALEMODE_LINEAR);
-            if (!scaled)
+            scaled = SDL_CreateRGBSurfaceWithFormat(0, targetWidth, targetHeight, 32, SDL_PIXELFORMAT_RGBA32);
+            if (!scaled || SDL_SoftStretchLinear(surface, nullptr, scaled, nullptr) != 0)
             {
-                SDL_DestroySurface(surface);
-                throw std::runtime_error(std::string("SDL_ScaleSurface failed: ") + SDL_GetError());
+                if (scaled) SDL_FreeSurface(scaled);
+                SDL_FreeSurface(surface);
+                throw std::runtime_error(std::string("SDL_SoftStretchLinear failed: ") + SDL_GetError());
             }
             src = scaled;
         }
 
-        SDL_IOStream* dst = SDL_IOFromDynamicMem();
+        DynamicMemBuffer* memBuf = nullptr;
+        SDL_RWops* dst = CreateDynamicMemRWops(memBuf);
         if (!dst)
         {
-            SDL_DestroySurface(surface);
-            if (scaled) SDL_DestroySurface(scaled);
-            throw std::runtime_error(std::string("SDL_IOFromDynamicMem failed: ") + SDL_GetError());
+            SDL_FreeSurface(surface);
+            if (scaled) SDL_FreeSurface(scaled);
+            throw std::runtime_error("Failed to allocate dynamic-memory RWops for SaveAsPng");
         }
 
-        if (!IMG_SavePNG_IO(src, dst, false))
+        if (IMG_SavePNG_RW(src, dst, 0) != 0)
         {
-            SDL_CloseIO(dst);
-            SDL_DestroySurface(surface);
-            if (scaled) SDL_DestroySurface(scaled);
-            throw std::runtime_error(std::string("IMG_SavePNG_IO failed: ") + SDL_GetError());
+            SDL_RWclose(dst);
+            SDL_FreeSurface(surface);
+            if (scaled) SDL_FreeSurface(scaled);
+            throw std::runtime_error(std::string("IMG_SavePNG_RW failed: ") + SDL_GetError());
         }
 
-        const Sint64 size = SDL_TellIO(dst);
-        if (size > 0)
+        if (!memBuf->data.empty())
         {
-            auto* buf = static_cast<uint8_t*>(
-                SDL_GetPointerProperty(SDL_GetIOProperties(dst),
-                                       SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, nullptr));
-            if (buf)
-                stream->Write(reinterpret_cast<const System::IO::bytecs*>(buf), 0,
-                              static_cast<System::IO::intcs>(size));
+            stream->Write(reinterpret_cast<const System::IO::bytecs*>(memBuf->data.data()), 0,
+                          static_cast<System::IO::intcs>(memBuf->data.size()));
         }
 
-        SDL_CloseIO(dst);
-        if (scaled) SDL_DestroySurface(scaled);
-        SDL_DestroySurface(surface);
+        SDL_RWclose(dst); // frees memBuf too (DynMemClose)
+        if (scaled) SDL_FreeSurface(scaled);
+        SDL_FreeSurface(surface);
     }
 
     void Texture2D::SaveAsPng(const std::string& filename) const
@@ -687,19 +749,18 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!cpuPixels_ || cpuPixels_->empty())
             throw std::runtime_error("Texture2D::SaveAsPng: no CPU-side pixel data available");
 
-        SDL_Surface* surface = SDL_CreateSurfaceFrom(
-            width, height, SDL_PIXELFORMAT_RGBA32,
-            const_cast<uint8_t*>(cpuPixels_->data()), width * 4);
+        SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            const_cast<uint8_t*>(cpuPixels_->data()), width, height, 32, width * 4, SDL_PIXELFORMAT_RGBA32);
 
         if (!surface)
-            throw std::runtime_error(std::string("SDL_CreateSurfaceFrom failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_CreateRGBSurfaceWithFormatFrom failed: ") + SDL_GetError());
 
-        if (!IMG_SavePNG(surface, filename.c_str()))
+        if (IMG_SavePNG(surface, filename.c_str()) != 0)
         {
-            SDL_DestroySurface(surface);
+            SDL_FreeSurface(surface);
             throw std::runtime_error(std::string("IMG_SavePNG failed: ") + SDL_GetError());
         }
-        SDL_DestroySurface(surface);
+        SDL_FreeSurface(surface);
     }
 
     // -----------------------------------------------------------------------
@@ -726,55 +787,51 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!cpuPixels_ || cpuPixels_->empty())
             throw std::runtime_error("Texture2D::SaveAsJpeg: no CPU-side pixel data available");
 
-        SDL_Surface* surface = SDL_CreateSurfaceFrom(
-            width, height, SDL_PIXELFORMAT_RGBA32,
-            const_cast<uint8_t*>(cpuPixels_->data()), width * 4);
+        SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            const_cast<uint8_t*>(cpuPixels_->data()), width, height, 32, width * 4, SDL_PIXELFORMAT_RGBA32);
         if (!surface)
-            throw std::runtime_error(std::string("SDL_CreateSurfaceFrom failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_CreateRGBSurfaceWithFormatFrom failed: ") + SDL_GetError());
 
         SDL_Surface* src = surface;
         SDL_Surface* scaled = nullptr;
         if (targetWidth != width || targetHeight != height)
         {
-            scaled = SDL_ScaleSurface(surface, targetWidth, targetHeight, SDL_SCALEMODE_LINEAR);
-            if (!scaled)
+            scaled = SDL_CreateRGBSurfaceWithFormat(0, targetWidth, targetHeight, 32, SDL_PIXELFORMAT_RGBA32);
+            if (!scaled || SDL_SoftStretchLinear(surface, nullptr, scaled, nullptr) != 0)
             {
-                SDL_DestroySurface(surface);
-                throw std::runtime_error(std::string("SDL_ScaleSurface failed: ") + SDL_GetError());
+                if (scaled) SDL_FreeSurface(scaled);
+                SDL_FreeSurface(surface);
+                throw std::runtime_error(std::string("SDL_SoftStretchLinear failed: ") + SDL_GetError());
             }
             src = scaled;
         }
 
-        SDL_IOStream* dst = SDL_IOFromDynamicMem();
+        DynamicMemBuffer* memBuf = nullptr;
+        SDL_RWops* dst = CreateDynamicMemRWops(memBuf);
         if (!dst)
         {
-            SDL_DestroySurface(surface);
-            if (scaled) SDL_DestroySurface(scaled);
-            throw std::runtime_error(std::string("SDL_IOFromDynamicMem failed: ") + SDL_GetError());
+            SDL_FreeSurface(surface);
+            if (scaled) SDL_FreeSurface(scaled);
+            throw std::runtime_error("Failed to allocate dynamic-memory RWops for SaveAsJpeg");
         }
 
-        if (!IMG_SaveJPG_IO(src, dst, false, GetJpegSaveQuality()))
+        if (IMG_SaveJPG_RW(src, dst, 0, GetJpegSaveQuality()) != 0)
         {
-            SDL_CloseIO(dst);
-            SDL_DestroySurface(surface);
-            if (scaled) SDL_DestroySurface(scaled);
-            throw std::runtime_error(std::string("IMG_SaveJPG_IO failed: ") + SDL_GetError());
+            SDL_RWclose(dst);
+            SDL_FreeSurface(surface);
+            if (scaled) SDL_FreeSurface(scaled);
+            throw std::runtime_error(std::string("IMG_SaveJPG_RW failed: ") + SDL_GetError());
         }
 
-        const Sint64 size = SDL_TellIO(dst);
-        if (size > 0)
+        if (!memBuf->data.empty())
         {
-            auto* buf = static_cast<uint8_t*>(
-                SDL_GetPointerProperty(SDL_GetIOProperties(dst),
-                                       SDL_PROP_IOSTREAM_DYNAMIC_MEMORY_POINTER, nullptr));
-            if (buf)
-                stream->Write(reinterpret_cast<const System::IO::bytecs*>(buf), 0,
-                              static_cast<System::IO::intcs>(size));
+            stream->Write(reinterpret_cast<const System::IO::bytecs*>(memBuf->data.data()), 0,
+                          static_cast<System::IO::intcs>(memBuf->data.size()));
         }
 
-        SDL_CloseIO(dst);
-        if (scaled) SDL_DestroySurface(scaled);
-        SDL_DestroySurface(surface);
+        SDL_RWclose(dst); // frees memBuf too (DynMemClose)
+        if (scaled) SDL_FreeSurface(scaled);
+        SDL_FreeSurface(surface);
     }
 
     void Texture2D::SaveAsJpeg(const std::string& filename) const
@@ -782,18 +839,17 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!cpuPixels_ || cpuPixels_->empty())
             throw std::runtime_error("Texture2D::SaveAsJpeg: no CPU-side pixel data available");
 
-        SDL_Surface* surface = SDL_CreateSurfaceFrom(
-            width, height, SDL_PIXELFORMAT_RGBA32,
-            const_cast<uint8_t*>(cpuPixels_->data()), width * 4);
+        SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            const_cast<uint8_t*>(cpuPixels_->data()), width, height, 32, width * 4, SDL_PIXELFORMAT_RGBA32);
         if (!surface)
-            throw std::runtime_error(std::string("SDL_CreateSurfaceFrom failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_CreateRGBSurfaceWithFormatFrom failed: ") + SDL_GetError());
 
-        if (!IMG_SaveJPG(surface, filename.c_str(), GetJpegSaveQuality()))
+        if (IMG_SaveJPG(surface, filename.c_str(), GetJpegSaveQuality()) != 0)
         {
-            SDL_DestroySurface(surface);
+            SDL_FreeSurface(surface);
             throw std::runtime_error(std::string("IMG_SaveJPG failed: ") + SDL_GetError());
         }
-        SDL_DestroySurface(surface);
+        SDL_FreeSurface(surface);
     }
 
     // -----------------------------------------------------------------------

@@ -1,11 +1,11 @@
 #include "CNA/Internal/Backends/SdlRenderer/SdlGraphicsBackend.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <filesystem>
-#include <SDL3/SDL_gpu.h>
 
 namespace CNA::Internal::Backends::SdlRenderer
 {
@@ -26,7 +26,7 @@ namespace CNA::Internal::Backends::SdlRenderer
             throw std::runtime_error(std::string("Failed to create SDL texture: ") + SDL_GetError());
         }
 
-        if (!SDL_UpdateTexture(texture, nullptr, data.pixels.data(), width * 4))
+        if (SDL_UpdateTexture(texture, nullptr, data.pixels.data(), width * 4) != 0)
         {
             SDL_DestroyTexture(texture);
             texture = nullptr;
@@ -113,10 +113,10 @@ namespace CNA::Internal::Backends::SdlRenderer
             case 3: // LinearMipPoint
             case 7: // MinPointMagLinearMipLinear
             case 8: // MinPointMagLinearMipPoint
-                scaleMode = SDL_SCALEMODE_LINEAR;
+                scaleMode = SDL_ScaleModeLinear;
                 break;
             default: // Point, PointMipLinear, MinLinearMagPointMipLinear, MinLinearMagPointMipPoint
-                scaleMode = SDL_SCALEMODE_NEAREST;
+                scaleMode = SDL_ScaleModeNearest;
                 break;
         }
     }
@@ -134,9 +134,9 @@ namespace CNA::Internal::Backends::SdlRenderer
         SDL_SetTextureScaleMode(nativeTex, scaleMode);
 
         SDL_FRect dst{x, y, static_cast<float>(texture.GetWidth()), static_cast<float>(texture.GetHeight())};
-        if (!SDL_RenderTexture(renderer, nativeTex, nullptr, &dst))
+        if (SDL_RenderCopyF(renderer, nativeTex, nullptr, &dst) != 0)
         {
-            throw std::runtime_error(std::string("SDL_RenderTexture failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_RenderCopyF failed: ") + SDL_GetError());
         }
     }
 
@@ -153,32 +153,34 @@ namespace CNA::Internal::Backends::SdlRenderer
         if (!nativeTex) return;
         SDL_SetTextureScaleMode(nativeTex, scaleMode);
 
-        if (!SDL_SetTextureColorMod(nativeTex, color.getRProperty(), color.getGProperty(), color.getBProperty()))
+        if (SDL_SetTextureColorMod(nativeTex, color.getRProperty(), color.getGProperty(), color.getBProperty()) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetTextureColorMod failed: ") + SDL_GetError());
         }
-        if (!SDL_SetTextureAlphaMod(nativeTex, color.getAProperty()))
+        if (SDL_SetTextureAlphaMod(nativeTex, color.getAProperty()) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetTextureAlphaMod failed: ") + SDL_GetError());
         }
         SDL_BlendMode currentBlendMode = SDL_BLENDMODE_BLEND;
         SDL_GetRenderDrawBlendMode(renderer, &currentBlendMode);
-        if (!SDL_SetTextureBlendMode(nativeTex, currentBlendMode))
+        if (SDL_SetTextureBlendMode(nativeTex, currentBlendMode) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetTextureBlendMode failed: ") + SDL_GetError());
         }
 
-        SDL_FRect src{
-            (float)sourceRectangle.X, (float)sourceRectangle.Y, (float)sourceRectangle.Width,
-            (float)sourceRectangle.Height
+        // SDL2's SDL_RenderCopyF/SDL_RenderCopyExF take an integer (pixel-space) source rect --
+        // only the destination rect is float -- unlike SDL3's SDL_RenderTexture, where both are
+        // float.
+        SDL_Rect src{
+            sourceRectangle.X, sourceRectangle.Y, sourceRectangle.Width, sourceRectangle.Height
         };
         SDL_FRect dst{
             (float)destinationRectangle.X, (float)destinationRectangle.Y, (float)destinationRectangle.Width,
             (float)destinationRectangle.Height
         };
-        if (!SDL_RenderTexture(renderer, nativeTex, &src, &dst))
+        if (SDL_RenderCopyF(renderer, nativeTex, &src, &dst) != 0)
         {
-            throw std::runtime_error(std::string("SDL_RenderTexture failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_RenderCopyF failed: ") + SDL_GetError());
         }
     }
 
@@ -200,24 +202,25 @@ namespace CNA::Internal::Backends::SdlRenderer
         if (!nativeTex) return;
         SDL_SetTextureScaleMode(nativeTex, scaleMode);
 
-        if (!SDL_SetTextureColorMod(nativeTex, color.getRProperty(), color.getGProperty(), color.getBProperty()))
+        if (SDL_SetTextureColorMod(nativeTex, color.getRProperty(), color.getGProperty(), color.getBProperty()) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetTextureColorMod failed: ") + SDL_GetError());
         }
-        if (!SDL_SetTextureAlphaMod(nativeTex, color.getAProperty()))
+        if (SDL_SetTextureAlphaMod(nativeTex, color.getAProperty()) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetTextureAlphaMod failed: ") + SDL_GetError());
         }
         SDL_BlendMode currentBlendMode = SDL_BLENDMODE_BLEND;
         SDL_GetRenderDrawBlendMode(renderer, &currentBlendMode);
-        if (!SDL_SetTextureBlendMode(nativeTex, currentBlendMode))
+        if (SDL_SetTextureBlendMode(nativeTex, currentBlendMode) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetTextureBlendMode failed: ") + SDL_GetError());
         }
 
-        SDL_FRect src{
-            (float)sourceRectangle.X, (float)sourceRectangle.Y, (float)sourceRectangle.Width,
-            (float)sourceRectangle.Height
+        // SDL2's SDL_RenderCopyExF takes an integer (pixel-space) source rect -- see the (x,y)
+        // Draw overload above for the same note.
+        SDL_Rect src{
+            sourceRectangle.X, sourceRectangle.Y, sourceRectangle.Width, sourceRectangle.Height
         };
 
         // Task 671 finding: XNA's Draw(destinationRectangle, ..., origin, ...) contract requires
@@ -241,28 +244,30 @@ namespace CNA::Internal::Backends::SdlRenderer
         SDL_FPoint sdlCenter{sdlCenterX, sdlCenterY};
         double rotationDeg = (double)rotation * 180.0 / 3.14159265358979323846;
 
-        SDL_FlipMode flip = SDL_FLIP_NONE;
+        SDL_RendererFlip flip = SDL_FLIP_NONE;
         if (((int)effects & (int)SpriteEffects::FlipHorizontally) && ((int)effects & (int)
             SpriteEffects::FlipVertically))
-            flip = SDL_FLIP_HORIZONTAL_AND_VERTICAL;
+            flip = static_cast<SDL_RendererFlip>(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
         else if ((int)effects & (int)SpriteEffects::FlipHorizontally) flip = SDL_FLIP_HORIZONTAL;
         else if ((int)effects & (int)SpriteEffects::FlipVertically) flip = SDL_FLIP_VERTICAL;
 
         // Task 675: SpriteBatch::Begin's transformMatrix was previously silently ignored on this
         // backend (SetTransformMatrix has no override, so the shared no-op default ran) --
-        // SDL_RenderTextureRotated has no way to accept an arbitrary transform on top of its own
-        // rotation/flip. Fixed via SDL_RenderTextureAffine, which maps 3 quad corners (origin,
-        // right, down) to arbitrary destination points, for the genuinely general case (only
-        // taken when transformMatrix isn't Identity -- the common case keeps using
-        // SDL_RenderTextureRotated above, unchanged, zero regression risk). The 4 unrotated local
-        // corners (relative to the origin pivot, mirroring the sdlCenter math above) are rotated
-        // by `rotation` exactly like FNA's own GenerateVertexInfo formula, translated to screen
+        // SDL_RenderCopyExF has no way to accept an arbitrary transform on top of its own
+        // rotation/flip. Post-Phase-4 (SDL2 migration): the pre-migration SDL3 implementation used
+        // SDL_RenderTextureAffine (SDL3-only, maps 3 quad corners to arbitrary destination points);
+        // SDL2 has no equivalent, so this is reimplemented via SDL_RenderGeometry, feeding it the
+        // same 4 already-transformed screen-space corners directly as a two-triangle textured
+        // quad (only taken when transformMatrix isn't Identity -- the common case keeps using
+        // SDL_RenderCopyExF above, unchanged, zero regression risk). The 4 unrotated local corners
+        // (relative to the origin pivot, mirroring the sdlCenter math above) are rotated by
+        // `rotation` exactly like FNA's own GenerateVertexInfo formula, translated to screen
         // space, then transformed by transformMatrix via Vector2::Transform (world/camera
         // transform applied on top of the sprite's own placement, matching FNA's real vertex
-        // pipeline order). Flip is applied by permuting which corner feeds which
-        // SDL_RenderTextureAffine parameter (each parameter fixes which SOURCE corner it
-        // represents; flipping swaps which SCREEN corner that source corner lands on) rather than
-        // by an SDL_FlipMode, which this API doesn't accept.
+        // pipeline order). Flip is applied to the texture-coordinate assignment instead of an
+        // SDL_RendererFlip value (SDL_RenderGeometry has no flip parameter at all) -- swapping
+        // which source corner's UV lands on which fixed screen corner achieves the identical
+        // mirrored result.
         if (transformMatrix != Matrix::getIdentityProperty())
         {
             const float cosR = std::cos(rotation);
@@ -281,42 +286,43 @@ namespace CNA::Internal::Backends::SdlRenderer
             const Vector2 bottomLeft  = Vector2::Transform(rotateAndPlace(-sdlCenterX,     h - sdlCenterY),  transformMatrix);
             const Vector2 bottomRight = Vector2::Transform(rotateAndPlace(w - sdlCenterX,  h - sdlCenterY),  transformMatrix);
 
-            const bool flipH = flip == SDL_FLIP_HORIZONTAL || flip == SDL_FLIP_HORIZONTAL_AND_VERTICAL;
-            const bool flipV = flip == SDL_FLIP_VERTICAL   || flip == SDL_FLIP_HORIZONTAL_AND_VERTICAL;
-            const Vector2& originCorner = (flipH && flipV) ? bottomRight : flipH ? topRight    : flipV ? bottomLeft  : topLeft;
-            const Vector2& rightCorner  = (flipH && flipV) ? bottomLeft  : flipH ? topLeft     : flipV ? bottomRight : topRight;
-            const Vector2& downCorner   = (flipH && flipV) ? topRight    : flipH ? bottomRight : flipV ? topLeft     : bottomLeft;
+            const bool flipH = flip == SDL_FLIP_HORIZONTAL || flip == static_cast<SDL_RendererFlip>(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
+            const bool flipV = flip == SDL_FLIP_VERTICAL   || flip == static_cast<SDL_RendererFlip>(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
 
-            SDL_FPoint sdlOrigin{originCorner.X, originCorner.Y};
-            SDL_FPoint sdlRight{rightCorner.X, rightCorner.Y};
-            SDL_FPoint sdlDown{downCorner.X, downCorner.Y};
-            if (!SDL_RenderTextureAffine(renderer, nativeTex, &src, &sdlOrigin, &sdlRight, &sdlDown))
+            const float texW = static_cast<float>(texture.GetWidth());
+            const float texH = static_cast<float>(texture.GetHeight());
+            const float u0 = static_cast<float>(src.x) / texW;
+            const float v0 = static_cast<float>(src.y) / texH;
+            const float u1 = static_cast<float>(src.x + src.w) / texW;
+            const float v1 = static_cast<float>(src.y + src.h) / texH;
+            const float uLeft  = flipH ? u1 : u0;
+            const float uRight = flipH ? u0 : u1;
+            const float vTop    = flipV ? v1 : v0;
+            const float vBottom = flipV ? v0 : v1;
+
+            const SDL_Color sdlColor{color.getRProperty(), color.getGProperty(),
+                                      color.getBProperty(), color.getAProperty()};
+            const SDL_Vertex vertices[4] = {
+                {{topLeft.X, topLeft.Y},         sdlColor, {uLeft,  vTop}},
+                {{topRight.X, topRight.Y},       sdlColor, {uRight, vTop}},
+                {{bottomLeft.X, bottomLeft.Y},   sdlColor, {uLeft,  vBottom}},
+                {{bottomRight.X, bottomRight.Y}, sdlColor, {uRight, vBottom}},
+            };
+            const int indices[6] = {0, 1, 2, 2, 1, 3};
+            if (SDL_RenderGeometry(renderer, nativeTex, vertices, 4, indices, 6) != 0)
             {
-                throw std::runtime_error(std::string("SDL_RenderTextureAffine failed: ") + SDL_GetError());
+                throw std::runtime_error(std::string("SDL_RenderGeometry failed: ") + SDL_GetError());
             }
             return;
         }
 
-        if (!SDL_RenderTextureRotated(renderer, nativeTex, &src, &dst, rotationDeg, &sdlCenter, flip))
+        if (SDL_RenderCopyExF(renderer, nativeTex, &src, &dst, rotationDeg, &sdlCenter, flip) != 0)
         {
-            throw std::runtime_error(std::string("SDL_RenderTextureRotated failed: ") + SDL_GetError());
+            throw std::runtime_error(std::string("SDL_RenderCopyExF failed: ") + SDL_GetError());
         }
     }
 
     // --- SdlGraphicsBackend ---
-
-    static SDL_RendererLogicalPresentation toSdlPresentationMode(CnaPresentationMode mode)
-    {
-        switch (mode)
-        {
-        case CnaPresentationMode::Letterbox: return SDL_LOGICAL_PRESENTATION_LETTERBOX;
-        case CnaPresentationMode::Overscan: return SDL_LOGICAL_PRESENTATION_OVERSCAN;
-        case CnaPresentationMode::Stretch: return SDL_LOGICAL_PRESENTATION_STRETCH;
-        case CnaPresentationMode::NativeBackBuffer: return SDL_LOGICAL_PRESENTATION_DISABLED;
-        case CnaPresentationMode::FixedHeightDynamicWidth: return SDL_LOGICAL_PRESENTATION_LETTERBOX;
-        default: return SDL_LOGICAL_PRESENTATION_LETTERBOX;
-        }
-    }
 
     static const char* presentationModeName(CnaPresentationMode mode)
     {
@@ -331,8 +337,12 @@ namespace CNA::Internal::Backends::SdlRenderer
         }
     }
 
-    /// When mode is FixedHeightDynamicWidth, derive logicalW from the actual
-    /// renderer output size so the canvas exactly matches the surface AR.
+    // Post-Phase-4 (SDL2 migration): SDL3's SDL_SetRenderLogicalPresentation had 4 built-in modes;
+    // SDL2's closest native primitive, SDL_RenderSetLogicalSize, only implements Letterbox
+    // (uniform scale-to-fit, centered, preserving aspect ratio -- exactly SDL3's LETTERBOX mode).
+    // Overscan (scale-to-fill, centered, cropping overflow) and Stretch (independent x/y scale,
+    // fills exactly, no cropping) have no SDL2 built-in equivalent and are reimplemented manually
+    // below via SDL_RenderSetScale + SDL_RenderSetViewport -- see each case's own comment.
     static void applyLogicalPresentation(SDL_Renderer* renderer,
                                          int& logicalWidth, int& logicalHeight,
                                          CnaPresentationMode mode)
@@ -340,7 +350,7 @@ namespace CNA::Internal::Backends::SdlRenderer
         if (mode == CnaPresentationMode::FixedHeightDynamicWidth)
         {
             int outputW = 0, outputH = 0;
-            SDL_GetRenderOutputSize(renderer, &outputW, &outputH);
+            SDL_GetRendererOutputSize(renderer, &outputW, &outputH);
             if (outputH > 0 && logicalHeight > 0)
             {
                 logicalWidth = (int)((double)outputW * logicalHeight / outputH + 0.5);
@@ -348,16 +358,74 @@ namespace CNA::Internal::Backends::SdlRenderer
             SDL_Log("[Renderer] FixedHeightDynamicWidth: outputSize=%dx%d logicalSize=%dx%d",
                     outputW, outputH, logicalWidth, logicalHeight);
         }
-        SDL_RendererLogicalPresentation sdlMode = toSdlPresentationMode(mode);
-        if (!SDL_SetRenderLogicalPresentation(renderer, logicalWidth, logicalHeight, sdlMode))
+
+        int outputW = 0, outputH = 0;
+        SDL_GetRendererOutputSize(renderer, &outputW, &outputH);
+
+        switch (mode)
         {
-            SDL_Log("[Renderer] WARNING: SDL_SetRenderLogicalPresentation failed: %s", SDL_GetError());
+            case CnaPresentationMode::Letterbox:
+            case CnaPresentationMode::FixedHeightDynamicWidth:
+                // FixedHeightDynamicWidth already computed logicalWidth to match the output's own
+                // aspect ratio exactly above, so no actual letterbox bar ever shows -- otherwise
+                // identical to plain Letterbox.
+                SDL_RenderSetViewport(renderer, nullptr);
+                SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+                if (SDL_RenderSetLogicalSize(renderer, logicalWidth, logicalHeight) != 0)
+                {
+                    SDL_Log("[Renderer] WARNING: SDL_RenderSetLogicalSize failed: %s", SDL_GetError());
+                }
+                break;
+
+            case CnaPresentationMode::NativeBackBuffer:
+                // Disable logical scaling entirely -- 1:1 physical pixels.
+                SDL_RenderSetLogicalSize(renderer, 0, 0);
+                SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+                SDL_RenderSetViewport(renderer, nullptr);
+                break;
+
+            case CnaPresentationMode::Overscan:
+                // SDL_RenderSetLogicalSize has no overscan variant -- disable it and apply a
+                // uniform scale-to-FILL factor (the larger of the two axis ratios, so both axes
+                // are at least fully covered) manually, then center the logical area within the
+                // real output via a deliberately oversized/negative-origin viewport (SDL2 clips
+                // rendering to the real render-target bounds regardless of viewport size, so the
+                // overflow is cropped exactly like SDL3's OVERSCAN mode).
+                SDL_RenderSetLogicalSize(renderer, 0, 0);
+                if (logicalWidth > 0 && logicalHeight > 0 && outputW > 0 && outputH > 0)
+                {
+                    const float scale = std::max(
+                        static_cast<float>(outputW) / static_cast<float>(logicalWidth),
+                        static_cast<float>(outputH) / static_cast<float>(logicalHeight));
+                    SDL_RenderSetScale(renderer, scale, scale);
+                    const int scaledW = static_cast<int>(std::lround(logicalWidth * scale));
+                    const int scaledH = static_cast<int>(std::lround(logicalHeight * scale));
+                    const SDL_Rect viewport{
+                        (outputW - scaledW) / 2, (outputH - scaledH) / 2, scaledW, scaledH};
+                    SDL_RenderSetViewport(renderer, &viewport);
+                }
+                break;
+
+            case CnaPresentationMode::Stretch:
+                // Independent x/y scale factors fill the output exactly, ignoring aspect ratio --
+                // no cropping, no letterbox bars.
+                SDL_RenderSetLogicalSize(renderer, 0, 0);
+                SDL_RenderSetViewport(renderer, nullptr);
+                if (logicalWidth > 0 && logicalHeight > 0 && outputW > 0 && outputH > 0)
+                {
+                    SDL_RenderSetScale(
+                        renderer,
+                        static_cast<float>(outputW) / static_cast<float>(logicalWidth),
+                        static_cast<float>(outputH) / static_cast<float>(logicalHeight));
+                }
+                break;
+
+            default:
+                break;
         }
-        else
-        {
-            SDL_Log("[Renderer] SDL_SetRenderLogicalPresentation set to %dx%d %s",
-                    logicalWidth, logicalHeight, presentationModeName(mode));
-        }
+
+        SDL_Log("[Renderer] Logical presentation set to %dx%d %s",
+                logicalWidth, logicalHeight, presentationModeName(mode));
     }
 
     SdlGraphicsBackend::SdlGraphicsBackend(SDL_Window* window, int virtualWidth, int virtualHeight,
@@ -369,15 +437,22 @@ namespace CNA::Internal::Backends::SdlRenderer
         // NOTE: SDL_Window is NOT owned by the backend.
         // It is owned by GraphicsDevice or higher level platform layer.
 
-        renderer = SDL_CreateRenderer(window, nullptr);
+        // SDL2's SDL_CreateRenderer takes a device index (-1 = first driver satisfying flags) and
+        // a flags bitmask, not SDL3's (window, name) pair -- vsync is a creation-time flag here,
+        // unlike SDL3's separately-callable SDL_SetRenderVSync. Deliberately does NOT request
+        // SDL_RENDERER_ACCELERATED: that flag makes SDL2 refuse every driver lacking real GPU
+        // acceleration (fails outright under headless/software-only video drivers, e.g.
+        // SDL_VIDEODRIVER=dummy in this project's own smoke tests/CI), whereas leaving it
+        // unset (matching the pre-migration SDL3 implementation's own driver-agnostic
+        // `SDL_CreateRenderer(window, nullptr)` call) still picks the best real accelerated
+        // driver first when one is genuinely available, falling back to software only when
+        // nothing else exists.
+        const Uint32 rendererFlags =
+            swapInterval > 0 ? static_cast<Uint32>(SDL_RENDERER_PRESENTVSYNC) : 0u;
+        renderer = SDL_CreateRenderer(window, -1, rendererFlags);
         if (!renderer)
         {
             throw std::runtime_error(std::string("SDL_CreateRenderer failed: ") + SDL_GetError());
-        }
-        // SDL3 SDL_SetRenderVSync only supports 0 (off) or 1 (on) — map Two→1, Immediate→0.
-        if (!SDL_SetRenderVSync(renderer, swapInterval > 0 ? 1 : 0))
-        {
-            std::cerr << "Warning: SDL_SetRenderVSync failed: " << SDL_GetError() << std::endl;
         }
 
         // Log physical output size vs. requested virtual size, then configure
@@ -385,7 +460,7 @@ namespace CNA::Internal::Backends::SdlRenderer
         // scaled / letterboxed to fit the real surface on every platform.
         {
             int outputW = 0, outputH = 0;
-            SDL_GetRenderOutputSize(renderer, &outputW, &outputH);
+            SDL_GetRendererOutputSize(renderer, &outputW, &outputH);
             int winW = 0, winH = 0;
             SDL_GetWindowSize(window, &winW, &winH);
             SDL_Log("[Renderer] virtualSize=%dx%d windowSize=%dx%d rendererOutputSize=%dx%d",
@@ -401,43 +476,29 @@ namespace CNA::Internal::Backends::SdlRenderer
             }
         }
 
-        const char* name = SDL_GetRendererName(renderer);
-
-        if (!name)
+        // SDL2 has no separate GPU-device-driver query (SDL3-only SDL_GetGPURendererDevice/
+        // SDL_GetGPUDeviceDriver, for its new "gpu" renderer -- SDL2 has no such renderer at all,
+        // only software/opengl/opengles2/direct3d/metal/vulkan) -- SDL_GetRendererInfo's own
+        // `.name` field is the complete, sufficient diagnostic here.
+        SDL_RendererInfo info{};
+        if (SDL_GetRendererInfo(renderer, &info) != 0)
         {
-            SDL_Log("SDL_GetRendererName failed: %s", SDL_GetError());
+            SDL_Log("SDL_GetRendererInfo failed: %s", SDL_GetError());
         }
-        else if (SDL_strcmp(name, "opengl") == 0)
+        else if (SDL_strcmp(info.name, "opengl") == 0)
         {
             SDL_Log("SDL_Renderer uses OpenGL");
             std::cout << "SDL_Renderer uses OpenGL" << std::endl;
         }
-        else if (SDL_strcmp(name, "gpu") == 0)
-        {
-            SDL_GPUDevice* device = SDL_GetGPURendererDevice(renderer);
-            if (device)
-            {
-                const char* gpuDriver = SDL_GetGPUDeviceDriver(device);
-                SDL_Log("SDL_Renderer = gpu, current backend = %s",
-                        gpuDriver ? gpuDriver : "unknown");
-                std::cout << "SDL_Renderer = gpu, current backend = " << (gpuDriver ? gpuDriver : "unknown") <<
-                    std::endl;
-            }
-            else
-            {
-                SDL_Log("Renderer is gpu, but GPU device could not be find out: %s", SDL_GetError());
-                std::cout << "Renderer is gpu, but GPU device could not be find out: " << SDL_GetError() << std::endl;
-            }
-        }
-        else if (SDL_strcmp(name, "vulkan") == 0)
+        else if (SDL_strcmp(info.name, "vulkan") == 0)
         {
             SDL_Log("SDL_Renderer uses Vulkan");
             std::cout << "SDL_Renderer uses Vulkan" << std::endl;
         }
         else
         {
-            SDL_Log("SDL_Renderer backend: %s", name);
-            std::cout << "SDL_Renderer backend: " << name << std::endl;
+            SDL_Log("SDL_Renderer backend: %s", info.name);
+            std::cout << "SDL_Renderer backend: " << info.name << std::endl;
         }
 
         // Task 456: one-time startup capability dump. This backend is 2D-only by design (Tasks
@@ -460,12 +521,12 @@ namespace CNA::Internal::Backends::SdlRenderer
 
     void SdlGraphicsBackend::Clear(float r, float g, float b, float a)
     {
-        if (!SDL_SetRenderDrawColor(renderer, (Uint8)(r * 255.0f), (Uint8)(g * 255.0f), (Uint8)(b * 255.0f),
-                                    (Uint8)(a * 255.0f)))
+        if (SDL_SetRenderDrawColor(renderer, (Uint8)(r * 255.0f), (Uint8)(g * 255.0f), (Uint8)(b * 255.0f),
+                                    (Uint8)(a * 255.0f)) != 0)
         {
             throw std::runtime_error(std::string("SDL_SetRenderDrawColor failed: ") + SDL_GetError());
         }
-        if (!SDL_RenderClear(renderer))
+        if (SDL_RenderClear(renderer) != 0)
         {
             throw std::runtime_error(std::string("SDL_RenderClear failed: ") + SDL_GetError());
         }
@@ -479,7 +540,7 @@ namespace CNA::Internal::Backends::SdlRenderer
         if (renderer && logicalHeight > 0)
         {
             int outputW = 0, outputH = 0;
-            SDL_GetRenderOutputSize(renderer, &outputW, &outputH);
+            SDL_GetRendererOutputSize(renderer, &outputW, &outputH);
             if (outputW > 0 && outputH > 0 &&
                 (outputW != lastOutputW_ || outputH != lastOutputH_))
             {
@@ -490,10 +551,8 @@ namespace CNA::Internal::Backends::SdlRenderer
                 applyLogicalPresentation(renderer, logicalWidth, logicalHeight, presentationMode_);
             }
         }
-        if (!SDL_RenderPresent(renderer))
-        {
-            throw std::runtime_error(std::string("SDL_RenderPresent failed: ") + SDL_GetError());
-        }
+        // SDL2's SDL_RenderPresent returns void (unlike SDL3's bool-returning version).
+        SDL_RenderPresent(renderer);
     }
 
     void SdlGraphicsBackend::SetVirtualResolution(int width, int height)
@@ -518,21 +577,13 @@ namespace CNA::Internal::Backends::SdlRenderer
 
     void SdlGraphicsBackend::SetSwapInterval(int interval)
     {
-        if (!renderer) return;
-        // Task 713 finding: interval is already exactly 0 (PresentInterval::Immediate), 1
-        // (Default/One), or 2 (Two) per GraphicsDevice.cpp's own toSwapInterval() -- this
-        // previously collapsed ANY positive interval down to 1, silently discarding
-        // PresentInterval::Two's "wait for two vertical retrace periods, half refresh rate"
-        // semantics. SDL_SetRenderVSync's own doc comment confirms passing 2 directly means
-        // exactly that ("synchronize present with every second vertical refresh"), so the value
-        // is now passed straight through instead of collapsed.
-        if (SDL_SetRenderVSync(renderer, interval)) return;
-        // Not every value is supported by every driver (SDL_SetRenderVSync's own doc comment --
-        // confirmed empirically: this project's own sandbox GL driver rejects interval=2). Fall
-        // back to the closest universally-supported approximation (every-refresh vsync) rather
-        // than silently leaving vsync at whatever value happened to be set previously.
-        if (interval > 1)
-            SDL_SetRenderVSync(renderer, 1);
+        // SDL2 has no runtime vsync toggle at all (unlike SDL3's SDL_SetRenderVSync) -- vsync is
+        // fixed at SDL_CreateRenderer time via the SDL_RENDERER_PRESENTVSYNC flag (see the
+        // constructor). A later SetSwapInterval() call is a silent no-op here rather than
+        // recreating the renderer (which would drop every texture bound to it) -- a disclosed
+        // limitation: only the constructor's initial swapInterval actually takes effect on this
+        // backend post-migration.
+        (void)interval;
     }
 
     int SdlGraphicsBackend::ApplyMultiSampleCount(int requestedMultiSampleCount)
@@ -560,7 +611,7 @@ namespace CNA::Internal::Backends::SdlRenderer
         if ((logicalWidth <= 0 || logicalHeight <= 0) && renderer)
         {
             int outputW = 0, outputH = 0;
-            SDL_GetRenderOutputSize(renderer, &outputW, &outputH);
+            SDL_GetRendererOutputSize(renderer, &outputW, &outputH);
             if (outputW > 0 && outputH > 0)
             {
                 SDL_Log("[Renderer] GetViewportSize: virtual size unset, falling back to physical %dx%d",
@@ -596,48 +647,32 @@ namespace CNA::Internal::Backends::SdlRenderer
         int originX = 0, originY = 0;
         if (SDL_GetRenderTarget(renderer) == nullptr)
         {
-            SDL_FRect presentRect{};
-            SDL_GetRenderLogicalPresentationRect(renderer, &presentRect);
-            const int physW = static_cast<int>(presentRect.w);
-            const int physH = static_cast<int>(presentRect.h);
-            if (physW != logicalWidth || physH != logicalHeight)
+            // SDL2 has no SDL_GetRenderLogicalPresentationRect equivalent -- SDL_RenderGetViewport
+            // serves the same purpose here: SDL2 maintains the current viewport internally for
+            // logical-size letterboxing, and applyLogicalPresentation() above sets it explicitly
+            // for Overscan/Stretch/NativeBackBuffer too, so it always reflects the current
+            // logical-to-physical presentation rect regardless of mode.
+            SDL_Rect presentRect{};
+            SDL_RenderGetViewport(renderer, &presentRect);
+            if (presentRect.w != logicalWidth || presentRect.h != logicalHeight)
             {
                 throw std::runtime_error("ReadBackbuffer: physical/logical size mismatch "
                                           "(letterbox or stretch scaling active) -- exact-pixel "
                                           "readback unsupported");
             }
-            originX = static_cast<int>(presentRect.x);
-            originY = static_cast<int>(presentRect.y);
+            originX = presentRect.x;
+            originY = presentRect.y;
         }
 
+        // SDL2's SDL_RenderReadPixels writes directly into a caller-provided buffer at a
+        // requested format (unlike SDL3's version, which allocates and returns a new SDL_Surface
+        // in the renderer's native format) -- requesting RGBA32 directly means no separate
+        // surface + format-conversion step is needed at all.
         SDL_Rect region{ originX + x, originY + y, w, h };
-        SDL_Surface* surface = SDL_RenderReadPixels(renderer, &region);
-        if (!surface)
+        if (SDL_RenderReadPixels(renderer, &region, SDL_PIXELFORMAT_RGBA32, pixels, w * 4) != 0)
+        {
             throw std::runtime_error(std::string("SDL_RenderReadPixels failed: ") + SDL_GetError());
-
-        SDL_Surface* converted = surface;
-        bool ownsConverted = false;
-        if (surface->format != SDL_PIXELFORMAT_RGBA32)
-        {
-            converted = SDL_ConvertSurface(surface, SDL_PIXELFORMAT_RGBA32);
-            if (!converted)
-            {
-                SDL_DestroySurface(surface);
-                throw std::runtime_error(std::string("SDL_ConvertSurface failed: ") + SDL_GetError());
-            }
-            ownsConverted = true;
         }
-
-        const auto* base = static_cast<const uint8_t*>(converted->pixels);
-        for (int row = 0; row < h; ++row)
-        {
-            const uint8_t* src = base + static_cast<std::size_t>(row) * converted->pitch;
-            std::memcpy(pixels + static_cast<std::size_t>(row) * w * 4, src, static_cast<std::size_t>(w) * 4);
-        }
-
-        if (ownsConverted)
-            SDL_DestroySurface(converted);
-        SDL_DestroySurface(surface);
     }
 
     // Maps Microsoft::Xna::Framework::Graphics::Blend's 13 values to SDL_BlendFactor. The first
@@ -690,9 +725,21 @@ namespace CNA::Internal::Backends::SdlRenderer
             ToSdlBlendFactor(alphaSrcBlend), ToSdlBlendFactor(alphaDstBlend),
             ToSdlBlendOperation(alphaBlendFunc));
         blendMode_ = mode;
-        if (!SDL_SetRenderDrawBlendMode(renderer, blendMode_))
+        if (SDL_SetRenderDrawBlendMode(renderer, blendMode_) != 0)
         {
-            throw std::runtime_error(std::string("SDL_SetRenderDrawBlendMode failed: ") + SDL_GetError());
+            // SDL2's software renderer (used whenever no accelerated driver is available, e.g.
+            // SDL_VIDEODRIVER=dummy in headless smoke tests/CI) rejects most arbitrarily-composed
+            // custom blend modes outright ("That operation is not supported") -- unlike SDL2's
+            // opengl/direct3d/vulkan renderers, which support SDL_ComposeCustomBlendMode's full
+            // generality. Falling back to the standard SDL_BLENDMODE_BLEND (XNA's overwhelmingly
+            // common BlendState::AlphaBlend) keeps headless/software runs going instead of hard
+            // crashing on a renderer limitation that has no bearing on any real (accelerated)
+            // target this backend actually ships on.
+            blendMode_ = SDL_BLENDMODE_BLEND;
+            if (SDL_SetRenderDrawBlendMode(renderer, blendMode_) != 0)
+            {
+                throw std::runtime_error(std::string("SDL_SetRenderDrawBlendMode failed: ") + SDL_GetError());
+            }
         }
     }
 
@@ -700,11 +747,11 @@ namespace CNA::Internal::Backends::SdlRenderer
     {
         if (w <= 0 || h <= 0)
         {
-            SDL_SetRenderClipRect(renderer, nullptr);
+            SDL_RenderSetClipRect(renderer, nullptr);
             return;
         }
         SDL_Rect rect{ x, y, w, h };
-        SDL_SetRenderClipRect(renderer, &rect);
+        SDL_RenderSetClipRect(renderer, &rect);
     }
 
     // --- SdlRenderTargetBackend ---

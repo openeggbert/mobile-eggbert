@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Graphics/GraphicsAdapter.hpp"
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <stdexcept>
 #include <utility>
@@ -17,9 +17,13 @@ namespace Microsoft::Xna::Framework::Graphics
 
     namespace
     {
-        std::string getDisplayName(SDL_DisplayID displayId, SharpRuntime::intcs fallbackIndex)
+        // SDL2 identifies displays by a plain zero-based index (SDL_GetDisplayName(int)),
+        // unlike SDL3's opaque SDL_DisplayID/SDL_GetDisplays() array -- this file's own
+        // `displayIndex` parameters already ARE that index, so no separate ID-lookup layer is
+        // needed anymore (the pre-migration getDisplayIdByIndex() helper this replaces is gone).
+        std::string getDisplayName(int displayIndex, SharpRuntime::intcs fallbackIndex)
         {
-            const char* name = SDL_GetDisplayName(displayId);
+            const char* name = SDL_GetDisplayName(displayIndex);
             if (name != nullptr && *name != '\0')
             {
                 return std::string(name);
@@ -27,26 +31,6 @@ namespace Microsoft::Xna::Framework::Graphics
 
             return "Display " + std::to_string(fallbackIndex);
         }
-
-        SDL_DisplayID getDisplayIdByIndex(SharpRuntime::intcs index)
-        {
-            int count = 0;
-            SDL_DisplayID* displays = SDL_GetDisplays(&count);
-            if (displays == nullptr || count <= 0)
-            {
-                return 0;
-            }
-
-            SDL_DisplayID result = 0;
-            if (index >= 0 && index < count)
-            {
-                result = displays[index];
-            }
-
-            SDL_free(displays);
-            return result;
-        }
-
     }
 
     GraphicsAdapter& GraphicsAdapter::getDefaultAdapterProperty()
@@ -130,15 +114,10 @@ namespace Microsoft::Xna::Framework::Graphics
         SharpRuntime::intcs vendorId = 0, deviceId = 0;
         queryPciIds(vendorId, deviceId);
 
-        int count = 0;
-        SDL_DisplayID* displays = SDL_GetDisplays(&count);
+        const int count = SDL_GetNumVideoDisplays();
 
-        if (displays == nullptr || count <= 0)
+        if (count <= 0)
         {
-            // SDL_free is a documented no-op on nullptr; guards the (unlikely but possible) case
-            // where SDL returns a non-null array with count<=0.
-            SDL_free(displays);
-
             adapters_.push_back(std::unique_ptr<GraphicsAdapter>(
                 new GraphicsAdapter(
                     0,
@@ -157,7 +136,7 @@ namespace Microsoft::Xna::Framework::Graphics
             // Windows-style path (not the real display name — real XNA convention, kept even on
             // non-Windows platforms), while Description is the actual display name.
             const std::string deviceName = "\\\\.\\DISPLAY" + std::to_string(i + 1);
-            const std::string description = getDisplayName(displays[i], i);
+            const std::string description = getDisplayName(i, i);
             // All displays share the same GPU — pass PCI IDs to every adapter.
             adapters_.push_back(std::unique_ptr<GraphicsAdapter>(
                 new GraphicsAdapter(
@@ -169,8 +148,6 @@ namespace Microsoft::Xna::Framework::Graphics
                 )
             ));
         }
-
-        SDL_free(displays);
     }
 
     const std::string& GraphicsAdapter::GetTypeName() const
@@ -182,23 +159,22 @@ namespace Microsoft::Xna::Framework::Graphics
     std::vector<DisplayMode> GraphicsAdapter::queryDisplayModes(SharpRuntime::intcs displayIndex)
     {
         std::vector<DisplayMode> result;
-        const SDL_DisplayID displayId = getDisplayIdByIndex(displayIndex);
 
-        if (displayId == 0)
+        if (displayIndex < 0 || displayIndex >= SDL_GetNumVideoDisplays())
         {
             result.emplace_back(800, 480, SurfaceFormat::Color);
             return result;
         }
 
-        int count = 0;
-        SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(displayId, &count);
-        if (modes != nullptr && count > 0)
+        const int count = SDL_GetNumDisplayModes(displayIndex);
+        if (count > 0)
         {
             // Matches FNA's SDL3_FNAPlatform.GetGraphicsAdapters(): iterate in reverse and skip
             // width/height duplicates caused by multiple refresh rates at the same resolution.
             for (int i = count - 1; i >= 0; --i)
             {
-                if (modes[i] == nullptr)
+                SDL_DisplayMode mode{};
+                if (SDL_GetDisplayMode(displayIndex, i, &mode) != 0)
                 {
                     continue;
                 }
@@ -206,7 +182,7 @@ namespace Microsoft::Xna::Framework::Graphics
                 bool dupe = false;
                 for (const DisplayMode& existing : result)
                 {
-                    if (modes[i]->w == existing.getWidthProperty() && modes[i]->h == existing.getHeightProperty())
+                    if (mode.w == existing.getWidthProperty() && mode.h == existing.getHeightProperty())
                     {
                         dupe = true;
                         break;
@@ -215,11 +191,9 @@ namespace Microsoft::Xna::Framework::Graphics
 
                 if (!dupe)
                 {
-                    result.emplace_back(modes[i]->w, modes[i]->h, SurfaceFormat::Color);
+                    result.emplace_back(mode.w, mode.h, SurfaceFormat::Color);
                 }
             }
-
-            SDL_free(modes);
         }
 
         if (result.empty())
@@ -232,18 +206,17 @@ namespace Microsoft::Xna::Framework::Graphics
 
     DisplayMode GraphicsAdapter::queryCurrentDisplayMode(SharpRuntime::intcs displayIndex)
     {
-        const SDL_DisplayID displayId = getDisplayIdByIndex(displayIndex);
-        if (displayId == 0)
+        if (displayIndex < 0 || displayIndex >= SDL_GetNumVideoDisplays())
         {
             return DisplayMode(800, 480, SurfaceFormat::Color);
         }
 
-        const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(displayId);
-        if (mode == nullptr)
+        SDL_DisplayMode mode{};
+        if (SDL_GetCurrentDisplayMode(displayIndex, &mode) != 0)
         {
             return DisplayMode(800, 480, SurfaceFormat::Color);
         }
 
-        return DisplayMode(mode->w, mode->h, SurfaceFormat::Color);
+        return DisplayMode(mode.w, mode.h, SurfaceFormat::Color);
     }
 }

@@ -1,6 +1,6 @@
 #include "CNA/Logger.hpp"
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <string>
 
@@ -159,7 +159,9 @@ namespace CNA
     void Logger::SetMinimumLevel(LogLevel level)
     {
         minimumLevel_ = level;
-        SDL_SetLogPriorities(static_cast<SDL_LogPriority>(ToSDLPriority(level)));
+        // SDL2's equivalent of SDL3's SDL_SetLogPriorities (set every category's priority) is
+        // SDL_LogSetAllPriority.
+        SDL_LogSetAllPriority(static_cast<SDL_LogPriority>(ToSDLPriority(level)));
     }
 
     LogLevel Logger::GetMinimumLevel()
@@ -211,7 +213,9 @@ namespace CNA
         case LogCategory::TEST:
             return SDL_LOG_CATEGORY_TEST;
         case LogCategory::GPU:
-            return SDL_LOG_CATEGORY_GPU;
+            // SDL2 has no dedicated GPU log category (SDL3-only addition) -- RENDER is the
+            // closest existing category.
+            return SDL_LOG_CATEGORY_RENDER;
         default:
             return SDL_LOG_CATEGORY_APPLICATION;
         }

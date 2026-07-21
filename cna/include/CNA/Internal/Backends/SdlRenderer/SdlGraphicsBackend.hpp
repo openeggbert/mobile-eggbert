@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../Common/IGraphicsBackend.hpp"
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_render.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
 
 namespace CNA::Internal::Backends::SdlRenderer
 {
@@ -55,7 +55,7 @@ namespace CNA::Internal::Backends::SdlRenderer
     public:
         SDL_Renderer* renderer;
         bool begun = false;
-        SDL_ScaleMode scaleMode = SDL_SCALEMODE_LINEAR;
+        SDL_ScaleMode scaleMode = SDL_ScaleModeLinear;
         // Task 675: transform matrix applied on top of each sprite's own destRect/rotation/origin
         // placement. Defaults to Identity -- SDL_RenderTextureRotated() is used unchanged
         // whenever this stays Identity (the overwhelmingly common case), so this fix carries zero
