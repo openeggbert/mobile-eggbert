@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #pragma once
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 #include <cstddef>
 #include <cstdint>
 #include <string>

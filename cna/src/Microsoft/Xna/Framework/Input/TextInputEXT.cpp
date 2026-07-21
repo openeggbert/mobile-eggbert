@@ -3,7 +3,7 @@
 
 #include "CNA/Input/TextInputType.hpp"
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 namespace
 {
@@ -11,23 +11,6 @@ namespace
     inline SDL_Window* ToSdlWindow(std::uintptr_t handle)
     {
         return reinterpret_cast<SDL_Window*>(handle);
-    }
-
-    SDL_TextInputType ToSdlTextInputType(CNA::Input::TextInputTypeEXT type)
-    {
-        switch (type)
-        {
-            case CNA::Input::TextInputTypeEXT::Text:                 return SDL_TEXTINPUT_TYPE_TEXT;
-            case CNA::Input::TextInputTypeEXT::TextName:             return SDL_TEXTINPUT_TYPE_TEXT_NAME;
-            case CNA::Input::TextInputTypeEXT::TextEmail:            return SDL_TEXTINPUT_TYPE_TEXT_EMAIL;
-            case CNA::Input::TextInputTypeEXT::TextUsername:         return SDL_TEXTINPUT_TYPE_TEXT_USERNAME;
-            case CNA::Input::TextInputTypeEXT::TextPasswordHidden:   return SDL_TEXTINPUT_TYPE_TEXT_PASSWORD_HIDDEN;
-            case CNA::Input::TextInputTypeEXT::TextPasswordVisible:  return SDL_TEXTINPUT_TYPE_TEXT_PASSWORD_VISIBLE;
-            case CNA::Input::TextInputTypeEXT::Number:                return SDL_TEXTINPUT_TYPE_NUMBER;
-            case CNA::Input::TextInputTypeEXT::NumberPasswordHidden:  return SDL_TEXTINPUT_TYPE_NUMBER_PASSWORD_HIDDEN;
-            case CNA::Input::TextInputTypeEXT::NumberPasswordVisible: return SDL_TEXTINPUT_TYPE_NUMBER_PASSWORD_VISIBLE;
-        }
-        return SDL_TEXTINPUT_TYPE_TEXT;
     }
 }
 
@@ -50,9 +33,12 @@ namespace Microsoft::Xna::Framework::Input
 
     bool TextInputEXT::IsTextInputActive()
     {
-        if (SDL_Window* window = ToSdlWindow(windowHandle_))
+        // SDL2's text-input API is process-global, not per-window (unlike SDL3's
+        // window-parameterized SDL_TextInputActive) -- the window handle is only still checked
+        // here to preserve this method's existing "no window yet -> false" guard.
+        if (ToSdlWindow(windowHandle_) != nullptr)
         {
-            return SDL_TextInputActive(window);
+            return SDL_IsTextInputActive() != SDL_FALSE;
         }
         return false;
     }
@@ -66,7 +52,7 @@ namespace Microsoft::Xna::Framework::Input
     {
         if (SDL_Window* w = ToSdlWindow(window))
         {
-            return SDL_ScreenKeyboardShown(w);
+            return SDL_IsScreenKeyboardShown(w) != SDL_FALSE;
         }
         return false;
     }
@@ -74,47 +60,51 @@ namespace Microsoft::Xna::Framework::Input
     void TextInputEXT::StartTextInput()
     {
         // Guard against a null window: WindowHandle is not populated until the window
-        // is created (plan_input.md Task 703). FNA passes the handle straight through.
-        if (SDL_Window* window = ToSdlWindow(windowHandle_))
+        // is created (plan_input.md Task 703). SDL2's SDL_StartTextInput takes no window
+        // argument (process-global, unlike SDL3's per-window version) -- the guard is kept so
+        // this call is a no-op before a window exists, matching the pre-migration behavior.
+        if (ToSdlWindow(windowHandle_) != nullptr)
         {
-            SDL_StartTextInput(window);
+            SDL_StartTextInput();
         }
     }
 
     void TextInputEXT::StopTextInput()
     {
-        if (SDL_Window* window = ToSdlWindow(windowHandle_))
+        if (ToSdlWindow(windowHandle_) != nullptr)
         {
-            SDL_StopTextInput(window);
+            SDL_StopTextInput();
         }
     }
 
-    void TextInputEXT::StartTextInputWithTypeEXT(CNA::Input::TextInputTypeEXT type)
+    void TextInputEXT::StartTextInputWithTypeEXT(CNA::Input::TextInputTypeEXT /*type*/)
     {
-        if (SDL_Window* window = ToSdlWindow(windowHandle_))
+        // SDL2 has no equivalent of SDL3's per-input IME type-hint properties system
+        // (SDL_StartTextInputWithProperties/SDL_PROP_TEXTINPUT_TYPE_NUMBER) -- falls back to a
+        // plain, type-hint-less StartTextInput(). A disclosed behavioral simplification: on-screen
+        // keyboards that adapt their layout to the requested type (e.g. a numeric-only IME for
+        // TextInputTypeEXT::Number) will show their default text layout instead. Not exercised by
+        // mobile-eggbert itself (no XNA/NOXNA text-entry UI calls this) -- see plan_lite.md's
+        // Phase 4 status.
+        if (ToSdlWindow(windowHandle_) != nullptr)
         {
-            SDL_PropertiesID props = SDL_CreateProperties();
-            SDL_SetNumberProperty(props, SDL_PROP_TEXTINPUT_TYPE_NUMBER, ToSdlTextInputType(type));
-            SDL_StartTextInputWithProperties(window, props);
-            SDL_DestroyProperties(props);
+            SDL_StartTextInput();
         }
     }
 
     void TextInputEXT::SetInputRectangle(const Microsoft::Xna::Framework::Rectangle& rectangle)
     {
-        if (SDL_Window* window = ToSdlWindow(windowHandle_))
+        if (ToSdlWindow(windowHandle_) != nullptr)
         {
             SDL_Rect rect;
             rect.x = rectangle.X;
             rect.y = rectangle.Y;
             rect.w = rectangle.Width;
             rect.h = rectangle.Height;
-            // Cursor offset 0 matches FNA exactly (SetTextInputRectangle,
-            // SDL3_FNAPlatform.cs:779: `SDL_SetTextInputArea(window, ref rect, 0)`). SDL3's third
-            // argument is the text cursor's x-offset relative to rect->x (an optional IME
-            // placement hint); FNA passes 0 and flags it with its own `// FIXME SDL3: Do we need a
-            // cursor here?` — CNA follows FNA rather than inventing a cursor offset it doesn't have.
-            SDL_SetTextInputArea(window, &rect, 0);
+            // SDL2's SDL_SetTextInputRect is process-global (no window argument, no IME cursor
+            // x-offset parameter) -- unlike SDL3's window-scoped, cursor-offset-aware
+            // SDL_SetTextInputArea.
+            SDL_SetTextInputRect(&rect);
         }
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Input/Mouse.hpp"
 #include "CNA/Internal/Input/InputManager.hpp"
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 namespace Microsoft::Xna::Framework::Input
 {

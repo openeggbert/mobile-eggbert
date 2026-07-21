@@ -3,7 +3,7 @@
 
 #include <mutex>
 
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 namespace Microsoft::Devices::Sensors::Detail
 {

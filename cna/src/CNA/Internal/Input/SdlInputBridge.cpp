@@ -230,9 +230,9 @@ namespace
         }
     }
 
-    std::array<SDL_Gamepad*, MaxSupportedGamePads>& get_opened_gamepads()
+    std::array<SDL_GameController*, MaxSupportedGamePads>& get_opened_gamepads()
     {
-        static std::array<SDL_Gamepad*, MaxSupportedGamePads> openedGamePads{};
+        static std::array<SDL_GameController*, MaxSupportedGamePads> openedGamePads{};
         return openedGamePads;
     }
 
@@ -308,72 +308,77 @@ namespace
         return item->second;
     }
 
-    std::optional<GamePadButton> try_convert_sdl_gamepad_button(const SDL_GamepadButton button)
+    std::optional<GamePadButton> try_convert_sdl_gamepad_button(const SDL_GameControllerButton button)
     {
         switch (button)
         {
-        case SDL_GAMEPAD_BUTTON_SOUTH:
+        case SDL_CONTROLLER_BUTTON_A:
             return GamePadButton::A;
-        case SDL_GAMEPAD_BUTTON_EAST:
+        case SDL_CONTROLLER_BUTTON_B:
             return GamePadButton::B;
-        case SDL_GAMEPAD_BUTTON_WEST:
+        case SDL_CONTROLLER_BUTTON_X:
             return GamePadButton::X;
-        case SDL_GAMEPAD_BUTTON_NORTH:
+        case SDL_CONTROLLER_BUTTON_Y:
             return GamePadButton::Y;
-        case SDL_GAMEPAD_BUTTON_BACK:
+        case SDL_CONTROLLER_BUTTON_BACK:
             return GamePadButton::Back;
-        case SDL_GAMEPAD_BUTTON_START:
+        case SDL_CONTROLLER_BUTTON_START:
             return GamePadButton::Start;
-        case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:
+        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
             return GamePadButton::LeftShoulder;
-        case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:
+        case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
             return GamePadButton::RightShoulder;
-        case SDL_GAMEPAD_BUTTON_LEFT_STICK:
+        case SDL_CONTROLLER_BUTTON_LEFTSTICK:
             return GamePadButton::LeftStick;
-        case SDL_GAMEPAD_BUTTON_RIGHT_STICK:
+        case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
             return GamePadButton::RightStick;
-        case SDL_GAMEPAD_BUTTON_DPAD_UP:
+        case SDL_CONTROLLER_BUTTON_DPAD_UP:
             return GamePadButton::DPadUp;
-        case SDL_GAMEPAD_BUTTON_DPAD_DOWN:
+        case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
             return GamePadButton::DPadDown;
-        case SDL_GAMEPAD_BUTTON_DPAD_LEFT:
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
             return GamePadButton::DPadLeft;
-        case SDL_GAMEPAD_BUTTON_DPAD_RIGHT:
+        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
             return GamePadButton::DPadRight;
-        case SDL_GAMEPAD_BUTTON_GUIDE:
+        case SDL_CONTROLLER_BUTTON_GUIDE:
             return GamePadButton::BigButton;
-        case SDL_GAMEPAD_BUTTON_MISC1:
+        case SDL_CONTROLLER_BUTTON_MISC1:
             return GamePadButton::Misc1EXT;
-        case SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1:
+        // SDL2's PADDLE1-4 order (upper-left, upper-right, lower-left, lower-right) differs from
+        // SDL3's LEFT_PADDLE1/RIGHT_PADDLE1/LEFT_PADDLE2/RIGHT_PADDLE2 naming -- mapped by
+        // physical position, not name similarity: RIGHT_PADDLE1 (upper-right) -> PADDLE2,
+        // LEFT_PADDLE1 (upper-left) -> PADDLE1, RIGHT_PADDLE2 (lower-right) -> PADDLE4,
+        // LEFT_PADDLE2 (lower-left) -> PADDLE3.
+        case SDL_CONTROLLER_BUTTON_PADDLE2:
             return GamePadButton::Paddle1EXT;
-        case SDL_GAMEPAD_BUTTON_LEFT_PADDLE1:
+        case SDL_CONTROLLER_BUTTON_PADDLE1:
             return GamePadButton::Paddle2EXT;
-        case SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2:
+        case SDL_CONTROLLER_BUTTON_PADDLE4:
             return GamePadButton::Paddle3EXT;
-        case SDL_GAMEPAD_BUTTON_LEFT_PADDLE2:
+        case SDL_CONTROLLER_BUTTON_PADDLE3:
             return GamePadButton::Paddle4EXT;
-        case SDL_GAMEPAD_BUTTON_TOUCHPAD:
+        case SDL_CONTROLLER_BUTTON_TOUCHPAD:
             return GamePadButton::TouchPadEXT;
         default:
             return std::nullopt;
         }
     }
 
-    std::optional<GamePadAxis> try_convert_sdl_gamepad_axis(const SDL_GamepadAxis axis)
+    std::optional<GamePadAxis> try_convert_sdl_gamepad_axis(const SDL_GameControllerAxis axis)
     {
         switch (axis)
         {
-        case SDL_GAMEPAD_AXIS_LEFTX:
+        case SDL_CONTROLLER_AXIS_LEFTX:
             return GamePadAxis::LeftThumbstickX;
-        case SDL_GAMEPAD_AXIS_LEFTY:
+        case SDL_CONTROLLER_AXIS_LEFTY:
             return GamePadAxis::LeftThumbstickY;
-        case SDL_GAMEPAD_AXIS_RIGHTX:
+        case SDL_CONTROLLER_AXIS_RIGHTX:
             return GamePadAxis::RightThumbstickX;
-        case SDL_GAMEPAD_AXIS_RIGHTY:
+        case SDL_CONTROLLER_AXIS_RIGHTY:
             return GamePadAxis::RightThumbstickY;
-        case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
+        case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
             return GamePadAxis::LeftTrigger;
-        case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
+        case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
             return GamePadAxis::RightTrigger;
         default:
             return std::nullopt;
@@ -452,11 +457,12 @@ namespace
             SDL_Renderer* renderer = SDL_GetRenderer(window);
             if (renderer != nullptr)
             {
+                // SDL2's SDL_RenderWindowToLogical returns void and takes integer window
+                // coordinates (unlike SDL3's bool-returning, float-input SDL_RenderCoordinatesFromWindow).
                 float logX = windowX, logY = windowY;
-                if (SDL_RenderCoordinatesFromWindow(renderer, windowX, windowY, &logX, &logY))
-                {
-                    return Microsoft::Xna::Framework::Vector2(logX, logY);
-                }
+                SDL_RenderWindowToLogical(
+                    renderer, static_cast<int>(windowX), static_cast<int>(windowY), &logX, &logY);
+                return Microsoft::Xna::Framework::Vector2(logX, logY);
             }
             // Other backends (e.g. EasyGL): use the backend's own transform if registered.
             auto* backend = CNA::Internal::Backends::IGraphicsBackend::GetForWindow(window);
@@ -516,32 +522,32 @@ namespace
         case SDLK_LSHIFT: return Keys::LeftShift;
         case SDLK_RSHIFT: return Keys::RightShift;
         case SDLK_TAB: return Keys::Tab;
-        case SDLK_A: return Keys::A;
-        case SDLK_B: return Keys::B;
-        case SDLK_C: return Keys::C;
-        case SDLK_D: return Keys::D;
-        case SDLK_E: return Keys::E;
-        case SDLK_F: return Keys::F;
-        case SDLK_G: return Keys::G;
-        case SDLK_H: return Keys::H;
-        case SDLK_I: return Keys::I;
-        case SDLK_J: return Keys::J;
-        case SDLK_K: return Keys::K;
-        case SDLK_L: return Keys::L;
-        case SDLK_M: return Keys::M;
-        case SDLK_N: return Keys::N;
-        case SDLK_O: return Keys::O;
-        case SDLK_P: return Keys::P;
-        case SDLK_Q: return Keys::Q;
-        case SDLK_R: return Keys::R;
-        case SDLK_S: return Keys::S;
-        case SDLK_T: return Keys::T;
-        case SDLK_U: return Keys::U;
-        case SDLK_V: return Keys::V;
-        case SDLK_W: return Keys::W;
-        case SDLK_X: return Keys::X;
-        case SDLK_Y: return Keys::Y;
-        case SDLK_Z: return Keys::Z;
+        case SDLK_a: return Keys::A;
+        case SDLK_b: return Keys::B;
+        case SDLK_c: return Keys::C;
+        case SDLK_d: return Keys::D;
+        case SDLK_e: return Keys::E;
+        case SDLK_f: return Keys::F;
+        case SDLK_g: return Keys::G;
+        case SDLK_h: return Keys::H;
+        case SDLK_i: return Keys::I;
+        case SDLK_j: return Keys::J;
+        case SDLK_k: return Keys::K;
+        case SDLK_l: return Keys::L;
+        case SDLK_m: return Keys::M;
+        case SDLK_n: return Keys::N;
+        case SDLK_o: return Keys::O;
+        case SDLK_p: return Keys::P;
+        case SDLK_q: return Keys::Q;
+        case SDLK_r: return Keys::R;
+        case SDLK_s: return Keys::S;
+        case SDLK_t: return Keys::T;
+        case SDLK_u: return Keys::U;
+        case SDLK_v: return Keys::V;
+        case SDLK_w: return Keys::W;
+        case SDLK_x: return Keys::X;
+        case SDLK_y: return Keys::Y;
+        case SDLK_z: return Keys::Z;
         case SDLK_0: return Keys::D0;
         case SDLK_1: return Keys::D1;
         case SDLK_2: return Keys::D2;
@@ -594,11 +600,11 @@ namespace
         case SDLK_MINUS:       return Keys::OemMinus;
         case SDLK_PERIOD:      return Keys::OemPeriod;
         case SDLK_SLASH:       return Keys::OemQuestion;
-        case SDLK_GRAVE:       return Keys::OemTilde;
+        case SDLK_BACKQUOTE:       return Keys::OemTilde;
         case SDLK_LEFTBRACKET: return Keys::OemOpenBrackets;
         case SDLK_BACKSLASH:   return Keys::OemPipe;
         case SDLK_RIGHTBRACKET:return Keys::OemCloseBrackets;
-        case SDLK_APOSTROPHE:  return Keys::OemQuotes;
+        case SDLK_QUOTE:  return Keys::OemQuotes;
         case SDLK_PAGEUP:   return Keys::PageUp;
         case SDLK_PAGEDOWN: return Keys::PageDown;
         case SDLK_HOME:     return Keys::Home;
@@ -810,7 +816,8 @@ namespace CNA::Internal::Input
             case SDL_POWERSTATE_CHARGING:   return PowerStateEXT::Charging;
             case SDL_POWERSTATE_CHARGED:    return PowerStateEXT::Charged;
             case SDL_POWERSTATE_UNKNOWN:    return PowerStateEXT::Unknown;
-            case SDL_POWERSTATE_ERROR:
+            // SDL2 has no SDL_POWERSTATE_ERROR value (an SDL3-only addition) -- falls through to
+            // the default case below, same as it did before this migration.
             default:                        return PowerStateEXT::Error;
         }
     }
@@ -836,7 +843,7 @@ namespace CNA::Internal::Input
         using CNA::Input::JoystickTypeEXT;
         switch (t)
         {
-        case SDL_JOYSTICK_TYPE_GAMEPAD:      return JoystickTypeEXT::Gamepad;
+        case SDL_JOYSTICK_TYPE_GAMECONTROLLER: return JoystickTypeEXT::Gamepad; // SDL2 name (SDL3: SDL_JOYSTICK_TYPE_GAMEPAD)
         case SDL_JOYSTICK_TYPE_WHEEL:        return JoystickTypeEXT::Wheel;
         case SDL_JOYSTICK_TYPE_ARCADE_STICK: return JoystickTypeEXT::ArcadeStick;
         case SDL_JOYSTICK_TYPE_FLIGHT_STICK: return JoystickTypeEXT::FlightStick;
@@ -950,19 +957,19 @@ namespace CNA::Internal::Input
 
     void SdlInputBridge::EnsureGamepadSubsystemInitialized()
     {
-        if (SDL_WasInit(SDL_INIT_GAMEPAD) & SDL_INIT_GAMEPAD)
+        if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) & SDL_INIT_GAMECONTROLLER)
         {
             return;
         }
         // Deliver gamepad button/axis events even when the game window is not focused, matching
         // FNA (SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS = "1").
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-        SDL_InitSubSystem(SDL_INIT_GAMEPAD);
+        SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     }
 
     void SdlInputBridge::ShutdownGamepadSubsystem()
     {
-        SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
+        SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER);
     }
 
     void SdlInputBridge::ProcessEvent(const SDL_Event& event)
@@ -973,7 +980,7 @@ namespace CNA::Internal::Input
 
         switch (event.type)
         {
-        case SDL_EVENT_MOUSE_MOTION:
+        case SDL_MOUSEMOTION:
             {
                 SDL_Window* win = (event.motion.windowID != 0)
                                       ? SDL_GetWindowFromID(event.motion.windowID)
@@ -983,11 +990,11 @@ namespace CNA::Internal::Input
                 InputManager::AddMouseRelativeDelta(event.motion.xrel, event.motion.yrel);
                 break;
             }
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-        case SDL_EVENT_MOUSE_BUTTON_UP:
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
             {
                 const auto state =
-                    event.type == SDL_EVENT_MOUSE_BUTTON_DOWN
+                    event.type == SDL_MOUSEBUTTONDOWN
                         ? Microsoft::Xna::Framework::Input::ButtonState::Pressed
                         : Microsoft::Xna::Framework::Input::ButtonState::Released;
 
@@ -1020,13 +1027,13 @@ namespace CNA::Internal::Input
                     InputManager::SetMousePosition(static_cast<int>(pos.X), static_cast<int>(pos.Y));
                 }
 
-                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+                if (event.type == SDL_MOUSEBUTTONDOWN)
                 {
                     Microsoft::Xna::Framework::Input::Mouse::INTERNAL_onClicked(event.button.button - 1);
                 }
                 break;
             }
-        case SDL_EVENT_MOUSE_WHEEL:
+        case SDL_MOUSEWHEEL:
             // Vertical wheel = the XNA-faithful cumulative ScrollWheelValue. FNA truncates the SDL wheel
             // delta to whole notches BEFORE scaling by 120 (`(int) evt.wheel.y * 120`, SDL3_FNAPlatform.cs)
             // — the cast binds tighter than the multiply, so sub-notch fractional motion from high-
@@ -1043,53 +1050,50 @@ namespace CNA::Internal::Input
                 static_cast<int>(event.wheel.x) * 120
             );
             break;
-        // NOXNA/EXT (input_noxna.md N-017b): device hot-plug events routed to CNA::Input::InputDevices.
-        case SDL_EVENT_MOUSE_ADDED:
-            CNA::Input::InputDevices::MouseConnectedEXT.Invoke(event.mdevice.which);
-            break;
-        case SDL_EVENT_MOUSE_REMOVED:
-            CNA::Input::InputDevices::MouseDisconnectedEXT.Invoke(event.mdevice.which);
-            break;
-        case SDL_EVENT_KEYBOARD_ADDED:
-            CNA::Input::InputDevices::KeyboardConnectedEXT.Invoke(event.kdevice.which);
-            break;
-        case SDL_EVENT_KEYBOARD_REMOVED:
-            CNA::Input::InputDevices::KeyboardDisconnectedEXT.Invoke(event.kdevice.which);
-            break;
-        case SDL_EVENT_KEY_DOWN:
-        case SDL_EVENT_KEY_UP:
+        // NOXNA/EXT (input_noxna.md N-017b): device hot-plug events routed to
+        // CNA::Input::InputDevices. Post-Phase-4 (SDL2 migration): SDL2 has no per-device
+        // mouse/keyboard added/removed events at all (SDL_EVENT_MOUSE_ADDED/REMOVED/
+        // SDL_EVENT_KEYBOARD_ADDED/REMOVED are SDL3-only additions -- SDL2 treats every physical
+        // mouse as one combined logical pointer and every physical keyboard as one combined
+        // logical keyboard, matching SystemDeviceBackend.cpp's identical gap for GetMice()/
+        // GetKeyboards()). MouseConnectedEXT/MouseDisconnectedEXT/KeyboardConnectedEXT/
+        // KeyboardDisconnectedEXT simply never fire under this backend -- a genuine SDL2
+        // capability gap, not exercised by mobile-eggbert itself. See plan_lite.md's Phase 4
+        // status for the full disclosure.
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
             {
                 // Mirrors FNA's ToXNAKey (SDL3_FNAPlatform.cs:2743-2766): in scancode mode,
                 // the physical key position (scancode) is used instead of the layout-dependent
                 // keycode, so games get consistent physical-key bindings across keyboard layouts.
                 const auto key = use_scancode_mode()
-                                      ? try_convert_sdl_scancode(event.key.scancode)
-                                      : try_convert_sdl_key(event.key.key);
+                                      ? try_convert_sdl_scancode(event.key.keysym.scancode)
+                                      : try_convert_sdl_key(event.key.keysym.sym);
 
 #ifdef __ANDROID__
                 {
-                    const char* evtName = (event.type == SDL_EVENT_KEY_DOWN) ? "KEY_DOWN" : "KEY_UP";
-                    const char* keyName = SDL_GetKeyName(event.key.key);
+                    const char* evtName = (event.type == SDL_KEYDOWN) ? "KEY_DOWN" : "KEY_UP";
+                    const char* keyName = SDL_GetKeyName(event.key.keysym.sym);
                     if (key.has_value())
                     {
                         SDL_Log("[Keyboard] SDL_%s scancode=%d keycode=%d (0x%x) keyname='%s' mod=0x%x -> XNA Keys=%d",
                                 evtName,
-                                static_cast<int>(event.key.scancode),
-                                static_cast<int>(event.key.key),
-                                static_cast<unsigned>(event.key.key),
+                                static_cast<int>(event.key.keysym.scancode),
+                                static_cast<int>(event.key.keysym.sym),
+                                static_cast<unsigned>(event.key.keysym.sym),
                                 keyName ? keyName : "?",
-                                static_cast<unsigned>(event.key.mod),
+                                static_cast<unsigned>(event.key.keysym.mod),
                                 static_cast<int>(key.value()));
                     }
                     else
                     {
                         SDL_Log("[Keyboard] SDL_%s scancode=%d keycode=%d (0x%x) keyname='%s' mod=0x%x -> unmapped",
                                 evtName,
-                                static_cast<int>(event.key.scancode),
-                                static_cast<int>(event.key.key),
-                                static_cast<unsigned>(event.key.key),
+                                static_cast<int>(event.key.keysym.scancode),
+                                static_cast<int>(event.key.keysym.sym),
+                                static_cast<unsigned>(event.key.keysym.sym),
                                 keyName ? keyName : "?",
-                                static_cast<unsigned>(event.key.mod));
+                                static_cast<unsigned>(event.key.keysym.mod));
                     }
                 }
 #endif
@@ -1099,7 +1103,7 @@ namespace CNA::Internal::Input
                     break;
                 }
 
-                const bool pressed  = event.type == SDL_EVENT_KEY_DOWN;
+                const bool pressed  = event.type == SDL_KEYDOWN;
                 const bool isRepeat = pressed && event.key.repeat;
 
                 // DEC-19: repeats keep the key down (state already set); FNA only re-emits text
@@ -1139,7 +1143,7 @@ namespace CNA::Internal::Input
 #endif
                 break;
             }
-        case SDL_EVENT_TEXT_INPUT:
+        case SDL_TEXTINPUT:
             {
                 // Suppress the literal character SDL emits alongside a synthesized paste
                 // (Ctrl+V): the paste control char (22) was already sent on KEY_DOWN.
@@ -1161,7 +1165,7 @@ namespace CNA::Internal::Input
                 }
                 break;
             }
-        case SDL_EVENT_TEXT_EDITING:
+        case SDL_TEXTEDITING:
             {
                 // IME composition draft text (UTF-8). Pass the bytes straight through to
                 // CNA's UTF-8 std::string callback. FNA passes null for an empty composition;
@@ -1180,32 +1184,17 @@ namespace CNA::Internal::Input
                 }
                 break;
             }
-        case SDL_EVENT_TEXT_EDITING_CANDIDATES:
-            {
-                // NOXNA/EXT (input_noxna.md N-014): SDL3-new IME candidate list. Decode the
-                // SDL-owned string array into UTF-8 std::strings before the event is recycled.
-                std::vector<std::string> candidates;
-                const int count = event.edit_candidates.candidates != nullptr
-                                      ? event.edit_candidates.num_candidates
-                                      : 0;
-                candidates.reserve(static_cast<std::size_t>(count < 0 ? 0 : count));
-                for (int i = 0; i < count; ++i)
-                {
-                    const char* candidate = event.edit_candidates.candidates[i];
-                    candidates.emplace_back(candidate != nullptr ? candidate : "");
-                }
-                Microsoft::Xna::Framework::Input::TextInputEXT::INTERNAL_OnTextEditingCandidates(
-                    candidates,
-                    event.edit_candidates.selected_candidate,
-                    event.edit_candidates.horizontal);
-                break;
-            }
-        case SDL_EVENT_FINGER_DOWN:
+        // NOXNA/EXT (input_noxna.md N-014): SDL3-only IME candidate-list event
+        // (SDL_EVENT_TEXT_EDITING_CANDIDATES) -- SDL2 has no equivalent event or
+        // `event.edit_candidates` union member at all, so TextEditingCandidatesEXT simply never
+        // fires under this backend. A genuine SDL2 capability gap, not exercised by
+        // mobile-eggbert itself -- see plan_lite.md's Phase 4 status for the full disclosure.
+        case SDL_FINGERDOWN:
             {
                 // Windows only notices a touch screen once it's touched (FNA SDL3_FNAPlatform.cs:972).
                 Microsoft::Xna::Framework::Input::Touch::TouchPanel::setTouchDeviceExistsProperty(true);
 
-                const int touchId = get_or_create_touch_id(event.tfinger.fingerID);
+                const int touchId = get_or_create_touch_id(event.tfinger.fingerId);
                 InputManager::SetTouchState(
                     touchId,
                     TouchLocationState::Pressed,
@@ -1222,9 +1211,9 @@ namespace CNA::Internal::Input
                 );
                 break;
             }
-        case SDL_EVENT_FINGER_MOTION:
+        case SDL_FINGERMOTION:
             {
-                const int touchId = get_or_create_touch_id(event.tfinger.fingerID);
+                const int touchId = get_or_create_touch_id(event.tfinger.fingerId);
                 InputManager::SetTouchState(
                     touchId,
                     TouchLocationState::Moved,
@@ -1241,16 +1230,14 @@ namespace CNA::Internal::Input
                 );
                 break;
             }
-        case SDL_EVENT_FINGER_UP:
-        case SDL_EVENT_FINGER_CANCELED:
+        // SDL2 has no SDL_EVENT_FINGER_CANCELED equivalent (an SDL3-only addition) -- SDL_FINGERUP
+        // is the only "touch ended" signal SDL2 ever delivers, so this case list is now just the
+        // one value (harmless: FNA's own "treat canceled identically to lifted" rule collapses to
+        // a no-op distinction when SDL2 never generates the canceled variant in the first place).
+        case SDL_FINGERUP:
             {
-                // FNA treats a canceled finger identically to a lifted one
-                // (`FINGER_UP || FINGER_CANCELED` -> Released, SDL3_FNAPlatform.cs): both must
-                // release the touch in InputManager, notify TouchPanel/GestureDetector with
-                // Released, and free the finger-id mapping. Without the CANCELED case the touch
-                // would stay stuck Pressed/Moved forever and leak its id mapping + gesture tracking.
-                const int touchId = try_get_touch_id(event.tfinger.fingerID).value_or(
-                    get_or_create_touch_id(event.tfinger.fingerID)
+                const int touchId = try_get_touch_id(event.tfinger.fingerId).value_or(
+                    get_or_create_touch_id(event.tfinger.fingerId)
                 );
 
                 InputManager::SetTouchState(
@@ -1267,18 +1254,18 @@ namespace CNA::Internal::Input
                     0.0f,
                     0.0f
                 );
-                release_touch_id_mapping(event.tfinger.fingerID);
+                release_touch_id_mapping(event.tfinger.fingerId);
                 break;
             }
-        case SDL_EVENT_GAMEPAD_ADDED:
+        case SDL_CONTROLLERDEVICEADDED:
             {
-                if (!sdl_gamepad_backend().IsGamepad(event.gdevice.which))
+                if (!sdl_gamepad_backend().IsGamepad(event.cdevice.which))
                 {
                     break;
                 }
 
                 auto& gamepadToPlayerIndex = get_gamepad_to_player_index_map();
-                if (gamepadToPlayerIndex.contains(event.gdevice.which))
+                if (gamepadToPlayerIndex.contains(event.cdevice.which))
                 {
                     break;
                 }
@@ -1289,7 +1276,7 @@ namespace CNA::Internal::Input
                     break;
                 }
 
-                SDL_Gamepad* gamepad = sdl_gamepad_backend().OpenGamepad(event.gdevice.which);
+                SDL_GameController* gamepad = sdl_gamepad_backend().OpenGamepad(event.cdevice.which);
                 if (gamepad == nullptr)
                 {
                     break;
@@ -1297,14 +1284,14 @@ namespace CNA::Internal::Input
 
                 const PlayerIndex playerIndex = slot_to_player_index(freeSlot.value());
                 get_opened_gamepads()[freeSlot.value()] = gamepad;
-                gamepadToPlayerIndex[event.gdevice.which] = playerIndex;
+                gamepadToPlayerIndex[event.cdevice.which] = playerIndex;
                 InputManager::SetGamePadConnection(playerIndex, true);
                 break;
             }
-        case SDL_EVENT_GAMEPAD_REMOVED:
+        case SDL_CONTROLLERDEVICEREMOVED:
             {
                 auto& gamepadToPlayerIndex = get_gamepad_to_player_index_map();
-                const auto playerIndex = try_get_player_index_for_gamepad_id(event.gdevice.which);
+                const auto playerIndex = try_get_player_index_for_gamepad_id(event.cdevice.which);
                 if (!playerIndex.has_value())
                 {
                     break;
@@ -1321,7 +1308,7 @@ namespace CNA::Internal::Input
                     }
                 }
 
-                gamepadToPlayerIndex.erase(event.gdevice.which);
+                gamepadToPlayerIndex.erase(event.cdevice.which);
                 InputManager::SetGamePadConnection(playerIndex.value(), false);
                 break;
             }
@@ -1329,9 +1316,9 @@ namespace CNA::Internal::Input
         // Every connected joystick is opened here — including devices SDL also maps as a gamepad
         // above — so raw axis/button/hat/trackball state stays queryable independent of GamePad.
         // Axis/button/hat/ball motion events need no handling: SDL's own event pump already updates
-        // its internal joystick-state cache (that's what SDL_GetJoystickAxis/Button/Hat/Ball read),
+        // its internal joystick-state cache (that's what SDL_JoystickGetAxis/Button/Hat/Ball read),
         // so GetJoystickState can poll live values on demand, exactly like the gamepad EXT getters do.
-        case SDL_EVENT_JOYSTICK_ADDED:
+        case SDL_JOYDEVICEADDED:
             {
                 auto& opened = get_opened_joysticks();
                 if (opened.contains(event.jdevice.which))
@@ -1349,7 +1336,7 @@ namespace CNA::Internal::Input
                 CNA::Input::Joysticks::ConnectedEXT.Invoke(static_cast<std::uint32_t>(event.jdevice.which));
                 break;
             }
-        case SDL_EVENT_JOYSTICK_REMOVED:
+        case SDL_JOYDEVICEREMOVED:
             {
                 auto& opened = get_opened_joysticks();
                 const auto it = opened.find(event.jdevice.which);
@@ -1363,40 +1350,40 @@ namespace CNA::Internal::Input
                 CNA::Input::Joysticks::DisconnectedEXT.Invoke(static_cast<std::uint32_t>(event.jdevice.which));
                 break;
             }
-        case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-        case SDL_EVENT_GAMEPAD_BUTTON_UP:
+        case SDL_CONTROLLERBUTTONDOWN:
+        case SDL_CONTROLLERBUTTONUP:
             {
-                const auto playerIndex = try_get_player_index_for_gamepad_id(event.gbutton.which);
+                const auto playerIndex = try_get_player_index_for_gamepad_id(event.cbutton.which);
                 if (!playerIndex.has_value())
                 {
                     break;
                 }
 
                 const auto button = try_convert_sdl_gamepad_button(
-                    static_cast<SDL_GamepadButton>(event.gbutton.button)
+                    static_cast<SDL_GameControllerButton>(event.cbutton.button)
                 );
                 if (!button.has_value())
                 {
                     break;
                 }
 
-                const auto state = event.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN
+                const auto state = event.type == SDL_CONTROLLERBUTTONDOWN
                                        ? ButtonState::Pressed
                                        : ButtonState::Released;
 
                 InputManager::SetGamePadButtonState(playerIndex.value(), button.value(), state);
                 break;
             }
-        case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+        case SDL_CONTROLLERAXISMOTION:
             {
-                const auto playerIndex = try_get_player_index_for_gamepad_id(event.gaxis.which);
+                const auto playerIndex = try_get_player_index_for_gamepad_id(event.caxis.which);
                 if (!playerIndex.has_value())
                 {
                     break;
                 }
 
                 const auto axis = try_convert_sdl_gamepad_axis(
-                    static_cast<SDL_GamepadAxis>(event.gaxis.axis)
+                    static_cast<SDL_GameControllerAxis>(event.caxis.axis)
                 );
                 if (!axis.has_value())
                 {
@@ -1408,15 +1395,15 @@ namespace CNA::Internal::Input
                 {
                 case GamePadAxis::LeftThumbstickX:
                 case GamePadAxis::RightThumbstickX:
-                    value = normalize_stick_axis(event.gaxis.value);
+                    value = normalize_stick_axis(event.caxis.value);
                     break;
                 case GamePadAxis::LeftThumbstickY:
                 case GamePadAxis::RightThumbstickY:
-                    value = -normalize_stick_axis(event.gaxis.value);
+                    value = -normalize_stick_axis(event.caxis.value);
                     break;
                 case GamePadAxis::LeftTrigger:
                 case GamePadAxis::RightTrigger:
-                    value = normalize_trigger_axis(event.gaxis.value);
+                    value = normalize_trigger_axis(event.caxis.value);
                     break;
                 }
 

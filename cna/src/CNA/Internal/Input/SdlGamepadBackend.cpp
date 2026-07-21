@@ -5,21 +5,21 @@ namespace CNA::Internal::Input
 {
     namespace
     {
-        // Real SDL-backed implementation: every method forwards 1:1 to the matching SDL3 function.
+        // Real SDL-backed implementation: every method forwards 1:1 to the matching SDL2 function.
         class RealSdlGamepadBackend final : public ISdlGamepadBackend
         {
         public:
-            bool IsGamepad(SDL_JoystickID instanceId) override
+            bool IsGamepad(int deviceIndex) override
             {
-                return SDL_IsGamepad(instanceId);
+                return SDL_IsGameController(deviceIndex) == SDL_TRUE;
             }
-            SDL_Gamepad* OpenGamepad(SDL_JoystickID instanceId) override
+            SDL_GameController* OpenGamepad(int deviceIndex) override
             {
-                return SDL_OpenGamepad(instanceId);
+                return SDL_GameControllerOpen(deviceIndex);
             }
-            void CloseGamepad(SDL_Gamepad* gamepad) override
+            void CloseGamepad(SDL_GameController* gamepad) override
             {
-                SDL_CloseGamepad(gamepad);
+                SDL_GameControllerClose(gamepad);
             }
         };
 

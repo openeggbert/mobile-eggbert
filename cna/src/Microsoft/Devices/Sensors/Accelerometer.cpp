@@ -13,9 +13,8 @@
 #include <string>
 #include <utility>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_sensor.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_sensor.h>
 
 #include "CNA/Platform.hpp"
 #include "Microsoft/Devices/Sensors/Detail/AndroidSensorOrientation.hpp"
@@ -413,7 +412,7 @@ namespace Microsoft::Devices::Sensors
 
                 if (subsystem.sensor_ != nullptr)
                 {
-                    SDL_CloseSensor(subsystem.sensor_);
+                    SDL_SensorClose(subsystem.sensor_);
                     subsystem.sensor_ = nullptr;
                     subsystem.sensorId_ = 0;
                 }
@@ -499,8 +498,9 @@ namespace Microsoft::Devices::Sensors
     static Microsoft::Xna::Framework::Vector3 ConvertAndroidAccelerometerToXnaLandscape(
         float rawX, float rawY, float rawZ)
     {
-        const SDL_DisplayOrientation orient =
-            SDL_GetCurrentDisplayOrientation(SDL_GetPrimaryDisplay());
+        // SDL2 has no separate "primary display" getter (unlike SDL3's SDL_GetPrimaryDisplay) --
+        // display index 0 is always the primary display.
+        const SDL_DisplayOrientation orient = SDL_GetDisplayOrientation(0);
 
         // Task P5-7: the actual sign-remap math is a pure function shared
         // with Gyroscope.cpp (identical for both), moved to

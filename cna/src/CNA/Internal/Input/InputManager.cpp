@@ -16,7 +16,7 @@
 #include <vector>
 
 #ifdef __ANDROID__
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 namespace CNA::Internal::Input

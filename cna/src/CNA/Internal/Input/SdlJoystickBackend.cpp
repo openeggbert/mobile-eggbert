@@ -5,68 +5,87 @@ namespace CNA::Internal::Input
 {
     namespace
     {
-        // Real SDL-backed implementation: every method forwards 1:1 to the matching SDL3 function.
+        // Real SDL-backed implementation: every method forwards 1:1 to the matching SDL2 function.
         class RealSdlJoystickBackend final : public ISdlJoystickBackend
         {
         public:
-            SDL_Joystick* OpenJoystick(SDL_JoystickID instanceId) override
+            SDL_Joystick* OpenJoystick(int deviceIndex) override
             {
-                return SDL_OpenJoystick(instanceId);
+                return SDL_JoystickOpen(deviceIndex);
             }
             void CloseJoystick(SDL_Joystick* joystick) override
             {
-                SDL_CloseJoystick(joystick);
+                SDL_JoystickClose(joystick);
             }
             std::string GetJoystickName(SDL_Joystick* joystick) override
             {
-                const char* s = SDL_GetJoystickName(joystick);
+                const char* s = SDL_JoystickName(joystick);
                 return s ? s : "";
             }
             SDL_JoystickType GetJoystickType(SDL_Joystick* joystick) override
             {
-                return SDL_GetJoystickType(joystick);
+                return SDL_JoystickGetType(joystick);
             }
             std::string GetJoystickGUID(SDL_Joystick* joystick) override
             {
                 char buffer[33] = {};
-                SDL_GUIDToString(SDL_GetJoystickGUID(joystick), buffer, sizeof(buffer));
+                SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joystick), buffer, sizeof(buffer));
                 return buffer;
             }
             int GetNumJoystickAxes(SDL_Joystick* joystick) override
             {
-                return SDL_GetNumJoystickAxes(joystick);
+                return SDL_JoystickNumAxes(joystick);
             }
             int GetNumJoystickButtons(SDL_Joystick* joystick) override
             {
-                return SDL_GetNumJoystickButtons(joystick);
+                return SDL_JoystickNumButtons(joystick);
             }
             int GetNumJoystickHats(SDL_Joystick* joystick) override
             {
-                return SDL_GetNumJoystickHats(joystick);
+                return SDL_JoystickNumHats(joystick);
             }
             int GetNumJoystickBalls(SDL_Joystick* joystick) override
             {
-                return SDL_GetNumJoystickBalls(joystick);
+                return SDL_JoystickNumBalls(joystick);
             }
             Sint16 GetJoystickAxis(SDL_Joystick* joystick, int axis) override
             {
-                return SDL_GetJoystickAxis(joystick, axis);
+                return SDL_JoystickGetAxis(joystick, axis);
             }
             bool GetJoystickButton(SDL_Joystick* joystick, int button) override
             {
-                return SDL_GetJoystickButton(joystick, button);
+                return SDL_JoystickGetButton(joystick, button) != 0;
             }
             Uint8 GetJoystickHat(SDL_Joystick* joystick, int hat) override
             {
-                return SDL_GetJoystickHat(joystick, hat);
+                return SDL_JoystickGetHat(joystick, hat);
             }
             bool GetJoystickBall(SDL_Joystick* joystick, int ball, int* dx, int* dy) override
             {
-                return SDL_GetJoystickBall(joystick, ball, dx, dy);
+                return SDL_JoystickGetBall(joystick, ball, dx, dy) == 0;
             }
+            // SDL2's joystick power query (unlike SDL3's SDL_GetJoystickPowerInfo) reports only a
+            // coarse SDL_JoystickPowerLevel, never a percentage -- mapped onto the CNA-level
+            // SDL_PowerState/percent shape this interface already declares (see the header's
+            // updated doc), *percent always -1 ("unknown"), matching XNA's own
+            // GamePadState.Battery "not always available" contract.
             SDL_PowerState GetJoystickPowerInfo(SDL_Joystick* joystick, int* percent) override
             {
-                return SDL_GetJoystickPowerInfo(joystick, percent);
+                if (percent) *percent = -1;
+                switch (SDL_JoystickCurrentPowerLevel(joystick))
+                {
+                    case SDL_JOYSTICK_POWER_WIRED:
+                        return SDL_POWERSTATE_NO_BATTERY;
+                    case SDL_JOYSTICK_POWER_EMPTY:
+                    case SDL_JOYSTICK_POWER_LOW:
+                    case SDL_JOYSTICK_POWER_MEDIUM:
+                        return SDL_POWERSTATE_ON_BATTERY;
+                    case SDL_JOYSTICK_POWER_FULL:
+                        return SDL_POWERSTATE_CHARGED;
+                    case SDL_JOYSTICK_POWER_UNKNOWN:
+                    default:
+                        return SDL_POWERSTATE_UNKNOWN;
+                }
             }
         };
 

@@ -13,9 +13,8 @@
 #include <utility>
 #include <vector>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_sensor.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_sensor.h>
 
 #include "Microsoft/Devices/Detail/SdlSubsystemMutex.hpp"
 #include "Microsoft/Devices/Sensors/Detail/NativeDiagnostic.hpp"
@@ -312,20 +311,17 @@ namespace Microsoft::Devices::Sensors::Detail
         static bool IsSensorConnected(
             std::int64_t sensorId, const std::lock_guard<std::mutex>& /*globalSdlSensorMutexHeld*/)
         {
-            int sensorCount = 0;
-            SDL_SensorID* sensors = SDL_GetSensors(&sensorCount);
-            if (sensors == nullptr)
-            {
-                return false;
-            }
+            // SDL2's sensor API is device-index-based (SDL_NumSensors/SDL_SensorGetDeviceInstanceID),
+            // unlike SDL3's SDL_GetSensors() returning a heap-allocated SDL_SensorID array --
+            // no array to free here.
+            const int sensorCount = SDL_NumSensors();
 
             bool stillConnected = false;
             for (int i = 0; i < sensorCount && !stillConnected; ++i)
             {
-                stillConnected = static_cast<std::int64_t>(sensors[i]) == sensorId;
+                stillConnected = static_cast<std::int64_t>(SDL_SensorGetDeviceInstanceID(i)) == sensorId;
             }
 
-            SDL_free(sensors);
             return stillConnected;
         }
 
@@ -372,7 +368,7 @@ namespace Microsoft::Devices::Sensors::Detail
                 record.Severity = NativeDiagnosticSeverity::Info;
                 NativeDiagnosticSink::Record(record);
 
-                SDL_CloseSensor(sensor_);
+                SDL_SensorClose(sensor_);
                 sensor_ = nullptr;
                 sensorId_ = 0;
             }
@@ -382,15 +378,13 @@ namespace Microsoft::Devices::Sensors::Detail
                 return sensor_;
             }
 
-            int sensorCount = 0;
-            SDL_SensorID* sensors = SDL_GetSensors(&sensorCount);
-
-            if (sensors == nullptr || sensorCount <= 0)
+            // SDL2's sensor API opens by device_index (SDL_SensorOpen(int)), not by the
+            // SDL_SensorID SDL3's SDL_OpenSensor(SDL_SensorID) takes -- the instance id (needed
+            // for IsSensorConnected() above) is queried separately per-index via
+            // SDL_SensorGetDeviceInstanceID, not returned alongside an enumeration array.
+            const int sensorCount = SDL_NumSensors();
+            if (sensorCount <= 0)
             {
-                if (sensors != nullptr)
-                {
-                    SDL_free(sensors);
-                }
                 return nullptr;
             }
 
@@ -399,25 +393,21 @@ namespace Microsoft::Devices::Sensors::Detail
 
             for (int i = 0; i < sensorCount; ++i)
             {
-                const SDL_SensorID sensorId = sensors[i];
-
-                SDL_Sensor* sensor = SDL_OpenSensor(sensorId);
+                SDL_Sensor* sensor = SDL_SensorOpen(i);
                 if (!sensor)
                 {
                     continue;
                 }
 
-                if (SDL_GetSensorType(sensor) == TSensor::GetSdlSensorType())
+                if (SDL_SensorGetType(sensor) == TSensor::GetSdlSensorType())
                 {
                     openedSensor = sensor;
-                    openedSensorId = sensorId;
+                    openedSensorId = SDL_SensorGetInstanceID(sensor);
                     break;
                 }
 
-                SDL_CloseSensor(sensor);
+                SDL_SensorClose(sensor);
             }
-
-            SDL_free(sensors);
 
             if (openedSensor != nullptr)
             {
@@ -449,15 +439,9 @@ namespace Microsoft::Devices::Sensors::Detail
                 return false;
             }
 
-            int sensorCount = 0;
-            SDL_SensorID* sensors = SDL_GetSensors(&sensorCount);
-
-            if (sensors == nullptr || sensorCount <= 0)
+            const int sensorCount = SDL_NumSensors();
+            if (sensorCount <= 0)
             {
-                if (sensors != nullptr)
-                {
-                    SDL_free(sensors);
-                }
                 return false;
             }
 
@@ -465,23 +449,22 @@ namespace Microsoft::Devices::Sensors::Detail
 
             for (int i = 0; i < sensorCount; ++i)
             {
-                SDL_Sensor* sensor = SDL_OpenSensor(sensors[i]);
+                SDL_Sensor* sensor = SDL_SensorOpen(i);
                 if (!sensor)
                 {
                     continue;
                 }
 
-                if (SDL_GetSensorType(sensor) == TSensor::GetSdlSensorType())
+                if (SDL_SensorGetType(sensor) == TSensor::GetSdlSensorType())
                 {
                     supported = true;
-                    SDL_CloseSensor(sensor);
+                    SDL_SensorClose(sensor);
                     break;
                 }
 
-                SDL_CloseSensor(sensor);
+                SDL_SensorClose(sensor);
             }
 
-            SDL_free(sensors);
             return supported;
         }
 
@@ -523,17 +506,10 @@ namespace Microsoft::Devices::Sensors::Detail
                 return false;
             }
 
-            if (!SDL_AddEventWatch(&SdlSensorSubsystem::SensorEventWatch, nullptr))
-            {
-                // Task SDLCORE-003: capture SDL's own error string
-                // immediately -- SDL_GetError() reports the *last* SDL
-                // error on the calling thread, which a later, unrelated SDL
-                // call could otherwise overwrite before Start() gets a
-                // chance to read it.
-                const char* sdlError = SDL_GetError();
-                lastEventWatchError_ = (sdlError != nullptr) ? sdlError : "unknown SDL error";
-                return false;
-            }
+            // SDL2's SDL_AddEventWatch returns void (unlike SDL3's bool-returning version, which
+            // could report e.g. an allocation failure) -- there is no real-failure path left to
+            // detect here beyond the force-failure test hook already checked above.
+            SDL_AddEventWatch(&SdlSensorSubsystem::SensorEventWatch, nullptr);
 
             eventWatchRegistered_ = true;
             return true;
@@ -579,7 +555,8 @@ namespace Microsoft::Devices::Sensors::Detail
         {
             if (eventWatchRegistered_ && startedInstances_.empty())
             {
-                SDL_RemoveEventWatch(&SdlSensorSubsystem::SensorEventWatch, nullptr);
+                // SDL2 names this SDL_DelEventWatch, not SDL_RemoveEventWatch.
+                SDL_DelEventWatch(&SdlSensorSubsystem::SensorEventWatch, nullptr);
                 eventWatchRegistered_ = false;
             }
         }
@@ -877,18 +854,21 @@ namespace Microsoft::Devices::Sensors::Detail
          * ever changes, this call site fails to compile instead of
          * silently reinterpreting an incompatible type.
          */
-        static bool SDLCALL SensorEventWatch(void* userdata, SDL_Event* event)
+        // SDL2's SDL_EventFilter returns int, not bool (unlike SDL3's version) -- the return
+        // type here must match exactly for &SensorEventWatch to be usable as an SDL_EventFilter
+        // at all (function pointer types are not return-type-covariant in C++).
+        static int SDLCALL SensorEventWatch(void* userdata, SDL_Event* event)
         {
             (void)userdata;
 
             if (event == nullptr)
             {
-                return true;
+                return 1;
             }
 
-            if (event->type != SDL_EVENT_SENSOR_UPDATE)
+            if (event->type != SDL_SENSORUPDATE)
             {
-                return true;
+                return 1;
             }
 
             SdlSensorSubsystem& subsystem = TSensor::GetSubsystem();
@@ -908,7 +888,7 @@ namespace Microsoft::Devices::Sensors::Detail
                 instance->ProcessSensorUpdateEvent(sensorId, x, y, z);
             });
 
-            return true;
+            return 1;
         }
 
         // Task SDLCORE-002: a standalone, explicit compile-time proof (in
