@@ -116,26 +116,23 @@ are read from their own GitHub repos as source, but no changes are pushed back t
 - Build + smoke-run after each sub-step.
 - Commit + push throughout.
 
-## Open questions (answer before Phase 1 starts)
+## Decisions (2026-07-21, confirmed by user)
 
-1. **Vendoring method**: plain flat copy of `cna`/`sharp-runtime` `develop` HEAD (no history), or
-   `git subtree add` (keeps upstream history/attribution, still a normal in-repo copy, still no
-   submodule)?
-2. **Headless backend**: task says keep only `SDL_RENDERER` — that also removes `Headless`,
-   which looks like it's meant for CI/automated testing without a display. OK to delete it too
-   (no headless CI test path afterward), or should it survive as a second exception?
-3. **Ms-PL attribution for vendored `cna`**: keep `cna`'s `LICENSE` (Ms-PL) and
-   `THIRD_PARTY_NOTICES.md` inside the vendored `cna/` subdirectory as-is (satisfies Ms-PL's
-   redistribution terms for that code, doesn't relicense mobile-eggbert's own MIT code), or
-   different handling in mind?
-4. **Touch input on SDL 1.2**: `InputPad` (per project CLAUDE.md) handles touch/keyboard/
-   accelerometer. SDL 1.2 has no touch API. Fall back to mouse-as-touch emulation only, or is
-   touch out of scope for the SDL 1.2 target platform(s)?
-5. **Phasing/commit granularity**: proceed through Phases 1→5 continuously on this one branch
-   as instructed, commit+push after each phase (and sub-step within Phases 4-5)? Confirming
-   before Phase 1 since Phases 4-5 are large enough that a mid-course correction after lots of
-   commits would be costly.
-6. **Scope check for Phase 2**: safe to assume `Net`, `Media`, `GltfImport`, and `Xnb` importer
-   subsystems in `cna` are entirely unused by mobile-eggbert (per `Worlds`/`GameData` loading
-   raw level/save files, not glTF or XNB) and can be deleted outright, or should any be kept
-   pending a closer look during Phase 2 itself?
+1. **Vendoring method**: plain flat copy of `develop` HEAD, no `.git` history, no submodule.
+2. **Backends kept**: `SDL_RENDERER` **and** `HEADLESS` **and** `SOFTWARE` survive Phase 3 (not
+   just `SDL_RENDERER` alone). The other 11 (`Ascii Bgfx Canvas D3D9 D3D11 D3D12 D3DCommon Dx3
+   EasyGL SdlGpu Vulkan WebGPU`) are still removed — recheck `D3DCommon` isn't a shared dep of
+   the 3 kept backends before deleting it.
+3. **Phasing**: proceed through Phases 1-3 continuously, commit+push throughout. **Stop before
+   Phase 4** (SDL 1.2 migration) and check in before starting it — Phase 5 (C++98) follows the
+   same stop, revisited once Phase 4's scope/approach is agreed.
+
+## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
+
+3. **Ms-PL attribution for vendored `cna`**: default plan is to keep `cna`'s `LICENSE` (Ms-PL)
+   and `THIRD_PARTY_NOTICES.md` inside the vendored `cna/` subdirectory as-is (satisfies Ms-PL's
+   redistribution terms for that code, doesn't relicense mobile-eggbert's own MIT code).
+6. **Scope check for Phase 2**: default plan is to determine `Net`/`Media`/`GltfImport`/`Xnb`
+   usage empirically via the reachability analysis itself (not assume upfront) and delete
+   whatever comes back unreachable.
+4. **Touch input on SDL 1.2** — deferred to the Phase 4 check-in.
