@@ -116,24 +116,44 @@ are read from their own GitHub repos as source, but no changes are pushed back t
 - Commit + push, likely in several sub-steps (window/event, then rendering, then input, then
   audio) rather than one commit, given the size.
 
-### Phase 5 — Migrate C++23 → C++98
-- Applies to mobile-eggbert's own 50 files **and** whatever remains of the vendored `cna`/
-  `sharp-runtime` after Phases 2-3.
-- Known C++98-incompatible constructs to hunt for and replace throughout: `auto`, lambdas,
-  range-based `for`, `nullptr` → `NULL`/`0`, `enum class` → plain `enum` (namespaced to avoid
-  collisions), `override`/`final`, `constexpr` → `const`/macros, smart pointers
-  (`unique_ptr`/`shared_ptr`) → manual `new`/`delete` or a pre-C++11 owning-pointer helper,
-  move semantics/rvalue refs, variadic templates, `static_assert`, uniform initialization
-  (`{}`), `<unordered_map>`/`<unordered_set>` → `<map>`/`<set>` (TR1 not guaranteed), `<thread>`/
-  `<atomic>`/`<mutex>` → SDL2 threading primitives (`SDL_Thread`/`SDL_mutex`/`SDL_atomic.h`),
-  `<chrono>` → SDL2's `SDL_GetTicks()`/`time.h`, trailing
-  return types, `constexpr if`, structured bindings, string formatting beyond `iostream`/
-  `sprintf`.
-- `CMakeLists.txt`: `CMAKE_CXX_STANDARD 23` → `98` in mobile-eggbert and the vendored `cna`/
+### Phase 5 — Migrate C++23 → C++14 (target changed from C++98, 2026-07-22 user decision)
+
+**Why the change**: Phase 4 pre-analysis (SDL3→SDL2) established the real constraint driving the
+low-C++-standard requirement is VS2017's `v141_xp` toolset (the last MSVC toolset that can target
+Windows XP SP2) — and that toolset's compiler supports up to C++17 language-wise, with only its
+*library* (STL) having practical XP-runtime risk in a few headers (`std::filesystem`, some
+`<thread>` sync primitives calling WinAPI functions absent on XP). C++98 was solving for a
+constraint (pre-C++11 compiler) that doesn't actually exist for this project's real target
+toolchain. C++14 keeps the actual reason for going low (XP/`v141_xp` compatibility) while avoiding
+a much larger, riskier rewrite that would strip lambdas, `auto`, smart pointers, move semantics,
+and `<thread>` — all of which C++14 keeps.
+
+**Scope, verified 2026-07-22** (grepped the full reachable tree — mobile-eggbert's own `include/`+
+`src/`, plus `cna`/`sharp-runtime` post-Phase-4 — for C++17/20/23-only constructs, not estimated):
+- **Zero occurrences** of: structured bindings (`auto [a, b] = ...`), `std::variant`, `std::span`,
+  concepts/`requires`, spaceship operator (`<=>`), coroutines (`co_await`/`co_return`/`co_yield`),
+  `std::format`, C++20 modules.
+- **`std::ranges`** — 1 real file: `include/WindowsPhoneSpeedyBlupi/Def.hpp` uses
+  `std::ranges::none_of` (C++20). (Grep also matched `sharp-runtime`'s own `CLAUDE.md`/`NEXT.md`
+  prose mentioning `std::ranges` as a style rule — not code, not in scope.)
+- **`if constexpr`** — 2 files (C++17).
+- **`std::string_view`** — 4 files (C++17).
+- **`std::optional`** — 13 files (C++17), the largest item: `SpriteBatch`, `SpriteFont`,
+  `SdlInputBridge`, `InputManager`, `GamerServices/Guide` (`.hpp`+`.cpp` pairs) in `cna`; mobile-
+  eggbert's own `Worlds`, `Decor`, `Pixmap` (`.hpp`+`.cpp` pairs). Each call site needs a real
+  case-by-case decision (sentinel value, `bool`+out-param pair, or pointer), not a mechanical
+  find/replace — this is the actual work of this phase, not busywork.
+- No C++11-only constructs (`auto`, lambdas, range-based `for`, `nullptr`, `enum class`,
+  `override`/`final`, smart pointers, move semantics, uniform initialization, variadic templates,
+  `<thread>`/`<atomic>`/`<mutex>`, `<chrono>`) need touching at all — C++14 is a superset of C++11
+  for all of these.
+- `CMakeLists.txt`: `CMAKE_CXX_STANDARD 23` → `14` in mobile-eggbert and the vendored `cna`/
   `sharp-runtime` copies.
-- This is expected to be the largest phase by file-touch count; do it in small,
-  buildable-at-every-step commits (e.g. one subsystem/directory at a time), not a single sweep.
-- Build + smoke-run after each sub-step.
+- Much smaller than the original C++98 plan implied — expected to be a single focused pass
+  (`std::optional` call sites are the real work), not the largest phase by file-touch count.
+  Build + smoke-run after the `std::optional` rewrite and again after the final standard-version
+  flip; commit in reviewable batches (mechanical C++17 fixes, then `std::optional` rewrites, then
+  the CMake standard-version change + final verification), not one giant diff.
 - Commit + push throughout.
 
 ## Decisions (2026-07-21, confirmed by user)
