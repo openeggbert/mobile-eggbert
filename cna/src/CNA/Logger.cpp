@@ -16,7 +16,7 @@ namespace CNA
 
     void Logger::Log(
         LogLevel level,
-        std::string_view message,
+        const std::string& message,
         LogCategory category,
         bool condition
     )
@@ -45,7 +45,7 @@ namespace CNA
     }
 
     void Logger::Fatal(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -53,7 +53,7 @@ namespace CNA
     }
 
     void Logger::Error(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -61,7 +61,7 @@ namespace CNA
     }
 
     void Logger::Warn(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -69,7 +69,7 @@ namespace CNA
     }
 
     void Logger::Info(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -77,7 +77,7 @@ namespace CNA
     }
 
     void Logger::Debug(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -85,7 +85,7 @@ namespace CNA
     }
 
     void Logger::Trace(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -93,7 +93,7 @@ namespace CNA
     }
 
     void Logger::Experiment(
-        std::string_view message,
+        const std::string& message,
         LogCategory category
     )
     {
@@ -101,7 +101,7 @@ namespace CNA
     }
 
     void Logger::FatalIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {
@@ -109,7 +109,7 @@ namespace CNA
     }
 
     void Logger::ErrorIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {
@@ -117,7 +117,7 @@ namespace CNA
     }
 
     void Logger::WarnIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {
@@ -125,7 +125,7 @@ namespace CNA
     }
 
     void Logger::InfoIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {
@@ -133,7 +133,7 @@ namespace CNA
     }
 
     void Logger::DebugIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {
@@ -141,7 +141,7 @@ namespace CNA
     }
 
     void Logger::TraceIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {
@@ -149,7 +149,7 @@ namespace CNA
     }
 
     void Logger::ExperimentIf(
-        std::string_view message,
+        const std::string& message,
         bool condition
     )
     {

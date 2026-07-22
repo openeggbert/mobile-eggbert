@@ -1978,7 +1978,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiSuspend = false;
             m_blupiCloud = false;
             m_blupiHide = false;
-            if constexpr (Config::FPS != Fps::Fps20)
+            if (Config::FPS != Fps::Fps20)
             {
                 m_blupiVitesseY = 0.0;
                 m_blupiSubPixelY = 0.0;
@@ -2643,7 +2643,7 @@ namespace WindowsPhoneSpeedyBlupi
         // no collision response. Only world bounds are enforced.
         int dx = 0;
         int dy = 0;
-        if constexpr (Config::FPS == Fps::Fps20)
+        if (Config::FPS == Fps::Fps20)
         {
             dx = static_cast<int>(m_blupiSpeedX * 4.0);
             dy = static_cast<int>(m_blupiSpeedY * 4.0);
@@ -2775,22 +2775,22 @@ namespace WindowsPhoneSpeedyBlupi
             icon = m_decor[(end.X + 30) / 64][(end.Y + 30) / 64].icon;
             if (icon == 110)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X -= 9; }
+                if (Config::FPS == Fps::Fps20) { end.X -= 9; }
                 else { m_blupiSubPixelX -= 9.0 * Config::SPEED_SCALE; int wpx110 = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpx110; end.X += wpx110; }
             }
             if (icon == 114)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X += 9; }
+                if (Config::FPS == Fps::Fps20) { end.X += 9; }
                 else { m_blupiSubPixelX += 9.0 * Config::SPEED_SCALE; int wpx114 = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpx114; end.X += wpx114; }
             }
             if (icon == 118)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.Y -= 20; }
+                if (Config::FPS == Fps::Fps20) { end.Y -= 20; }
                 else { m_blupiSubPixelY -= 20.0 * Config::SPEED_SCALE; int wpy118 = static_cast<int>(std::floor(m_blupiSubPixelY)); m_blupiSubPixelY -= wpy118; end.Y += wpy118; }
             }
             if (icon == 122)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.Y += 20; }
+                if (Config::FPS == Fps::Fps20) { end.Y += 20; }
                 else { m_blupiSubPixelY += 20.0 * Config::SPEED_SCALE; int wpy122 = static_cast<int>(std::floor(m_blupiSubPixelY)); m_blupiSubPixelY -= wpy122; end.Y += wpy122; }
             }
             if (icon >= 110 && icon <= 125)
@@ -2962,7 +2962,7 @@ namespace WindowsPhoneSpeedyBlupi
                 }
                 m_blupiVitesseY = 1.0;
             }
-            if constexpr (Config::FPS == Fps::Fps20)
+            if (Config::FPS == Fps::Fps20)
             {
                 end.Y += (int)(m_blupiVitesseY * 2.0);
                 if (m_blupiVitesseY < 20.0) { m_blupiVitesseY += 2.0; }
@@ -3385,7 +3385,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiAction == BlupiAction::Push)
                 {
-                    if constexpr (Config::FPS == Fps::Fps20) { end.X -= CaisseGetMove(5); }
+                    if (Config::FPS == Fps::Fps20) { end.X -= CaisseGetMove(5); }
                     else { m_blupiSubPixelX -= CaisseGetMove(5) * Config::SPEED_SCALE; int wholePixelsX = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wholePixelsX; end.X += wholePixelsX; }
                 }
                 else
@@ -3401,13 +3401,13 @@ namespace WindowsPhoneSpeedyBlupi
                         num3 *= 3;
                         num3 /= 2;
                     }
-                    if constexpr (Config::FPS == Fps::Fps20) { end.X += Misc::Speed(m_blupiSpeedX, num3); }
+                    if (Config::FPS == Fps::Fps20) { end.X += Misc::Speed(m_blupiSpeedX, num3); }
                     else { m_blupiSubPixelX += Misc::Speed(m_blupiSpeedX, num3) * Config::SPEED_SCALE; int wholePixelsX = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wholePixelsX; end.X += wholePixelsX; }
                 }
             }
             if (m_blupiDir == Direction::Right && m_blupiAction == BlupiAction::Pop)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X -= CaisseGetMove(3); }
+                if (Config::FPS == Fps::Fps20) { end.X -= CaisseGetMove(3); }
                 else { m_blupiSubPixelX -= CaisseGetMove(3) * Config::SPEED_SCALE; int wholePixelsXPop = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wholePixelsXPop; end.X += wholePixelsXPop; }
             }
         }
@@ -3443,7 +3443,7 @@ namespace WindowsPhoneSpeedyBlupi
             {
                 if (m_blupiAction == BlupiAction::Push)
                 {
-                    if constexpr (Config::FPS == Fps::Fps20) { end.X += CaisseGetMove(5); }
+                    if (Config::FPS == Fps::Fps20) { end.X += CaisseGetMove(5); }
                     else { m_blupiSubPixelX += CaisseGetMove(5) * Config::SPEED_SCALE; int wholePixelsX = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wholePixelsX; end.X += wholePixelsX; }
                 }
                 else
@@ -3459,13 +3459,13 @@ namespace WindowsPhoneSpeedyBlupi
                         num3 *= 3;
                         num3 /= 2;
                     }
-                    if constexpr (Config::FPS == Fps::Fps20) { end.X += Misc::Speed(m_blupiSpeedX, num3); }
+                    if (Config::FPS == Fps::Fps20) { end.X += Misc::Speed(m_blupiSpeedX, num3); }
                     else { m_blupiSubPixelX += Misc::Speed(m_blupiSpeedX, num3) * Config::SPEED_SCALE; int wholePixelsX = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wholePixelsX; end.X += wholePixelsX; }
                 }
             }
             if (m_blupiDir == Direction::Left && m_blupiAction == BlupiAction::Pop)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X += CaisseGetMove(3); }
+                if (Config::FPS == Fps::Fps20) { end.X += CaisseGetMove(3); }
                 else { m_blupiSubPixelX += CaisseGetMove(3) * Config::SPEED_SCALE; int wholePixelsXPop = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wholePixelsXPop; end.X += wholePixelsXPop; }
             }
         }
@@ -3646,22 +3646,22 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiAction == BlupiAction::Recede && m_blupiDir == Direction::Left)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X += 4; }
+                if (Config::FPS == Fps::Fps20) { end.X += 4; }
                 else { m_blupiSubPixelX += 4.0 * Config::SPEED_SCALE; int wpxR = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpxR; end.X += wpxR; }
             }
             if (m_blupiAction == BlupiAction::Recede && m_blupiDir == Direction::Right)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X -= 4; }
+                if (Config::FPS == Fps::Fps20) { end.X -= 4; }
                 else { m_blupiSubPixelX -= 4.0 * Config::SPEED_SCALE; int wpxR = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpxR; end.X += wpxR; }
             }
             if (m_blupiAction == BlupiAction::Advance && m_blupiDir == Direction::Left)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X -= 4; }
+                if (Config::FPS == Fps::Fps20) { end.X -= 4; }
                 else { m_blupiSubPixelX -= 4.0 * Config::SPEED_SCALE; int wpxA = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpxA; end.X += wpxA; }
             }
             if (m_blupiAction == BlupiAction::Advance && m_blupiDir == Direction::Right)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X += 4; }
+                if (Config::FPS == Fps::Fps20) { end.X += 4; }
                 else { m_blupiSubPixelX += 4.0 * Config::SPEED_SCALE; int wpxA = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpxA; end.X += wpxA; }
             }
         }
@@ -3670,12 +3670,12 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (m_blupiAction == BlupiAction::Advance && m_blupiDir == Direction::Left)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X -= 5; }
+                if (Config::FPS == Fps::Fps20) { end.X -= 5; }
                 else { m_blupiSubPixelX -= 5.0 * Config::SPEED_SCALE; int wpxJA = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpxJA; end.X += wpxJA; }
             }
             if (m_blupiAction == BlupiAction::Advance && m_blupiDir == Direction::Right)
             {
-                if constexpr (Config::FPS == Fps::Fps20) { end.X += 5; }
+                if (Config::FPS == Fps::Fps20) { end.X += 5; }
                 else { m_blupiSubPixelX += 5.0 * Config::SPEED_SCALE; int wpxJA = static_cast<int>(std::floor(m_blupiSubPixelX)); m_blupiSubPixelX -= wpxJA; end.X += wpxJA; }
             }
         }
@@ -4367,7 +4367,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiVitesseY = 0.0;
                 m_blupiSubPixelY = 0.0;
             }
-            if constexpr (Config::FPS == Fps::Fps20)
+            if (Config::FPS == Fps::Fps20)
             {
                 end.Y += (int)m_blupiVitesseY;
             }
@@ -5716,7 +5716,7 @@ namespace WindowsPhoneSpeedyBlupi
                 m_blupiAir = false;
                 m_blupiTank = true;
                 m_blupiVitesseX = 0.0;
-                if constexpr (Config::FPS != Fps::Fps20)
+                if (Config::FPS != Fps::Fps20)
                 {
                     m_blupiVitesseY = 0.0;
                     m_blupiSubPixelY = 0.0;

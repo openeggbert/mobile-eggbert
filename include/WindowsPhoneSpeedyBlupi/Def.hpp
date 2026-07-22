@@ -10,7 +10,6 @@
 #pragma once
 
 #include <algorithm>
-#include <ranges>
 
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 #include "WindowsPhoneSpeedyBlupi/def/BlupiAction.hpp"
@@ -126,7 +125,7 @@ namespace WindowsPhoneSpeedyBlupi
          * @brief Returns true if the specified glyph is not present in the given list.
          *
          * @details This is an additional helper not present in the original C# code.
-         * Uses std::ranges::none_of for a clean O(n) membership test.
+         * Uses std::none_of for a clean O(n) membership test.
          *
          * @param[in] buttonGlyphToBeChecked Glyph to search for.
          * @param[in] buttonGlyphs Collection of glyphs to search within.
@@ -137,11 +136,11 @@ namespace WindowsPhoneSpeedyBlupi
         static bool isNotOneOf(const ButtonGlyph& buttonGlyphToBeChecked,
                                std::initializer_list<ButtonGlyph> buttonGlyphs)
         {
-            return std::ranges::none_of(buttonGlyphs,
-                                        [&buttonGlyphToBeChecked](const ButtonGlyph candidate)
-                                        {
-                                            return candidate == buttonGlyphToBeChecked;
-                                        });
+            return std::none_of(buttonGlyphs.begin(), buttonGlyphs.end(),
+                                [&buttonGlyphToBeChecked](const ButtonGlyph candidate)
+                                {
+                                    return candidate == buttonGlyphToBeChecked;
+                                });
         }
 
         static constexpr intcs LXIMAGE = 640;     ///< @brief Logical game viewport width in pixels.

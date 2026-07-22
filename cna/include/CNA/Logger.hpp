@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string_view>
+#include <string>
 
 #include "CNA/LogLevel.hpp"
 #include "CNA/LogCategory.hpp"
@@ -25,7 +25,7 @@ namespace CNA
          */
         static void Log(
             LogLevel level,
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION,
             bool condition = true
         );
@@ -37,7 +37,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Fatal(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
 
@@ -48,7 +48,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Error(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
 
@@ -59,7 +59,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Warn(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
 
@@ -70,7 +70,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Info(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
 
@@ -81,7 +81,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Debug(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
 
@@ -92,7 +92,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Trace(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
 
@@ -103,7 +103,7 @@ namespace CNA
          * @param category Functional category. Defaults to APPLICATION.
          */
         static void Experiment(
-            std::string_view message,
+            const std::string& message,
             LogCategory category = LogCategory::APPLICATION
         );
         /**
@@ -113,7 +113,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void FatalIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
 
@@ -124,7 +124,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void ErrorIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
 
@@ -135,7 +135,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void WarnIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
 
@@ -146,7 +146,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void InfoIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
 
@@ -157,7 +157,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void DebugIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
 
@@ -168,7 +168,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void TraceIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
 
@@ -179,7 +179,7 @@ namespace CNA
          * @param condition Condition that must be true for the message to be logged.
          */
         static void ExperimentIf(
-            std::string_view message,
+            const std::string& message,
             bool condition
         );
         /**

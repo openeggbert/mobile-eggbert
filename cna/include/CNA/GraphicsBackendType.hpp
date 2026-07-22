@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string_view>
-
 namespace CNA
 {
     /** @brief Identifies which CNA graphics backend was selected for this build (compile-time choice, see CNA_GRAPHICS_BACKEND). */
@@ -97,14 +95,14 @@ namespace CNA
     /**
      * @brief Returns the human-readable name of the graphics backend compiled into this build.
      *
-     * The returned view matches the CNA_GRAPHICS_BACKEND CMake option value exactly
+     * The returned string matches the CNA_GRAPHICS_BACKEND CMake option value exactly
      * (e.g. "EASYGL", "SDL_RENDERER", "D3D9") and points at static storage (a string literal),
      * so it stays valid for the lifetime of the program. Like getCurrentGraphicsBackendType(),
      * this is a compile-time constant.
      *
      * @return The active backend's name.
      */
-    constexpr std::string_view getCurrentGraphicsBackendName()
+    constexpr const char* getCurrentGraphicsBackendName()
     {
         switch (getCurrentGraphicsBackendType())
         {

@@ -130,7 +130,7 @@ namespace WindowsPhoneSpeedyBlupi
          */
         static constexpr int ScaleTime(int value)
         {
-            if constexpr (FPS == Fps::Fps20)
+            if (FPS == Fps::Fps20)
             {
                 return value;
             }
