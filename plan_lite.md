@@ -695,6 +695,92 @@ presentation → audio mixer) with no new warnings beyond the disclosed, intenti
 **Commits**: vendor swap; `AudioMixer` rewrite; `SdlGraphicsBackend` + window/display layer rewrite;
 input pair + sensors rewrite — 4 commits, each independently buildable in sequence, none pushed.
 
+## Phase 5 status: done (2026-07-22) — C++23 → C++14 migration
+
+The 2026-07-22 Phase 5 scope commit (`498c37c`) grepped the reachable tree for named C++17/20/23
+constructs and found `std::optional` (13 files) as the only sizeable item, with `if constexpr`
+(2), `std::string_view` (4), and one `std::ranges::none_of` call rounding it out. That scope
+covered everything grep could name in advance; it did **not** cover constructs that only surface
+once the compiler actually runs under `-std=c++14` (an unnamed-in-advance category by
+definition) — actually flipping `CMAKE_CXX_STANDARD` at the end of this phase surfaced a real
+second wave, documented below. Executed as 7 sequential commits, building after each.
+
+**`std::optional` → `System::Nullable<T>`** (commit `3dedf9a`): every use site is a faithful
+mapping of a real C# nullable value type (`Rectangle? sourceRectangle` in `SpriteBatch.Draw`,
+`char? DefaultCharacter` in `SpriteFont`, `int? EndShowMessageBox` in `Guide` — all verified
+against the FNA reference source, not guessed), so the SharpRuntime dependency rule applied: added
+`System::Nullable<T>` (`getHasValueProperty()`/`getValueProperty()`/`GetValueOrDefault()`, matching
+.NET's actual `Nullable<T>` API shape) rather than hand-rolling a workaround per call site. Also
+covers `cna`'s internal input-bridging code (`InputManager`/`SdlInputBridge`'s `try_get_*`
+functions) and mobile-eggbert's own `Worlds`/`Decor`, which used the same optional-value pattern
+for non-.NET-facing internal state — reusing one vocabulary type there too rather than introducing
+a second one. Doc comments referencing `std::nullopt`/`std::optional` in prose were updated to
+match, not just the code.
+
+**Mechanical C++17 fixes** (commit `ff43b47`): `if constexpr` → plain `if` (the discarded-branch
+guarantee wasn't needed — `Config::FPS` is a fixed compile-time constant, not a template
+parameter, and C++14's relaxed `constexpr`-function rules already allow the multi-statement bodies
+involved). `std::string_view` → `const std::string&` (`Logger`) or `const char*` (an unused,
+compile-time-only string-literal switch). `std::ranges::none_of` → `std::none_of(begin, end)`.
+
+**The second wave — surfaced only by actually compiling at `-std=c++14`** (commits `f7998bf`,
+`e2874ca`, `ca2614d`, `591e254`, `5a745d1`): the grep-based scope estimate could name constructs by
+keyword; it could not detect implicit-language-feature *dependencies* like guaranteed copy
+elision, C++17-only member-declaration syntax, or genuinely undiscovered library usage that
+happened not to match the original grep patterns. Real items found this way, in the order the
+build surfaced them:
+- **`std::filesystem` → Filesystem TS** (`std::experimental::filesystem`, `-lstdc++fs`): 12 files
+  across `FileStream`, `IsolatedStorageFile`/`FileStream`, `StoragePaths`, `ContentManager`,
+  `TitleContainer`/`TitleLocation`, `Song` — not in the original grep at all (a different named
+  construct than any of the four patterns checked). `TitleContainer::CombineTitlePath`/
+  `ResolveRealPath` also used `path::lexically_normal()`, a final-C++17 addition absent from the
+  TS — replaced with a small local `LexicallyNormal()` (pure lexical `.`/`..` collapsing, no
+  filesystem access, matching the standard function's actual contract).
+- **Guaranteed copy elision** (C++17) had been silently load-bearing in three places that all
+  looked like ordinary C++11/14 code: `IsolatedStorageFile::OpenFile()`'s
+  `return IsolatedStorageFileStream(...)` factory pattern (needed `FileStream` to gain an explicit
+  move constructor — its user-declared destructor had suppressed the implicit one);
+  `MakeScopeExit()`'s equivalent factory return (`ScopeExit<F>` got the same fix, plus an explicit
+  disarm flag so a real move doesn't double-invoke the wrapped cleanup callback); and
+  `InputPad`'s `accelSensor(Accelerometer())` member-initializer, where `Accelerometer`/
+  `SensorBase` directly own a `std::mutex`/`std::condition_variable` and can *never* be made
+  movable — the fix there was removing the unneeded temporary (`accelSensor()`), not adding a
+  move constructor.
+- **`std::any` → `System::Any`**: also not in the original grep. `IAsyncResult::
+  getAsyncStateProperty()`'s own doc comment already named it as this port's substitute for
+  .NET's `object?` — a genuine sharp-runtime-level concept, so `System::Any` (minimal type-erased
+  holder, `any_cast<T>()` with an exact-type check) lives in `sharp-runtime`, used by `Guide`'s
+  `Begin*`/`End*` async state parameters and, after a brief detour through a `cna`-local
+  `CNA::Internal::Any` (removed same commit), `ContentManager`'s type-erased asset/reader caches
+  too — one implementation instead of two once the dependency-direction issue (sharp-runtime can't
+  depend on cna) became clear.
+- **Inline variables** (C++17 `inline` on a variable declaration): `SharpRuntimeHelper.hpp`'s/
+  `ConfigDef.hpp`'s namespace-scope `inline constexpr` scalars just needed `inline` dropped (plain
+  `constexpr` already has internal linkage at namespace scope pre-C++17). `Game1::waitTable`/
+  `cheatGeste` and `Sound::tableVolumePitch` are `static constexpr` *array* members that are
+  genuinely ODR-used (indexed with `[]`) — these needed real out-of-class definitions added in the
+  `.cpp` files, since C++17's implicit-inline-on-static-constexpr-members is exactly what let the
+  pre-migration code skip that.
+- **Smaller items, one fix each**: `std::clamp` (C++17, ~40 call sites across 7 files) →
+  `CNA::Internal::Clamp<T>()` (a new internal-only header, not XNA-facing — callers wanting XNA's
+  own semantics still use `MathHelper::Clamp()`); `std::is_base_of_v`/`std::is_same_v` (C++17
+  variable templates) → the C++14 `::value` form; `unordered_map::contains()` (C++20, not even
+  C++17) → `.count(k) > 0`; structured bindings (C++17) in four `for`-range loops over map
+  entries → `.first`/`.second`; `std::vector` class-template-argument deduction (C++17,
+  `Decor.cpp`) → explicit `std::vector<std::string>`; `std::atomic<bool> isFloat_ = false`
+  (copy-initialization needs C++17 elision to dodge `atomic`'s deleted copy constructor) →
+  direct-init (`{false}`).
+
+**Verification**: full clean configure+build of `WindowsPhoneSpeedyBlupi` at `-std=c++14` — 0
+compile errors, 0 link errors. `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` smoke-test ran the
+full duration with clean window/renderer/audio-mixer init logs and no crash; also verified against
+the real X11 display (OpenGL renderer path) with the same clean result. 57 files touched across
+the 6 code commits (`ff43b47`, `3dedf9a`, `f7998bf`, `e2874ca`, `ca2614d`, `591e254`, `5a745d1`);
+combined `cna`+`sharp-runtime` `.hpp`/`.cpp` count: 337 (end of Phase 2.6) → 340 (this phase adds
+2 new header-only files, `System::Any` and `CNA::Internal::Clamp`, and touches no others
+structurally). None of this phase's commits are pushed — left for the user/orchestrator, matching
+Phase 4's precedent.
+
 ## Remaining open questions (not yet answered, relevant to Phase 1/2, low-risk defaults applied unless told otherwise)
 
 3. **Ms-PL attribution for vendored `cna`**: default plan applied — `cna`'s `LICENSE` (Ms-PL) and
