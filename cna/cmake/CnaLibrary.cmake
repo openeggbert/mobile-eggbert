@@ -1,30 +1,10 @@
-# --- FFmpeg (video decoding) — not available on Emscripten/Android, nor on any Windows target
-# (mingw-w64 cross-build OR a native MSVC build, e.g. this project's own D3D11/D3D12 Windows CI --
-# neither has an FFmpeg pkg-config path; on the MinGW cross-build, pkg-config would otherwise
-# silently resolve to the host's native FFmpeg and poison the cross-compile's include path with
-# native glibc headers). WIN32 covers both MinGW and native MSVC uniformly; MINGW is kept for
-# clarity/documentation even though it's now redundant with WIN32. ---
-if(MINGW OR WIN32 OR EMSCRIPTEN OR ANDROID)
-    set(CNA_FFMPEG_AVAILABLE OFF)
-else()
-    set(CNA_FFMPEG_AVAILABLE ON)
-endif()
-
-if(CNA_FFMPEG_AVAILABLE)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBAVCODEC  REQUIRED libavcodec)
-    pkg_check_modules(LIBAVFORMAT REQUIRED libavformat)
-    pkg_check_modules(LIBAVUTIL   REQUIRED libavutil)
-    pkg_check_modules(LIBSWRESAMPLE REQUIRED libswresample)
-endif()
-
 # --- Draco (KHR_draco_mesh_compression mesh decoding, plan_cnj.md CNB-91, Phase 14F) — optional,
 # genuinely a system dependency (unlike cgltf.h/stb_image.h, which are vendored single-header
 # libs): Draco is a real multi-file C++ library, not something worth vendoring wholesale just to
 # decode compressed meshes. Detected via CMake's own exported package config (Debian's
 # libdraco-dev ships draco-config.cmake); when absent, GltfImportCore::ExtractMesh keeps its own
 # existing "throws a clear unsupported-format error" behavior for a Draco-compressed primitive,
-# exactly like FFmpeg's own CNA_FFMPEG_AVAILABLE=OFF fallback above.
+# exactly like a missing optional codec fallback would.
 find_package(draco CONFIG QUIET)
 if(draco_FOUND)
     set(CNA_DRACO_AVAILABLE ON)
@@ -46,13 +26,6 @@ list(FILTER CNA_SOURCES EXCLUDE REGEX "src/CNA/Internal/GamerServices/.*")
 list(FILTER CNA_SOURCES EXCLUDE REGEX "src/Microsoft/Xna/Framework/Net/.*")
 list(FILTER CNA_SOURCES EXCLUDE REGEX "src/CNA/Internal/Net/.*")
 
-# Exclude FFmpeg-dependent sources on platforms where FFmpeg is unavailable
-if(NOT CNA_FFMPEG_AVAILABLE)
-    list(FILTER CNA_SOURCES EXCLUDE REGEX ".*/CNA/Internal/Media/VideoDecoder\\.cpp$")
-    list(FILTER CNA_SOURCES EXCLUDE REGEX ".*/Media/Video/VideoPlayer\\.cpp$")
-    list(FILTER CNA_SOURCES EXCLUDE REGEX ".*/Media/Video/Video\\.cpp$")
-endif()
-
 add_library(CNA STATIC
         ${CNA_SOURCES}
 )
@@ -72,7 +45,6 @@ target_compile_definitions(CNA
         $<$<BOOL:${CNA_NOXNA}>:CNA_NOXNA>
         $<$<BOOL:${CNA_DEVICES}>:CNA_DEVICES>
         $<$<BOOL:${CNA_DRACO_AVAILABLE}>:CNA_DRACO_AVAILABLE>
-        $<$<BOOL:${CNA_FFMPEG_AVAILABLE}>:CNA_FFMPEG_AVAILABLE>
 )
 
 if(CNA_DRACO_AVAILABLE)
@@ -144,21 +116,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # TitleLocation/Song use the pre-standard Filesystem TS (std::experimental::filesystem),
     # which on libstdc++/libc++ needs this separate archive linked in.
     target_link_libraries(CNA PRIVATE stdc++fs)
-endif()
-
-if(CNA_FFMPEG_AVAILABLE)
-    target_link_libraries(CNA PRIVATE
-        ${LIBAVCODEC_LIBRARIES}
-        ${LIBAVFORMAT_LIBRARIES}
-        ${LIBAVUTIL_LIBRARIES}
-        ${LIBSWRESAMPLE_LIBRARIES}
-    )
-    target_include_directories(CNA PRIVATE
-        ${LIBAVCODEC_INCLUDE_DIRS}
-        ${LIBAVFORMAT_INCLUDE_DIRS}
-        ${LIBAVUTIL_INCLUDE_DIRS}
-        ${LIBSWRESAMPLE_INCLUDE_DIRS}
-    )
 endif()
 
 # --- GamerServices ---
