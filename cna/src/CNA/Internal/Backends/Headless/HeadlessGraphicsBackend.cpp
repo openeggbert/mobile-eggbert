@@ -1,4 +1,5 @@
 #include "CNA/Internal/Backends/Headless/HeadlessGraphicsBackend.hpp"
+#include "CNA/Internal/Clamp.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -104,8 +105,8 @@ namespace CNA::Internal::Backends::Headless
         std::lock_guard<std::mutex> lock(mutex_);
         std::vector<HeadlessResourceRecord> result;
         result.reserve(records_.size());
-        for (const auto& [id, record] : records_)
-            result.push_back(record);
+        for (const auto& entry : records_)
+            result.push_back(entry.second);
         return result;
     }
 
@@ -550,10 +551,10 @@ namespace CNA::Internal::Backends::Headless
         // Nothing was ever rendered -- reports the last Clear() colour for every pixel, which is
         // the closest honest answer a backend that draws nothing can give (matches what a real
         // backend would show if every draw call were a no-op but Clear() still worked).
-        const std::uint8_t r = static_cast<std::uint8_t>(std::clamp(clearColor_[0], 0.0f, 1.0f) * 255.0f);
-        const std::uint8_t g = static_cast<std::uint8_t>(std::clamp(clearColor_[1], 0.0f, 1.0f) * 255.0f);
-        const std::uint8_t b = static_cast<std::uint8_t>(std::clamp(clearColor_[2], 0.0f, 1.0f) * 255.0f);
-        const std::uint8_t a = static_cast<std::uint8_t>(std::clamp(clearColor_[3], 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t r = static_cast<std::uint8_t>(CNA::Internal::Clamp(clearColor_[0], 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t g = static_cast<std::uint8_t>(CNA::Internal::Clamp(clearColor_[1], 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t b = static_cast<std::uint8_t>(CNA::Internal::Clamp(clearColor_[2], 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t a = static_cast<std::uint8_t>(CNA::Internal::Clamp(clearColor_[3], 0.0f, 1.0f) * 255.0f);
         for (int i = 0; i < w * h; ++i)
         {
             pixels[i * 4 + 0] = r; pixels[i * 4 + 1] = g; pixels[i * 4 + 2] = b; pixels[i * 4 + 3] = a;

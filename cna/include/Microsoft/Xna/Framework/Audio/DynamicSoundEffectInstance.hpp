@@ -183,7 +183,7 @@ namespace Microsoft::Xna::Framework::Audio
         // from Play(), the game thread) -- a real TSAN-confirmed data race as a plain bool, since
         // neither side takes queueMutex_ for it (EnsureStream() runs before a track/stream
         // exists to synchronize around, and this flag must be visible before that point).
-        std::atomic<bool>   isFloat_ = false;
+        std::atomic<bool>   isFloat_{false};
 
         bool                streamIsFloat_ = false; // format the live audioStream_ was created with; game-thread-only, no lock needed
 

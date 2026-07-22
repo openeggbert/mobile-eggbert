@@ -18,7 +18,7 @@ namespace Microsoft::Devices::Sensors
     template <typename T>
     class SensorReadingEventArgs : public System::EventArgs
     {
-        static_assert(std::is_base_of_v<ISensorReading, T>,
+        static_assert(std::is_base_of<ISensorReading, T>::value,
                       "T must derive from ISensorReading");
 
     private:

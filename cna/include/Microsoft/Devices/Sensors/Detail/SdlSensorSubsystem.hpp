@@ -55,6 +55,10 @@ namespace Microsoft::Devices::Sensors::Detail
 
         ~ScopeExit() noexcept
         {
+            if (!active_)
+            {
+                return;
+            }
             try
             {
                 onExit_();
@@ -70,8 +74,25 @@ namespace Microsoft::Devices::Sensors::Detail
         ScopeExit(const ScopeExit&) = delete;
         ScopeExit& operator=(const ScopeExit&) = delete;
 
+        /**
+         * @brief Move-constructs from @p other, disarming @p other so its destructor becomes a
+         * no-op (onExit_ must run exactly once, on whichever ScopeExit instance outlives the
+         * other).
+         *
+         * C++14 has no guaranteed copy elision (that's C++17), so MakeScopeExit()'s
+         * `return ScopeExit<F>(...)` and callers' `auto guard = MakeScopeExit(...)` both need a
+         * real, accessible move constructor -- the user-declared destructor above otherwise
+         * suppresses the implicitly-declared one.
+         */
+        ScopeExit(ScopeExit&& other) noexcept
+            : onExit_(std::move(other.onExit_))
+        {
+            other.active_ = false;
+        }
+
     private:
         F onExit_;
+        bool active_ = true;
     };
 
     /** @brief Deduces F so callers can write `auto guard = MakeScopeExit([]{ ... });`. */
@@ -901,7 +922,7 @@ namespace Microsoft::Devices::Sensors::Detail
         // SDL_EventFilter's signature, rather than an overload-resolution
         // error at a call site far from the actual mismatch.
         static_assert(
-            std::is_same_v<decltype(&SdlSensorSubsystem::SensorEventWatch), SDL_EventFilter>,
+            std::is_same<decltype(&SdlSensorSubsystem::SensorEventWatch), SDL_EventFilter>::value,
             "SdlSensorSubsystem::SensorEventWatch must exactly match SDL_EventFilter's signature and calling convention");
     };
 } // namespace Microsoft::Devices::Sensors::Detail

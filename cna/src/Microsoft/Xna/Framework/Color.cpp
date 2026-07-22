@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 
 #include "Microsoft/Xna/Framework/Color.hpp"
+#include "CNA/Internal/Clamp.hpp"
 #include "Microsoft/Xna/Framework/MathHelper.hpp"
 
 #include <algorithm>
@@ -25,7 +26,7 @@ namespace Microsoft::Xna::Framework
 
         [[nodiscard]] intcs ClampToByteInt(intcs value)
         {
-            return std::clamp(value, ByteMin, ByteMax);
+            return CNA::Internal::Clamp(value, ByteMin, ByteMax);
         }
 
         [[nodiscard]] bytecs ToByte(intcs value)

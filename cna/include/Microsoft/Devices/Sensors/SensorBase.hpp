@@ -36,7 +36,7 @@ namespace Microsoft::Devices::Sensors
     template <typename TSensorReading>
     class SensorBase : public System::Object, public System::IDisposable
     {
-        static_assert(std::is_base_of_v<ISensorReading, TSensorReading>,
+        static_assert(std::is_base_of<ISensorReading, TSensorReading>::value,
                       "TSensorReading must derive from ISensorReading");
 
     private:

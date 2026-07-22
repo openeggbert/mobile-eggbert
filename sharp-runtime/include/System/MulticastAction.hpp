@@ -125,8 +125,8 @@ namespace System {
          */
         void operator()(Args... args) const {
             const auto snapshot = handlers_;
-            for (const auto& [token, handler] : snapshot) {
-                handler(args...);
+            for (const auto& entry : snapshot) {
+                entry.second(args...);
             }
         }
 

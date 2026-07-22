@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MS-PL
 #include "CNA/Internal/Input/InputManager.hpp"
+#include "CNA/Internal/Clamp.hpp"
 #include "CNA/Internal/Input/SdlInputBridge.hpp"
 #include "CNA/Internal/Input/GestureDetector.hpp"
 #include "Microsoft/Xna/Framework/Input/GamePad.hpp"
@@ -104,12 +105,12 @@ namespace CNA::Internal::Input
 
         float clamp_signed_unit(const float value)
         {
-            return std::clamp(value, -1.0f, 1.0f);
+            return CNA::Internal::Clamp(value, -1.0f, 1.0f);
         }
 
         float clamp_positive_unit(const float value)
         {
-            return std::clamp(value, 0.0f, 1.0f);
+            return CNA::Internal::Clamp(value, 0.0f, 1.0f);
         }
 
         InternalInputState& getInternalInputState()
@@ -379,9 +380,9 @@ namespace CNA::Internal::Input
 
         std::vector<int> sortedTouchIds;
         sortedTouchIds.reserve(touchLocations.size());
-        for (const auto& [touchId, _] : touchLocations)
+        for (const auto& touchEntry : touchLocations)
         {
-            sortedTouchIds.push_back(touchId);
+            sortedTouchIds.push_back(touchEntry.first);
         }
         std::sort(sortedTouchIds.begin(), sortedTouchIds.end());
 
@@ -423,8 +424,10 @@ namespace CNA::Internal::Input
         std::vector<int> touchIdsToRemove;
         touchIdsToRemove.reserve(touchLocations.size());
 
-        for (auto& [touchId, touchLocation] : touchLocations)
+        for (auto& touchEntry : touchLocations)
         {
+            const int touchId = touchEntry.first;
+            auto& touchLocation = touchEntry.second;
             // Record the location just reported as "previous" for the next snapshot — done before
             // the Pressed→Moved promotion below, so a promoted touch's previous is the Pressed
             // location the game actually saw, not the promoted Moved state.

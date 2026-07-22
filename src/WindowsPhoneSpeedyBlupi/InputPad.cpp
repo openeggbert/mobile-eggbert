@@ -246,7 +246,7 @@ namespace WindowsPhoneSpeedyBlupi
         pixmap(pixmap),
         sound(sound),
         gameData(gameData),
-        accelSensor(Microsoft::Devices::Sensors::Accelerometer()),
+        accelSensor(),
         accelSlider(Slider(TinyPoint(320, 400), this->gameData->getAccelSensitivityProperty()))
     {
         using Microsoft::Devices::Sensors::AccelerometerReading;

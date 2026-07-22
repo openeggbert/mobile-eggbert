@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MS-PL
 #include "CNA/Internal/Input/SdlInputBridge.hpp"
+#include "CNA/Internal/Clamp.hpp"
 
 #include "CNA/Input/InputDevices.hpp"
 #include "CNA/Input/Joysticks.hpp"
@@ -395,12 +396,12 @@ namespace
         // to -1.0 via GamePadThumbSticks' clamp; clamping to [-1,1] here gives the byte-identical final
         // value. (An earlier CNA build divided the negative half by 32768, which diverged from FNA at every
         // non-endpoint negative sample, e.g. -16384 → -0.5 instead of FNA's -0.50001.)
-        return std::clamp(static_cast<float>(value) / 32767.0f, -1.0f, 1.0f);
+        return CNA::Internal::Clamp(static_cast<float>(value) / 32767.0f, -1.0f, 1.0f);
     }
 
     float normalize_trigger_axis(const Sint16 value)
     {
-        return std::clamp(static_cast<float>(value) / 32767.0f, 0.0f, 1.0f);
+        return CNA::Internal::Clamp(static_cast<float>(value) / 32767.0f, 0.0f, 1.0f);
     }
 
     std::unordered_map<SDL_FingerID, int>& get_finger_id_to_touch_id_map()
@@ -880,8 +881,10 @@ namespace CNA::Internal::Input
     std::vector<CNA::Input::JoystickInfoEXT> SdlInputBridge::GetJoysticks()
     {
         std::vector<CNA::Input::JoystickInfoEXT> result;
-        for (const auto& [id, joystick] : get_opened_joysticks())
+        for (const auto& entry : get_opened_joysticks())
         {
+            const auto& id = entry.first;
+            const auto& joystick = entry.second;
             CNA::Input::JoystickInfoEXT info;
             info.id = static_cast<std::uint32_t>(id);
             info.name = sdl_joystick_backend().GetJoystickName(joystick);
@@ -1268,7 +1271,7 @@ namespace CNA::Internal::Input
                 }
 
                 auto& gamepadToPlayerIndex = get_gamepad_to_player_index_map();
-                if (gamepadToPlayerIndex.contains(event.cdevice.which))
+                if (gamepadToPlayerIndex.count(event.cdevice.which) > 0)
                 {
                     break;
                 }
@@ -1324,7 +1327,7 @@ namespace CNA::Internal::Input
         case SDL_JOYDEVICEADDED:
             {
                 auto& opened = get_opened_joysticks();
-                if (opened.contains(event.jdevice.which))
+                if (opened.count(event.jdevice.which) > 0)
                 {
                     break;
                 }

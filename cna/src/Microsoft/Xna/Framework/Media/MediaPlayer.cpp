@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Media/MediaPlayer.hpp"
+#include "CNA/Internal/Clamp.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -60,7 +61,7 @@ namespace Microsoft::Xna::Framework::Media
 
         void ApplyMusicVolume(float vol, bool muted)
         {
-            Mix_VolumeMusic(std::clamp(static_cast<int>((muted ? 0.0f : vol) * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
+            Mix_VolumeMusic(CNA::Internal::Clamp(static_cast<int>((muted ? 0.0f : vol) * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
         }
     }
 #endif

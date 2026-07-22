@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MS-PL
 #include "CNA/Internal/Audio/AudioMixer.hpp"
+#include "CNA/Internal/Clamp.hpp"
 
 #ifdef SOUND_ENABLED
 #include <algorithm>
@@ -294,7 +295,7 @@ namespace CNA::Internal::Audio
         track->gain = gain;
         if (track->channel != -1)
         {
-            const int v = std::clamp(static_cast<int>(gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME);
+            const int v = CNA::Internal::Clamp(static_cast<int>(gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME);
             Mix_Volume(track->channel, v);
         }
     }
@@ -348,7 +349,7 @@ namespace CNA::Internal::Audio
             g_channelOwner[ch] = track;
         }
 
-        Mix_Volume(track->channel, std::clamp(static_cast<int>(track->gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
+        Mix_Volume(track->channel, CNA::Internal::Clamp(static_cast<int>(track->gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
         Mix_UnregisterEffect(track->channel, PanEffectCallback);
         if (track->pan != 0.0f)
         {
@@ -373,7 +374,7 @@ namespace CNA::Internal::Audio
             g_channelOwner[ch] = track;
         }
 
-        Mix_Volume(track->channel, std::clamp(static_cast<int>(track->gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
+        Mix_Volume(track->channel, CNA::Internal::Clamp(static_cast<int>(track->gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
         track->explicitlyStopped = false;
         track->looping = true; // informational only -- the actual loop is SDL2_mixer-native here.
         return Mix_PlayChannel(track->channel, placeholderChunk, -1) != -1;
@@ -445,7 +446,7 @@ namespace CNA::Internal::Audio
 
     void SetMasterGain(float gain)
     {
-        Mix_MasterVolume(std::clamp(static_cast<int>(gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
+        Mix_MasterVolume(CNA::Internal::Clamp(static_cast<int>(gain * MIX_MAX_VOLUME), 0, MIX_MAX_VOLUME));
     }
 }
 #endif

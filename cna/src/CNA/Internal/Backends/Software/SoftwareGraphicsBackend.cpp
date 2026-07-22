@@ -1,4 +1,5 @@
 #include "CNA/Internal/Backends/Software/SoftwareGraphicsBackend.hpp"
+#include "CNA/Internal/Clamp.hpp"
 
 #include "Microsoft/Xna/Framework/Vector4.hpp"
 
@@ -193,12 +194,12 @@ namespace CNA::Internal::Backends::Software
             // Software_Effects' own corner-sampling check: it produced a visible blend with the
             // neighboring texel right at the texture edge instead of correctly collapsing to a
             // single texel there).
-            const int x0 = std::clamp(x0raw, 0, texW - 1);
-            const int y0 = std::clamp(y0raw, 0, texH - 1);
-            const int x1 = std::clamp(x0raw + 1, 0, texW - 1);
-            const int y1 = std::clamp(y0raw + 1, 0, texH - 1);
-            const float fx = std::clamp(tx - std::floor(tx), 0.0f, 1.0f);
-            const float fy = std::clamp(ty - std::floor(ty), 0.0f, 1.0f);
+            const int x0 = CNA::Internal::Clamp(x0raw, 0, texW - 1);
+            const int y0 = CNA::Internal::Clamp(y0raw, 0, texH - 1);
+            const int x1 = CNA::Internal::Clamp(x0raw + 1, 0, texW - 1);
+            const int y1 = CNA::Internal::Clamp(y0raw + 1, 0, texH - 1);
+            const float fx = CNA::Internal::Clamp(tx - std::floor(tx), 0.0f, 1.0f);
+            const float fy = CNA::Internal::Clamp(ty - std::floor(ty), 0.0f, 1.0f);
 
             const auto sample = [&](int px, int py, int channel) -> float {
                 const std::size_t idx = (static_cast<std::size_t>(py) * static_cast<std::size_t>(texW) +
@@ -263,12 +264,12 @@ namespace CNA::Internal::Backends::Software
                 v = -dir.Y;
                 ma = az;
             }
-            const float s = std::clamp((u / ma + 1.0f) * 0.5f, 0.0f, 1.0f);
-            const float t = std::clamp((v / ma + 1.0f) * 0.5f, 0.0f, 1.0f);
+            const float s = CNA::Internal::Clamp((u / ma + 1.0f) * 0.5f, 0.0f, 1.0f);
+            const float t = CNA::Internal::Clamp((v / ma + 1.0f) * 0.5f, 0.0f, 1.0f);
 
             const int size = std::max(1, cube.GetSize());
-            const int px = std::clamp(static_cast<int>(s * static_cast<float>(size)), 0, size - 1);
-            const int py = std::clamp(static_cast<int>(t * static_cast<float>(size)), 0, size - 1);
+            const int px = CNA::Internal::Clamp(static_cast<int>(s * static_cast<float>(size)), 0, size - 1);
+            const int py = CNA::Internal::Clamp(static_cast<int>(t * static_cast<float>(size)), 0, size - 1);
             const auto& pixels = cube.FacePixels(face);
             const std::size_t idx = (static_cast<std::size_t>(py) * static_cast<std::size_t>(size) +
                                     static_cast<std::size_t>(px)) * 4u;
@@ -354,10 +355,10 @@ namespace CNA::Internal::Backends::Software
                     fb.depthBuffer[pixelIndex] = depth;
 
                     const std::size_t colorIndex = pixelIndex * 4;
-                    fb.color[colorIndex + 0] = static_cast<std::uint8_t>(std::clamp(r, 0.0f, 1.0f) * 255.0f);
-                    fb.color[colorIndex + 1] = static_cast<std::uint8_t>(std::clamp(g, 0.0f, 1.0f) * 255.0f);
-                    fb.color[colorIndex + 2] = static_cast<std::uint8_t>(std::clamp(b, 0.0f, 1.0f) * 255.0f);
-                    fb.color[colorIndex + 3] = static_cast<std::uint8_t>(std::clamp(a, 0.0f, 1.0f) * 255.0f);
+                    fb.color[colorIndex + 0] = static_cast<std::uint8_t>(CNA::Internal::Clamp(r, 0.0f, 1.0f) * 255.0f);
+                    fb.color[colorIndex + 1] = static_cast<std::uint8_t>(CNA::Internal::Clamp(g, 0.0f, 1.0f) * 255.0f);
+                    fb.color[colorIndex + 2] = static_cast<std::uint8_t>(CNA::Internal::Clamp(b, 0.0f, 1.0f) * 255.0f);
+                    fb.color[colorIndex + 3] = static_cast<std::uint8_t>(CNA::Internal::Clamp(a, 0.0f, 1.0f) * 255.0f);
                 }
             }
         }
@@ -397,10 +398,10 @@ namespace CNA::Internal::Backends::Software
                 const float weights[4] = {blendWeight.X, blendWeight.Y, blendWeight.Z, blendWeight.W};
 
                 float blended[16] = {};
-                const int n = std::clamp(params.weightsPerVertex, 1, 4);
+                const int n = CNA::Internal::Clamp(params.weightsPerVertex, 1, 4);
                 for (int k = 0; k < n; ++k)
                 {
-                    const int boneIndex = std::clamp(static_cast<int>(blendIndices[k]), 0, 71);
+                    const int boneIndex = CNA::Internal::Clamp(static_cast<int>(blendIndices[k]), 0, 71);
                     const float* bone = &params.boneTransforms[static_cast<std::size_t>(boneIndex) * 16u];
                     for (int e = 0; e < 16; ++e)
                         blended[e] += bone[e] * weights[k];
@@ -638,10 +639,10 @@ namespace CNA::Internal::Backends::Software
                     const std::size_t colorIndex = pixelIndex * 4;
                     if (!blendEnabled)
                     {
-                        fb.color[colorIndex + 0] = static_cast<std::uint8_t>(std::clamp(r, 0.0f, 1.0f) * 255.0f);
-                        fb.color[colorIndex + 1] = static_cast<std::uint8_t>(std::clamp(g, 0.0f, 1.0f) * 255.0f);
-                        fb.color[colorIndex + 2] = static_cast<std::uint8_t>(std::clamp(b, 0.0f, 1.0f) * 255.0f);
-                        fb.color[colorIndex + 3] = static_cast<std::uint8_t>(std::clamp(a, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 0] = static_cast<std::uint8_t>(CNA::Internal::Clamp(r, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 1] = static_cast<std::uint8_t>(CNA::Internal::Clamp(g, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 2] = static_cast<std::uint8_t>(CNA::Internal::Clamp(b, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 3] = static_cast<std::uint8_t>(CNA::Internal::Clamp(a, 0.0f, 1.0f) * 255.0f);
                     }
                     else
                     {
@@ -655,10 +656,10 @@ namespace CNA::Internal::Backends::Software
                         const float dstB = fb.color[colorIndex + 2] / 255.0f;
                         const float dstA = fb.color[colorIndex + 3] / 255.0f;
                         const float invA = 1.0f - a;
-                        fb.color[colorIndex + 0] = static_cast<std::uint8_t>(std::clamp(r * a + dstR * invA, 0.0f, 1.0f) * 255.0f);
-                        fb.color[colorIndex + 1] = static_cast<std::uint8_t>(std::clamp(g * a + dstG * invA, 0.0f, 1.0f) * 255.0f);
-                        fb.color[colorIndex + 2] = static_cast<std::uint8_t>(std::clamp(b * a + dstB * invA, 0.0f, 1.0f) * 255.0f);
-                        fb.color[colorIndex + 3] = static_cast<std::uint8_t>(std::clamp(a + dstA * invA, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 0] = static_cast<std::uint8_t>(CNA::Internal::Clamp(r * a + dstR * invA, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 1] = static_cast<std::uint8_t>(CNA::Internal::Clamp(g * a + dstG * invA, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 2] = static_cast<std::uint8_t>(CNA::Internal::Clamp(b * a + dstB * invA, 0.0f, 1.0f) * 255.0f);
+                        fb.color[colorIndex + 3] = static_cast<std::uint8_t>(CNA::Internal::Clamp(a + dstA * invA, 0.0f, 1.0f) * 255.0f);
                     }
                 }
             }
@@ -677,10 +678,10 @@ namespace CNA::Internal::Backends::Software
 
     void SoftwareFramebuffer::ClearColor(float r, float g, float b, float a)
     {
-        const std::uint8_t rb = static_cast<std::uint8_t>(std::clamp(r, 0.0f, 1.0f) * 255.0f);
-        const std::uint8_t gb = static_cast<std::uint8_t>(std::clamp(g, 0.0f, 1.0f) * 255.0f);
-        const std::uint8_t bb = static_cast<std::uint8_t>(std::clamp(b, 0.0f, 1.0f) * 255.0f);
-        const std::uint8_t ab = static_cast<std::uint8_t>(std::clamp(a, 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t rb = static_cast<std::uint8_t>(CNA::Internal::Clamp(r, 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t gb = static_cast<std::uint8_t>(CNA::Internal::Clamp(g, 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t bb = static_cast<std::uint8_t>(CNA::Internal::Clamp(b, 0.0f, 1.0f) * 255.0f);
+        const std::uint8_t ab = static_cast<std::uint8_t>(CNA::Internal::Clamp(a, 0.0f, 1.0f) * 255.0f);
         const std::size_t pixelCount = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
         for (std::size_t i = 0; i < pixelCount; ++i)
         {

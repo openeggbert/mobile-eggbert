@@ -51,7 +51,7 @@ namespace Microsoft::Xna::Framework::Input
 
     bool KeyboardState::IsKeyDown(const Keys key) const
     {
-        return pressedKeys_.contains(key);
+        return pressedKeys_.count(key) > 0;
     }
 
     bool KeyboardState::IsKeyUp(const Keys key) const
