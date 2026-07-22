@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(SHARP_RUNTIME LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -31,6 +31,13 @@ endif()
 
 if(WIN32)
     target_link_libraries(SHARP_RUNTIME PRIVATE ws2_32)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # C++14 has no standardized <filesystem> (that's C++17) -- SharpRuntime::Storage::StoragePaths
+    # and System::IO::IsolatedStorage use the pre-standard Filesystem TS (std::experimental::filesystem),
+    # which on libstdc++/libc++ needs this separate archive linked in.
+    target_link_libraries(SHARP_RUNTIME PRIVATE stdc++fs)
 endif()
 
 if(ANDROID AND TARGET SDL2::SDL2)
