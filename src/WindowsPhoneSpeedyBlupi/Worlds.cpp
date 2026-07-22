@@ -26,13 +26,13 @@
  * ```
  *
  * ### Error and fallback behaviour
- * - TryGetFieldValueText() (file-local helper) returns std::nullopt when a
+ * - TryGetFieldValueText() (file-local helper) returns no value when a
  *   section+rank+name combination is not found; all Get* methods propagate this
  *   as their documented default value.
  * - Doors parsing treats an empty comma slot as 1 (default open state).
  * - Decor parsing treats an empty comma slot as -1 (no tile).
- * - ReadWorld() returns std::nullopt (not an empty vector) when the file cannot
- *   be opened; the caller must check for nullopt before iterating.
+ * - ReadWorld() returns no value (not an empty vector) when the file cannot
+ *   be opened; the caller must check for a no-value result before iterating.
  * - ReadGameData() returns false but does not throw when the save file is absent
  *   or an IsolatedStorageException is raised.
  */
@@ -44,7 +44,7 @@
 #include <fstream>
 #include <iomanip>
 #include <locale>
-#include <optional>
+#include "System/Nullable.hpp"
 #include <sstream>
 #include <string>
 #include <vector>
@@ -139,7 +139,7 @@ namespace WindowsPhoneSpeedyBlupi
         return currentGameFilename;
     }
 
-    std::optional<std::vector<std::string>> Worlds::ReadWorld(intcs gamer, intcs rank)
+    System::Nullable<std::vector<std::string>> Worlds::ReadWorld(intcs gamer, intcs rank)
     {
         (void)gamer;
 
@@ -171,12 +171,12 @@ namespace WindowsPhoneSpeedyBlupi
 
         // if (String::IsEmpty(text))
         // {
-        //     return std::nullopt;
+        //     return {};
         // }
 
         if (!loaded)
         {
-            return std::nullopt;
+            return {};
         }
         return String::Split(text, '\n');
     }
@@ -270,7 +270,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
     }
 
-    std::optional<string> Worlds::ReadCurrentGame()
+    System::Nullable<string> Worlds::ReadCurrentGame()
     {
         log::Debug("ReadCurrentGame");
 
@@ -278,7 +278,7 @@ namespace WindowsPhoneSpeedyBlupi
 
         if (!userStoreForApplication.FileExists(getCurrentGameFilenameProperty()))
         {
-            return std::nullopt;
+            return {};
         }
 
         try
@@ -308,7 +308,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         catch (const System::IO::IsolatedStorage::IsolatedStorageException&)
         {
-            return std::nullopt;
+            return {};
         }
     }
     void Worlds::WriteCurrentGame(const string& data)
@@ -384,7 +384,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     namespace
     {
-        [[nodiscard]] std::optional<std::string> TryGetFieldValueText(
+        [[nodiscard]] System::Nullable<std::string> TryGetFieldValueText(
             const string lines[],
             intcs lineCount,
             const string& section,
@@ -400,7 +400,7 @@ namespace WindowsPhoneSpeedyBlupi
                     std::size_t num = text.find(name + "=");
                     if (num == string::npos)
                     {
-                        return std::nullopt;
+                        return {};
                     }
 
                     num += name.length() + 1;
@@ -408,14 +408,14 @@ namespace WindowsPhoneSpeedyBlupi
                     const std::size_t num2 = text.find(" ", num);
                     if (num2 == string::npos)
                     {
-                        return std::nullopt;
+                        return {};
                     }
 
                     return text.substr(num, num2 - num);
                 }
             }
 
-            return std::nullopt;
+            return {};
         }
     }
     bool Worlds::GetBoolField(
@@ -426,13 +426,13 @@ namespace WindowsPhoneSpeedyBlupi
      const string& name)
     {
         const auto valueText = TryGetFieldValueText(lines, lineCount, section, rank, name);
-        if (!valueText.has_value())
+        if (!valueText.getHasValueProperty())
         {
             return false;
         }
 
         bool result = false;
-        if (TryParseBool(valueText.value(), result))
+        if (TryParseBool(valueText.getValueProperty(), result))
         {
             return result;
         }
@@ -448,13 +448,13 @@ namespace WindowsPhoneSpeedyBlupi
       const string& name)
     {
         const auto valueText = TryGetFieldValueText(lines, lineCount, section, rank, name);
-        if (!valueText.has_value())
+        if (!valueText.getHasValueProperty())
         {
             return 0;
         }
 
         intcs result = 0;
-        if (TryParseInt(valueText.value(), result))
+        if (TryParseInt(valueText.getValueProperty(), result))
         {
             return result;
         }
@@ -470,13 +470,13 @@ namespace WindowsPhoneSpeedyBlupi
        const string& name)
     {
         const auto valueText = TryGetFieldValueText(lines, lineCount, section, rank, name);
-        if (!valueText.has_value())
+        if (!valueText.getHasValueProperty())
         {
             return 0.0;
         }
 
         double result = 0.0;
-        if (TryParseDouble(valueText.value(), result))
+        if (TryParseDouble(valueText.getValueProperty(), result))
         {
             return result;
         }
@@ -540,7 +540,7 @@ namespace WindowsPhoneSpeedyBlupi
         return TinyPoint{};
     }
 
-    std::optional<intcs> Worlds::GetDecorField(
+    System::Nullable<intcs> Worlds::GetDecorField(
         const string lines[],
         intcs lineCount,
         const string& section,
@@ -555,7 +555,7 @@ namespace WindowsPhoneSpeedyBlupi
                 const intcs rowIndex = i + 1 + x;
                 if (rowIndex < 0 || rowIndex >= lineCount)
                 {
-                    return std::nullopt;
+                    return {};
                 }
 
                 text = lines[rowIndex];
@@ -563,7 +563,7 @@ namespace WindowsPhoneSpeedyBlupi
 
                 if (y < 0 || y >= static_cast<intcs>(parts.size()))
                 {
-                    return std::nullopt;
+                    return {};
                 }
 
                 if (parts[y].empty())
@@ -577,11 +577,11 @@ namespace WindowsPhoneSpeedyBlupi
                     return result;
                 }
 
-                return std::nullopt;
+                return {};
             }
         }
 
-        return std::nullopt;
+        return {};
     }
 
     void Worlds::GetDoorsField(

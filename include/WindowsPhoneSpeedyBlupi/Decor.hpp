@@ -28,6 +28,7 @@
 #include "IPixmap.hpp"
 #include "ISound.hpp"
 #include "Tables.hpp"
+#include "System/Nullable.hpp"
 #include "System/Random.hpp"
 #include "Jauge.hpp"
 #include "decor/DecorAction.hpp"
@@ -1102,7 +1103,7 @@ namespace WindowsPhoneSpeedyBlupi
          * @param[in] action1  Primary death animation to play (e.g., BlupiAction::Dead).
          * @param[in] action2  Optional secondary death animation played after action1 completes.
          */
-        void BlupiDead(BlupiAction action1, std::optional<BlupiAction> action2 = std::nullopt);
+        void BlupiDead(BlupiAction action1, System::Nullable<BlupiAction> action2 = {});
 
     private:
         /**
@@ -1714,10 +1715,10 @@ namespace WindowsPhoneSpeedyBlupi
         /**
          * @brief Searches for a moving object of a specific type at the given position.
          * @param[in] pos   Game-space position to search around.
-         * @param[in] type  Optional object type filter; std::nullopt matches any type.
+         * @param[in] type  Optional object type filter; no value matches any type.
          * @return Pool index of the first matching object, or -1 if none found.
          */
-        int MoveObjectSearch(TinyPoint pos, std::optional<ObjectType> type);
+        int MoveObjectSearch(TinyPoint pos, System::Nullable<ObjectType> type);
 
     private:
         /**

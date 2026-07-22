@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #pragma once
 
-#include <optional>
+#include "System/Nullable.hpp"
 #include <vector>
 
 #include "CNA/CNAHelper.hpp"
@@ -218,7 +218,7 @@ namespace Microsoft::Xna::Framework::Graphics
          * @param color           Tint color.
          */
         void Draw(const Texture2D& texture, Vector2 position,
-                  std::optional<Rectangle> sourceRectangle, Color color);
+                  System::Nullable<Rectangle> sourceRectangle, Color color);
         /**
          * @brief Draws a texture at a position with rotation, origin, uniform scale, effects, and depth.
          *
@@ -233,7 +233,7 @@ namespace Microsoft::Xna::Framework::Graphics
          * @param layerDepth      Depth value for sort ordering.
          */
         void Draw(const Texture2D& texture, Vector2 position,
-                  std::optional<Rectangle> sourceRectangle, Color color,
+                  System::Nullable<Rectangle> sourceRectangle, Color color,
                   float rotation, Vector2 origin, float scale,
                   SpriteEffects effects, float layerDepth);
         /**
@@ -250,7 +250,7 @@ namespace Microsoft::Xna::Framework::Graphics
          * @param layerDepth      Depth value for sort ordering.
          */
         void Draw(const Texture2D& texture, Vector2 position,
-                  std::optional<Rectangle> sourceRectangle, Color color,
+                  System::Nullable<Rectangle> sourceRectangle, Color color,
                   float rotation, Vector2 origin, Vector2 scale,
                   SpriteEffects effects, float layerDepth);
         /**
@@ -272,7 +272,7 @@ namespace Microsoft::Xna::Framework::Graphics
          */
         void Draw(const Texture2D& texture,
                   const Rectangle& destinationRectangle,
-                  std::optional<Rectangle> sourceRectangle, Color color);
+                  System::Nullable<Rectangle> sourceRectangle, Color color);
         /**
          * @brief Draws an optional source region of a texture into a destination rectangle with
          *        rotation, origin, effects, and depth.
@@ -288,7 +288,7 @@ namespace Microsoft::Xna::Framework::Graphics
          */
         void Draw(const Texture2D& texture,
                   const Rectangle& destinationRectangle,
-                  std::optional<Rectangle> sourceRectangle,
+                  System::Nullable<Rectangle> sourceRectangle,
                   Color color,
                   float rotation_rad,
                   Vector2 origin,

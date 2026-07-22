@@ -30,14 +30,14 @@
  * - GetDoubleField: 0.0
  * - GetBoolField: false
  * - GetPointField: default-constructed TinyPoint {0, 0}
- * - GetDecorField: std::nullopt
+ * - GetDecorField: no value
  *
  * @see GameData
  */
 
 #pragma once
 
-#include <optional>
+#include "System/Nullable.hpp"
 #include <string>
 #include <vector>
 
@@ -117,18 +117,18 @@ namespace WindowsPhoneSpeedyBlupi
          * splits it on newline characters.
          *
          * In the original C# code this method returns `null` on failure.  In this
-         * C++ port `std::nullopt` represents that state.
+         * C++ port `System::Nullable<T>` with no value represents that state.
          *
          * @param[in] gamer  Gamer identifier.  Present for compatibility with the
          *                   original C# signature; currently unused.
          * @param[in] rank   World rank (0-based).  Determines the filename, e.g.
          *                   `worlds/world001.txt`.
-         * @return Optional vector of text lines on success; std::nullopt if the
+         * @return Optional vector of text lines on success; a default-constructed (no-value) Nullable if the
          *         file cannot be opened or read.
          *
          * @note Status: Partial
          */
-        static std::optional<std::vector<std::string>> ReadWorld(intcs gamer, intcs rank);
+        static System::Nullable<std::vector<std::string>> ReadWorld(intcs gamer, intcs rank);
 
     private:
         /**
@@ -198,16 +198,16 @@ namespace WindowsPhoneSpeedyBlupi
          *
          * @details
          * Opens the file identified by getCurrentGameFilenameProperty() and reads
-         * it as a UTF-8 string.  Returns std::nullopt when the file does not exist
+         * it as a UTF-8 string.  Returns a default-constructed (no-value) Nullable when the file does not exist
          * or an IsolatedStorageException is thrown (mirrors the original C# null
          * return on failure).  Returns an empty string if the file exists but is
          * empty.
          *
-         * @return Optional string containing the save data; std::nullopt on failure.
+         * @return Optional string containing the save data; no value on failure.
          *
          * @note Status: Partial
          */
-        static std::optional<string> ReadCurrentGame();
+        static System::Nullable<string> ReadCurrentGame();
 
         /**
          * @brief Writes the current-game save text to IsolatedStorage.
@@ -354,11 +354,11 @@ namespace WindowsPhoneSpeedyBlupi
          * @details
          * Locates the section header line, then navigates to row `x+1` relative to
          * that header line, and retrieves the comma-separated value at column @p y.
-         * An empty column is returned as -1 (no decor tile).  Returns std::nullopt
+         * An empty column is returned as -1 (no decor tile).  Returns no value
          * when the section, row, or column is out of range or the value cannot be
          * parsed.
          *
-         * Corresponds to the original C# method that returns `int?`; std::nullopt
+         * Corresponds to the original C# method that returns `int?`; no value
          * represents null.
          *
          * @param[in] lines      Array of text lines.
@@ -366,11 +366,11 @@ namespace WindowsPhoneSpeedyBlupi
          * @param[in] section    Section name for the decor block.
          * @param[in] x          Row offset from the section header (0-based).
          * @param[in] y          Column index within the row (0-based).
-         * @return Optional integer tile value; std::nullopt on any error.
+         * @return Optional integer tile value; no value on any error.
          *
          * @note Status: Ported
          */
-        static std::optional<intcs> GetDecorField(
+        static System::Nullable<intcs> GetDecorField(
             const string lines[],
             intcs lineCount,
             const string& section,

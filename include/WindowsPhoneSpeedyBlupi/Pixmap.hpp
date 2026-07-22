@@ -28,8 +28,6 @@
 
 #pragma once
 
-#include <optional>
-
 #include "Def.hpp"
 #include "IGame1.hpp"
 #include "IPixmap.hpp"

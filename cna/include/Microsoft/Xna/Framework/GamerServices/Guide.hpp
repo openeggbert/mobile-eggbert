@@ -8,7 +8,7 @@
 #include "System/IAsyncResult.hpp"
 #include "System/TimeSpan.hpp"
 #include <any>
-#include <optional>
+#include "System/Nullable.hpp"
 #include <string>
 #include <vector>
 
@@ -362,7 +362,7 @@ namespace Microsoft::Xna::Framework::GamerServices
          * @throws System::ArgumentException if result was not returned by BeginShowMessageBox.
          * @throws System::InvalidOperationException if the operation has not completed yet.
          */
-        [[nodiscard]] static std::optional<int> EndShowMessageBox(System::IAsyncResult* result);
+        [[nodiscard]] static System::Nullable<int> EndShowMessageBox(System::IAsyncResult* result);
 
         /**
          * @brief NOXNA/EXT: gets whether a message box is currently pending (shown via

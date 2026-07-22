@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #pragma once
 
-#include <optional>
+#include "System/Nullable.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -39,7 +39,7 @@ namespace Microsoft::Xna::Framework::Graphics
          * @param lineSpacing Vertical distance between text lines, in pixels.
          * @param spacing     Extra horizontal spacing applied between characters.
          * @param kerningData Per-glyph (left bearing, width, right bearing).
-         * @param defaultCharacter Fallback glyph, or std::nullopt to throw on misses.
+         * @param defaultCharacter Fallback glyph, or no value to throw on misses.
          */
         NOXNA SpriteFont(Texture2D texture,
                          std::vector<Rectangle> glyphBounds,
@@ -48,7 +48,7 @@ namespace Microsoft::Xna::Framework::Graphics
                          int lineSpacing,
                          float spacing,
                          std::vector<Vector3> kerningData,
-                         std::optional<charcs> defaultCharacter);
+                         System::Nullable<charcs> defaultCharacter);
 
         /**
          * @brief Gets the collection of characters this font can render.
@@ -58,14 +58,14 @@ namespace Microsoft::Xna::Framework::Graphics
 
         /**
          * @brief Gets the fallback character used when a requested character is not in the font.
-         * @return Optional fallback character; std::nullopt if unset (throws on miss).
+         * @return Optional fallback character; no value if unset (throws on miss).
          */
-        [[nodiscard]] std::optional<charcs> getDefaultCharacterProperty() const;
+        [[nodiscard]] System::Nullable<charcs> getDefaultCharacterProperty() const;
         /**
          * @brief Sets the fallback character used when a requested character is not in the font.
-         * @param value Optional fallback character; pass std::nullopt to throw on misses.
+         * @param value Optional fallback character; pass a default-constructed (no-value) Nullable to throw on misses.
          */
-        void setDefaultCharacterProperty(std::optional<charcs> value);
+        void setDefaultCharacterProperty(System::Nullable<charcs> value);
 
         /**
          * @brief Gets the vertical distance in pixels between the base lines of two consecutive lines of text.
@@ -112,7 +112,7 @@ namespace Microsoft::Xna::Framework::Graphics
         std::vector<Vector3> kerning_;
         std::vector<charcs> characterMap_;
         std::unordered_map<charcs, int> characterIndexMap_;
-        std::optional<charcs> defaultCharacter_;
+        System::Nullable<charcs> defaultCharacter_;
         int lineSpacing_ = 0;
         float spacing_   = 0.0f;
 

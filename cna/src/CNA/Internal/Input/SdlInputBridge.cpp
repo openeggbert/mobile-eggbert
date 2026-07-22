@@ -18,7 +18,7 @@
 #include <cstdlib>
 #include <string>
 #include <array>
-#include <optional>
+#include "System/Nullable.hpp"
 #include <unordered_map>
 
 namespace
@@ -60,12 +60,12 @@ namespace
 
     // Test-only override for effective_gamepad_count(); nullopt means "use the cached env value".
     // The env value is read once (cached), so tests use this to exercise 0/1/4-slot behavior.
-    std::optional<std::size_t> g_gamepadCountTestOverride;
+    System::Nullable<std::size_t> g_gamepadCountTestOverride;
 
     std::size_t effective_gamepad_count()
     {
-        if (g_gamepadCountTestOverride.has_value())
-            return g_gamepadCountTestOverride.value();
+        if (g_gamepadCountTestOverride.getHasValueProperty())
+            return g_gamepadCountTestOverride.getValueProperty();
         static const std::size_t count = parse_gamepad_count(std::getenv("FNA_GAMEPAD_NUM_GAMEPADS"));
         return count;
     }
@@ -73,15 +73,15 @@ namespace
     // Test-only override for use_scancode_mode(): nullopt means "use the cached env value".
     // Because the env value is cached once (below), tests can't toggle FNA_KEYBOARD_USE_SCANCODES
     // in-process; this hook lets a test exercise both modes without a subprocess.
-    std::optional<bool> g_scancodeModeTestOverride;
+    System::Nullable<bool> g_scancodeModeTestOverride;
 
     // Mirrors FNA's UseScancodes static readonly bool (SDL3_FNAPlatform.cs:33-35):
     // evaluated once, so setting the env var after the first key event/lookup has no
     // effect, matching FNA's own readonly-at-startup semantics.
     bool use_scancode_mode()
     {
-        if (g_scancodeModeTestOverride.has_value())
-            return g_scancodeModeTestOverride.value();
+        if (g_scancodeModeTestOverride.getHasValueProperty())
+            return g_scancodeModeTestOverride.getValueProperty();
         static const bool useScancodes = []() -> bool {
             const char* envValue = std::getenv("FNA_KEYBOARD_USE_SCANCODES");
             return envValue != nullptr && std::string(envValue) == "1";
@@ -175,7 +175,7 @@ namespace
         }
     }
 
-    std::optional<int> text_input_binding_index(const Keys key)
+    System::Nullable<int> text_input_binding_index(const Keys key)
     {
         switch (key)
         {
@@ -185,7 +185,7 @@ namespace
         case Keys::Tab:    return 3;
         case Keys::Enter:  return 4;
         case Keys::Delete: return 5;
-        default:           return std::nullopt;
+        default:           return {};
         }
     }
 
@@ -198,13 +198,14 @@ namespace
     void handle_text_input_key_down(const Keys key, const bool repeat)
     {
         using Microsoft::Xna::Framework::Input::TextInputEXT;
-        if (const auto idx = text_input_binding_index(key))
+        const auto idx = text_input_binding_index(key);
+        if (idx.getHasValueProperty())
         {
             if (!repeat)
             {
-                g_textInputControlDown[*idx] = true;
+                g_textInputControlDown[idx.getValueProperty()] = true;
             }
-            TextInputEXT::INTERNAL_OnTextInput(static_cast<charcs>(kTextInputCharacters[*idx]));
+            TextInputEXT::INTERNAL_OnTextInput(static_cast<charcs>(kTextInputCharacters[idx.getValueProperty()]));
         }
         else if (control_key_held() && key == Keys::V)
         {
@@ -219,9 +220,10 @@ namespace
 
     void handle_text_input_key_up(const Keys key)
     {
-        if (const auto idx = text_input_binding_index(key))
+        const auto idx = text_input_binding_index(key);
+        if (idx.getHasValueProperty())
         {
-            g_textInputControlDown[*idx] = false;
+            g_textInputControlDown[idx.getValueProperty()] = false;
         }
         else if ((!control_key_held() && g_textInputControlDown[6]) || key == Keys::V)
         {
@@ -273,17 +275,17 @@ namespace
         }
     }
 
-    std::optional<std::size_t> try_get_slot_for_player_index(const PlayerIndex playerIndex)
+    System::Nullable<std::size_t> try_get_slot_for_player_index(const PlayerIndex playerIndex)
     {
         const int slot = static_cast<int>(playerIndex);
         if (slot < 0 || slot >= static_cast<int>(MaxSupportedGamePads))
         {
-            return std::nullopt;
+            return {};
         }
         return static_cast<std::size_t>(slot);
     }
 
-    std::optional<std::size_t> try_find_free_gamepad_slot()
+    System::Nullable<std::size_t> try_find_free_gamepad_slot()
     {
         const auto& openedGamePads = get_opened_gamepads();
         const std::size_t limit = effective_gamepad_count();
@@ -294,21 +296,21 @@ namespace
                 return slot;
             }
         }
-        return std::nullopt;
+        return {};
     }
 
-    std::optional<PlayerIndex> try_get_player_index_for_gamepad_id(const SDL_JoystickID gamePadId)
+    System::Nullable<PlayerIndex> try_get_player_index_for_gamepad_id(const SDL_JoystickID gamePadId)
     {
         const auto& gamepadToPlayerIndex = get_gamepad_to_player_index_map();
         const auto item = gamepadToPlayerIndex.find(gamePadId);
         if (item == gamepadToPlayerIndex.end())
         {
-            return std::nullopt;
+            return {};
         }
         return item->second;
     }
 
-    std::optional<GamePadButton> try_convert_sdl_gamepad_button(const SDL_GameControllerButton button)
+    System::Nullable<GamePadButton> try_convert_sdl_gamepad_button(const SDL_GameControllerButton button)
     {
         switch (button)
         {
@@ -360,11 +362,11 @@ namespace
         case SDL_CONTROLLER_BUTTON_TOUCHPAD:
             return GamePadButton::TouchPadEXT;
         default:
-            return std::nullopt;
+            return {};
         }
     }
 
-    std::optional<GamePadAxis> try_convert_sdl_gamepad_axis(const SDL_GameControllerAxis axis)
+    System::Nullable<GamePadAxis> try_convert_sdl_gamepad_axis(const SDL_GameControllerAxis axis)
     {
         switch (axis)
         {
@@ -381,7 +383,7 @@ namespace
         case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
             return GamePadAxis::RightTrigger;
         default:
-            return std::nullopt;
+            return {};
         }
     }
 
@@ -428,13 +430,13 @@ namespace
         return touchId;
     }
 
-    std::optional<int> try_get_touch_id(const SDL_FingerID fingerId)
+    System::Nullable<int> try_get_touch_id(const SDL_FingerID fingerId)
     {
         const auto& fingerIdToTouchId = get_finger_id_to_touch_id_map();
         const auto existing = fingerIdToTouchId.find(fingerId);
         if (existing == fingerIdToTouchId.end())
         {
-            return std::nullopt;
+            return {};
         }
         return existing->second;
     }
@@ -504,7 +506,7 @@ namespace
         return to_logical_position(window, windowX, windowY);
     }
 
-    std::optional<Microsoft::Xna::Framework::Input::Keys> try_convert_sdl_key(const SDL_Keycode keycode)
+    System::Nullable<Microsoft::Xna::Framework::Input::Keys> try_convert_sdl_key(const SDL_Keycode keycode)
     {
         using Microsoft::Xna::Framework::Input::Keys;
         switch (keycode)
@@ -640,8 +642,8 @@ namespace
         case '+':    return Keys::OemPlus;      // Norwegian
         case 0x00F8: return Keys::OemSemicolon; // 'ø' — Norwegian
         case 0x00E6: return Keys::OemQuotes;    // 'æ' — Norwegian
-        case 0x00E9: return std::nullopt;       // 'é' — BEPO; no real Keys mapping exists yet
-        default: return std::nullopt;
+        case 0x00E9: return {};       // 'é' — BEPO; no real Keys mapping exists yet
+        default: return {};
         }
     }
 
@@ -649,7 +651,7 @@ namespace
     /// FNA's INTERNAL_scanMap (SDL3_FNAPlatform.cs:2490-2618). Used only in scancode mode
     /// (FNA_KEYBOARD_USE_SCANCODES=1), where the physical key position is reported instead of
     /// the character the current keyboard layout produces there.
-    std::optional<Microsoft::Xna::Framework::Input::Keys> try_convert_sdl_scancode(const SDL_Scancode scancode)
+    System::Nullable<Microsoft::Xna::Framework::Input::Keys> try_convert_sdl_scancode(const SDL_Scancode scancode)
     {
         using Microsoft::Xna::Framework::Input::Keys;
         switch (scancode)
@@ -776,7 +778,7 @@ namespace
         case SDL_SCANCODE_GRAVE: return Keys::OemTilde;
         case SDL_SCANCODE_VOLUMEUP: return Keys::VolumeUp;
         case SDL_SCANCODE_VOLUMEDOWN: return Keys::VolumeDown;
-        // INPUT-KBD-011/019: scancodes with no XNA Keys value are DROPPED (std::nullopt), never mapped to
+        // INPUT-KBD-011/019: scancodes with no XNA Keys value are DROPPED (no value), never mapped to
         // Keys::None — the same DEC-16 policy already applied to unmapped keycodes, so Keys::None never
         // enters the pressed set (IsKeyDown(None) stays false; None never leaks into GetPressedKeys()).
         // This covers the no-scancode sentinel (SDL_SCANCODE_UNKNOWN, matching the keycode path's SDLK_
@@ -784,10 +786,10 @@ namespace
         // boards), which FNA maps to Keys.None with its own unresolved "need verification" FIXME
         // (SDL3_FNAPlatform.cs:2615-2617) and adds to its pressed list. A deliberate, DEC-16-consistent
         // deviation from FNA — recorded in docs/input-fna-fidelity.md, pinned by SdlInputBridgeKeyboardTest.
-        case SDL_SCANCODE_UNKNOWN: return std::nullopt;
-        case SDL_SCANCODE_NONUSHASH: return std::nullopt;
-        case SDL_SCANCODE_NONUSBACKSLASH: return std::nullopt;
-        default: return std::nullopt;
+        case SDL_SCANCODE_UNKNOWN: return {};
+        case SDL_SCANCODE_NONUSHASH: return {};
+        case SDL_SCANCODE_NONUSBACKSLASH: return {};
+        default: return {};
         }
     }
 
@@ -1074,7 +1076,7 @@ namespace CNA::Internal::Input
                 {
                     const char* evtName = (event.type == SDL_KEYDOWN) ? "KEY_DOWN" : "KEY_UP";
                     const char* keyName = SDL_GetKeyName(event.key.keysym.sym);
-                    if (key.has_value())
+                    if (key.getHasValueProperty())
                     {
                         SDL_Log("[Keyboard] SDL_%s scancode=%d keycode=%d (0x%x) keyname='%s' mod=0x%x -> XNA Keys=%d",
                                 evtName,
@@ -1083,7 +1085,7 @@ namespace CNA::Internal::Input
                                 static_cast<unsigned>(event.key.keysym.sym),
                                 keyName ? keyName : "?",
                                 static_cast<unsigned>(event.key.keysym.mod),
-                                static_cast<int>(key.value()));
+                                static_cast<int>(key.getValueProperty()));
                     }
                     else
                     {
@@ -1098,7 +1100,7 @@ namespace CNA::Internal::Input
                 }
 #endif
 
-                if (!key.has_value())
+                if (!key.getHasValueProperty())
                 {
                     break;
                 }
@@ -1110,18 +1112,18 @@ namespace CNA::Internal::Input
                 // input on repeat, so skip the pressed-key state update for repeats.
                 if (!isRepeat)
                 {
-                    InputManager::SetKeyState(key.value(), pressed);
+                    InputManager::SetKeyState(key.getValueProperty(), pressed);
                 }
 
                 // Synthesize TextInput for control keys SDL doesn't deliver as TEXT_INPUT
                 // (Home/End/Back/Tab/Enter/Delete and Ctrl+V).
                 if (pressed)
                 {
-                    handle_text_input_key_down(key.value(), isRepeat);
+                    handle_text_input_key_down(key.getValueProperty(), isRepeat);
                 }
                 else
                 {
-                    handle_text_input_key_up(key.value());
+                    handle_text_input_key_up(key.getValueProperty());
                 }
 
 #ifdef __ANDROID__
@@ -1135,7 +1137,7 @@ namespace CNA::Internal::Input
                         keyList += ' ';
                     }
                     SDL_Log("[Keyboard] KeyboardState updated: XNA Keys=%d pressed=%s | total pressed=%zu [%s]",
-                            static_cast<int>(key.value()),
+                            static_cast<int>(key.getValueProperty()),
                             pressed ? "true" : "false",
                             allPressed.size(),
                             keyList.c_str());
@@ -1236,9 +1238,10 @@ namespace CNA::Internal::Input
         // a no-op distinction when SDL2 never generates the canceled variant in the first place).
         case SDL_FINGERUP:
             {
-                const int touchId = try_get_touch_id(event.tfinger.fingerId).value_or(
-                    get_or_create_touch_id(event.tfinger.fingerId)
-                );
+                const auto touchIdOpt = try_get_touch_id(event.tfinger.fingerId);
+                const int touchId = touchIdOpt.getHasValueProperty()
+                    ? touchIdOpt.getValueProperty()
+                    : get_or_create_touch_id(event.tfinger.fingerId);
 
                 InputManager::SetTouchState(
                     touchId,
@@ -1271,7 +1274,7 @@ namespace CNA::Internal::Input
                 }
 
                 const auto freeSlot = try_find_free_gamepad_slot();
-                if (!freeSlot.has_value())
+                if (!freeSlot.getHasValueProperty())
                 {
                     break;
                 }
@@ -1282,8 +1285,8 @@ namespace CNA::Internal::Input
                     break;
                 }
 
-                const PlayerIndex playerIndex = slot_to_player_index(freeSlot.value());
-                get_opened_gamepads()[freeSlot.value()] = gamepad;
+                const PlayerIndex playerIndex = slot_to_player_index(freeSlot.getValueProperty());
+                get_opened_gamepads()[freeSlot.getValueProperty()] = gamepad;
                 gamepadToPlayerIndex[event.cdevice.which] = playerIndex;
                 InputManager::SetGamePadConnection(playerIndex, true);
                 break;
@@ -1292,15 +1295,15 @@ namespace CNA::Internal::Input
             {
                 auto& gamepadToPlayerIndex = get_gamepad_to_player_index_map();
                 const auto playerIndex = try_get_player_index_for_gamepad_id(event.cdevice.which);
-                if (!playerIndex.has_value())
+                if (!playerIndex.getHasValueProperty())
                 {
                     break;
                 }
 
-                const auto slot = try_get_slot_for_player_index(playerIndex.value());
-                if (slot.has_value())
+                const auto slot = try_get_slot_for_player_index(playerIndex.getValueProperty());
+                if (slot.getHasValueProperty())
                 {
-                    auto& openedGamePad = get_opened_gamepads()[slot.value()];
+                    auto& openedGamePad = get_opened_gamepads()[slot.getValueProperty()];
                     if (openedGamePad != nullptr)
                     {
                         sdl_gamepad_backend().CloseGamepad(openedGamePad);
@@ -1309,7 +1312,7 @@ namespace CNA::Internal::Input
                 }
 
                 gamepadToPlayerIndex.erase(event.cdevice.which);
-                InputManager::SetGamePadConnection(playerIndex.value(), false);
+                InputManager::SetGamePadConnection(playerIndex.getValueProperty(), false);
                 break;
             }
         // NOXNA/EXT (input_noxna.md N-007): raw joystick hot-plug, routed to CNA::Input::Joysticks.
@@ -1354,7 +1357,7 @@ namespace CNA::Internal::Input
         case SDL_CONTROLLERBUTTONUP:
             {
                 const auto playerIndex = try_get_player_index_for_gamepad_id(event.cbutton.which);
-                if (!playerIndex.has_value())
+                if (!playerIndex.getHasValueProperty())
                 {
                     break;
                 }
@@ -1362,7 +1365,7 @@ namespace CNA::Internal::Input
                 const auto button = try_convert_sdl_gamepad_button(
                     static_cast<SDL_GameControllerButton>(event.cbutton.button)
                 );
-                if (!button.has_value())
+                if (!button.getHasValueProperty())
                 {
                     break;
                 }
@@ -1371,13 +1374,13 @@ namespace CNA::Internal::Input
                                        ? ButtonState::Pressed
                                        : ButtonState::Released;
 
-                InputManager::SetGamePadButtonState(playerIndex.value(), button.value(), state);
+                InputManager::SetGamePadButtonState(playerIndex.getValueProperty(), button.getValueProperty(), state);
                 break;
             }
         case SDL_CONTROLLERAXISMOTION:
             {
                 const auto playerIndex = try_get_player_index_for_gamepad_id(event.caxis.which);
-                if (!playerIndex.has_value())
+                if (!playerIndex.getHasValueProperty())
                 {
                     break;
                 }
@@ -1385,13 +1388,13 @@ namespace CNA::Internal::Input
                 const auto axis = try_convert_sdl_gamepad_axis(
                     static_cast<SDL_GameControllerAxis>(event.caxis.axis)
                 );
-                if (!axis.has_value())
+                if (!axis.getHasValueProperty())
                 {
                     break;
                 }
 
                 float value = 0.0f;
-                switch (axis.value())
+                switch (axis.getValueProperty())
                 {
                 case GamePadAxis::LeftThumbstickX:
                 case GamePadAxis::RightThumbstickX:
@@ -1407,7 +1410,7 @@ namespace CNA::Internal::Input
                     break;
                 }
 
-                InputManager::SetGamePadAxisValue(playerIndex.value(), axis.value(), value);
+                InputManager::SetGamePadAxisValue(playerIndex.getValueProperty(), axis.getValueProperty(), value);
                 break;
             }
         default:

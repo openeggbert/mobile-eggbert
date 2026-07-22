@@ -16,7 +16,7 @@ namespace Microsoft::Xna::Framework::Graphics
                            int lineSpacing,
                            float spacing,
                            std::vector<Vector3> kerningData,
-                           std::optional<charcs> defaultCharacter)
+                           System::Nullable<charcs> defaultCharacter)
         : textureValue_(std::move(texture))
         , glyphData_(std::move(glyphBounds))
         , croppingData_(std::move(cropping))
@@ -38,12 +38,12 @@ namespace Microsoft::Xna::Framework::Graphics
         return characterMap_;
     }
 
-    std::optional<charcs> SpriteFont::getDefaultCharacterProperty() const
+    System::Nullable<charcs> SpriteFont::getDefaultCharacterProperty() const
     {
         return defaultCharacter_;
     }
 
-    void SpriteFont::setDefaultCharacterProperty(std::optional<charcs> value)
+    void SpriteFont::setDefaultCharacterProperty(System::Nullable<charcs> value)
     {
         defaultCharacter_ = value;
     }
@@ -101,12 +101,12 @@ namespace Microsoft::Xna::Framework::Graphics
             auto it = characterIndexMap_.find(c);
             if (it == characterIndexMap_.end())
             {
-                if (!defaultCharacter_.has_value())
+                if (!defaultCharacter_.getHasValueProperty())
                 {
                     throw std::invalid_argument(
                         "Text contains characters that cannot be resolved by this SpriteFont.");
                 }
-                it = characterIndexMap_.find(defaultCharacter_.value());
+                it = characterIndexMap_.find(defaultCharacter_.getValueProperty());
             }
             const int index = it->second;
 

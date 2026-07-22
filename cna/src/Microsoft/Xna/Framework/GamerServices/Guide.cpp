@@ -92,7 +92,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             const std::vector<std::string> Buttons;
             const int FocusButton;
             const MessageBoxIcon Icon;
-            std::optional<int> SelectedButton;
+            System::Nullable<int> SelectedButton;
 
             // Edge-detection state for RenderPendingMessageBoxEXT's real mouse-click handling -
             // a button selects on the down-edge of the left mouse button, not every frame it's
@@ -553,7 +553,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         spriteBatch.Draw(whitePixel,
                           Rectangle(static_cast<int>(boxX), static_cast<int>(boxY),
                                     static_cast<int>(boxWidth), static_cast<int>(boxHeight)),
-                          std::nullopt, boxColor);
+                          System::Nullable<Rectangle>{}, boxColor);
 
         float y = boxY + padding;
         spriteBatch.DrawString(font, title, Vector2(boxX + padding, y), textColor);
@@ -643,7 +643,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         return BeginShowMessageBox(title, text, buttons, focusButton, icon, std::move(callback), std::move(state));
     }
 
-    std::optional<int> Guide::EndShowMessageBox(System::IAsyncResult* result)
+    System::Nullable<int> Guide::EndShowMessageBox(System::IAsyncResult* result)
     {
         auto* action = dynamic_cast<GuideMessageBoxAction*>(result);
         if (action == nullptr)
@@ -710,7 +710,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         spriteBatch.Draw(whitePixel,
                           Rectangle(static_cast<int>(boxX), static_cast<int>(boxY),
                                     static_cast<int>(boxWidth), static_cast<int>(boxHeight)),
-                          std::nullopt, boxColor);
+                          System::Nullable<Rectangle>{}, boxColor);
 
         spriteBatch.DrawString(font, pendingMessageBox_->Title, Vector2(boxX + padding, boxY + padding), textColor);
         spriteBatch.DrawString(font, pendingMessageBox_->Text,
@@ -739,7 +739,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             buttonRects.push_back(rect);
 
             const bool isFocused = static_cast<int>(i) == pendingMessageBox_->FocusButton;
-            spriteBatch.Draw(whitePixel, rect, std::nullopt, isFocused ? buttonFocusColor : buttonColor);
+            spriteBatch.Draw(whitePixel, rect, System::Nullable<Rectangle>{}, isFocused ? buttonFocusColor : buttonColor);
             const Vector2 labelSize = font.MeasureString(pendingMessageBox_->Buttons[i]);
             const Vector2 labelPos(
                 buttonX + (buttonWidths[i] - labelSize.X) * 0.5f,

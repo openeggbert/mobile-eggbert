@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <array>
-#include <optional>
+#include "System/Nullable.hpp"
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -92,12 +92,12 @@ namespace CNA::Internal::Input
             std::unordered_map<int, InternalTouchLocationState> TouchLocations;
         };
 
-        std::optional<std::size_t> try_get_player_slot(const PlayerIndex playerIndex)
+        System::Nullable<std::size_t> try_get_player_slot(const PlayerIndex playerIndex)
         {
             const int index = static_cast<int>(playerIndex);
             if (index < 0 || index >= 4)
             {
-                return std::nullopt;
+                return {};
             }
             return static_cast<std::size_t>(index);
         }
@@ -208,12 +208,12 @@ namespace CNA::Internal::Input
     void InputManager::SetGamePadConnection(const PlayerIndex playerIndex, const bool isConnected)
     {
         const auto slot = try_get_player_slot(playerIndex);
-        if (!slot.has_value())
+        if (!slot.getHasValueProperty())
         {
             return;
         }
 
-        auto& gamePadState = getInternalInputState().GamePads[slot.value()];
+        auto& gamePadState = getInternalInputState().GamePads[slot.getValueProperty()];
         if (isConnected)
         {
             if (!gamePadState.IsConnected)
@@ -234,12 +234,12 @@ namespace CNA::Internal::Input
     )
     {
         const auto slot = try_get_player_slot(playerIndex);
-        if (!slot.has_value())
+        if (!slot.getHasValueProperty())
         {
             return;
         }
 
-        auto& gamePadState = getInternalInputState().GamePads[slot.value()];
+        auto& gamePadState = getInternalInputState().GamePads[slot.getValueProperty()];
         const bool pressed = (state == Microsoft::Xna::Framework::Input::ButtonState::Pressed);
 
         auto setFlag = [&](Buttons flag) {
@@ -285,12 +285,12 @@ namespace CNA::Internal::Input
     )
     {
         const auto slot = try_get_player_slot(playerIndex);
-        if (!slot.has_value())
+        if (!slot.getHasValueProperty())
         {
             return;
         }
 
-        auto& gamePadState = getInternalInputState().GamePads[slot.value()];
+        auto& gamePadState = getInternalInputState().GamePads[slot.getValueProperty()];
 
         auto setAxis = [&](float& field, const float newValue) {
             if (newValue != field)
@@ -454,10 +454,10 @@ namespace CNA::Internal::Input
     {
         const auto slot = try_get_player_slot(playerIndex);
         RawGamePadState raw{};
-        if (!slot.has_value())
+        if (!slot.getHasValueProperty())
             return raw;
 
-        const auto& g = getInternalInputState().GamePads[slot.value()];
+        const auto& g = getInternalInputState().GamePads[slot.getValueProperty()];
         raw.isConnected  = g.IsConnected;
         raw.buttons      = g.Buttons_;
         raw.leftX        = g.LeftThumbstickX;

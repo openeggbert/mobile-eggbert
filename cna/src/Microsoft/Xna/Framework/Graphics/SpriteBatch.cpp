@@ -279,22 +279,22 @@ namespace Microsoft::Xna::Framework::Graphics
     }
 
     void SpriteBatch::Draw(const Texture2D& texture, Vector2 position,
-                           std::optional<Rectangle> sourceRectangle, Color color)
+                           System::Nullable<Rectangle> sourceRectangle, Color color)
     {
         if (!begun) throw std::runtime_error("SpriteBatch::Draw called before Begin().");
         if (!backend_) return;
         const int w = texture.getWidthProperty();
         const int h = texture.getHeightProperty();
-        const Rectangle src = sourceRectangle.has_value() ? sourceRectangle.value() : Rectangle(0, 0, w, h);
-        const int dw = sourceRectangle.has_value() ? src.Width  : w;
-        const int dh = sourceRectangle.has_value() ? src.Height : h;
+        const Rectangle src = sourceRectangle.getHasValueProperty() ? sourceRectangle.getValueProperty() : Rectangle(0, 0, w, h);
+        const int dw = sourceRectangle.getHasValueProperty() ? src.Width  : w;
+        const int dh = sourceRectangle.getHasValueProperty() ? src.Height : h;
         pushSprite(texture,
                    Rectangle(static_cast<intcs>(position.X), static_cast<intcs>(position.Y), dw, dh),
                    src, color, 0.0f, Vector2::Zero, SpriteEffects::None, 0.0f);
     }
 
     void SpriteBatch::Draw(const Texture2D& texture, Vector2 position,
-                           std::optional<Rectangle> sourceRectangle, Color color,
+                           System::Nullable<Rectangle> sourceRectangle, Color color,
                            float rotation, Vector2 origin, float scale,
                            SpriteEffects effects, float layerDepth)
     {
@@ -302,9 +302,9 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!backend_) return;
         const int w = texture.getWidthProperty();
         const int h = texture.getHeightProperty();
-        const Rectangle src = sourceRectangle.has_value() ? sourceRectangle.value() : Rectangle(0, 0, w, h);
-        const int dw = sourceRectangle.has_value() ? src.Width  : w;
-        const int dh = sourceRectangle.has_value() ? src.Height : h;
+        const Rectangle src = sourceRectangle.getHasValueProperty() ? sourceRectangle.getValueProperty() : Rectangle(0, 0, w, h);
+        const int dw = sourceRectangle.getHasValueProperty() ? src.Width  : w;
+        const int dh = sourceRectangle.getHasValueProperty() ? src.Height : h;
         pushSprite(texture,
                    Rectangle(static_cast<intcs>(position.X), static_cast<intcs>(position.Y),
                              static_cast<intcs>(dw * scale), static_cast<intcs>(dh * scale)),
@@ -312,7 +312,7 @@ namespace Microsoft::Xna::Framework::Graphics
     }
 
     void SpriteBatch::Draw(const Texture2D& texture, Vector2 position,
-                           std::optional<Rectangle> sourceRectangle, Color color,
+                           System::Nullable<Rectangle> sourceRectangle, Color color,
                            float rotation, Vector2 origin, Vector2 scale,
                            SpriteEffects effects, float layerDepth)
     {
@@ -320,9 +320,9 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!backend_) return;
         const int w = texture.getWidthProperty();
         const int h = texture.getHeightProperty();
-        const Rectangle src = sourceRectangle.has_value() ? sourceRectangle.value() : Rectangle(0, 0, w, h);
-        const int dw = sourceRectangle.has_value() ? src.Width  : w;
-        const int dh = sourceRectangle.has_value() ? src.Height : h;
+        const Rectangle src = sourceRectangle.getHasValueProperty() ? sourceRectangle.getValueProperty() : Rectangle(0, 0, w, h);
+        const int dw = sourceRectangle.getHasValueProperty() ? src.Width  : w;
+        const int dh = sourceRectangle.getHasValueProperty() ? src.Height : h;
         pushSprite(texture,
                    Rectangle(static_cast<intcs>(position.X), static_cast<intcs>(position.Y),
                              static_cast<intcs>(dw * scale.X), static_cast<intcs>(dh * scale.Y)),
@@ -342,20 +342,20 @@ namespace Microsoft::Xna::Framework::Graphics
 
     void SpriteBatch::Draw(const Texture2D& texture,
                            const Rectangle& destinationRectangle,
-                           std::optional<Rectangle> sourceRectangle, Color color)
+                           System::Nullable<Rectangle> sourceRectangle, Color color)
     {
         if (!begun) throw std::runtime_error("SpriteBatch::Draw called before Begin().");
         if (!backend_) return;
         const int w = texture.getWidthProperty();
         const int h = texture.getHeightProperty();
-        const Rectangle src = sourceRectangle.has_value() ? sourceRectangle.value() : Rectangle(0, 0, w, h);
+        const Rectangle src = sourceRectangle.getHasValueProperty() ? sourceRectangle.getValueProperty() : Rectangle(0, 0, w, h);
         pushSprite(texture, destinationRectangle, src,
                    color, 0.0f, Vector2::Zero, SpriteEffects::None, 0.0f);
     }
 
     void SpriteBatch::Draw(const Texture2D& texture,
                            const Rectangle& destinationRectangle,
-                           std::optional<Rectangle> sourceRectangle,
+                           System::Nullable<Rectangle> sourceRectangle,
                            Color color,
                            float rotation_rad,
                            Vector2 origin,
@@ -366,7 +366,7 @@ namespace Microsoft::Xna::Framework::Graphics
         if (!backend_) return;
         const int w = texture.getWidthProperty();
         const int h = texture.getHeightProperty();
-        const Rectangle src = sourceRectangle.has_value() ? sourceRectangle.value() : Rectangle(0, 0, w, h);
+        const Rectangle src = sourceRectangle.getHasValueProperty() ? sourceRectangle.getValueProperty() : Rectangle(0, 0, w, h);
         pushSprite(texture, destinationRectangle, src,
                    color, rotation_rad, origin, effect, layerDepth);
     }
@@ -457,10 +457,10 @@ namespace Microsoft::Xna::Framework::Graphics
             auto it = spriteFont.characterIndexMap_.find(c);
             if (it == spriteFont.characterIndexMap_.end())
             {
-                if (!spriteFont.defaultCharacter_.has_value())
+                if (!spriteFont.defaultCharacter_.getHasValueProperty())
                     throw std::invalid_argument(
                         "Text contains characters that cannot be resolved by this SpriteFont.");
-                it = spriteFont.characterIndexMap_.find(spriteFont.defaultCharacter_.value());
+                it = spriteFont.characterIndexMap_.find(spriteFont.defaultCharacter_.getValueProperty());
             }
             const int index = it->second;
 

@@ -2753,7 +2753,7 @@ namespace WindowsPhoneSpeedyBlupi
         end.Y += m_blupiVector.Y;
         if (m_blupiFocus && (end.Y + 30) / 64 >= 99)
         {
-            BlupiDead(BlupiAction::Clear2, std::nullopt);
+            BlupiDead(BlupiAction::Clear2, {});
             m_blupiRestart = true;
             m_blupiAir = true;
             m_blupiPos.Y = m_blupiPos.Y / 64 * 64 + BLUPIOFFY;
@@ -5496,7 +5496,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             if (IsLave(m_blupiPos) && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
             {
-                BlupiDead(BlupiAction::Clear3, std::nullopt);
+                BlupiDead(BlupiAction::Clear3, {});
                 m_blupiRestart = true;
                 m_blupiPos.Y = m_blupiPos.Y / 64 * 64 + BLUPIOFFY;
                 PlaySound(SoundChannel::SoundChannel8, m_blupiPos);
@@ -5504,7 +5504,7 @@ namespace WindowsPhoneSpeedyBlupi
             if (IsPiege(m_blupiPos) && !m_blupiOver && !m_blupiJeep && !m_blupiTank && !m_blupiShield && !m_blupiHide &&
                 !m_bSuperBlupi && m_blupiFocus)
             {
-                BlupiDead(BlupiAction::Glu, std::nullopt);
+                BlupiDead(BlupiAction::Glu, {});
                 m_blupiRestart = true;
                 m_blupiAir = true;
                 ObjectStart(m_blupiPos, ObjectType::ObjectType53, 0);
@@ -5513,7 +5513,7 @@ namespace WindowsPhoneSpeedyBlupi
             if (IsGoutte(m_blupiPos, false) && !m_blupiOver && !m_blupiJeep && !m_blupiTank && !m_blupiShield && !
                 m_blupiHide && !m_bSuperBlupi && m_blupiFocus)
             {
-                BlupiDead(BlupiAction::Glu, std::nullopt);
+                BlupiDead(BlupiAction::Glu, {});
                 m_blupiRestart = true;
                 m_blupiAir = true;
                 PlaySound(SoundChannel::SoundChannel51, m_blupiPos);
@@ -5521,7 +5521,7 @@ namespace WindowsPhoneSpeedyBlupi
             if (IsScie(m_blupiPos) && !m_blupiOver && !m_blupiJeep && !m_blupiTank && !m_blupiShield && !m_blupiHide &&
                 !m_bSuperBlupi && m_blupiFocus)
             {
-                BlupiDead(BlupiAction::Clear4, std::nullopt);
+                BlupiDead(BlupiAction::Clear4, {});
                 m_blupiFront = true;
                 m_blupiRestart = true;
                 m_blupiAir = true;
@@ -5540,7 +5540,7 @@ namespace WindowsPhoneSpeedyBlupi
             }
             if (IsBlitz(m_blupiPos, false) && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi)
             {
-                BlupiDead(BlupiAction::Clear1, std::nullopt);
+                BlupiDead(BlupiAction::Clear1, {});
                 m_blupiRestart = true;
                 m_blupiAir = true;
                 m_blupiPos.Y = m_blupiPos.Y / 64 * 64 + BLUPIOFFY;
@@ -6544,16 +6544,16 @@ namespace WindowsPhoneSpeedyBlupi
      * @note Spawns helicopter debris up front via ByeByeHelico() regardless of cause, which is
      *       a no-op when Blupi was not in helicopter mode.
      */
-    void Decor::BlupiDead(BlupiAction action1, std::optional<BlupiAction> action2)
+    void Decor::BlupiDead(BlupiAction action1, System::Nullable<BlupiAction> action2)
     {
         ByeByeHelico();
-        if (!action2.has_value())
+        if (!action2.getHasValueProperty())
         {
             m_blupiAction = action1;
         }
         else
         {
-            m_blupiAction = ((m_random.get()->Next() % 2 == 0) ? action1 : *action2);
+            m_blupiAction = ((m_random.get()->Next() % 2 == 0) ? action1 : action2.getValueProperty());
         }
         m_blupiPhase = 0;
         m_blupiFocus = false;
@@ -9169,7 +9169,7 @@ namespace WindowsPhoneSpeedyBlupi
             m_blupiPos.X < posStart.X + 30 + 64 && m_blupiPos.Y > posStart.Y - 30 && m_blupiPos.Y < posStart.Y + 30 +
             64)
         {
-            BlupiDead(BlupiAction::Clear1, std::nullopt);
+            BlupiDead(BlupiAction::Clear1, {});
             m_blupiAir = true;
         }
     }
@@ -10004,7 +10004,7 @@ namespace WindowsPhoneSpeedyBlupi
 
     int Decor::MoveObjectSearch(TinyPoint pos)
     {
-        return MoveObjectSearch(pos, std::nullopt);
+        return MoveObjectSearch(pos, {});
     }
 
     /**
@@ -10013,11 +10013,11 @@ namespace WindowsPhoneSpeedyBlupi
      *       special-cased: they match anywhere within +/-100px along their travel axis (with the
      *       cross axis exact), so a bullet in flight can still be found at its origin cell.
      */
-    int Decor::MoveObjectSearch(TinyPoint pos, std::optional<ObjectType> type)
+    int Decor::MoveObjectSearch(TinyPoint pos, System::Nullable<ObjectType> type)
     {
         for (int i = 0; i < MAXMOVEOBJECT; i++)
         {
-            if (m_moveObject[i].type == ObjectType::ObjectType0 || (type.has_value() && m_moveObject[i].type != *type))
+            if (m_moveObject[i].type == ObjectType::ObjectType0 || (type.getHasValueProperty() && m_moveObject[i].type != type.getValueProperty()))
             {
                 continue;
             }
@@ -11142,13 +11142,13 @@ namespace WindowsPhoneSpeedyBlupi
      */
     bool Decor::CurrentRead()
     {
-        const std::optional<string>& text = Worlds::ReadCurrentGame();
-        if (!text.has_value() || text.value().empty())
+        const System::Nullable<string>& text = Worlds::ReadCurrentGame();
+        if (!text.getHasValueProperty() || text.getValueProperty().empty())
         {
             return false;
         }
         InitDecor();
-        auto linesVector = System::String::Split(text.value(), '\n');
+        auto linesVector = System::String::Split(text.getValueProperty(), '\n');
         string* lines = linesVector.data();
         int linesLength = linesVector.size();
         Worlds::GetIntField(lines, linesLength, "DescFile", 0, "_version_");
@@ -11242,7 +11242,7 @@ namespace WindowsPhoneSpeedyBlupi
             for (int j = 0; j < 100; j++)
             {
                 auto decorField = Worlds::GetDecorField(lines, linesLength, "Decor", j, i);
-                m_decor[j][i].icon = decorField.value_or(-1);
+                m_decor[j][i].icon = decorField.GetValueOrDefault(-1);
             }
         }
         for (int k = 0; k < 100; k++)
@@ -11250,7 +11250,7 @@ namespace WindowsPhoneSpeedyBlupi
             for (int l = 0; l < 100; l++)
             {
                 auto decorField = Worlds::GetDecorField(lines, linesLength, "BigDecor", l, k);
-                m_bigDecor[l][k].icon = decorField.value_or(-1);
+                m_bigDecor[l][k].icon = decorField.GetValueOrDefault(-1);
             }
         }
         for (int m = 0; m < MAXMOVEOBJECT; m++)
@@ -11305,12 +11305,12 @@ namespace WindowsPhoneSpeedyBlupi
     {
         InitDecor();
         auto worldOpt = Worlds::ReadWorld(gamer, rank);
-        if (!worldOpt.has_value() || worldOpt->empty())
+        if (!worldOpt.getHasValueProperty() || worldOpt.getValueProperty().empty())
         {
             return false;
         }
 
-        auto arrayVector = *worldOpt;
+        auto arrayVector = worldOpt.getValueProperty();
         auto vectorSize = arrayVector.size();
         string* array = arrayVector.data();
         if (arrayVector.empty())
@@ -11327,7 +11327,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             for (int j = 0; j < 100; j++)
             {
-                int decorField = Worlds::GetDecorField(array, vectorSize, "Decor", j, i).value_or(-1);
+                int decorField = Worlds::GetDecorField(array, vectorSize, "Decor", j, i).GetValueOrDefault(-1);
                 m_decor[j][i].icon = decorField != 0 ? decorField : -1;
             }
         }
@@ -11335,7 +11335,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             for (int l = 0; l < 100; l++)
             {
-                int decorField = Worlds::GetDecorField(array, vectorSize, "BigDecor", l, k).value_or(-1);
+                int decorField = Worlds::GetDecorField(array, vectorSize, "BigDecor", l, k).GetValueOrDefault(-1);
                 m_bigDecor[l][k].icon = decorField != 0 ? decorField : -1;
             }
         }
