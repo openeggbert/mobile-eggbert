@@ -7,7 +7,7 @@
 #include "System/AsyncCallback.hpp"
 #include "System/IAsyncResult.hpp"
 #include "System/TimeSpan.hpp"
-#include <any>
+#include "System/Any.hpp"
 #include "System/Nullable.hpp"
 #include <string>
 #include <vector>
@@ -141,7 +141,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             const std::string& description,
             const std::string& defaultText,
             System::AsyncCallback callback,
-            std::any state
+            System::Any state
         );
 
         /**
@@ -171,7 +171,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             const std::string& description,
             const std::string& defaultText,
             System::AsyncCallback callback,
-            std::any state,
+            System::Any state,
             bool usePasswordMode
         );
 
@@ -319,7 +319,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             int focusButton,
             MessageBoxIcon icon,
             System::AsyncCallback callback,
-            std::any state
+            System::Any state
         );
 
         /**
@@ -349,7 +349,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             int focusButton,
             MessageBoxIcon icon,
             System::AsyncCallback callback,
-            std::any state
+            System::Any state
         );
 
         /**

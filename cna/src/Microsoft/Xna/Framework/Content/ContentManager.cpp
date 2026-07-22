@@ -8,7 +8,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <stdexcept>
 
 namespace Microsoft::Xna::Framework::Content
@@ -104,7 +104,7 @@ namespace Microsoft::Xna::Framework::Content
         {
             return assetName;
         }
-        namespace fs = std::filesystem;
+        namespace fs = std::experimental::filesystem;
         return (fs::path(rootDirectory_) / assetName).string();
     }
 
@@ -212,7 +212,7 @@ namespace Microsoft::Xna::Framework::Content
                 std::string("ContentManager::Load<Texture2D>(): No reader registered, asset '")
                 + assetName + "'.");
 
-        auto* readerPtr = std::any_cast<
+        auto* readerPtr = System::any_cast<
             std::shared_ptr<LooseFileContentTypeReader<Graphics::Texture2D>>>(&readerIt->second);
         if (!readerPtr || !*readerPtr)
             throw ContentLoadException(
@@ -254,7 +254,7 @@ namespace Microsoft::Xna::Framework::Content
                 std::string("ContentManager::Load<T>(): No reader registered for type, asset '")
                 + assetName + "'.");
 
-        auto* readerPtr = std::any_cast<
+        auto* readerPtr = System::any_cast<
             std::shared_ptr<LooseFileContentTypeReader<Audio::SoundEffect>>>(&readerIt->second);
         if (!readerPtr || !*readerPtr)
             throw ContentLoadException(

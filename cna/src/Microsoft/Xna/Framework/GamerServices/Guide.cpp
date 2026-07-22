@@ -31,14 +31,14 @@ namespace Microsoft::Xna::Framework::GamerServices
         class GuideAction : public System::IAsyncResult
         {
         public:
-            GuideAction(std::any state, System::AsyncCallback callback)
+            GuideAction(System::Any state, System::AsyncCallback callback)
                 : Callback(std::move(callback))
                 , asyncState_(std::move(state))
                 , asyncWaitHandle_(true, System::Threading::EventResetMode::ManualReset)
             {
             }
 
-            [[nodiscard]] const std::any& getAsyncStateProperty() const override { return asyncState_; }
+            [[nodiscard]] const System::Any& getAsyncStateProperty() const override { return asyncState_; }
             [[nodiscard]] bool getCompletedSynchronouslyProperty() const override { return false; }
             [[nodiscard]] bool getIsCompletedProperty() const override { return isCompleted_; }
             void setIsCompletedProperty(bool value) { isCompleted_ = value; }
@@ -51,7 +51,7 @@ namespace Microsoft::Xna::Framework::GamerServices
             const System::AsyncCallback Callback;
 
         private:
-            std::any asyncState_;
+            System::Any asyncState_;
             bool isCompleted_{false};
 
             // Mutable: IAsyncResult::getAsyncWaitHandleProperty() is const but returns a
@@ -70,7 +70,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         {
         public:
             GuideMessageBoxAction(
-                std::any state,
+                System::Any state,
                 System::AsyncCallback callback,
                 std::string title,
                 std::string text,
@@ -242,7 +242,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         class GuideKeyboardInputAction : public GuideAction
         {
         public:
-            GuideKeyboardInputAction(std::any state, System::AsyncCallback callback, std::string title,
+            GuideKeyboardInputAction(System::Any state, System::AsyncCallback callback, std::string title,
                                       std::string description, bool usePasswordMode)
                 : GuideAction(std::move(state), std::move(callback))
                 , Title(std::move(title))
@@ -371,7 +371,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         const std::string& description,
         const std::string& defaultText,
         System::AsyncCallback callback,
-        std::any state
+        System::Any state
     ) {
         return BeginShowKeyboardInput(
             player, title, description, defaultText, std::move(callback), std::move(state), false
@@ -384,7 +384,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         const std::string& description,
         const std::string& defaultText,
         System::AsyncCallback callback,
-        std::any state,
+        System::Any state,
         bool usePasswordMode
     ) {
         if (pendingKeyboardInput_ != nullptr)
@@ -608,7 +608,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         int focusButton,
         MessageBoxIcon icon,
         System::AsyncCallback callback,
-        std::any state
+        System::Any state
     ) {
         // No FNA reference behavior exists for this validation (FNA's own BeginShowMessageBox is
         // a permanent NotSupportedException stub, "FIXME: Surely they don't want us doing this");
@@ -638,7 +638,7 @@ namespace Microsoft::Xna::Framework::GamerServices
         int focusButton,
         MessageBoxIcon icon,
         System::AsyncCallback callback,
-        std::any state
+        System::Any state
     ) {
         return BeginShowMessageBox(title, text, buttons, focusButton, icon, std::move(callback), std::move(state));
     }

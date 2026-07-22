@@ -2,7 +2,7 @@
 // Copyright (c) Robert Vokac and contributors
 // Portions based on .NET runtime API (MIT License, Copyright .NET Foundation and Contributors)
 #pragma once
-#include <any>
+#include "System/Any.hpp"
 #include "System/Threading/WaitHandle.hpp"
 
 namespace System {
@@ -25,11 +25,11 @@ namespace System {
          * @brief Gets a user-defined object that qualifies or contains information about
          * an asynchronous operation.
          *
-         * C++ counterpart of .NET IAsyncResult.AsyncState. Uses std::any as the
+         * C++ counterpart of .NET IAsyncResult.AsyncState. Uses System::Any as the
          * C++ substitute for .NET's `object?`, since this port has no universal
          * base type.
          */
-        [[nodiscard]] virtual const std::any& getAsyncStateProperty() const = 0;
+        [[nodiscard]] virtual const System::Any& getAsyncStateProperty() const = 0;
         /**
          * @brief Gets a WaitHandle that is used to wait for an asynchronous operation to complete.
          *

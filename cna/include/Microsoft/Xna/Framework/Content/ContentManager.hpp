@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MS-PL
 #pragma once
 
-#include <any>
-#include <filesystem>
+#include "System/Any.hpp"
+#include <experimental/filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -43,7 +43,7 @@ namespace Microsoft::Xna::Framework::Content
 
         // Keyed by (T's type_index, normalized logical name), not name alone -- otherwise a
         // second Load<T2>() for a logical name a different T1 already cached under would
-        // std::any_cast<T2> a std::any actually holding T1, throwing std::bad_any_cast (an
+        // any_cast<T2>() a System::Any actually holding T1, throwing std::bad_cast (an
         // unrelated, undocumented exception type) instead of a clear ContentLoadException
         // naming both types.
         struct AssetCacheKey
@@ -66,8 +66,8 @@ namespace Microsoft::Xna::Framework::Content
             }
         };
 
-        std::unordered_map<AssetCacheKey, std::any, AssetCacheKeyHash> loadedAssets_;
-        std::unordered_map<std::type_index, std::any> typeReaders_;
+        std::unordered_map<AssetCacheKey, System::Any, AssetCacheKeyHash> loadedAssets_;
+        std::unordered_map<std::type_index, System::Any> typeReaders_;
 
         struct WeakTextureEntry {
             std::weak_ptr<CNA::Internal::Backends::ITextureBackend> backend;
@@ -174,7 +174,7 @@ namespace Microsoft::Xna::Framework::Content
             auto cacheIt = loadedAssets_.find(cacheKey);
             if (cacheIt != loadedAssets_.end())
             {
-                return std::any_cast<T>(cacheIt->second);
+                return System::any_cast<T>(cacheIt->second);
             }
 
             auto readerIt = typeReaders_.find(std::type_index(typeid(T)));
@@ -185,7 +185,7 @@ namespace Microsoft::Xna::Framework::Content
                     + assetName + "'.");
             }
 
-            auto* readerPtr = std::any_cast<std::shared_ptr<LooseFileContentTypeReader<T>>>(&readerIt->second);
+            auto* readerPtr = System::any_cast<std::shared_ptr<LooseFileContentTypeReader<T>>>(&readerIt->second);
             if (!readerPtr || !*readerPtr)
             {
                 throw ContentLoadException(
@@ -220,13 +220,13 @@ namespace Microsoft::Xna::Framework::Content
 
             // If the literal path already exists, use it as-is. This covers
             // assetName with an explicit, correct extension. Checking
-            // existence rather than std::filesystem::path::has_extension()
+            // existence rather than std::experimental::filesystem::path::has_extension()
             // matters because asset names can legitimately contain a '.'
             // that is not a file extension (e.g. localized names like
             // "Flag.en-US"), which has_extension() would otherwise
             // misinterpret as already-resolved and never try appending
             // a reader extension.
-            if (std::filesystem::exists(base))
+            if (std::experimental::filesystem::exists(base))
             {
                 return base;
             }
@@ -236,7 +236,7 @@ namespace Microsoft::Xna::Framework::Content
             for (const auto& ext : extensions)
             {
                 const std::string candidate = base + ext;
-                if (std::filesystem::exists(candidate))
+                if (std::experimental::filesystem::exists(candidate))
                 {
                     return candidate;
                 }
