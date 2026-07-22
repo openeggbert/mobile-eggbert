@@ -91,6 +91,12 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    // C++14 has no inline variables (that's C++17) -- a static constexpr array member that is
+    // ODR-used (as these are, via [] indexing) needs this out-of-class definition or the linker
+    // cannot find it.
+    constexpr double Game1::waitTable[Game1::waitTableLength];
+    constexpr Def::ButtonGlyph Game1::cheatGeste[Game1::cheatGesteLength];
+
     bool Game1::getIsRankingModeProperty() const
     {
         if (!simulateTrialMode)

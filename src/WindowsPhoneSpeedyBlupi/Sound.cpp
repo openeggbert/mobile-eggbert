@@ -59,6 +59,11 @@
 
 namespace WindowsPhoneSpeedyBlupi
 {
+    // C++14 has no inline variables (that's C++17) -- a static constexpr array member that is
+    // ODR-used (as this is, via [] indexing) needs this out-of-class definition or the linker
+    // cannot find it.
+    constexpr double Sound::tableVolumePitch[Sound::tableVolumePitchLength];
+
     SoundChannel Sound::Play::getChannelProperty() const { return channel; }
 
     bool Sound::Play::getIsFreeProperty() const

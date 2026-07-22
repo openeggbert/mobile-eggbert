@@ -31,7 +31,7 @@ namespace WindowsPhoneSpeedyBlupi
      * @details Always ScaleResolution1 (native 640x480). Do not change this constant.
      */
     // Please do not change
-    inline constexpr ResolutionScale RESOLUTION_SCALE_DEFAULT = ResolutionScale::ScaleResolution1;
+    constexpr ResolutionScale RESOLUTION_SCALE_DEFAULT = ResolutionScale::ScaleResolution1;
 
     /**
      * @brief Target update rates supported by the compile-time configuration.
@@ -60,7 +60,7 @@ namespace WindowsPhoneSpeedyBlupi
      * @details Always Fps20. Do not change this constant.
      */
     // Please do not change
-    inline constexpr Fps FPS_DEFAULT = Fps::Fps20;
+    constexpr Fps FPS_DEFAULT = Fps::Fps20;
 
     /**
      * @brief The original game's update rate as a plain integer (20).

@@ -78,92 +78,92 @@ namespace SharpRuntime
     /**
      * @brief Maximum value of @c SharpRuntime::sbytecs.
      */
-    inline constexpr sbytecs SBYTECS_MAX = std::numeric_limits<sbytecs>::max();
+    constexpr sbytecs SBYTECS_MAX = std::numeric_limits<sbytecs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::sbytecs.
      */
-    inline constexpr sbytecs SBYTECS_MIN = std::numeric_limits<sbytecs>::min();
+    constexpr sbytecs SBYTECS_MIN = std::numeric_limits<sbytecs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::bytecs.
      */
-    inline constexpr bytecs BYTECS_MAX = std::numeric_limits<bytecs>::max();
+    constexpr bytecs BYTECS_MAX = std::numeric_limits<bytecs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::bytecs.
      */
-    inline constexpr bytecs BYTECS_MIN = std::numeric_limits<bytecs>::min();
+    constexpr bytecs BYTECS_MIN = std::numeric_limits<bytecs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::shortcs.
      */
-    inline constexpr shortcs SHORTCS_MAX = std::numeric_limits<shortcs>::max();
+    constexpr shortcs SHORTCS_MAX = std::numeric_limits<shortcs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::shortcs.
      */
-    inline constexpr shortcs SHORTCS_MIN = std::numeric_limits<shortcs>::min();
+    constexpr shortcs SHORTCS_MIN = std::numeric_limits<shortcs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::ushortcs.
      */
-    inline constexpr ushortcs USHORTCS_MAX = std::numeric_limits<ushortcs>::max();
+    constexpr ushortcs USHORTCS_MAX = std::numeric_limits<ushortcs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::ushortcs.
      */
-    inline constexpr ushortcs USHORTCS_MIN = std::numeric_limits<ushortcs>::min();
+    constexpr ushortcs USHORTCS_MIN = std::numeric_limits<ushortcs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::intcs.
      */
-    inline constexpr intcs INTCS_MAX = std::numeric_limits<intcs>::max();
+    constexpr intcs INTCS_MAX = std::numeric_limits<intcs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::intcs.
      */
-    inline constexpr intcs INTCS_MIN = std::numeric_limits<intcs>::min();
+    constexpr intcs INTCS_MIN = std::numeric_limits<intcs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::uintcs.
      */
-    inline constexpr uintcs UINTCS_MAX = std::numeric_limits<uintcs>::max();
+    constexpr uintcs UINTCS_MAX = std::numeric_limits<uintcs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::uintcs.
      */
-    inline constexpr uintcs UINTCS_MIN = std::numeric_limits<uintcs>::min();
+    constexpr uintcs UINTCS_MIN = std::numeric_limits<uintcs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::longcs.
      */
-    inline constexpr longcs LONGCS_MAX = std::numeric_limits<longcs>::max();
+    constexpr longcs LONGCS_MAX = std::numeric_limits<longcs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::longcs.
      */
-    inline constexpr longcs LONGCS_MIN = std::numeric_limits<longcs>::min();
+    constexpr longcs LONGCS_MIN = std::numeric_limits<longcs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::ulongcs.
      */
-    inline constexpr ulongcs ULONGCS_MAX = std::numeric_limits<ulongcs>::max();
+    constexpr ulongcs ULONGCS_MAX = std::numeric_limits<ulongcs>::max();
 
     /**
      * @brief Minimum value of @c SharpRuntime::ulongcs.
      */
-    inline constexpr ulongcs ULONGCS_MIN = std::numeric_limits<ulongcs>::min();
+    constexpr ulongcs ULONGCS_MIN = std::numeric_limits<ulongcs>::min();
 
     /**
      * @brief Maximum value of @c SharpRuntime::byte.
      */
-    inline constexpr bytecs BYTE_MAX = BYTECS_MAX;
+    constexpr bytecs BYTE_MAX = BYTECS_MAX;
 
     /**
      * @brief Minimum value of @c SharpRuntime::byte.
      */
-    inline constexpr bytecs BYTE_MIN = BYTECS_MIN;
+    constexpr bytecs BYTE_MIN = BYTECS_MIN;
 
     // ---------------------------------------------------------------------------
     // C#-name aliases — mirror the .NET primitive type names used in FNA source
