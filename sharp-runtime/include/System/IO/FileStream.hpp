@@ -52,6 +52,22 @@ namespace System::IO
         /** Destroys the FileStream and closes the file. */
         ~FileStream() override;
 
+        FileStream(const FileStream&) = delete;
+        FileStream& operator=(const FileStream&) = delete;
+
+        /**
+         * @brief Move-constructs from @p other, leaving it in a closed, unusable state.
+         *
+         * C++14 has no guaranteed copy elision (that's C++17), so factory-style construction
+         * (e.g. IsolatedStorageFile::OpenFile() returning an IsolatedStorageFileStream by value)
+         * needs a real, accessible move constructor -- the user-declared destructor above
+         * otherwise suppresses the implicitly-declared one.
+         */
+        FileStream(FileStream&&) noexcept = default;
+
+        /** @brief Move-assigns from @p other, leaving it in a closed, unusable state. */
+        FileStream& operator=(FileStream&&) noexcept = default;
+
         /** Reads up to count bytes into buffer starting at offset; returns bytes actually read. */
         intcs Read(bytecs buffer[], intcs offset, intcs count) override;
         /** Writes count bytes from buffer starting at offset into the file. */

@@ -10,7 +10,7 @@
 #include "System/IO/FileNotFoundException.hpp"
 #include "System/IO/IOException.hpp"
 
-#include <filesystem>
+#include <experimental/filesystem>
 
 namespace System::IO
 {
@@ -25,10 +25,10 @@ namespace System::IO
         // compatibility, throw DirectoryNotFoundException instead of FileNotFoundException when
         // the parent folder does not exist."
         bool ParentDirectoryExists(const std::string& path) {
-            std::filesystem::path parent = std::filesystem::path(path).parent_path();
+            std::experimental::filesystem::path parent = std::experimental::filesystem::path(path).parent_path();
             if (parent.empty()) return true; // relative path with no directory component
             std::error_code ec;
-            bool isDir = std::filesystem::is_directory(parent, ec);
+            bool isDir = std::experimental::filesystem::is_directory(parent, ec);
             return !ec && isDir;
         }
 
@@ -64,7 +64,7 @@ namespace System::IO
         ValidateModeAndAccess(mode, access);
 
         std::error_code ec;
-        bool exists = std::filesystem::is_regular_file(path, ec) && !ec;
+        bool exists = std::experimental::filesystem::is_regular_file(path, ec) && !ec;
 
         // Existence preconditions that std::fstream's open-mode flags can't express directly.
         if (mode == FileMode::CreateNew && exists) {
@@ -117,7 +117,7 @@ namespace System::IO
         // Query length independently of the stream's own read position/access, matching
         // .NET's FileStream.Length (available regardless of CanRead).
         std::error_code sizeEc;
-        auto size = std::filesystem::file_size(path, sizeEc);
+        auto size = std::experimental::filesystem::file_size(path, sizeEc);
         length_ = sizeEc ? 0 : static_cast<intcs>(size);
     }
 
@@ -170,7 +170,7 @@ namespace System::IO
             f.flush();
         }
         std::error_code ec;
-        auto size = std::filesystem::file_size(path_, ec);
+        auto size = std::experimental::filesystem::file_size(path_, ec);
         return ec ? length_ : static_cast<intcs>(size);
     }
 

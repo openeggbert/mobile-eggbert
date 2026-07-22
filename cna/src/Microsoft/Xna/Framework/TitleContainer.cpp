@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -18,6 +18,57 @@
 #include "System/IO/MemoryStream.hpp"
 #include "SharpRuntime/SharpRuntimeHelper.hpp"
 
+namespace
+{
+    /**
+     * @brief Purely lexical path normalization: collapses "." components and resolves ".."
+     * against a preceding real component, without touching the filesystem.
+     *
+     * C++14-compatible replacement for std::filesystem::path::lexically_normal(), which is a
+     * final-C++17 addition not present in the pre-standard Filesystem TS
+     * (std::experimental::filesystem) this build uses instead.
+     */
+    std::experimental::filesystem::path LexicallyNormal(const std::experimental::filesystem::path& p)
+    {
+        namespace fs = std::experimental::filesystem;
+
+        const fs::path rootName = p.root_name();
+        const fs::path rootDir  = p.root_directory();
+
+        std::vector<fs::path> stack;
+        for (const fs::path& part : p.relative_path())
+        {
+            if (part == ".")
+            {
+                continue;
+            }
+            if (part == "..")
+            {
+                if (!stack.empty() && stack.back() != "..")
+                {
+                    stack.pop_back();
+                }
+                else if (rootDir.empty())
+                {
+                    // Relative path with no root: an unresolvable leading ".." is preserved.
+                    stack.push_back(part);
+                }
+                // Absolute path: ".." above the root has nowhere to go, so it is dropped.
+                continue;
+            }
+            stack.push_back(part);
+        }
+
+        fs::path result = rootName;
+        result += rootDir;
+        for (const fs::path& component : stack)
+        {
+            result /= component;
+        }
+        return result.empty() ? fs::path(".") : result;
+    }
+}
+
 namespace Microsoft::Xna::Framework
 {
     std::unique_ptr<System::IO::Stream> TitleContainer::OpenStream(const std::string& name)
@@ -28,7 +79,7 @@ namespace Microsoft::Xna::Framework
         CNA::Logger::Info("[TitleContainer] OpenStream requested: " + name);
         CNA::Logger::Info("[TitleContainer] Resolved path: " + realName);
 
-        if (std::filesystem::exists(realName))
+        if (std::experimental::filesystem::exists(realName))
         {
             return std::make_unique<System::IO::FileStream>(realName);
         }
@@ -172,15 +223,15 @@ namespace Microsoft::Xna::Framework
 
     std::string TitleContainer::CombineTitlePath(const std::string& name)
     {
-        const std::filesystem::path base(TitleLocation::getPathProperty());
-        return (base / std::filesystem::path(name)).lexically_normal().string();
+        const std::experimental::filesystem::path base(TitleLocation::getPathProperty());
+        return LexicallyNormal(base / std::experimental::filesystem::path(name)).string();
     }
 
     std::string TitleContainer::ResolveRealPath(const std::string& name)
     {
         if (IsPathRooted(name))
         {
-            return std::filesystem::path(name).lexically_normal().string();
+            return LexicallyNormal(std::experimental::filesystem::path(name)).string();
         }
 
         return CombineTitlePath(name);

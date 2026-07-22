@@ -5,7 +5,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <filesystem>
 
 namespace CNA::Internal::Backends::SdlRenderer
 {

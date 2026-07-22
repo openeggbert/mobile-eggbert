@@ -2,7 +2,7 @@
 
 #include "Microsoft/Xna/Framework/TitleLocation.hpp"
 
-#include <filesystem>
+#include <experimental/filesystem>
 
 #include <SDL2/SDL.h>
 
@@ -49,6 +49,6 @@ namespace Microsoft::Xna::Framework
             }
         }
 
-        return std::filesystem::current_path().string();
+        return std::experimental::filesystem::current_path().string();
     }
 }

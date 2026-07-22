@@ -3,7 +3,7 @@
 // Portions based on .NET runtime API (MIT License, Copyright .NET Foundation and Contributors)
 #pragma once
 
-#include <filesystem>
+#include <experimental/filesystem>
 #include <string>
 
 #include "System/IO/FileMode.hpp"
@@ -25,18 +25,18 @@ namespace System::IO::IsolatedStorage
     class IsolatedStorageFile : public IsolatedStorage
     {
     private:
-        std::filesystem::path rootDirectory_; ///< Root directory of this isolated storage scope.
+        std::experimental::filesystem::path rootDirectory_; ///< Root directory of this isolated storage scope.
         bool disposed_ = false;               ///< True after Close()/Dispose().
 
         /** Returns the full absolute path for a relative path inside the store. */
-        [[nodiscard]] std::filesystem::path fullPath(const std::string& relativePath) const;
+        [[nodiscard]] std::experimental::filesystem::path fullPath(const std::string& relativePath) const;
 
         /** @throws System::ObjectDisposedException if this store has been Close()d/Remove()d/Dispose()d. */
         void throwIfDisposed() const;
 
     public:
         /** Constructs an IsolatedStorageFile rooted at @p rootDirectory with the given scope. */
-        explicit IsolatedStorageFile(const std::filesystem::path& rootDirectory,
+        explicit IsolatedStorageFile(const std::experimental::filesystem::path& rootDirectory,
                                       IsolatedStorageScope scope = IsolatedStorageScope::None);
 
         /** Returns an isolated storage scoped to the current application. */

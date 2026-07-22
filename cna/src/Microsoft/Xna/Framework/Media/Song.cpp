@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MS-PL
 #include "Microsoft/Xna/Framework/Media/Song.hpp"
 
-#include <filesystem>
+#include <experimental/filesystem>
 #include <utility>
 
 #include "System/IO/FileNotFoundException.hpp"
@@ -18,7 +18,7 @@ namespace Microsoft::Xna::Framework::Media
         // FNA's ctor throws FileNotFoundException(fileName) directly (Song.cs); match the
         // established CNA-wide convention (SoundBank/WaveBank) of a descriptive message plus the
         // path via getFileNameProperty(), rather than a bare std::runtime_error(handle_).
-        if (!std::filesystem::exists(handle_))
+        if (!std::experimental::filesystem::exists(handle_))
         {
             throw System::IO::FileNotFoundException(
                 "Could not find file '" + handle_ + "'.", handle_);

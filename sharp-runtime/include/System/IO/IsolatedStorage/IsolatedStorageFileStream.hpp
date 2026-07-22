@@ -3,7 +3,7 @@
 // Portions based on .NET runtime API (MIT License, Copyright .NET Foundation and Contributors)
 #pragma once
 
-#include <filesystem>
+#include <experimental/filesystem>
 
 #include "System/IO/FileMode.hpp"
 #include "System/IO/FileStream.hpp"
@@ -25,7 +25,7 @@ namespace System::IO::IsolatedStorage
          * @param fullPath Absolute filesystem path to the file. Parent directories are created if missing.
          * @param mode Specifies how the file should be opened or created.
          */
-        IsolatedStorageFileStream(const std::filesystem::path& fullPath, System::IO::FileMode mode);
+        IsolatedStorageFileStream(const std::experimental::filesystem::path& fullPath, System::IO::FileMode mode);
 
         /** Closes the underlying file stream, syncing IDBFS on Emscripten builds. */
         void Close() override;

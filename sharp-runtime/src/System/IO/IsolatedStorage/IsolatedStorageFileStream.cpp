@@ -3,7 +3,7 @@
 // Portions based on .NET runtime API (MIT License, Copyright .NET Foundation and Contributors)
 #include "System/IO/IsolatedStorage/IsolatedStorageFileStream.hpp"
 
-#include <filesystem>
+#include <experimental/filesystem>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -12,15 +12,15 @@
 namespace System::IO::IsolatedStorage
 {
     namespace {
-        std::string PrepareFullPath(const std::filesystem::path& fullPath)
+        std::string PrepareFullPath(const std::experimental::filesystem::path& fullPath)
         {
-            std::filesystem::create_directories(fullPath.parent_path());
+            std::experimental::filesystem::create_directories(fullPath.parent_path());
             return fullPath.string();
         }
     }
 
     IsolatedStorageFileStream::IsolatedStorageFileStream(
-        const std::filesystem::path& fullPath,
+        const std::experimental::filesystem::path& fullPath,
         System::IO::FileMode mode)
         : System::IO::FileStream(PrepareFullPath(fullPath), mode)
     {

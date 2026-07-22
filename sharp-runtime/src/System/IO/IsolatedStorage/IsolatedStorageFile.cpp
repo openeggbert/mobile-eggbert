@@ -3,7 +3,7 @@
 // Portions based on .NET runtime API (MIT License, Copyright .NET Foundation and Contributors)
 #include "System/IO/IsolatedStorage/IsolatedStorageFile.hpp"
 
-#include <filesystem>
+#include <experimental/filesystem>
 
 #include "SharpRuntime/Storage/StoragePaths.hpp"
 #include "System/IO/FileMode.hpp"
@@ -13,14 +13,14 @@
 
 namespace System::IO::IsolatedStorage
 {
-    IsolatedStorageFile::IsolatedStorageFile(const std::filesystem::path& rootDirectory, IsolatedStorageScope scope)
+    IsolatedStorageFile::IsolatedStorageFile(const std::experimental::filesystem::path& rootDirectory, IsolatedStorageScope scope)
         : rootDirectory_(rootDirectory)
     {
         scope_ = scope;
-        std::filesystem::create_directories(rootDirectory_);
+        std::experimental::filesystem::create_directories(rootDirectory_);
     }
 
-    std::filesystem::path IsolatedStorageFile::fullPath(const std::string& relativePath) const
+    std::experimental::filesystem::path IsolatedStorageFile::fullPath(const std::string& relativePath) const
     {
         return rootDirectory_ / relativePath;
     }
@@ -47,7 +47,7 @@ namespace System::IO::IsolatedStorage
     {
         throwIfDisposed();
         const auto fp = fullPath(relativePath);
-        return std::filesystem::exists(fp) && std::filesystem::is_regular_file(fp);
+        return std::experimental::filesystem::exists(fp) && std::experimental::filesystem::is_regular_file(fp);
     }
 
     IsolatedStorageFileStream IsolatedStorageFile::OpenFile(
@@ -62,7 +62,7 @@ namespace System::IO::IsolatedStorage
     {
         throwIfDisposed();
         std::error_code ec;
-        std::filesystem::remove(fullPath(relativePath), ec);
+        std::experimental::filesystem::remove(fullPath(relativePath), ec);
         if (ec)
             throw IsolatedStorageException("Failed to delete isolated storage file: " + relativePath);
     }
@@ -72,7 +72,7 @@ namespace System::IO::IsolatedStorage
     void IsolatedStorageFile::Remove()
     {
         std::error_code ec;
-        std::filesystem::remove_all(rootDirectory_, ec);
+        std::experimental::filesystem::remove_all(rootDirectory_, ec);
         disposed_ = true;
     }
 }
