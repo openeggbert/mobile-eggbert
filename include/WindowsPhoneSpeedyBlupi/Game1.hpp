@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <any>
-
 #include "Decor.hpp"
 #include "Def.hpp"
 #include "IGame1.hpp"

@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <any>
-
 #include "Def.hpp"
 #include "InputPad.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
