@@ -38,8 +38,12 @@ public class SpeedyBlupiActivity extends SDLActivity {
     @Override
     protected String[] getLibraries() {
         return new String[]{
-                // The vendored SDL Android build exports libSDL2.so.
+                // Android 4.x's linker does not resolve libmain.so's sibling
+                // shared-library dependencies from the APK automatically.
+                // Load every SDL dependency first, in dependency order.
                 "SDL2",
+                "SDL2_image",
+                "SDL2_mixer",
                 "main"
         };
     }
