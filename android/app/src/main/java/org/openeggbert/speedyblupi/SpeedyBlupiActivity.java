@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 
@@ -37,7 +38,8 @@ public class SpeedyBlupiActivity extends SDLActivity {
     @Override
     protected String[] getLibraries() {
         return new String[]{
-                "SDL3",
+                // The vendored SDL Android build exports libSDL2.so.
+                "SDL2",
                 "main"
         };
     }
@@ -101,13 +103,9 @@ public class SpeedyBlupiActivity extends SDLActivity {
     /** Hide status bar and navigation bar using the appropriate API level. */
     private void hideSystemBars() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // API 30+ (Android 11+): WindowInsetsController
-            WindowInsetsController controller = getWindow().getInsetsController();
-            if (controller != null) {
-                controller.hide(WindowInsets.Type.systemBars());
-                controller.setSystemBarsBehavior(
-                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
+            // Keep Android 11-only types in a separate class.  Dalvik on
+            // Android 4.x must never attempt to resolve these newer APIs.
+            Api30SystemBars.hide(getWindow());
         } else {
             // API < 30: legacy system UI visibility flags
             getWindow().getDecorView().setSystemUiVisibility(
@@ -118,6 +116,18 @@ public class SpeedyBlupiActivity extends SDLActivity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             );
+        }
+    }
+
+    /** Code that is loaded only after the API 30 runtime check above. */
+    private static final class Api30SystemBars {
+        private static void hide(Window window) {
+            WindowInsetsController controller = window.getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.systemBars());
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
         }
     }
 }

@@ -82,6 +82,10 @@
  */
 #include "WindowsPhoneSpeedyBlupi/InputPad.hpp"
 
+#ifdef __ANDROID__
+#include <SDL2/SDL.h>
+#endif
+
 #ifndef LEGACY
 #include <algorithm>
 #include <string>
@@ -111,6 +115,52 @@
 
 #ifndef INPUT_ENABLED
 #define INPUT_DISABLED
+#endif
+
+#ifdef __ANDROID__
+namespace
+{
+    // SDL's Android Java glue publishes the accelerometer as the virtual
+    // "Android Accelerometer" joystick.  Its direct SDL_Sensor backend is
+    // unreliable on older Android releases because it owns a second native
+    // sensor queue, while the Java path is already active for SDLActivity.
+    // Keep one handle for the application lifetime and use the horizontal
+    // axis when tilt controls are enabled.
+    SDL_Joystick* getAndroidAccelerometerJoystick()
+    {
+        static SDL_Joystick* joystick = nullptr;
+        if (joystick != nullptr)
+        {
+            return joystick;
+        }
+
+        const int count = SDL_NumJoysticks();
+        for (int index = 0; index < count; ++index)
+        {
+            const char* name = SDL_JoystickNameForIndex(index);
+            if (name != nullptr && SDL_strcmp(name, "Android Accelerometer") == 0)
+            {
+                joystick = SDL_JoystickOpen(index);
+                break;
+            }
+        }
+        return joystick;
+    }
+
+    bool tryGetAndroidAccelerometerTilt(float& tilt)
+    {
+        SDL_Joystick* joystick = getAndroidAccelerometerJoystick();
+        if (joystick == nullptr || SDL_JoystickNumAxes(joystick) < 1)
+        {
+            return false;
+        }
+
+        // SDLActivity's landscape accelerometer joystick has the opposite
+        // horizontal sign from the game's established tilt convention.
+        tilt = -static_cast<float>(SDL_JoystickGetAxis(joystick, 0)) / 32767.0f;
+        return true;
+    }
+}
 #endif
 
 namespace WindowsPhoneSpeedyBlupi
@@ -423,6 +473,48 @@ namespace WindowsPhoneSpeedyBlupi
                 INPUT_DEBUG("new Y"s + std::to_string(touchOrClick.Y));
             }
         }
+
+#ifdef __ANDROID__
+        // SDLActivity receives this tablet's accelerometer through its Java
+        // listener and exposes it as a virtual joystick.  Poll that source on
+        // Android instead of depending on SDL's separate native sensor queue.
+        if (accelStarted)
+        {
+            float tilt = 0.0f;
+            if (tryGetAndroidAccelerometerTilt(tilt))
+            {
+                const float sensitivityThreshold =
+                    (1.0f - static_cast<float>(gameData->getAccelSensitivityProperty())) * 0.06f + 0.04f;
+                const float adjustedThreshold = accelLastState ? sensitivityThreshold * 0.6f : sensitivityThreshold;
+                if (tilt > adjustedThreshold)
+                {
+                    accelSpeedX = -std::min(static_cast<double>(tilt) * 0.25 /
+                                             static_cast<double>(sensitivityThreshold) + 0.25, 1.0);
+                }
+                else if (tilt < -adjustedThreshold)
+                {
+                    accelSpeedX = std::min(static_cast<double>(-tilt) * 0.25 /
+                                            static_cast<double>(sensitivityThreshold) + 0.25, 1.0);
+                }
+                else
+                {
+                    accelSpeedX = 0.0;
+                }
+                accelLastState = accelSpeedX != 0.0;
+                if (accelWaitZero)
+                {
+                    if (accelSpeedX == 0.0)
+                    {
+                        accelWaitZero = false;
+                    }
+                    else
+                    {
+                        accelSpeedX = 0.0;
+                    }
+                }
+            }
+        }
+#endif
         using Microsoft::Xna::Framework::Input::KeyboardState;
         using namespace Microsoft::Xna::Framework::Input;
         KeyboardState newKeyboardState = Keyboard::GetState();
@@ -1843,6 +1935,12 @@ namespace WindowsPhoneSpeedyBlupi
     void InputPad::StartAccel()
     {
 #ifdef INPUT_DISABLED
+        return;
+#endif
+#ifdef __ANDROID__
+        // SDLActivity always enables the Java accelerometer listener.  The
+        // data is read from SDL's Android-accelerometer joystick in Update().
+        accelStarted = true;
         return;
 #endif
         try

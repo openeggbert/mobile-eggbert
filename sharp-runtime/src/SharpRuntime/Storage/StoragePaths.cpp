@@ -32,7 +32,7 @@ namespace SharpRuntime::Storage
             SDL_free(prefPath);
         } else {
             // Fallback: use the Android internal storage path directly
-            const char* internalPath = SDL_GetAndroidInternalStoragePath();
+            const char* internalPath = SDL_AndroidGetInternalStoragePath();
             if (internalPath) {
                 root = std::experimental::filesystem::path(internalPath) / ".cna_isolated_storage";
             } else {

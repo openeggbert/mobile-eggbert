@@ -381,6 +381,22 @@ namespace Microsoft::Xna::Framework
             accumulatedElapsedTime_ = MaxElapsedTime;
         }
 
+#ifdef __ANDROID__
+        // A slow Android GLES frame used to be followed by as many as ten
+        // fixed simulation updates before the next draw (MaxElapsedTime is
+        // 500 ms).  The player then sees Blupi jump ahead in time.  Keeping
+        // at most two updates preserves input responsiveness and lets a slow
+        // device recover visually instead of replaying a large backlog at
+        // once.  This intentionally drops excess wall-clock time, which is
+        // preferable for this real-time game.
+        const System::TimeSpan androidMaxCatchUp =
+            System::TimeSpan::FromTicks(TargetElapsedTime_.getTicksProperty() * 2);
+        if (TimeSpanGreater(accumulatedElapsedTime_, androidMaxCatchUp))
+        {
+            accumulatedElapsedTime_ = androidMaxCatchUp;
+        }
+#endif
+
         if (IsFixedTimeStep_)
         {
             gameTime_.setElapsedGameTimeProperty(TargetElapsedTime_);

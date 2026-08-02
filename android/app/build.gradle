@@ -11,11 +11,16 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "org.openeggbert.speedyblupi"
     compileSdkVersion 35
-    ndkVersion = "29.0.14206865"
+    // NDK r23 is the final supported NDK line for the API 16 baseline.
+    // NDK r25 raises native code to API 19 and newer releases require API 21.
+    ndkVersion = "23.1.7779620"
 
     defaultConfig {
         applicationId "org.openeggbert.speedyblupi"
-        minSdkVersion 21
+        // SDL3's Android project supports API 16.  This keeps the APK usable
+        // on Android 4.1–4.3 tablets while retaining the modern compile SDK.
+        // Android 4.0 (API 14/15) is not supported by the bundled SDL3 code.
+        minSdkVersion 16
         targetSdkVersion 35
         versionCode 1
         versionName "1.0"
@@ -23,13 +28,16 @@ android {
         externalNativeBuild {
             cmake {
                 // Pass Android platform and C++ STL config.
-                arguments "-DANDROID_PLATFORM=android-21",
+                arguments "-DANDROID_PLATFORM=android-16",
                           "-DANDROID_STL=c++_static",
                           // Disable sharp-runtime and CNA tests (they use gtest
                           // which is not needed in the APK build).
                           "-DCNA_BUILD_TESTS=OFF",
                           "-DSHARP_RUNTIME_BUILD_TESTS=OFF"
-                abiFilters 'arm64-v8a', 'x86_64'
+                // Old Android 4 tablets are almost always 32-bit ARM. Keep
+                // arm64 too, so this single universal APK also works on newer
+                // ARM devices.
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
         }
     }
@@ -48,18 +56,6 @@ android {
     }
     buildTypes {
         release {
-            if (!keystorePropertiesFile.exists()) {
-                doFirst {
-                    throw new GradleException(
-                        "\n\n" +
-                        "========================================================\n" +
-                        " ERROR: key.properties not found in android/ directory.\n" +
-                        " Cannot build a signed release APK.\n" +
-                        " See ANDROID.md for instructions on creating key.properties.\n" +
-                        "========================================================\n"
-                    )
-                }
-            }
             signingConfig signingConfigs.release
             minifyEnabled false
             debuggable false
@@ -108,6 +104,24 @@ android {
 
     lint {
         abortOnError = false
+    }
+}
+
+// AGP 8 build-type objects do not expose doFirst().  Attach the helpful
+// missing-keystore error to the actual release task instead, so debug builds
+// (used for local sideloading) remain usable without a private signing key.
+if (!keystorePropertiesFile.exists()) {
+    tasks.matching { it.name == 'assembleRelease' }.configureEach {
+        doFirst {
+            throw new GradleException(
+                "\n\n" +
+                "========================================================\n" +
+                " ERROR: key.properties not found in android/ directory.\n" +
+                " Cannot build a signed release APK.\n" +
+                " See ANDROID.md for instructions on creating key.properties.\n" +
+                "========================================================\n"
+            )
+        }
     }
 }
 

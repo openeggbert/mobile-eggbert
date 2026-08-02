@@ -19,6 +19,10 @@
 #include "Microsoft/Xna/Framework/Graphics/SurfaceFormat.hpp"
 #include "System/IDisposable.hpp"
 
+#if defined(__ANDROID__)
+#include <SDL2/SDL.h>
+#endif
+
 namespace Microsoft::Xna::Framework::Audio  { class SoundEffect; }
 namespace Microsoft::Xna::Framework::Graphics { class GraphicsDevice; class Texture2D; }
 namespace CNA::Internal::Backends { class ITextureBackend; }
@@ -217,6 +221,38 @@ namespace Microsoft::Xna::Framework::Content
             LooseFileContentTypeReader<T>& reader) const
         {
             const std::string base = BuildAssetPath(assetName);
+
+#if defined(__ANDROID__)
+            // APK assets are not visible to std::experimental::filesystem.
+            // SDL can open them through Android's AAssetManager, so use it
+            // when resolving extensionless XNA content names such as
+            // "backgrounds/wait" -> "backgrounds/wait.png".
+            const auto androidAssetExists = [](const std::string& candidate)
+            {
+                SDL_RWops* stream = SDL_RWFromFile(candidate.c_str(), "rb");
+                if (stream == nullptr)
+                {
+                    return false;
+                }
+                SDL_RWclose(stream);
+                return true;
+            };
+
+            if (androidAssetExists(base))
+            {
+                return base;
+            }
+
+            const auto androidExtensions = reader.GetExtensions();
+            for (const auto& ext : androidExtensions)
+            {
+                const std::string candidate = base + ext;
+                if (androidAssetExists(candidate))
+                {
+                    return candidate;
+                }
+            }
+#endif
 
             // If the literal path already exists, use it as-is. This covers
             // assetName with an explicit, correct extension. Checking

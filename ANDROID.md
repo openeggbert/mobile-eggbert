@@ -11,7 +11,7 @@ Android APK using SDL3, the Android NDK, and CMake.
 |------|---------------------|
 | Android Studio | Ladybug (2024.2) or newer |
 | Android SDK | API level 35 |
-| Android NDK | 28.2.13676358 (installed via SDK Manager) |
+| Android NDK | 23.1.7779620 (installed via SDK Manager; required for API 16) |
 | CMake (NDK bundle) | 3.21+ (installed via SDK Manager) |
 | Java (JDK) | 17 (bundled with Android Studio) |
 | Git | any recent version |
@@ -156,14 +156,18 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 
 ---
 
-## Supported ABIs
+## Android version and supported ABIs
 
-The current Gradle configuration builds for **arm64-v8a** only.  To add other
-ABIs (e.g. `x86_64` for the emulator) edit
-`android/app/build.gradle` and extend the `abiFilters` list:
+The APK supports **Android 4.1 (API 16) and newer**. Android 4.0 (API 14/15)
+is not supported by the bundled SDL3 version.
+
+It is a universal ARM APK containing both **armeabi-v7a** (needed by the vast
+majority of old Android 4 tablets) and **arm64-v8a** for current ARM devices.
+To add other ABIs (for example `x86_64` for an emulator), extend the
+`abiFilters` list in `android/app/build.gradle`:
 
 ```groovy
-abiFilters 'arm64-v8a', 'x86_64'
+abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
 ```
 
 ---

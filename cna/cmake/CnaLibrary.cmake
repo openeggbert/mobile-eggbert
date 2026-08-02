@@ -111,10 +111,9 @@ if(ANDROID)
     target_link_libraries(CNA PUBLIC android log)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    # C++14 has no standardized <filesystem> (that's C++17) -- ContentManager/TitleContainer/
-    # TitleLocation/Song use the pre-standard Filesystem TS (std::experimental::filesystem),
-    # which on libstdc++/libc++ needs this separate archive linked in.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ANDROID)
+    # Desktop libstdc++ needs this archive for the Filesystem TS. Android's
+    # libc++ provides it directly and has no libstdc++fs archive.
     target_link_libraries(CNA PRIVATE stdc++fs)
 endif()
 

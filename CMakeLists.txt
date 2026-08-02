@@ -11,7 +11,7 @@ if (NOT WIN32 AND CMAKE_BINARY_DIR MATCHES "build-windows")
                     "on a CLEAN build directory.")
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -83,8 +83,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 if(ANDROID)
     set(_game_target main)
     add_library(${_game_target} SHARED ${SOURCES}
-            include/WindowsPhoneSpeedyBlupi/def/Direction.hpp
-            "${CNA_GRAPHICS_SOURCE_DIR}/include/CNA/Misc.hpp")
+            include/WindowsPhoneSpeedyBlupi/def/Direction.hpp)
 else()
     set(_game_target WindowsPhoneSpeedyBlupi)
     add_executable(${_game_target} ${SOURCES})
@@ -119,7 +118,7 @@ elseif(ANDROID)
     # Android uses lld which resolves circular static-lib references without
     # --start-group. On Android the executable is actually a shared library
     # (libmain.so) loaded by SDLActivity; SDL2 is linked statically.
-    target_link_libraries(${_game_target} PRIVATE CNA SDL2::SDL2 android log)
+    target_link_libraries(${_game_target} PRIVATE CNA CNA_GamerServices SDL2::SDL2 android log)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
     # cna names every backend target
     # cna_backend_graphics_<backend, lowercased> -- this used to be a

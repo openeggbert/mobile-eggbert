@@ -2,7 +2,7 @@
 <resources>
 
     <style name="AppTheme"
-        parent="android:style/Theme.Material.NoActionBar.Fullscreen">
+        parent="android:style/Theme.Holo.NoActionBar.Fullscreen">
 
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>

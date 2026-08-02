@@ -454,6 +454,16 @@ namespace
     /// Falls back to the raw coords if no renderer is available.
     Microsoft::Xna::Framework::Vector2 to_logical_position(SDL_Window* window, float windowX, float windowY)
     {
+#ifdef __ANDROID__
+        // Mobile Eggbert's HUD owns its Android scaling: InputPad converts
+        // physical surface coordinates into its fixed 640x480 hit-test
+        // space.  SDL_RenderWindowToLogical would apply the dynamic renderer
+        // scale first, causing a second conversion and displaced touches.
+        // Keep Android pointer coordinates in the SurfaceView's physical
+        // coordinate system; desktop/XNA callers retain logical coordinates.
+        (void)window;
+        return Microsoft::Xna::Framework::Vector2(windowX, windowY);
+#else
         if (window != nullptr)
         {
             // SDL_renderer backend: use SDL's built-in logical-presentation transform.
@@ -477,6 +487,7 @@ namespace
             }
         }
         return Microsoft::Xna::Framework::Vector2(windowX, windowY);
+#endif
     }
 
     // INPUT-TOUCH-024: touch-state coord basis. Scales the normalized SDL coord by the SDL window size

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(SHARP_RUNTIME LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -26,17 +26,29 @@ target_include_directories(SHARP_RUNTIME PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/incl
 if(MSVC)
     target_compile_options(SHARP_RUNTIME PRIVATE /W4 /WX)
 else()
-    target_compile_options(SHARP_RUNTIME PRIVATE -Wall -Wextra -Werror -Wno-format-truncation)
+    target_compile_options(SHARP_RUNTIME PRIVATE -Wall -Wextra -Werror)
+    # GCC diagnoses format truncation; Clang (including Android NDK Clang)
+    # does not recognise this warning-control option and treats it as an error
+    # under -Werror.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(SHARP_RUNTIME PRIVATE -Wno-format-truncation)
+    endif()
+endif()
+
+if(ANDROID)
+    # The runtime intentionally retains std::experimental::filesystem for its
+    # C++14-compatible public API.  libc++ deprecates that namespace in C++17.
+    target_compile_definitions(SHARP_RUNTIME PRIVATE
+        _LIBCPP_NO_EXPERIMENTAL_DEPRECATION_WARNING_FILESYSTEM)
 endif()
 
 if(WIN32)
     target_link_libraries(SHARP_RUNTIME PRIVATE ws2_32)
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    # C++14 has no standardized <filesystem> (that's C++17) -- SharpRuntime::Storage::StoragePaths
-    # and System::IO::IsolatedStorage use the pre-standard Filesystem TS (std::experimental::filesystem),
-    # which on libstdc++/libc++ needs this separate archive linked in.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ANDROID)
+    # Desktop libstdc++ needs this archive for the Filesystem TS. Android's
+    # libc++ provides it directly and has no libstdc++fs archive.
     target_link_libraries(SHARP_RUNTIME PRIVATE stdc++fs)
 endif()
 
