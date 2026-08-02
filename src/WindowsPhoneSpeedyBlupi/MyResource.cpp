@@ -4,7 +4,7 @@
  *        per-language string-table initialisers.
  *
  * @details
- * This file defines the static members of MyResource and provides three
+ * This file defines the static members of MyResource and provides four
  * complete string-table population functions — one per supported locale.
  *
  * ## Supported locales
@@ -12,6 +12,7 @@
  * | Locale prefix | Initialiser called | Notes                                   |
  * |---------------|--------------------|-----------------------------------------|
  * | "fr"          | InitializeFR()     | Full French translation.                |
+ * | "cs"          | InitializeCS()     | Czech translation using ASCII text.     |
  * | (any other)   | InitializeEN()     | English is the default fallback.        |
  * | "de"*         | (InitializeDE())   | Defined but not yet wired; falls to EN. |
  *
@@ -21,10 +22,10 @@
  *
  * ## Locale detection
  *
- * Init() calls @c std::locale("") to obtain the platform default locale.  The
- * locale name string (e.g. "fr_FR.UTF-8") is lower-cased and the first two
- * characters compared to "fr".  If @c std::locale("") throws (e.g. on a
- * minimal embedded system with no locale support), the code defaults to "en".
+ * On Android, Init() reads SDL_GetPreferredLocales() so it uses the device
+ * language.  Other platforms use @c std::locale("").  The first two
+ * characters are lower-cased and compared with supported language codes.  If
+ * lookup fails, the code defaults to "en".
  *
  * ## Resource ID layout
  *
@@ -59,6 +60,9 @@
 #include <locale>
 #include <string>
 #include <algorithm>
+#ifdef __ANDROID__
+#include <SDL2/SDL_locale.h>
+#endif
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -273,6 +277,14 @@ namespace WindowsPhoneSpeedyBlupi
     {
         std::string languageCode = "en";
 
+#ifdef __ANDROID__
+        SDL_Locale* locales = SDL_GetPreferredLocales();
+        if (locales != nullptr && locales[0].language != nullptr)
+        {
+            languageCode = locales[0].language;
+        }
+        SDL_free(locales);
+#else
         try
         {
             std::locale loc("");
@@ -295,8 +307,22 @@ namespace WindowsPhoneSpeedyBlupi
         {
             languageCode = "en";
         }
+#endif
 
-        if (languageCode == "fr")
+        std::transform(
+            languageCode.begin(),
+            languageCode.end(),
+            languageCode.begin(),
+            [](unsigned char c)
+            {
+                return static_cast<char>(std::tolower(c));
+            });
+
+        if (languageCode == "cs")
+        {
+            InitializeCS();
+        }
+        else if (languageCode == "fr")
         {
             InitializeFR();
         }
@@ -574,6 +600,121 @@ namespace WindowsPhoneSpeedyBlupi
         resources.emplace(TX_TRAINING408a, "");
         resources.emplace(TX_TRAINING409a, "");
         resources.emplace(TX_TRAINING410a, "");
+    }
+
+    void MyResource::InitializeCS()
+    {
+        InitializeEN();
+
+        resources[TX_BUTTON_PLAY] = "Hrat";
+        resources[TX_BUTTON_MENU] = "Menu";
+        resources[TX_BUTTON_BACK] = "Zpet";
+        resources[TX_BUTTON_RESTART] = "Znovu";
+        resources[TX_BUTTON_CONTINUE] = "Pokracovat";
+        resources[TX_BUTTON_BUY] = "Koupit";
+        resources[TX_BUTTON_RANKING] = "Poradi";
+        resources[TX_BUTTON_SETUP] = "Nastaveni";
+        resources[TX_BUTTON_SETUP_SOUNDS] = "Zvuky";
+        resources[TX_BUTTON_SETUP_JUMP] = "Tlacitko skoku vpravo";
+        resources[TX_BUTTON_SETUP_ZOOM] = "Automaticke priblizeni";
+        resources[TX_BUTTON_SETUP_ACCEL] = "Akcelerometr";
+        resources[TX_BUTTON_SETUP_RESET] = "Hrac {0} :\nSmazat postup";
+        resources[TX_GAMER_TITLE] = "Hrac {0}";
+        resources[TX_GAMER_MDOORS] = "Hlavni brany : {0}/12";
+        resources[TX_GAMER_SDOORS] = "Vedlejsi brany : {0}/52";
+        resources[TX_GAMER_LIFES] = "Blupi : {0}";
+        resources[TX_TRIAL1] = "Kup plnou verzi";
+        resources[TX_TRIAL2] = "\u000e 64 napinavych urovni";
+        resources[TX_TRIAL3] = "\u000e Rozmanite pozadi";
+        resources[TX_TRIAL4] = "\u000e Postupne tezsi hra";
+        resources[TX_TRIAL5] = "\u000e Nove pasti";
+        resources[TX_TRIAL6] = "\u000e Zabava a vyzva";
+
+        resources[TX_TRAINING101] = MakeResourceString("Pouzij smerove kolecko \0.");
+        resources[TX_TRAINING102] = "Stiskni Skok \b.";
+        resources[TX_TRAINING103] = MakeResourceString("Stiskni Vpravo \0 a Skok \b.");
+        resources[TX_TRAINING104] = MakeResourceString("Stiskni Vpravo \0 a Skok \b.");
+        resources[TX_TRAINING105] = MakeResourceString("Nespadni do vody \0 \b!");
+        resources[TX_TRAINING107] = MakeResourceString("Jed vytahem klidne, bez skoku \0.");
+        resources[TX_TRAINING108] = "Skoc na vytah.";
+        resources[TX_TRAINING110] = MakeResourceString("Jdi dal bez skoku a bez zastaveni \0!");
+        resources[TX_TRAINING113] = MakeResourceString("Jdi po plosine \0.");
+        resources[TX_TRAINING114] = MakeResourceString("Opust plosinu \0.");
+        resources[TX_TRAINING115] = "Jeste jednou, ale rychleji...";
+        resources[TX_TRAINING116] = MakeResourceString("Jdi po plosine \0, pak skoc \0 \b.");
+        resources[TX_TRAINING117] = MakeResourceString("Skoc, kdyz jsi na plosine \0 \b.");
+        resources[TX_TRAINING118] = MakeResourceString("Vyber horni cestu \0 \b.");
+        resources[TX_TRAINING119] = "Vejce ti prida zivoty.";
+        resources[TX_TRAINING120] = "Az budes nahore, jdi hned na druhou plosinu...";
+        resources[TX_TRAINING121] = "Seber druhy a posledni poklad.";
+        resources[TX_TRAINING122] = "Dojdi k cervene sipce.";
+
+        resources[TX_TRAINING201] = MakeResourceString("Tlac bednu na cerveny bod \0.");
+        resources[TX_TRAINING202] = "Uzitecna bedna, ze?";
+        resources[TX_TRAINING203] = "Tahni bednu na cerveny bod s \u0003.";
+        resources[TX_TRAINING204] = "Naskladej obe bedny na cerveny bod.";
+        resources[TX_TRAINING205] = "Naskladej tri bedny na cerveny bod.";
+
+        resources[TX_TRAINING301] = "Nastup do vrtulniku s \t.";
+        resources[TX_TRAINING302] = MakeResourceString("Pro vzlet pouzij \u0006 nebo \b. Ridis \u0004 a \0.");
+        resources[TX_TRAINING303] = "Vystup z vrtulniku s \t, nema rad vodu!";
+        resources[TX_TRAINING304] = MakeResourceString("Ponor se. Ridis \u0004 \0 \u0002 \u0006.");
+        resources[TX_TRAINING305] = MakeResourceString("Nastup do vrtulniku \t a vzletni \u0006 nebo \b.");
+        resources[TX_TRAINING306] = "Seber tri poklady a pak jdi nahoru.";
+        resources[TX_TRAINING307] = "Najdi skate vlevo nahore.";
+        resources[TX_TRAINING308] = "Vezmi skate s \t.";
+        resources[TX_TRAINING309] = MakeResourceString("Se skatem muzes bez obav projet \0.");
+        resources[TX_TRAINING310] = "Tvuj skate nema rad vodu! Skoc!";
+        resources[TX_TRAINING311] = "Odloz skate s \t.";
+
+        resources[TX_TRAINING401] = "Vezmi dynamit s \t.";
+        resources[TX_TRAINING402] = "Zde dynamit nepokladej!";
+        resources[TX_TRAINING403] = "Najdi dynamit vlevo.";
+        resources[TX_TRAINING404] = "Poloz dynamit s \t, pak rychle pryc!";
+        resources[TX_TRAINING405] = "Poloz dalsi dynamit a pokracuj.";
+
+        resources[TX_TRAINING101a] = "Naklon telefon \v.";
+        resources[TX_TRAINING102a] = "Stiskni Skok \b.";
+        resources[TX_TRAINING103a] = "\v a Skok \b.";
+        resources[TX_TRAINING104a] = "\v a Skok \b.";
+        resources[TX_TRAINING105a] = "Nespadni do vody \v \b!";
+        resources[TX_TRAINING107a] = "Jed vytahem klidne, bez skoku \v.";
+        resources[TX_TRAINING108a] = "Skoc na vytah.";
+        resources[TX_TRAINING110a] = "Jdi dal bez skoku a bez zastaveni \v!";
+        resources[TX_TRAINING113a] = "Jdi po plosine \v.";
+        resources[TX_TRAINING114a] = "Opust plosinu \v.";
+        resources[TX_TRAINING115a] = "Jeste jednou, ale rychleji...";
+        resources[TX_TRAINING116a] = "Jdi po plosine \v, pak skoc \v \b.";
+        resources[TX_TRAINING117a] = "Skoc, kdyz jsi na plosine \v \b.";
+        resources[TX_TRAINING118a] = "Vyber horni cestu \v \b.";
+        resources[TX_TRAINING119a] = "Vejce ti prida zivoty.";
+        resources[TX_TRAINING120a] = "Az budes nahore, jdi hned na druhou plosinu...";
+        resources[TX_TRAINING121a] = "Seber druhy a posledni poklad.";
+        resources[TX_TRAINING122a] = "Dojdi k cervene sipce.";
+
+        resources[TX_TRAINING201a] = "Tlac bednu na cerveny bod \v.";
+        resources[TX_TRAINING202a] = "Uzitecna bedna, ze?";
+        resources[TX_TRAINING203a] = "Tahni bednu na cerveny bod s \f a \n.";
+        resources[TX_TRAINING204a] = "Naskladej obe bedny na cerveny bod.";
+        resources[TX_TRAINING205a] = "Naskladej tri bedny na cerveny bod.";
+
+        resources[TX_TRAINING301a] = "Nastup do vrtulniku s \t.";
+        resources[TX_TRAINING302a] = "Pro vzlet pouzij \b. Ridis \f a \v.";
+        resources[TX_TRAINING303a] = "Vystup z vrtulniku s \t, nema rad vodu!";
+        resources[TX_TRAINING304a] = "Ponor se. Ridis \f \v \b \n.";
+        resources[TX_TRAINING305a] = "Nastup do vrtulniku \t a vzletni \b.";
+        resources[TX_TRAINING306a] = "Seber tri poklady a pak jdi nahoru.";
+        resources[TX_TRAINING307a] = "Najdi skate vlevo nahore.";
+        resources[TX_TRAINING308a] = "Vezmi skate s \t.";
+        resources[TX_TRAINING309a] = "Se skatem muzes bez obav projet \v.";
+        resources[TX_TRAINING310a] = "Tvuj skate nema rad vodu! Skoc!";
+        resources[TX_TRAINING311a] = "Odloz skate s \t.";
+
+        resources[TX_TRAINING401a] = "Vezmi dynamit s \t.";
+        resources[TX_TRAINING402a] = "Zde dynamit nepokladej!";
+        resources[TX_TRAINING403a] = "Najdi dynamit vlevo.";
+        resources[TX_TRAINING404a] = "Poloz dynamit s \t, pak rychle pryc!";
+        resources[TX_TRAINING405a] = "Poloz dalsi dynamit a pokracuj.";
     }
 
     void MyResource::InitializeDE()

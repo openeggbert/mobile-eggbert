@@ -5,8 +5,8 @@
  * @details
  * MyResource is the C++ port of the original Windows Phone C# resource table.
  * It maps integer resource IDs (the TX_* constants) to localised strings for
- * one of three supported locales: French ("fr"), English (default), or German
- * ("de").
+ * one of four supported locales: French ("fr"), English (default), German
+ * ("de"), or Czech ("cs").
  *
  * Strings are used throughout the game for:
  *  - Button labels on the main menu, settings screen, and in-game HUD
@@ -22,7 +22,8 @@
  * The resource table is populated lazily: the first call to LoadString()
  * triggers EnsureInitialized(), which detects the active locale from the
  * platform default (std::locale("")) and then calls the appropriate
- * InitializeFR(), InitializeEN(), or InitializeDE() function.  Subsequent
+ * InitializeFR(), InitializeEN(), InitializeDE(), or InitializeCS() function.
+ * Subsequent
  * calls return strings from the already-populated table.
  *
  * @note All TX_* constants are resource IDs, not array indices.
@@ -304,8 +305,8 @@ namespace WindowsPhoneSpeedyBlupi
          *
          * @details
          * Reads the platform default locale via @c std::locale("").  If the
-         * first two characters of the locale name are "fr" (case-insensitive),
-         * InitializeFR() is called; otherwise InitializeEN() is called.
+         * first two characters of the locale name select a matching language
+         * initialiser; otherwise InitializeEN() is called.
          * InitializeDE() is defined but not currently wired up by this function.
          * On any exception from @c std::locale, the language code defaults to
          * "en".
@@ -349,6 +350,16 @@ namespace WindowsPhoneSpeedyBlupi
          * Fills @c resources with English translations for all TX_* IDs.
          */
         static void InitializeEN();
+
+        /**
+         * @brief Populates the resource table with Czech strings.
+         *
+         * @details
+         * Called by Init() when the platform locale starts with "cs".  Czech
+         * text intentionally uses ASCII-only spelling so it is readable with
+         * the game's bitmap font.
+         */
+        static void InitializeCS();
 
         /**
          * @brief Populates the resource table with German strings.
