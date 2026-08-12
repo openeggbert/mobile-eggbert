@@ -83,9 +83,28 @@ if(NOT CNA_GRAPHICS_BACKEND IN_LIST MOBILE_EGGBERT_BACKENDS)
         "Choose one of: ${MOBILE_EGGBERT_BACKENDS}.")
 endif()
 
+# cna's own unit tests and demo/example applications (house3d_demo, the per-renderer pixel
+# tests, the xna-oracle harness, ...) are not part of this game: nothing here links them, and
+# they pull in hundreds of extra translation units. cna defaults both switches to ON, which is
+# right for a standalone cna checkout but wrong for a consumer -- and some of those
+# registrations spell their sources as ${CMAKE_SOURCE_DIR}/examples/... or
+# ${CMAKE_SOURCE_DIR}/tools/..., which in an add_subdirectory build resolves to *this*
+# repository rather than cna's, so they fail at generate time with "No SOURCES given to
+# target". A plain (non-cache) set() is what turns them off: CMP0077 is NEW at
+# cmake_minimum_required(3.21), so cna's option() calls honour it.
+option(MOBILE_EGGBERT_BUILD_CNA_TESTS "Also build cna's own unit tests and example apps" OFF)
+if(NOT MOBILE_EGGBERT_BUILD_CNA_TESTS)
+    set(CNA_BUILD_TESTS OFF)
+    set(CNA_BUILD_EXAMPLES OFF)
+endif()
+
 set(CNA_GRAPHICS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cna")
 add_subdirectory("${CNA_GRAPHICS_SOURCE_DIR}" CNA)
-include_directories("${CNA_GRAPHICS_SOURCE_DIR}/include" CNA)
+# No include_directories() for CNA here: cna has no global include/ tree any more (each
+# modules/<name>/ owns its own, and cna's own build actively rejects a root-level include/), and
+# the CNA target propagates every module's include root through target composition. The two
+# paths that used to be listed here -- "${CNA_GRAPHICS_SOURCE_DIR}/include" and a bare
+# relative "CNA" -- both resolved to directories that do not exist.
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -96,7 +115,10 @@ if(ANDROID)
     set(_game_target main)
     add_library(${_game_target} SHARED ${SOURCES}
             include/WindowsPhoneSpeedyBlupi/def/Direction.hpp
-            "${CNA_GRAPHICS_SOURCE_DIR}/include/CNA/Misc.hpp")
+            # CNA/Misc.hpp moved to modules/runtime/ with cna's physical module layout; the old
+            # include/CNA/Misc.hpp path no longer exists and made this branch fail with
+            # "Cannot find source file" on every Android configure.
+            "${CNA_GRAPHICS_SOURCE_DIR}/modules/runtime/include/CNA/Misc.hpp")
 else()
     set(_game_target WindowsPhoneSpeedyBlupi)
     add_executable(${_game_target} ${SOURCES})
@@ -110,6 +132,14 @@ target_include_directories(${_game_target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/i
 
 if(CNA_SPRITE_BATCHING_ENABLED)
     target_compile_definitions(${_game_target} PRIVATE CNA_SPRITE_BATCHING_ENABLED)
+endif()
+
+# Worlds.cpp uses System::IO::IsolatedStorage directly for save-game I/O. No CNA module needs
+# that sharp-runtime component, so it is absent from the include/link surface the CNA umbrella
+# propagates -- this project has to name it itself. Guarded so a monolithic (pre-modular)
+# sharp-runtime checkout, whose single SHARP_RUNTIME archive already carries it, still links.
+if(TARGET SharpRuntime::IO.IsolatedStorage)
+    target_link_libraries(${_game_target} PRIVATE SharpRuntime::IO.IsolatedStorage)
 endif()
 
 # CNA builds SDL3 once into its own prebuilt root and sets SDL3_DIR / SDL3_image_DIR /
