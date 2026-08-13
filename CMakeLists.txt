@@ -137,9 +137,13 @@ elseif(EMSCRIPTEN)
     # CNA builds its libraries with WebAssembly exception handling. Directory-scoped options in
     # the CNA subdirectory do not propagate back to this consumer executable, so both the game's
     # translation units and final link must opt into the same exception ABI explicitly.
-    target_compile_options(${_game_target} PRIVATE -fwasm-exceptions)
+    target_compile_options(${_game_target} PRIVATE
+        -fwasm-exceptions
+        -sWASM_LEGACY_EXCEPTIONS=0
+    )
     target_link_options(${_game_target} PRIVATE
         -fwasm-exceptions
+        -sWASM_LEGACY_EXCEPTIONS=0
         -sALLOW_MEMORY_GROWTH=1
         -sSTACK_SIZE=1048576
         -sINITIAL_MEMORY=134217728

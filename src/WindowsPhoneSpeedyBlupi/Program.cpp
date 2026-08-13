@@ -41,10 +41,12 @@
 /**
  * @brief Application entry point — creates Game1 and runs the game loop.
  *
- * @details Constructs a WindowsPhoneSpeedyBlupi::Game1 instance on the stack,
- *          calls its Run() method which blocks until the window is closed, then
- *          returns 0.  Any unhandled exception terminates the process with
- *          exit code 1 after logging the error through CNA::Logger.
+ * @details Constructs a WindowsPhoneSpeedyBlupi::Game1 instance, calls its
+ *          Run() method which blocks until the window is closed, then returns
+ *          0. Under Emscripten the instance has static storage because CNA's
+ *          browser main-loop callback outlives the stack frame that registered
+ *          it. Any unhandled exception terminates the process with exit code 1
+ *          after logging the error through CNA::Logger.
  *
  * @param[in] argc Number of command-line arguments (passed through by SDL on
  *                 all platforms; not currently used by the game).
@@ -63,7 +65,15 @@ int main(int argc, char* args[])
     CNA::Logger::Info("SpeedyBlupi: before Game1 construction");
     try
     {
+#if defined(__EMSCRIPTEN__)
+        // emscripten_set_main_loop(..., simulateInfiniteLoop=1) unwinds the
+        // current Wasm stack after registering CNA's browser callback. Keep the
+        // game alive in static storage so the callback never retains a pointer
+        // to a reclaimed stack object.
+        static WindowsPhoneSpeedyBlupi::Game1 game;
+#else
         WindowsPhoneSpeedyBlupi::Game1 game;
+#endif
         CNA::Logger::Info("SpeedyBlupi: Game1 constructed, entering Run()");
         game.Run();
         CNA::Logger::Info("SpeedyBlupi: Run() returned normally");
