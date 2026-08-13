@@ -58,6 +58,15 @@ add_subdirectory("${MOBILE_EGGBERT_CNA_ROOT}" CNA)
 # No include_directories() for CNA here: each modules/<name>/ owns its include root, and the
 # module targets below propagate the required include paths through their dependency closure.
 
+# sharp-runtime's native RandomAccess helpers are intentionally unavailable on Emscripten. The
+# current IO module still compiles those internal helpers, so its strict -Werror policy turns the
+# resulting unused-function diagnostic into a consumer build failure. Keep warnings enabled and
+# relax only that diagnostic for the affected dependency target until sharp-runtime guards the
+# native-only helpers itself.
+if(EMSCRIPTEN AND TARGET sharp_runtime_io)
+    target_compile_options(sharp_runtime_io PRIVATE -Wno-error=unused-function)
+endif()
+
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # On Android the "executable" is a shared library loaded by SDLActivity.
@@ -125,7 +134,12 @@ elseif(EMSCRIPTEN)
     #
     # Save data is persisted via IDBFS mounted at /save (see StoragePaths.cpp).
     # The JS shell code mounts IDBFS after Module init and before the game loop.
+    # CNA builds its libraries with WebAssembly exception handling. Directory-scoped options in
+    # the CNA subdirectory do not propagate back to this consumer executable, so both the game's
+    # translation units and final link must opt into the same exception ABI explicitly.
+    target_compile_options(${_game_target} PRIVATE -fwasm-exceptions)
     target_link_options(${_game_target} PRIVATE
+        -fwasm-exceptions
         -sALLOW_MEMORY_GROWTH=1
         -sSTACK_SIZE=1048576
         -sINITIAL_MEMORY=134217728
