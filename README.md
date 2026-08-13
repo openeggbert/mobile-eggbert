@@ -16,18 +16,32 @@ https://github.com/openeggbert/mobile-eggbert-core/commit/1cbc13415b768085b7f5c9
 
 ## Development
 
-### Init submodules
+### Dependency checkouts
 
-git submodule init --recursive
-git submodule update --recursive
+Mobile Eggbert consumes the current CNA checkout next to this repository. CNA in turn consumes
+sharp-runtime from the same parent directory:
+
+```text
+openeggbert/
+├── mobile-eggbert/
+├── cna/
+└── sharp-runtime/
+```
+
+Initialise CNA's vendored dependencies after cloning it:
+
+```bash
+git -C ../cna submodule update --init
+```
+
+Use `-DMOBILE_EGGBERT_CNA_ROOT=/path/to/cna` and
+`-DCNA_SHARP_RUNTIME_ROOT=/path/to/sharp-runtime` for a different layout.
 
 ### Linux native build
 
 ```bash
 cmake -S . -B build-linux \
-  -DCNA_BACKEND_SDL_RENDERER=ON \
-  -DCNA_BACKEND_EASY_GL=OFF \
-  -DCNA_BACKEND_BGFX=OFF
+  -DCNA_GRAPHICS_RENDERER=SDL_RENDERER
 cmake --build build-linux --target WindowsPhoneSpeedyBlupi
 ```
 
@@ -35,9 +49,7 @@ cmake --build build-linux --target WindowsPhoneSpeedyBlupi
 
 ```powershell
 cmake -S . -B build-windows \
-  -DCNA_BACKEND_SDL_RENDERER=ON \
-  -DCNA_BACKEND_EASY_GL=OFF \
-  -DCNA_BACKEND_BGFX=OFF
+  -DCNA_GRAPHICS_RENDERER=SDL_RENDERER
 cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 ```
 
@@ -52,38 +64,36 @@ cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
-  -DCNA_GRAPHICS_BACKEND=SDL_RENDERER \
-  -DCNA_WINDOWS_DEPENDENCIES_ROOT=/path/to/windows/sdl3/libs
+  -DCNA_GRAPHICS_RENDERER=SDL_RENDERER
 cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 ```
 
-*Note: You must provide Windows-target SDL3 package configs (`SDL3`, `SDL3_image`, etc.) through `CNA_WINDOWS_DEPENDENCIES_ROOT` or `CMAKE_PREFIX_PATH`.*
+CNA builds its vendored SDL3, SDL3_image and SDL3_mixer dependencies for the selected toolchain.
 
-### Direct3D 11 / Direct3D 12 (Windows backends, runnable on Linux via Wine/Proton)
+### Direct3D 11 / Direct3D 12 (Windows renderers, runnable on Linux via Wine/Proton)
 
-CNA has full Direct3D 11 and Direct3D 12 backends. They are Windows-only, but you can build **and
+CNA has full Direct3D 11 and Direct3D 12 renderers. They are Windows-only, but you can build **and
 run** them from Linux — the D3D11 build even runs under plain Wine. Both were verified end to end
 (the game builds, starts, creates a real GPU device and swapchain, and presents frames).
 
-Build either one exactly like the cross-build above, just swapping the backend:
+Build either one exactly like the cross-build above, just swapping the renderer:
 
 ```bash
 # Direct3D 11
 cmake -S . -B build-d3d11 -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE=../cna/cmake/toolchains/mingw-w64.cmake \
-  -DCNA_GRAPHICS_BACKEND=D3D11 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
+  -DCNA_GRAPHICS_RENDERER=DIRECTX11 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
 cmake --build build-d3d11 --target WindowsPhoneSpeedyBlupi
 
 # Direct3D 12 (same, with D3D12)
 cmake -S . -B build-d3d12 -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE=../cna/cmake/toolchains/mingw-w64.cmake \
-  -DCNA_GRAPHICS_BACKEND=D3D12 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
+  -DCNA_GRAPHICS_RENDERER=DIRECTX12 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
 cmake --build build-d3d12 --target WindowsPhoneSpeedyBlupi
 ```
 
-`-DCNA_BUILD_TESTS=OFF` is needed because CNA's own GTest suite does not currently compile under
-MinGW (a known, unrelated POSIX-portability gap — see `cna/plan_dx.md` `DX-15`). It has no
-effect on the game itself.
+Mobile Eggbert disables CNA's own tests and examples by default. Set
+`-DMOBILE_EGGBERT_BUILD_CNA_TESTS=ON` only when working on CNA itself.
 
 #### Running D3D11 on Linux — plain Wine + DXVK
 
@@ -195,29 +205,30 @@ emrun cmake-build-web/WindowsPhoneSpeedyBlupi.html
   Linux/Windows regardless of the browser's actual RAF cadence. A 250 ms
   spike cap prevents runaway catch-up after the tab is backgrounded.
 
-### Backend status
+### Compile-time renderer selection
 
-Pick one with `-DCNA_GRAPHICS_BACKEND=<name>`; the full list CNA accepts is `SDL_RENDERER`,
-`EASYGL`, `BGFX`, `VULKAN`, `WEBGPU`, `HEADLESS`, `SOFTWARE`, `D3D11`, `D3D12`, `CANVAS`, `ASCII`,
-`DX3`.
+Pick exactly one renderer at configure time with `-DCNA_GRAPHICS_RENDERER=<name>`. Mobile Eggbert
+delegates selection and validation to CNA, so all 46 CNA renderer identities are available:
 
-- **Windows**: SDL_Renderer is the default. **Direct3D 11** and **Direct3D 12** both work (verified:
-  the game builds, runs, and presents frames on each). See the D3D section above for building them
-  from Linux, and for the one real caveat — D3D12 needs Proton, not plain Wine.
-- **Linux**: SDL_Renderer is supported; easy-gl can be enabled explicitly when needed. **ASCII**
-  (an SDL-windowed glyph-grid decorator around SDL_Renderer, not a real terminal/TTY backend) can
-  also be selected with `-DCNA_GRAPHICS_BACKEND=ASCII`. **DX3** (a narrow DirectX 3/DirectDraw
-  subset reimplemented on SDL3 via the sibling `../free-direct` repo — portable, no Wine/Proton
-  needed, unlike D3D11/D3D12) can be selected with `-DCNA_GRAPHICS_BACKEND=DX3`.
-- **Web (Emscripten)**: SDL_Renderer backend, experimental. **CANVAS** (browser HTML5 Canvas 2D,
-  no GPU) is also available with `-DCNA_GRAPHICS_BACKEND=CANVAS`.
-- **Android**: planned.
+```text
+SDL_RENDERER, OPENGLES2, OPENGLES3, OPENGL33, WEBGL1, WEBGL2, BGFX, VULKAN,
+WEBGPU, MAGNUM, HEADLESS, SOFTWARE, STUB, DIRECTX11, DIRECTX12, DIRECT2D,
+CANVAS, HTML_DOM, SKIA, BLEND2D, FREEDIRECT, DIRECTX9, DIRECTX1, DIRECTX2,
+DIRECTX3, DIRECTX5, DIRECTX6, DIRECTX7, DIRECTX8, DIRECTX10, SDL_GPU,
+OPENGLES1, OPENGL4, OPENGL1, OPENGL2, WICKED, SOKOL, DILIGENT, GLIDE, GDI,
+LLGL, METAL, FNA3D, SVG_DOM, OPENVG, PORTABLEGL
+```
 
-Note: mobile-eggbert's `CNA_GRAPHICS_SOURCE_DIR` points at the sibling `../cna` checkout, currently
-on its `develop` branch. `SDL_GPU` exists on `cna`'s in-progress `feature/sdlgpu` branch but isn't
-merged into `develop` yet, so it isn't in the list above until that lands.
+The renderer is compiled into the executable; it is not selected at runtime. CNA enforces each
+renderer's platform and toolchain requirements—for example, the DirectX renderers require a
+Windows target, the DOM renderers require Emscripten, Metal requires macOS and Glide requires a
+32-bit Windows target. Some renderers also require their documented sibling or system dependency.
+CNA's defaults are `OPENGLES3` on Linux, `WEBGL2` on Emscripten and `SDL_RENDERER` elsewhere.
+
+Mobile Eggbert links only `CNA::Runtime`, `CNA::Devices` and `CNA::GamerServices` directly, plus
+their required transitive module closure and the selected renderer. It does not link CNA's
+umbrella, Net or CNAEXT targets. sharp-runtime is likewise limited to CNA's required component
+closure plus `IO.IsolatedStorage` for save games.
 
 ## Progress
-
-
 
