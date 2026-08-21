@@ -87,7 +87,7 @@
 #include <string>
 #endif
 
-#include "CNA/Platform.hpp"
+#include "CNA/TargetPlatform.hpp"
 #include "Microsoft/Devices/Sensors/AccelerometerFailedException.hpp"
 #include "Microsoft/Xna/Framework/Input/Keyboard.hpp"
 #include "Microsoft/Xna/Framework/Input/KeyboardState.hpp"
@@ -388,7 +388,7 @@ namespace WindowsPhoneSpeedyBlupi
                                     getHeightProperty();
         float screenRatio = screenWidth / screenHeight;
 
-        if ((CNA::getCurrentPlatform() == CNA::Platform::Android && screenRatio > 1.3333333333333333)
+        if ((CNA::getCurrentPlatform() == CNA::TargetPlatform::Android && screenRatio > 1.3333333333333333)
             /*|| Env.IMPL.isKNI()*/)
         {
             for (int i = 0; i < touchesOrClicks.size(); i++)
@@ -436,7 +436,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         static bool F11_pressed_previously = false;
         static int fullscreen_timeout = 0;
-        if (CNA::getCurrentPlatform() != CNA::Platform::Android && CNA::getCurrentPlatform() != CNA::Platform::Web &&
+        if (CNA::getCurrentPlatform() != CNA::TargetPlatform::Android && CNA::getCurrentPlatform() != CNA::TargetPlatform::Web &&
             newKeyboardState.IsKeyDown(Keys::F11) && !F11_pressed_previously && fullscreen_timeout == 0)
         {
             F11_pressed_previously = true;

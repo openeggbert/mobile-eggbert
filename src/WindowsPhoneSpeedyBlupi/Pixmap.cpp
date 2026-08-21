@@ -46,7 +46,7 @@
 #include "WindowsPhoneSpeedyBlupi/Pixmap.hpp"
 
 #include "CNA/Logger.hpp"
-#include "CNA/Platform.hpp"
+#include "CNA/TargetPlatform.hpp"
 #include "Microsoft/Xna/Framework/Rectangle.hpp"
 #include "WindowsPhoneSpeedyBlupi/Decor.hpp"
 #include "WindowsPhoneSpeedyBlupi/Def.hpp"
@@ -80,7 +80,7 @@ namespace WindowsPhoneSpeedyBlupi
         TinyRect result{};
         double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
         double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
-        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
+        if (CNA::getCurrentPlatform() == CNA::TargetPlatform::Android && screenHeight > 480)
         {
             screenWidth = screenHeight * (640.0 / 480.0);
         }
@@ -307,7 +307,7 @@ namespace WindowsPhoneSpeedyBlupi
     {
         double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
         double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
-        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
+        if (CNA::getCurrentPlatform() == CNA::TargetPlatform::Android && screenHeight > 480)
         {
             screenWidth = screenHeight * (640.0 / 480.0);
         }
@@ -383,7 +383,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         double screenWidth = graphics.getGraphicsDeviceProperty()->getViewportProperty().getWidthProperty();
         double screenHeight = graphics.getGraphicsDeviceProperty()->getViewportProperty().getHeightProperty();
-        if (CNA::getCurrentPlatform() == CNA::Platform::Android && screenHeight > 480)
+        if (CNA::getCurrentPlatform() == CNA::TargetPlatform::Android && screenHeight > 480)
         {
             screenWidth = screenHeight * (640.0 / 480.0);
         }
@@ -519,7 +519,7 @@ namespace WindowsPhoneSpeedyBlupi
         }
         using Microsoft::Xna::Framework::Input::Touch::TouchPanel;
         if (Config::TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE && CNA::getCurrentPlatform() !=
-            CNA::Platform::Android && channel == PixmapChannel::Pad && !TouchPanel::GetCapabilities().getIsConnectedProperty())
+            CNA::TargetPlatform::Android && channel == PixmapChannel::Pad && !TouchPanel::GetCapabilities().getIsConnectedProperty())
         {
             static intcs padGameplayIconNumbers[] = {0, 1, 2, 3, 30, 12, 23};
             for (intcs iconNumber : padGameplayIconNumbers)

@@ -19,7 +19,7 @@
  * and Run() are therefore silenced at runtime but remain available when the
  * log level is lowered for debugging.
  *
- * On Android, CNA/Entrypoint.hpp renames @c main to @c SDL_main so that the
+ * On Android, CNA/Platform/Entrypoint.hpp renames @c main to @c SDL_main so that the
  * SDL Java bridge (SDLActivity.nativeRunMain) can locate the entry point.
  * Platform-specific entry-point plumbing is fully encapsulated in that header;
  * game code must never include @c <SDL3/SDL_main.h> directly.
@@ -29,10 +29,10 @@
 
 #include <iostream>
 
-// CNA/Entrypoint.hpp handles the SDL_main renaming required on Android so that
+// CNA/Platform/Entrypoint.hpp handles the SDL_main renaming required on Android so that
 // SDL's Java bridge (SDLActivity.nativeRunMain) can locate main() as SDL_main.
 // Game code must never include <SDL3/SDL_main.h> directly.
-#include "CNA/Entrypoint.hpp"
+#include "CNA/Platform/Entrypoint.hpp"
 
 #include "CNA/Logger.hpp"
 #include "Microsoft/Xna/Framework/Game.hpp"
@@ -53,7 +53,7 @@
  * @param[in] args Array of command-line argument strings.
  * @return 0 on normal exit; 1 if an unhandled exception was caught.
  *
- * @note On Android this function is renamed to SDL_main by CNA/Entrypoint.hpp.
+ * @note On Android this function is renamed to SDL_main by CNA/Platform/Entrypoint.hpp.
  *
  * @throws Nothing — all exceptions are caught internally and converted to a
  *         non-zero return value.

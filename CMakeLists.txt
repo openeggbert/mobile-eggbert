@@ -44,7 +44,7 @@ set(CNA_ENABLE_NET ON)
 # Mobile Eggbert additionally uses isolated storage directly for save games. Selecting this
 # closure prevents sharp-runtime's add_subdirectory fallback from enabling all optional modules.
 set(SHARP_RUNTIME_COMPONENTS
-    "Core.Base;IO;Collections.Core;Collections.ObjectModel;Runtime;Threading;Text;Globalization;Storage;IO.IsolatedStorage"
+    "Core.Base;IO;Collections.Core;Collections.ObjectModel;Runtime;Threading;Text;Globalization;Storage;IO.IsolatedStorage;Security.Cryptography"
     CACHE STRING "Sharp Runtime components required by Mobile Eggbert and CNA")
 
 set(MOBILE_EGGBERT_CNA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../cna" CACHE PATH
