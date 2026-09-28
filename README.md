@@ -18,20 +18,24 @@ https://github.com/openeggbert/mobile-eggbert-core/commit/1cbc13415b768085b7f5c9
 
 ### Dependency checkouts
 
-Mobile Eggbert consumes the current CNA checkout next to this repository. CNA in turn consumes
-sharp-runtime from the same parent directory:
+Mobile Eggbert consumes the current CNA checkout at `../../libcna/cna`. CNA in turn consumes
+sharp-runtime and easy-gl from that checkout's parent directory; easy-gl consumes meta-gl:
 
 ```text
-openeggbert/
-├── mobile-eggbert/
-├── cna/
-└── sharp-runtime/
+github.com/
+├── openeggbert/
+│   └── mobile-eggbert/
+└── libcna/
+    ├── cna/
+    ├── sharp-runtime/
+    ├── easy-gl/
+    └── meta-gl/
 ```
 
 Initialise CNA's vendored dependencies after cloning it:
 
 ```bash
-git -C ../cna submodule update --init
+git -C ../../libcna/cna submodule update --init --recursive
 ```
 
 Use `-DMOBILE_EGGBERT_CNA_ROOT=/path/to/cna` and
@@ -64,6 +68,7 @@ cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+  -DCNA_WINDOWS_DEPENDENCIES_ROOT="$PWD/build/dependencies/windows" \
   -DCNA_GRAPHICS_RENDERER=SDL_RENDERER
 cmake --build build-windows --target WindowsPhoneSpeedyBlupi
 ```
@@ -72,22 +77,23 @@ CNA builds its vendored SDL3, SDL3_image and SDL3_mixer dependencies for the sel
 
 ### Direct3D 11 / Direct3D 12 (Windows renderers, runnable on Linux via Wine/Proton)
 
-CNA has full Direct3D 11 and Direct3D 12 renderers. They are Windows-only, but you can build **and
-run** them from Linux — the D3D11 build even runs under plain Wine. Both were verified end to end
-(the game builds, starts, creates a real GPU device and swapchain, and presents frames).
+CNA's Direct3D 11 and Direct3D 12 renderers target Windows. Cross-build them with MinGW-w64
+and run the resulting executables on Linux through Wine or Proton.
 
 Build either one exactly like the cross-build above, just swapping the renderer:
 
 ```bash
 # Direct3D 11
 cmake -S . -B build-d3d11 -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=../cna/cmake/toolchains/mingw-w64.cmake \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+  -DCNA_WINDOWS_DEPENDENCIES_ROOT="$PWD/build/dependencies/windows" \
   -DCNA_GRAPHICS_RENDERER=DIRECTX11 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
 cmake --build build-d3d11 --target WindowsPhoneSpeedyBlupi
 
 # Direct3D 12 (same, with D3D12)
 cmake -S . -B build-d3d12 -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=../cna/cmake/toolchains/mingw-w64.cmake \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
+  -DCNA_WINDOWS_DEPENDENCIES_ROOT="$PWD/build/dependencies/windows" \
   -DCNA_GRAPHICS_RENDERER=DIRECTX12 -DCMAKE_BUILD_TYPE=Release -DCNA_BUILD_TESTS=OFF
 cmake --build build-d3d12 --target WindowsPhoneSpeedyBlupi
 ```
@@ -123,7 +129,7 @@ So run D3D12 through a properly Proton-managed launch, using the helper script i
 
 ```bash
 cd build-d3d12
-bash ../../cna/scripts/run-proton-vkd3d.sh "$(pwd)/WindowsPhoneSpeedyBlupi.exe"
+bash ../../../libcna/cna/scripts/run-proton-vkd3d.sh "$(pwd)/WindowsPhoneSpeedyBlupi.exe"
 ```
 
 It needs a local Steam install with "Proton - Experimental"; it bootstraps its own dedicated prefix
@@ -195,10 +201,10 @@ emrun cmake-build-web/WindowsPhoneSpeedyBlupi.html
   and on page unload.
 - Audio uses SDL_mixer; the browser may require a user gesture before audio
   starts. If no sound is heard, click the canvas once.
-- CPU usage is bounded — the game uses `emscripten_set_main_loop` (backed by
-  `requestAnimationFrame`) instead of a busy loop.
+- CPU usage is bounded — CNA's blocking `Game::Run()` yields to
+  `requestAnimationFrame` through Asyncify between frames.
 - **Game speed**: the Web build uses a fixed-timestep accumulator in
-  `CNA/Game.cpp` to match native desktop timing. The browser calls the RAF
+  CNA's game loop to match native desktop timing. The browser calls the RAF
   callback at ~60 Hz; real inter-frame wall-clock time is measured and
   accumulated, and `Update()` fires only when one full `TargetElapsedTime`
   slice has accumulated. This ensures gameplay speed is identical to
@@ -208,21 +214,18 @@ emrun cmake-build-web/WindowsPhoneSpeedyBlupi.html
 ### Compile-time renderer selection
 
 Pick exactly one renderer at configure time with `-DCNA_GRAPHICS_RENDERER=<name>`. Mobile Eggbert
-delegates selection and validation to CNA, so all 46 CNA renderer identities are available:
+delegates selection and validation to CNA. Its current renderer identities are:
 
 ```text
-SDL_RENDERER, OPENGLES2, OPENGLES3, OPENGL33, WEBGL1, WEBGL2, BGFX, VULKAN,
-WEBGPU, MAGNUM, HEADLESS, SOFTWARE, STUB, DIRECTX11, DIRECTX12, DIRECT2D,
-CANVAS, HTML_DOM, SKIA, BLEND2D, FREEDIRECT, DIRECTX9, DIRECTX1, DIRECTX2,
-DIRECTX3, DIRECTX5, DIRECTX6, DIRECTX7, DIRECTX8, DIRECTX10, SDL_GPU,
-OPENGLES1, OPENGL4, OPENGL1, OPENGL2, WICKED, SOKOL, DILIGENT, GLIDE, GDI,
-LLGL, METAL, FNA3D, SVG_DOM, OPENVG, PORTABLEGL
+SDL_RENDERER, OPENGLES2, OPENGLES3, OPENGL33, WEBGL1, WEBGL2, VULKAN,
+WEBGPU, HEADLESS, SOFTWARE, STUB, DIRECTX11, DIRECTX12, CANVAS, HTML_DOM,
+DIRECTX9, SDL_GPU, OPENGL4, GDI, METAL, FNA3D, SVG_DOM
 ```
 
 The renderer is compiled into the executable; it is not selected at runtime. CNA enforces each
 renderer's platform and toolchain requirements—for example, the DirectX renderers require a
-Windows target, the DOM renderers require Emscripten, Metal requires macOS and Glide requires a
-32-bit Windows target. Some renderers also require their documented sibling or system dependency.
+Windows target, the DOM renderers require Emscripten and Metal requires macOS.
+Some renderers also require their documented sibling or system dependency.
 CNA's defaults are `OPENGLES3` on Linux, `WEBGL2` on Emscripten and `SDL_RENDERER` elsewhere.
 
 Mobile Eggbert links only `CNA::Runtime`, `CNA::Devices` and `CNA::GamerServices` directly, plus
@@ -230,5 +233,41 @@ their required transitive module closure and the selected renderer. It does not 
 umbrella, Net or CNAEXT targets. sharp-runtime is likewise limited to CNA's required component
 closure plus `IO.IsolatedStorage` for save games.
 
-## Progress
+### Renderer build presets
 
+`CMakePresets.json` provides separate build directories under `build/<preset>/`.
+
+See [the renderer build verification report](BUILD_RENDERERS.md) for the 22 verified variants,
+artifact paths and dependency versions.
+
+| Target | Presets |
+|---|---|
+| Linux | `linux-sdl-renderer`, `linux-opengles2`, `linux-opengles3`, `linux-opengl33`, `linux-vulkan`, `linux-webgpu`, `linux-headless`, `linux-software`, `linux-stub`, `linux-sdl-gpu`, `linux-opengl4`, `linux-fna3d` |
+| Web | `web-webgl1`, `web-webgl2`, `web-webgpu`, `web-canvas`, `web-html-dom`, `web-svg-dom` |
+| Windows / Wine | `windows-directx11`, `windows-directx12`, `windows-directx9`, `windows-gdi` |
+
+Configure and build a variant with the same preset name:
+
+```bash
+cmake --preset linux-vulkan
+cmake --build --preset linux-vulkan --parallel 4
+```
+
+Linux and Windows presets use Debug; web presets use Release. Web presets require an activated
+Emscripten SDK with `EMSDK` set. Windows presets use the MinGW-w64 cross-toolchain and produce
+`WindowsPhoneSpeedyBlupi.exe` for Windows or Wine. Native builds copy `Content/` and `worlds/`
+beside the executable; web builds embed their assets in `WindowsPhoneSpeedyBlupi.data`.
+
+Current CNA GamerServices requires libcurl with TLS and nlohmann JSON. For Windows these must
+come from a Windows dependency prefix, rather than the host's Linux packages. Windows presets
+use `build/dependencies/windows/`; override `CNA_WINDOWS_DEPENDENCIES_ROOT` to use another prefix.
+The MinGW toolchain searches this prefix for target packages. Shared libcurl is copied beside
+the game along with the SDL and MinGW runtime DLLs. A libcurl built with Schannel uses Windows'
+system TLS libraries.
+
+The presets keep the compiler cache and Emscripten cache under this project's ignored `build/`
+directory, and share one SDL dependency cache per target platform. Optional local dependency
+locations can still be supplied as CMake arguments, including `CNA_WEBGPU_ROOT` and
+`FETCHCONTENT_SOURCE_DIR_FNA3D`.
+
+## Progress

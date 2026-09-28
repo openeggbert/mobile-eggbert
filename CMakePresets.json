@@ -1,0 +1,412 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CNA_USE_CCACHE": "ON",
+        "EASYGL_BUILD_TESTS": "OFF",
+        "EASYGL_BUILD_EXAMPLES": "OFF"
+      },
+      "environment": {
+        "CCACHE_DIR": "${sourceDir}/build/ccache",
+        "CCACHE_BASEDIR": "${sourceDir}/../..",
+        "CCACHE_NOHASHDIR": "1",
+        "CCACHE_MAXSIZE": "30G"
+      }
+    },
+    {
+      "name": "linux-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CNA_SDL_PREBUILT_ROOT": "${sourceDir}/.sdl-prebuilt"
+      }
+    },
+    {
+      "name": "web-base",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CNA_SDL_PREBUILT_ROOT": "${sourceDir}/build/dependencies/sdl-web"
+      },
+      "environment": {
+        "EM_CACHE": "${sourceDir}/build/emscripten-cache"
+      }
+    },
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64.cmake",
+      "cacheVariables": {
+        "CNA_SDL_PREBUILT_ROOT": "${sourceDir}/build/dependencies/sdl-windows",
+        "CNA_WINDOWS_DEPENDENCIES_ROOT": "${sourceDir}/build/dependencies/windows"
+      }
+    },
+    {
+      "name": "linux-sdl-renderer",
+      "displayName": "linux: SDL_RENDERER",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-sdl-renderer",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "SDL_RENDERER"
+      }
+    },
+    {
+      "name": "linux-opengles2",
+      "displayName": "linux: OPENGLES2",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-opengles2",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "OPENGLES2"
+      }
+    },
+    {
+      "name": "linux-opengles3",
+      "displayName": "linux: OPENGLES3",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-opengles3",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "OPENGLES3"
+      }
+    },
+    {
+      "name": "linux-opengl33",
+      "displayName": "linux: OPENGL33",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-opengl33",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "OPENGL33"
+      }
+    },
+    {
+      "name": "linux-vulkan",
+      "displayName": "linux: VULKAN",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-vulkan",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "VULKAN"
+      }
+    },
+    {
+      "name": "linux-webgpu",
+      "displayName": "linux: WEBGPU",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-webgpu",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "WEBGPU"
+      }
+    },
+    {
+      "name": "linux-headless",
+      "displayName": "linux: HEADLESS",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-headless",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "HEADLESS"
+      }
+    },
+    {
+      "name": "linux-software",
+      "displayName": "linux: SOFTWARE",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-software",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "SOFTWARE"
+      }
+    },
+    {
+      "name": "linux-stub",
+      "displayName": "linux: STUB",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-stub",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "STUB"
+      }
+    },
+    {
+      "name": "linux-sdl-gpu",
+      "displayName": "linux: SDL_GPU",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-sdl-gpu",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "SDL_GPU"
+      }
+    },
+    {
+      "name": "linux-opengl4",
+      "displayName": "linux: OPENGL4",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-opengl4",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "OPENGL4"
+      }
+    },
+    {
+      "name": "linux-fna3d",
+      "displayName": "linux: FNA3D",
+      "inherits": "linux-base",
+      "binaryDir": "${sourceDir}/build/linux-fna3d",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "FNA3D"
+      }
+    },
+    {
+      "name": "web-webgl1",
+      "displayName": "web: WEBGL1",
+      "inherits": "web-base",
+      "binaryDir": "${sourceDir}/build/web-webgl1",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "WEBGL1"
+      }
+    },
+    {
+      "name": "web-webgl2",
+      "displayName": "web: WEBGL2",
+      "inherits": "web-base",
+      "binaryDir": "${sourceDir}/build/web-webgl2",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "WEBGL2"
+      }
+    },
+    {
+      "name": "web-webgpu",
+      "displayName": "web: WEBGPU",
+      "inherits": "web-base",
+      "binaryDir": "${sourceDir}/build/web-webgpu",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "WEBGPU"
+      }
+    },
+    {
+      "name": "web-canvas",
+      "displayName": "web: CANVAS",
+      "inherits": "web-base",
+      "binaryDir": "${sourceDir}/build/web-canvas",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "CANVAS"
+      }
+    },
+    {
+      "name": "web-html-dom",
+      "displayName": "web: HTML_DOM",
+      "inherits": "web-base",
+      "binaryDir": "${sourceDir}/build/web-html-dom",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "HTML_DOM"
+      }
+    },
+    {
+      "name": "web-svg-dom",
+      "displayName": "web: SVG_DOM",
+      "inherits": "web-base",
+      "binaryDir": "${sourceDir}/build/web-svg-dom",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "SVG_DOM"
+      }
+    },
+    {
+      "name": "windows-directx11",
+      "displayName": "windows: DIRECTX11",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build/windows-directx11",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "DIRECTX11"
+      }
+    },
+    {
+      "name": "windows-directx12",
+      "displayName": "windows: DIRECTX12",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build/windows-directx12",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "DIRECTX12"
+      }
+    },
+    {
+      "name": "windows-directx9",
+      "displayName": "windows: DIRECTX9",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build/windows-directx9",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "DIRECTX9"
+      }
+    },
+    {
+      "name": "windows-gdi",
+      "displayName": "windows: GDI",
+      "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/build/windows-gdi",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "GDI"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-sdl-renderer",
+      "configurePreset": "linux-sdl-renderer",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-opengles2",
+      "configurePreset": "linux-opengles2",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-opengles3",
+      "configurePreset": "linux-opengles3",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-opengl33",
+      "configurePreset": "linux-opengl33",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-vulkan",
+      "configurePreset": "linux-vulkan",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-webgpu",
+      "configurePreset": "linux-webgpu",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-headless",
+      "configurePreset": "linux-headless",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-software",
+      "configurePreset": "linux-software",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-stub",
+      "configurePreset": "linux-stub",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-sdl-gpu",
+      "configurePreset": "linux-sdl-gpu",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-opengl4",
+      "configurePreset": "linux-opengl4",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "linux-fna3d",
+      "configurePreset": "linux-fna3d",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "web-webgl1",
+      "configurePreset": "web-webgl1",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "web-webgl2",
+      "configurePreset": "web-webgl2",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "web-webgpu",
+      "configurePreset": "web-webgpu",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "web-canvas",
+      "configurePreset": "web-canvas",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "web-html-dom",
+      "configurePreset": "web-html-dom",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "web-svg-dom",
+      "configurePreset": "web-svg-dom",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "windows-directx11",
+      "configurePreset": "windows-directx11",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "windows-directx12",
+      "configurePreset": "windows-directx12",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "windows-directx9",
+      "configurePreset": "windows-directx9",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "windows-gdi",
+      "configurePreset": "windows-gdi",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    }
+  ]
+}

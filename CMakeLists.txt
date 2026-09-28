@@ -15,15 +15,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Enable sprite-batch grouping in Pixmap: all Draw calls between BeginBatch/
-# EndBatch in Game1::Draw share a single SpriteBatch Begin/End pair instead of
-# one per sprite.  Reduces GL draw calls by ~50-100x.  OFF by default so that
-# the original Daniel Roux per-sprite behaviour is preserved until the feature
-# has been thoroughly tested.
-option(CNA_SPRITE_BATCHING_ENABLED "Group all Pixmap draws into one SpriteBatch Begin/End per frame" OFF)
-
 # CNA owns the compile-time renderer registry, platform validation and defaults. Consumers select
-# one of its 46 renderer identities with -DCNA_GRAPHICS_RENDERER=<name>. Keeping the registry in
+# one of its public renderer identities with -DCNA_GRAPHICS_RENDERER=<name>. Keeping the registry in
 # one place means a new CNA renderer is immediately available to Mobile Eggbert without another
 # hard-coded list here falling out of sync.
 
@@ -47,12 +40,12 @@ set(SHARP_RUNTIME_COMPONENTS
     "Core.Base;IO;Collections.Core;Collections.ObjectModel;Runtime;Threading;Text;Globalization;Storage;IO.IsolatedStorage;Security.Cryptography"
     CACHE STRING "Sharp Runtime components required by Mobile Eggbert and CNA")
 
-set(MOBILE_EGGBERT_CNA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../cna" CACHE PATH
+set(MOBILE_EGGBERT_CNA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libcna/cna" CACHE PATH
     "Path to the CNA checkout consumed by Mobile Eggbert")
 if(NOT EXISTS "${MOBILE_EGGBERT_CNA_ROOT}/CMakeLists.txt")
     message(FATAL_ERROR
         "mobile-eggbert: CNA checkout not found at '${MOBILE_EGGBERT_CNA_ROOT}'. "
-        "Clone CNA next to this repository or set -DMOBILE_EGGBERT_CNA_ROOT=<path>.")
+        "Clone CNA into ../../libcna/cna or set -DMOBILE_EGGBERT_CNA_ROOT=<path>.")
 endif()
 add_subdirectory("${MOBILE_EGGBERT_CNA_ROOT}" CNA)
 # No include_directories() for CNA here: each modules/<name>/ owns its include root, and the
@@ -90,10 +83,6 @@ if(EMSCRIPTEN)
 endif()
 
 target_include_directories(${_game_target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-if(CNA_SPRITE_BATCHING_ENABLED)
-    target_compile_definitions(${_game_target} PRIVATE CNA_SPRITE_BATCHING_ENABLED)
-endif()
 
 # Link only the CNA modules whose public APIs the game uses. Their PUBLIC dependency closure brings
 # in graphics, input, audio, content, storage and the selected renderer; Net and CNAEXT stay out of
@@ -134,16 +123,10 @@ elseif(EMSCRIPTEN)
     #
     # Save data is persisted via IDBFS mounted at /save (see StoragePaths.cpp).
     # The JS shell code mounts IDBFS after Module init and before the game loop.
-    # CNA builds its libraries with WebAssembly exception handling. Directory-scoped options in
-    # the CNA subdirectory do not propagate back to this consumer executable, so both the game's
-    # translation units and final link must opt into the same exception ABI explicitly.
-    target_compile_options(${_game_target} PRIVATE
-        -fwasm-exceptions
-        -sWASM_LEGACY_EXCEPTIONS=0
-    )
+    # CNA's module targets propagate the exception ABI. Blocking Game::Run() additionally needs
+    # Asyncify on the final application so the browser can render while the caller stays alive.
+    target_link_libraries(${_game_target} PRIVATE CNA::EmscriptenAsyncify)
     target_link_options(${_game_target} PRIVATE
-        -fwasm-exceptions
-        -sWASM_LEGACY_EXCEPTIONS=0
         -sALLOW_MEMORY_GROWTH=1
         -sSTACK_SIZE=1048576
         -sINITIAL_MEMORY=134217728
@@ -199,13 +182,32 @@ endif() # ANDROID / EMSCRIPTEN / desktop
 
 if(WIN32)
     cna_copy_sdl_runtime(${_game_target})
+    set(_mobile_eggbert_compiler_runtime_dlls)
+    if(MINGW)
+        # GCC 14's MinGW C++23 type_info implementation cannot link with static libstdc++.
+        # Ship the matching compiler runtimes so the game can run without a toolchain in PATH.
+        foreach(_mobile_eggbert_runtime_dll IN ITEMS libgcc_s_seh-1.dll libstdc++-6.dll)
+            execute_process(
+                COMMAND "${CMAKE_CXX_COMPILER}" "-print-file-name=${_mobile_eggbert_runtime_dll}"
+                OUTPUT_VARIABLE _mobile_eggbert_runtime_path
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+            if(NOT EXISTS "${_mobile_eggbert_runtime_path}")
+                message(FATAL_ERROR "MinGW runtime DLL not found: ${_mobile_eggbert_runtime_dll}")
+            endif()
+            list(APPEND _mobile_eggbert_compiler_runtime_dlls "${_mobile_eggbert_runtime_path}")
+        endforeach()
+    endif()
+    # Imported dependency targets also cover system-SDL builds and libcurl's interface alias.
+    add_custom_command(TARGET ${_game_target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            "-DRUNTIME_DLLS=${_mobile_eggbert_compiler_runtime_dlls};$<TARGET_RUNTIME_DLLS:${_game_target}>"
+            "-DDESTINATION=$<TARGET_FILE_DIR:${_game_target}>"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyRuntimeDlls.cmake"
+        COMMENT "Copying Windows runtime DLLs next to game executable"
+        VERBATIM)
 endif()
 
 if(MINGW)
-    # Statically link the MinGW GCC and C++ runtime so the exe runs outside
-    # CLion/MSYS2 without needing libgcc_s_seh-1.dll / libstdc++-6.dll.
-    target_link_options(${_game_target} PRIVATE -static-libgcc -static-libstdc++)
-    # libwinpthread-1.dll cannot be statically linked this way; copy it instead.
     cna_copy_mingw_runtime(${_game_target})
 endif()
 

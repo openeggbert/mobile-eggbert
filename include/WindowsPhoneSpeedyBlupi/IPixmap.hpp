@@ -3,7 +3,7 @@
  * @brief Declares the IPixmap interface abstracting all sprite/rendering operations for the game.
  *
  * @details Provides the pure-virtual API for loading texture atlases, coordinate conversion,
- * sprite drawing, background rendering, and optional batch-draw optimisation. The concrete
+ * sprite drawing, and background rendering. The concrete
  * implementation is Pixmap.
  */
 
@@ -94,6 +94,18 @@ namespace WindowsPhoneSpeedyBlupi
          * @note Status: PARTIAL
          */
         virtual void LoadContent() = 0;
+
+        /**
+         * @brief Refreshes the viewport zoom and centering origin before drawing a frame.
+         * @details Keeps screen-space coordinates consistent with window resizes.
+         * @return No return value.
+         * @throws None under the stated precondition.
+         * @pre LoadContent() has completed and the graphics device is available.
+         * @post Subsequent draws use the current viewport geometry.
+         * @note Called once per frame by Game1::Draw().
+         * @warning Call before drawing, so all sprites in a frame use the same geometry.
+         */
+        virtual void UpdateGeometry() = 0;
 
         /**
          * @brief Loads (or switches to) a background texture by name.
@@ -211,28 +223,5 @@ namespace WindowsPhoneSpeedyBlupi
         virtual void DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
                               bool useHotSpot) = 0;
 
-        /**
-         * @brief Opens a shared SpriteBatch Begin/End pair for the current frame.
-         *
-         * @details When CNA_SPRITE_BATCHING_ENABLED is defined, all subsequent DrawPart,
-         * DrawIcon, and DrawBackground calls skip their own Begin/End and accumulate
-         * into one batch that is flushed by EndBatch(). Without the define this is a
-         * no-op and each draw call manages its own Begin/End (original behaviour).
-         *
-         * @pre Must not be called while a batch is already open.
-         * @post All subsequent draw calls until EndBatch() are batched together.
-         */
-        virtual void BeginBatch() = 0;
-
-        /**
-         * @brief Closes the shared SpriteBatch Begin/End pair opened by BeginBatch().
-         *
-         * @details Flushes all batched draw calls to the graphics device.
-         * No-op when CNA_SPRITE_BATCHING_ENABLED is not defined.
-         *
-         * @pre BeginBatch() must have been called.
-         * @post The batch is flushed; individual draw calls again manage their own Begin/End.
-         */
-        virtual void EndBatch() = 0;
     };
 }

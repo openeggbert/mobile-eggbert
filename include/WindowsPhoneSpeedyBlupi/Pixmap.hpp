@@ -15,13 +15,9 @@
  * | HUD-space   | Game-space offset by (originX, originY).           |
  * | Screen-space| Physical pixels after the zoom transform.          |
  *
- * ### Sprite-batching mode
- * When `CNA_SPRITE_BATCHING_ENABLED` is defined (currently hard-coded in the
- * .cpp), callers **must** bracket every frame's draw calls with
- * BeginBatch() / EndBatch().  All DrawPart / DrawIcon / DrawBackground
- * invocations then share the same SpriteBatch::Begin-End pair, reducing GPU
- * draw-call overhead by roughly 50-100x compared with the original one-call-
- * per-sprite design.  Without the define the behaviour is unchanged.
+ * ### Drawing order
+ * Each sprite uses its own SpriteBatch::Begin(BackToFront, AlphaBlend), Draw,
+ * and End sequence, preserving the original game's submission order.
  *
  * @see IPixmap
  */
@@ -54,13 +50,12 @@ namespace WindowsPhoneSpeedyBlupi
      * @details
      * Pixmap is the rendering back-end for Speedy Blupi.  It loads all texture
      * atlases, computes the viewport zoom/origin each frame, and issues every
-     * sprite draw through a shared or per-call SpriteBatch (depending on whether
-     * `CNA_SPRITE_BATCHING_ENABLED` is defined).
+     * sprite draw through a separate SpriteBatch Begin/End pair.
      *
      * ### Lifecycle
      * 1. Construct with a valid IGame1 pointer and a GraphicsDeviceManager.
      * 2. Call LoadContent() once to load all textures and compute initial geometry.
-     * 3. Each frame: Start() -> BeginBatch() -> draw calls -> EndBatch() -> Finish().
+     * 3. Each frame: UpdateGeometry() followed by the frame's draw calls.
      *
      * @warning This class is non-copyable.  Do not attempt to copy or move it.
      *
@@ -277,7 +272,6 @@ namespace WindowsPhoneSpeedyBlupi
          */
         void LoadContent() override;
 
-    private:
         /**
          * @brief Recomputes zoom, originX, and originY for the current viewport.
          *
@@ -293,13 +287,15 @@ namespace WindowsPhoneSpeedyBlupi
          * screenWidth is replaced with `screenHeight * (640/480)` before the
          * calculation to normalise tall screens to a 4:3 virtual canvas.
          *
-         * @post zoom > 0; originX >= 0; originY >= 0.
-         * @note Called automatically by LoadContent().  Re-call whenever the
-         *       window is resized.
+         * @return No return value.
+         * @throws None under the stated precondition.
+         * @pre LoadContent() has completed and the graphics device is available.
+         * @post zoom > 0; originX >= 0; originY >= 0 for a non-empty viewport.
+         * @note Called by LoadContent() and before each frame by Game1::Draw().
+         * @warning Call before drawing, so all sprites in a frame use the same geometry.
          */
-        void UpdateGeometry();
+        void UpdateGeometry() override;
 
-    public:
         /**
          * @brief Loads (or switches) the level background texture.
          *
@@ -329,9 +325,8 @@ namespace WindowsPhoneSpeedyBlupi
         /**
          * @brief Ends a frame.
          *
-         * @details Currently a no-op placeholder.  SpriteBatch flushing is handled
-         *          by EndBatch() (batching mode) or inline within each draw call
-         *          (non-batching mode).
+         * @details Currently a no-op placeholder.  Each draw call ends and flushes
+         *          its own SpriteBatch.
          *
          * @return Always returns true.
          */
@@ -349,9 +344,7 @@ namespace WindowsPhoneSpeedyBlupi
          * On Android with tall viewports, the effective screenWidth is normalized
          * to `screenHeight * (640/480)` before the first draw.
          *
-         * Respects the batching invariant: if a batch is already open
-         * (batch_started_ == true) the method reuses it; otherwise it opens and
-         * closes its own Begin/End pair.
+         * Each of the two sprites has its own Begin/Draw/End sequence.
          *
          * @pre  LoadContent() and BackgroundCache() must have been called.
          * @warning Calling this method before LoadContent() logs an error and
@@ -442,7 +435,7 @@ namespace WindowsPhoneSpeedyBlupi
          *
          * For the Jauge channel, @p dest is first translated by (originX, originY).
          *
-         * Respects the batching invariant (see class details).
+         * Uses a separate Begin/Draw/End sequence, as in the original game.
          *
          * @param[in] channel  Sprite sheet to sample.
          * @param[in] dest     Destination top-left in game-space.
@@ -489,7 +482,7 @@ namespace WindowsPhoneSpeedyBlupi
          * `TOUCH_BUTTONS_SHOWN_ONLY_IF_TOUCHSCREEN_IS_AVAILABLE` is set and no
          * touch device is connected.
          *
-         * Respects the batching invariant (see class details).
+         * Uses a separate Begin/Draw/End sequence, as in the original game.
          *
          * @param[in] channel      Sprite sheet to sample.
          * @param[in] icon         Icon slot index.  Pass -1 to skip drawing.
@@ -504,46 +497,7 @@ namespace WindowsPhoneSpeedyBlupi
         void DrawIcon(PixmapChannel channel, intcs icon, TinyRect rect, double opacity, double rotationDeg,
                       bool useHotSpot) override;
 
-        /**
-         * @brief Opens a shared SpriteBatch Begin/End pair for the current frame.
-         *
-         * @details
-         * When `CNA_SPRITE_BATCHING_ENABLED` is defined, this method calls
-         * SpriteBatch::Begin(BackToFront, AlphaBlend) and sets the internal flag
-         * `batch_started_`.  All subsequent draw calls detect this flag and omit
-         * their own Begin/End, accumulating into the single batch opened here.
-         *
-         * Call EndBatch() once all drawing for the frame is complete to flush the
-         * batch to the GPU.
-         *
-         * When `CNA_SPRITE_BATCHING_ENABLED` is not defined this method is a no-op.
-         *
-         * @pre  LoadContent() must have been called (spriteBatch must be non-null).
-         * @pre  BeginBatch() must not already have been called without a matching
-         *       EndBatch() (double-begin is silently ignored).
-         * @post batch_started_ == true (when the define is active).
-         *
-         * @note Reduces GL draw calls by ~50-100x versus the original per-sprite design.
-         */
-        void BeginBatch() override;
-
-        /**
-         * @brief Closes the shared SpriteBatch Begin/End pair opened by BeginBatch().
-         *
-         * @details
-         * Calls SpriteBatch::End() and clears `batch_started_`.  Must be called
-         * exactly once per BeginBatch() call, after all frame draw calls are done.
-         *
-         * When `CNA_SPRITE_BATCHING_ENABLED` is not defined this method is a no-op.
-         *
-         * @pre  BeginBatch() must have been called for this frame.
-         * @post batch_started_ == false.
-         */
-        void EndBatch() override;
-
     private:
-        bool batch_started_ = false; ///< @brief True while a BeginBatch()/EndBatch() pair is open; draw calls skip their own Begin/End when this flag is set.
-
         /**
          * @brief Computes the source rectangle for an icon within a sprite-sheet texture.
          *

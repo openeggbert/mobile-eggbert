@@ -32,13 +32,11 @@
  * they address the correct pixels in the higher-resolution atlas.  Destination
  * rectangles always remain in 1x logical coordinates.
  *
- * ### Batching invariant
- * When `CNA_SPRITE_BATCHING_ENABLED` is defined (hard-coded `#define` near the
- * top of this file), every draw method checks `batch_started_`:
- * - If **true**: the caller opened a batch via BeginBatch(); the method skips its
- *   own SpriteBatch::Begin/End and contributes to the outer batch.
- * - If **false**: the method opens and closes its own SpriteBatch::Begin/End pair
- *   (original one-draw-call-per-sprite behaviour).
+ * ### Drawing order
+ * Each sprite has its own SpriteBatch::Begin(BackToFront, AlphaBlend), Draw,
+ * and End sequence, as in the original game.  All sprites use depth zero;
+ * keeping separate batches preserves their submission order because
+ * BackToFront does not preserve the order of equal-depth sprites in a batch.
  *
  * @note Created by robertvokac on 5/24/25.
  */
@@ -60,7 +58,6 @@
 #include "WindowsPhoneSpeedyBlupi/Misc.hpp"
 #include "WindowsPhoneSpeedyBlupi/Tables.hpp"
 #include "WindowsPhoneSpeedyBlupi/Text.hpp"
-#define CNA_SPRITE_BATCHING_ENABLED
 
 namespace WindowsPhoneSpeedyBlupi
 {
@@ -343,37 +340,6 @@ namespace WindowsPhoneSpeedyBlupi
         return true;
     }
 
-    void Pixmap::BeginBatch()
-    {
-        // UpdateGeometry() was previously only ever called once, from LoadContent() at startup --
-        // its own doc comment already said "re-call whenever the window is resized", but nothing
-        // did. zoom/originX/originY then stayed frozen at the startup viewport size forever, so
-        // any later resize (most visibly: toggling fullscreen) left every sprite drawn at the
-        // stale scale/offset while DrawBackground()'s own full-screen stretch (which re-queries
-        // the live viewport every call already) correctly filled the new size -- the game content
-        // pinned to a small stale corner against an otherwise-blank background. BeginBatch(), not
-        // Start(), is the real once-per-frame hook: Game1::Draw() calls pixmap->BeginBatch() every
-        // frame unconditionally, but nothing anywhere ever calls IPixmap::Start() despite its own
-        // doc comment claiming it's part of the per-frame contract. Placed outside the
-        // CNA_SPRITE_BATCHING_ENABLED guard below so it runs regardless of that flag.
-        UpdateGeometry();
-#ifdef CNA_SPRITE_BATCHING_ENABLED
-        if (!spriteBatch || batch_started_) return;
-        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
-                           Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-        batch_started_ = true;
-#endif
-    }
-
-    void Pixmap::EndBatch()
-    {
-#ifdef CNA_SPRITE_BATCHING_ENABLED
-        if (!spriteBatch || !batch_started_) return;
-        spriteBatch->End();
-        batch_started_ = false;
-#endif
-    }
-
     void Pixmap::DrawBackground()
     {
         if (!spriteBatch)
@@ -397,10 +363,10 @@ namespace WindowsPhoneSpeedyBlupi
         Microsoft::Xna::Framework::Rectangle srcRectangle = GetSrcRectangle(bitmap, 10, 10, 10, 10, 0, 0);
         Microsoft::Xna::Framework::Rectangle destinationRectangle = Microsoft::Xna::Framework::Rectangle(
             0, 0, static_cast<intcs>(screenWidth), static_cast<intcs>(screenHeight));
-        if (!batch_started_) spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         spriteBatch->Draw(bitmap, destinationRectangle, srcRectangle, Microsoft::Xna::Framework::Color::White);
-        if (!batch_started_) spriteBatch->End();
+        spriteBatch->End();
         TinyPoint dest{
             static_cast<intcs>(originX),
             static_cast<intcs>(originY)
@@ -489,10 +455,10 @@ namespace WindowsPhoneSpeedyBlupi
             static_cast<intcs>(static_cast<double>(rect.getWidthProperty()) * zoom),
             static_cast<intcs>(static_cast<double>(rect.getHeightProperty()) * zoom)
         );
-        if (!batch_started_) spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+        spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                            Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         spriteBatch->Draw(*bitmap, destinationRectangle, value, Microsoft::Xna::Framework::Color::White);
-        if (!batch_started_) spriteBatch->End();
+        spriteBatch->End();
         return true;
     }
 
@@ -670,13 +636,13 @@ namespace WindowsPhoneSpeedyBlupi
                 rotationRad = static_cast<float>(Misc::DegToRad(rotationDeg));
                 rectangle = Misc::RotateAdjust(rectangle, rotationRad);
             }
-            if (!batch_started_) spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
+            spriteBatch->Begin(Microsoft::Xna::Framework::Graphics::SpriteSortMode::BackToFront,
                                Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
             spriteBatch->Draw(*bitmap, rectangle, srcRectangle,
                               Microsoft::Xna::Framework::Color::FromNonPremultiplied(
                                   255, 255, 255, static_cast<intcs>(255.0 * opacity)), rotationRad, origin, effect,
                               0.0f);
-            if (!batch_started_) spriteBatch->End();
+            spriteBatch->End();
         }
     }
 

@@ -282,9 +282,11 @@ namespace WindowsPhoneSpeedyBlupi
 
         /**
          * @brief Returns the graphics device manager owned by Game1.
-         * @return A copy of the GraphicsDeviceManager instance.
+         * @return Reference to the GraphicsDeviceManager instance owned by Game1.
+         * @note The manager owns device resources and must not be copied.
+         * @warning The reference must not outlive Game1.
          */
-        virtual Microsoft::Xna::Framework::GraphicsDeviceManager getGraphics() = 0;
+        virtual Microsoft::Xna::Framework::GraphicsDeviceManager& getGraphics() = 0;
 
         /**
          * @brief Returns a reference to the XNA/CNA content manager used to load assets.

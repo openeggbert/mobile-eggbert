@@ -529,7 +529,7 @@ namespace WindowsPhoneSpeedyBlupi
         {
             continueMission = ContinueMissionType::Active;
         }
-        pixmap->BeginBatch();
+        pixmap->UpdateGeometry();
         if (phase == Def::Phase::Wait || phase == Def::Phase::Init || phase == Def::Phase::Pause || phase ==
             Def::Phase::Resume || phase == Def::Phase::Lost || phase == Def::Phase::Win || phase ==
             Def::Phase::MainSetup || phase == Def::Phase::PlaySetup || phase == Def::Phase::Trial || phase ==
@@ -561,7 +561,6 @@ namespace WindowsPhoneSpeedyBlupi
         {
             DrawWaitProgress();
         }
-        pixmap->EndBatch();
         Game::Draw(gameTime);
     }
 
@@ -1094,7 +1093,7 @@ namespace WindowsPhoneSpeedyBlupi
     }
 #endif
 
-    Microsoft::Xna::Framework::GraphicsDeviceManager Game1::getGraphics()
+    Microsoft::Xna::Framework::GraphicsDeviceManager& Game1::getGraphics()
     {
         return graphics;
     }

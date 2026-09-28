@@ -583,7 +583,8 @@ namespace WindowsPhoneSpeedyBlupi
          * 3. For Phase::Play: delegate rendering entirely to Decor::Build() and
          *    InputPad::Draw().
          * 4. For Phase::Wait: overlay the loading-progress gauge.
-         * 5. Flush the sprite batch via pixmap::EndBatch().
+         * Each sprite is flushed by its own Pixmap draw call.  Viewport geometry
+         * is refreshed before drawing to preserve window-resize handling.
          *
          * @param[in] gameTime  Elapsed- and total-time snapshot for this frame
          *                      (passed through to the base-class Draw).
@@ -619,7 +620,7 @@ namespace WindowsPhoneSpeedyBlupi
          * - Phase::Lost: BlupiYoupie spins in with a high rotation count.
          * - Phase::Win: BlupiYoupie pulsates with a sine-wave scale.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Animated background icons have been submitted to pixmap.
          *
          * @note This method is called only when #fadeOutPhase != Phase::None or the
@@ -638,7 +639,7 @@ namespace WindowsPhoneSpeedyBlupi
          * panel).  The right panel height expands if trial or ranking mode is active.
          * Only active during Phase::Init.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Panel backgrounds have been submitted to pixmap for Phase::Init.
          *
          * @see Draw()
@@ -659,7 +660,7 @@ namespace WindowsPhoneSpeedyBlupi
          * - Phase::Trial: multi-line trial explanation text plus Buy and Back labels.
          * - Phase::Ranking: Back label.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Text labels have been submitted to pixmap for the current phase.
          *
          * @see Draw()
@@ -682,7 +683,7 @@ namespace WindowsPhoneSpeedyBlupi
          *                   (InitGamerA, InitGamerB, or InitGamerC).
          * @param[in] gamer  Zero-based gamer slot index (0 = A, 1 = B, 2 = C).
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @pre @p gamer is in the range [0, 2].
          * @post Four text lines have been submitted to pixmap to the right of @p glyph.
          *
@@ -699,7 +700,7 @@ namespace WindowsPhoneSpeedyBlupi
          * @param[in] glyph  The button whose right edge is used as the text anchor.
          * @param[in] res    MyResource string ID.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Text has been submitted to pixmap to the right of @p glyph.
          *
          * @see DrawTextRightButton(Def::ButtonGlyph, std::string)
@@ -716,7 +717,7 @@ namespace WindowsPhoneSpeedyBlupi
          * @param[in] glyph  The button whose right edge is used as the text anchor.
          * @param[in] text   UTF-8 string to draw; may contain one @c '\\n' separator.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Text has been submitted to pixmap to the right of @p glyph.
          *
          * @see DrawTextRightButton(Def::ButtonGlyph, int)
@@ -732,7 +733,7 @@ namespace WindowsPhoneSpeedyBlupi
          * @param[in] glyph  The button below which the text is drawn.
          * @param[in] res    MyResource string ID.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Text has been submitted to pixmap below @p glyph.
          *
          * @see DrawButtonsText()
@@ -748,7 +749,7 @@ namespace WindowsPhoneSpeedyBlupi
          * Jauge::SetLevel() followed by Jauge::Draw().
          *
          * @pre phase == Def::Phase::Wait.
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post waitJauge fill level reflects #waitProgress; the gauge sprite has been
          *       submitted to pixmap.
          *
@@ -766,7 +767,7 @@ namespace WindowsPhoneSpeedyBlupi
          * position (10, 20) at scale 1.0.  Not called from the normal render path;
          * must be wired in manually during debugging.
          *
-         * @pre pixmap is in a valid BeginBatch() / EndBatch() block.
+         * @pre pixmap is initialised and LoadContent() has returned.
          * @post Debug text has been submitted to pixmap.
          *
          * @note Intended for development use only.  Not called during normal gameplay.
@@ -914,17 +915,17 @@ namespace WindowsPhoneSpeedyBlupi
 #endif
 
         /**
-         * @brief Returns a copy of the GraphicsDeviceManager.
+         * @brief Returns a reference to the GraphicsDeviceManager owned by the game.
          *
          * @details Provided to satisfy the IGame1 interface so that subsystems can
          * access display parameters without a direct dependency on Game1.
          *
-         * @return A copy of the #graphics member.
+         * @return Reference to the #graphics member.
          *
-         * @note Returning by value is intentional; the returned object shares the
-         *       underlying platform handle with the original.
+         * @note The manager owns device resources and must not be copied.
+         * @warning The reference must not outlive this Game1 instance.
          */
-        Microsoft::Xna::Framework::GraphicsDeviceManager getGraphics() override;
+        Microsoft::Xna::Framework::GraphicsDeviceManager& getGraphics() override;
 
         /**
          * @brief Returns a reference to the game's ContentManager.
