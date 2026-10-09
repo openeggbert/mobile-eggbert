@@ -217,14 +217,16 @@ Pick exactly one renderer at configure time with `-DCNA_GRAPHICS_RENDERER=<name>
 delegates selection and validation to CNA. Its current renderer identities are:
 
 ```text
-SDL_RENDERER, OPENGLES2, OPENGLES3, OPENGL33, WEBGL1, WEBGL2, VULKAN,
-WEBGPU, HEADLESS, SOFTWARE, STUB, DIRECTX11, DIRECTX12, CANVAS, HTML_DOM,
-DIRECTX9, SDL_GPU, OPENGL4, GDI, METAL, FNA3D, SVG_DOM
+SDL_RENDERER, OPENGLES3, OPENGL33, WEBGL2, VULKAN, WEBGPU, HEADLESS,
+SOFTWARE, STUB, DIRECTX11, DIRECTX9, SDL_GPU, METAL, FNA3D
 ```
+
+These are CNA's 14 public renderer identities. CNA retired OPENGLES2, OPENGL4, WEBGL1, DIRECTX12,
+GDI and the DOM renderers (CANVAS, HTML_DOM, SVG_DOM) and refuses them at configure time by name.
 
 The renderer is compiled into the executable; it is not selected at runtime. CNA enforces each
 renderer's platform and toolchain requirements—for example, the DirectX renderers require a
-Windows target, the DOM renderers require Emscripten and Metal requires macOS.
+Windows target and Metal requires macOS.
 Some renderers also require their documented sibling or system dependency.
 CNA's defaults are `OPENGLES3` on Linux, `WEBGL2` on Emscripten and `SDL_RENDERER` elsewhere.
 
@@ -237,14 +239,16 @@ closure plus `IO.IsolatedStorage` for save games.
 
 `CMakePresets.json` provides separate build directories under `build/<preset>/`.
 
-See [the renderer build verification report](BUILD_RENDERERS.md) for the 22 verified variants,
-artifact paths and dependency versions.
+See [the renderer build verification report](BUILD_RENDERERS.md) for the 22 variants verified on
+2026-09-28 (eight of them use identities CNA has since retired), artifact paths and dependency
+versions.
 
 | Target | Presets |
 |---|---|
-| Linux | `linux-sdl-renderer`, `linux-opengles2`, `linux-opengles3`, `linux-opengl33`, `linux-vulkan`, `linux-webgpu`, `linux-headless`, `linux-software`, `linux-stub`, `linux-sdl-gpu`, `linux-opengl4`, `linux-fna3d` |
-| Web | `web-webgl1`, `web-webgl2`, `web-webgpu`, `web-canvas`, `web-html-dom`, `web-svg-dom` |
-| Windows / Wine | `windows-directx11`, `windows-directx12`, `windows-directx9`, `windows-gdi` |
+| Linux | `linux-sdl-renderer`, `linux-opengles3`, `linux-opengl33`, `linux-vulkan`, `linux-webgpu`, `linux-headless`, `linux-software`, `linux-stub`, `linux-sdl-gpu`, `linux-fna3d` |
+| macOS | `macos-metal`, `macos-opengl33`, `macos-sdl-renderer` |
+| Web | `web-webgl2`, `web-webgpu` |
+| Windows / Wine | `windows-directx11`, `windows-directx9` |
 
 Configure and build a variant with the same preset name:
 
@@ -253,7 +257,10 @@ cmake --preset linux-vulkan
 cmake --build --preset linux-vulkan --parallel 4
 ```
 
-Linux and Windows presets use Debug; web presets use Release. Web presets require an activated
+Linux, macOS and Windows presets use Debug; web presets use Release. The macOS presets are shown
+only on a macOS host; `METAL` is CNA's native renderer there, and macOS has no OpenGL ES, so the GL
+choice is `OPENGL33`. macOS needs `brew install nlohmann-json` for CNA's GamerServices (libcurl
+comes with the SDK). Web presets require an activated
 Emscripten SDK with `EMSDK` set. Windows presets use the MinGW-w64 cross-toolchain and produce
 `WindowsPhoneSpeedyBlupi.exe` for Windows or Wine. Native builds copy `Content/` and `worlds/`
 beside the executable; web builds embed their assets in `WindowsPhoneSpeedyBlupi.data`.

@@ -55,21 +55,52 @@
       }
     },
     {
+      "name": "macos-base",
+      "hidden": true,
+      "inherits": "base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CNA_SDL_PREBUILT_ROOT": "${sourceDir}/build/dependencies/sdl-macos"
+      }
+    },
+    {
+      "name": "macos-metal",
+      "displayName": "macos: METAL",
+      "inherits": "macos-base",
+      "binaryDir": "${sourceDir}/build/macos-metal",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "METAL"
+      }
+    },
+    {
+      "name": "macos-opengl33",
+      "displayName": "macos: OPENGL33",
+      "inherits": "macos-base",
+      "binaryDir": "${sourceDir}/build/macos-opengl33",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "OPENGL33"
+      }
+    },
+    {
+      "name": "macos-sdl-renderer",
+      "displayName": "macos: SDL_RENDERER",
+      "inherits": "macos-base",
+      "binaryDir": "${sourceDir}/build/macos-sdl-renderer",
+      "cacheVariables": {
+        "CNA_GRAPHICS_RENDERER": "SDL_RENDERER"
+      }
+    },
+    {
       "name": "linux-sdl-renderer",
       "displayName": "linux: SDL_RENDERER",
       "inherits": "linux-base",
       "binaryDir": "${sourceDir}/build/linux-sdl-renderer",
       "cacheVariables": {
         "CNA_GRAPHICS_RENDERER": "SDL_RENDERER"
-      }
-    },
-    {
-      "name": "linux-opengles2",
-      "displayName": "linux: OPENGLES2",
-      "inherits": "linux-base",
-      "binaryDir": "${sourceDir}/build/linux-opengles2",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "OPENGLES2"
       }
     },
     {
@@ -145,30 +176,12 @@
       }
     },
     {
-      "name": "linux-opengl4",
-      "displayName": "linux: OPENGL4",
-      "inherits": "linux-base",
-      "binaryDir": "${sourceDir}/build/linux-opengl4",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "OPENGL4"
-      }
-    },
-    {
       "name": "linux-fna3d",
       "displayName": "linux: FNA3D",
       "inherits": "linux-base",
       "binaryDir": "${sourceDir}/build/linux-fna3d",
       "cacheVariables": {
         "CNA_GRAPHICS_RENDERER": "FNA3D"
-      }
-    },
-    {
-      "name": "web-webgl1",
-      "displayName": "web: WEBGL1",
-      "inherits": "web-base",
-      "binaryDir": "${sourceDir}/build/web-webgl1",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "WEBGL1"
       }
     },
     {
@@ -190,48 +203,12 @@
       }
     },
     {
-      "name": "web-canvas",
-      "displayName": "web: CANVAS",
-      "inherits": "web-base",
-      "binaryDir": "${sourceDir}/build/web-canvas",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "CANVAS"
-      }
-    },
-    {
-      "name": "web-html-dom",
-      "displayName": "web: HTML_DOM",
-      "inherits": "web-base",
-      "binaryDir": "${sourceDir}/build/web-html-dom",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "HTML_DOM"
-      }
-    },
-    {
-      "name": "web-svg-dom",
-      "displayName": "web: SVG_DOM",
-      "inherits": "web-base",
-      "binaryDir": "${sourceDir}/build/web-svg-dom",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "SVG_DOM"
-      }
-    },
-    {
       "name": "windows-directx11",
       "displayName": "windows: DIRECTX11",
       "inherits": "windows-base",
       "binaryDir": "${sourceDir}/build/windows-directx11",
       "cacheVariables": {
         "CNA_GRAPHICS_RENDERER": "DIRECTX11"
-      }
-    },
-    {
-      "name": "windows-directx12",
-      "displayName": "windows: DIRECTX12",
-      "inherits": "windows-base",
-      "binaryDir": "${sourceDir}/build/windows-directx12",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "DIRECTX12"
       }
     },
     {
@@ -242,28 +219,12 @@
       "cacheVariables": {
         "CNA_GRAPHICS_RENDERER": "DIRECTX9"
       }
-    },
-    {
-      "name": "windows-gdi",
-      "displayName": "windows: GDI",
-      "inherits": "windows-base",
-      "binaryDir": "${sourceDir}/build/windows-gdi",
-      "cacheVariables": {
-        "CNA_GRAPHICS_RENDERER": "GDI"
-      }
     }
   ],
   "buildPresets": [
     {
       "name": "linux-sdl-renderer",
       "configurePreset": "linux-sdl-renderer",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
-      "name": "linux-opengles2",
-      "configurePreset": "linux-opengles2",
       "targets": [
         "WindowsPhoneSpeedyBlupi"
       ]
@@ -325,22 +286,8 @@
       ]
     },
     {
-      "name": "linux-opengl4",
-      "configurePreset": "linux-opengl4",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
       "name": "linux-fna3d",
       "configurePreset": "linux-fna3d",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
-      "name": "web-webgl1",
-      "configurePreset": "web-webgl1",
       "targets": [
         "WindowsPhoneSpeedyBlupi"
       ]
@@ -360,36 +307,8 @@
       ]
     },
     {
-      "name": "web-canvas",
-      "configurePreset": "web-canvas",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
-      "name": "web-html-dom",
-      "configurePreset": "web-html-dom",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
-      "name": "web-svg-dom",
-      "configurePreset": "web-svg-dom",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
       "name": "windows-directx11",
       "configurePreset": "windows-directx11",
-      "targets": [
-        "WindowsPhoneSpeedyBlupi"
-      ]
-    },
-    {
-      "name": "windows-directx12",
-      "configurePreset": "windows-directx12",
       "targets": [
         "WindowsPhoneSpeedyBlupi"
       ]
@@ -402,8 +321,22 @@
       ]
     },
     {
-      "name": "windows-gdi",
-      "configurePreset": "windows-gdi",
+      "name": "macos-metal",
+      "configurePreset": "macos-metal",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "macos-opengl33",
+      "configurePreset": "macos-opengl33",
+      "targets": [
+        "WindowsPhoneSpeedyBlupi"
+      ]
+    },
+    {
+      "name": "macos-sdl-renderer",
+      "configurePreset": "macos-sdl-renderer",
       "targets": [
         "WindowsPhoneSpeedyBlupi"
       ]
